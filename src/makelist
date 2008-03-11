@@ -1,0 +1,49 @@
+
+#-------------------------------------------------------------------
+# $Id: makelist 1997 2006-03-06 19:40:10Z rsregan $
+#-------------------------------------------------------------------
+
+MMFDIR      = ./mmf
+
+#########################################################
+# Configure tags for each system
+##########################################################
+ARC		= LINUX
+#ARC		= WINDOWS
+
+#OPTLEVEL	= -g
+OPTLEVEL	= -O3
+LDFLAGS		=$(OPTLEVEL)
+
+##########################################################
+# Define the Fortran compile flags
+##########################################################
+#FFLAGS= $(OPTLEVEL) -fbounds-check -Wall -fno-second-underscore
+FFLAGS= $(OPTLEVEL) -Wall -fno-second-underscore
+FC		= gfortran
+
+##########################################################
+# Define the C compile flags
+# -D_UF defines UNIX naming conventions for mixed language compilation.
+##########################################################
+CFLAGS		= $(OPTLEVEL) -D$(ARC) -D_UF
+CC		= gcc
+
+##########################################################
+# Define the libraries
+##########################################################
+MATHLIB		= -lm
+GCLIB		= -lgfortran -lgcc $(MATHLIB)
+FLIBS    = $(GCLIB)
+
+##########################################################
+# Unix system commands
+##########################################################
+RM		= rm -f
+AR  		= ar ruv
+RANLIB		= ranlib
+MAKE		= make
+LN		= ln -s
+CD		= cd
+CP		= cp
+

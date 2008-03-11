@@ -1,0 +1,285 @@
+#Sagehen Simulation -- Example problem for GSFLOW
+HEAD PRINT FORMAT   4
+DRAWDOWN PRINT FORMAT   0
+HEAD SAVE FORMAT (81F8.0) LABEL
+HEAD SAVE UNIT 58
+PERIOD   1 STEP   0   
+    PRINT BUDGET      
+PERIOD   2 STEP   1    
+    PRINT BUDGET 
+PERIOD   2 STEP   50     
+    PRINT BUDGET
+PERIOD   2 STEP   100    
+    PRINT BUDGET
+PERIOD   2 STEP   150    
+    PRINT BUDGET      
+PERIOD   3 STEP   1    
+    PRINT BUDGET 
+PERIOD   3 STEP   50     
+    PRINT BUDGET
+PERIOD   3 STEP   100    
+    PRINT BUDGET
+PERIOD   3 STEP   150    
+    PRINT BUDGET    
+PERIOD   4 STEP   1    
+    PRINT BUDGET 
+PERIOD   4 STEP   50     
+    PRINT BUDGET
+PERIOD   4 STEP   100    
+    PRINT BUDGET
+PERIOD   4 STEP   150    
+    PRINT BUDGET  
+PERIOD   5 STEP   1    
+    PRINT BUDGET 
+PERIOD   5 STEP   50     
+    PRINT BUDGET
+PERIOD   5 STEP   100    
+    PRINT BUDGET
+PERIOD   5 STEP   150    
+    PRINT BUDGET                      
+PERIOD   5 STEP   200    
+    PRINT BUDGET 
+PERIOD   5 STEP   250     
+    PRINT BUDGET
+PERIOD   5 STEP   300    
+    PRINT BUDGET
+PERIOD   5 STEP   350    
+    PRINT BUDGET     
+PERIOD   5 STEP   400    
+    PRINT BUDGET 
+PERIOD   5 STEP   450     
+    PRINT BUDGET
+PERIOD   5 STEP   500    
+    PRINT BUDGET
+PERIOD   5 STEP   550    
+    PRINT BUDGET         
+PERIOD   5 STEP   600    
+    PRINT BUDGET 
+PERIOD   5 STEP   650     
+    PRINT BUDGET
+PERIOD   5 STEP   700    
+    PRINT BUDGET
+PERIOD   5 STEP   750    
+    PRINT BUDGET
+PERIOD   5 STEP   600    
+    PRINT BUDGET 
+PERIOD   5 STEP   650     
+    PRINT BUDGET
+PERIOD   5 STEP   700    
+    PRINT BUDGET
+PERIOD   5 STEP   750    
+    PRINT BUDGET
+PERIOD   5 STEP   600    
+    PRINT BUDGET 
+PERIOD   5 STEP   650     
+    PRINT BUDGET
+PERIOD   5 STEP   700    
+    PRINT BUDGET
+PERIOD   5 STEP   750    
+    PRINT BUDGET
+PERIOD   5 STEP   600    
+    PRINT BUDGET 
+PERIOD   5 STEP   650     
+    PRINT BUDGET
+PERIOD   5 STEP   700    
+    PRINT BUDGET
+PERIOD   5 STEP   750    
+    PRINT BUDGET
+PERIOD   5 STEP   600    
+    PRINT BUDGET 
+PERIOD   5 STEP   650     
+    PRINT BUDGET
+PERIOD   5 STEP   700    
+    PRINT BUDGET
+PERIOD   5 STEP   750    
+    PRINT BUDGET
+PERIOD   5 STEP   800    
+    PRINT BUDGET 
+PERIOD   5 STEP   850     
+    PRINT BUDGET
+PERIOD   5 STEP   900    
+    PRINT BUDGET
+PERIOD   5 STEP   950    
+    PRINT BUDGET
+PERIOD   5 STEP   1000    
+    PRINT BUDGET 
+PERIOD   5 STEP   1050     
+    PRINT BUDGET
+PERIOD   5 STEP   1100    
+    PRINT BUDGET
+PERIOD   5 STEP   1150    
+    PRINT BUDGET
+PERIOD   5 STEP   1200    
+    PRINT BUDGET 
+PERIOD   5 STEP   1250     
+    PRINT BUDGET
+PERIOD   5 STEP   1300    
+    PRINT BUDGET
+PERIOD   5 STEP   1350    
+    PRINT BUDGET
+PERIOD   5 STEP   1400    
+    PRINT BUDGET 
+PERIOD   5 STEP   1450     
+    PRINT BUDGET
+PERIOD   5 STEP   1500    
+    PRINT BUDGET
+PERIOD   5 STEP   1550    
+    PRINT BUDGET
+PERIOD   5 STEP   1600    
+    PRINT BUDGET 
+PERIOD   5 STEP   1650     
+    PRINT BUDGET
+PERIOD   5 STEP   1700    
+    PRINT BUDGET
+PERIOD   5 STEP   1750    
+    PRINT BUDGET
+PERIOD   5 STEP   1800    
+    PRINT BUDGET 
+PERIOD   5 STEP   1850     
+    PRINT BUDGET
+PERIOD   5 STEP   1900    
+    PRINT BUDGET
+PERIOD   5 STEP   1950    
+    PRINT BUDGET
+PERIOD   5 STEP   2000    
+    PRINT BUDGET  
+PERIOD   5 STEP   2050     
+    PRINT BUDGET
+PERIOD   5 STEP   2100    
+    PRINT BUDGET
+PERIOD   5 STEP   2150    
+    PRINT BUDGET
+PERIOD   5 STEP   2200    
+    PRINT BUDGET 
+PERIOD   5 STEP   2250     
+    PRINT BUDGET
+PERIOD   5 STEP   2300    
+    PRINT BUDGET
+PERIOD   5 STEP   2350    
+    PRINT BUDGET
+PERIOD   5 STEP   2400    
+    PRINT BUDGET 
+PERIOD   5 STEP   2450     
+    PRINT BUDGET
+PERIOD   5 STEP   2500    
+    PRINT BUDGET
+PERIOD   5 STEP   2550    
+    PRINT BUDGET
+PERIOD   5 STEP   2600    
+    PRINT BUDGET 
+PERIOD   5 STEP   2650     
+    PRINT BUDGET
+PERIOD   5 STEP   2700    
+    PRINT BUDGET
+PERIOD   5 STEP   2750    
+    PRINT BUDGET
+PERIOD   5 STEP   2800    
+    PRINT BUDGET 
+PERIOD   5 STEP   2850     
+    PRINT BUDGET
+PERIOD   5 STEP   2900    
+    PRINT BUDGET
+PERIOD   5 STEP   2950    
+    PRINT BUDGET
+PERIOD   5 STEP   3000    
+    PRINT BUDGET        
+PERIOD   5 STEP   3050    
+    PRINT BUDGET                        
+PERIOD   5 STEP   3100    
+    PRINT BUDGET                        
+PERIOD   5 STEP   3150    
+    PRINT BUDGET                        
+PERIOD   5 STEP   3200    
+    PRINT BUDGET                        
+PERIOD   5 STEP   3250    
+    PRINT BUDGET                        
+PERIOD   5 STEP   3300    
+    PRINT BUDGET                        
+PERIOD   5 STEP   3350    
+    PRINT BUDGET                        
+PERIOD   5 STEP   3400    
+    PRINT BUDGET                        
+PERIOD   5 STEP   3450    
+    PRINT BUDGET                        
+PERIOD   5 STEP   3500    
+    PRINT BUDGET                        
+PERIOD   5 STEP   3550    
+    PRINT BUDGET                        
+PERIOD   5 STEP   3600    
+    PRINT BUDGET                        
+PERIOD   5 STEP   3650    
+    PRINT BUDGET      
+PERIOD   5 STEP   3700
+    PRINT BUDGET      
+PERIOD   5 STEP   3750
+    PRINT BUDGET      
+PERIOD   5 STEP   3800
+    PRINT BUDGET      
+PERIOD   5 STEP   3850
+    PRINT BUDGET      
+PERIOD   5 STEP   3900
+    PRINT BUDGET      
+PERIOD   5 STEP   3950
+    PRINT BUDGET      
+PERIOD   5 STEP   4000
+    PRINT BUDGET      
+PERIOD   5 STEP   4050    
+    PRINT BUDGET                        
+PERIOD   5 STEP   4100    
+    PRINT BUDGET                        
+PERIOD   5 STEP   4150    
+    PRINT BUDGET                        
+PERIOD   5 STEP   4200    
+    PRINT BUDGET                        
+PERIOD   5 STEP   4250    
+    PRINT BUDGET                        
+PERIOD   5 STEP   4300    
+    PRINT BUDGET                        
+PERIOD   5 STEP   4350    
+    PRINT BUDGET                        
+PERIOD   5 STEP   4400    
+    PRINT BUDGET                        
+PERIOD   5 STEP   4450    
+    PRINT BUDGET                        
+PERIOD   5 STEP   4500    
+    PRINT BUDGET                        
+PERIOD   5 STEP   4550    
+    PRINT BUDGET                        
+PERIOD   5 STEP   4600    
+    PRINT BUDGET                        
+PERIOD   5 STEP   4650    
+    PRINT BUDGET      
+PERIOD   5 STEP   4700
+    PRINT BUDGET      
+PERIOD   5 STEP   4750
+    PRINT BUDGET      
+PERIOD   5 STEP   4800
+    PRINT BUDGET      
+PERIOD   5 STEP   4850
+    PRINT BUDGET      
+PERIOD   5 STEP   4900
+    PRINT BUDGET      
+PERIOD   5 STEP   4950
+    PRINT BUDGET      
+PERIOD   5 STEP   5000
+    PRINT BUDGET
+PERIOD   5 STEP   5050    
+    PRINT BUDGET                        
+PERIOD   5 STEP   5100    
+    PRINT BUDGET                        
+PERIOD   5 STEP   5150    
+    PRINT BUDGET                        
+PERIOD   5 STEP   5200    
+    PRINT BUDGET                        
+PERIOD   5 STEP   5250    
+    PRINT BUDGET                        
+PERIOD   5 STEP   5300    
+    PRINT BUDGET                        
+PERIOD   5 STEP   5350    
+    PRINT BUDGET                        
+PERIOD   5 STEP   5400    
+    PRINT BUDGET                        
+PERIOD   5 STEP   5450    
+    PRINT BUDGET                        
+PERIOD   5 STEP   5500    
+    PRINT BUDGET

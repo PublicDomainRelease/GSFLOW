@@ -1,0 +1,108 @@
+release.txt
+
+                           MODFLOW-2005 Release Notes
+
+     This file describes changes introduced into MODFLOW-2005 with each
+official release; these changes may substantially affect users. In this
+file, packages are referred to by their 3-or 4-character abbreviation. 
+For information and references related to these packages, see mf2005.txt
+("Summary of MODFLOW-2005").
+
+NOTE: Any use of trade, product or firm names is for descriptive purposes 
+      only and does not imply endorsement by the U.S. Government.
+
+o Version 1.4.00
+   Added SUB-WT Package
+   GMG -- Added adaptive damping option as documented in "GMG_Damping.pdf"
+       and "Banta_damping_paper.pdf" in the doc directory.
+   GWF2LAK7 -- Corrected precision declaration for functions FINTERP,
+       DERIVTERP, and OUTFLWTERP.
+
+o Version 1.3.01
+   GWF2BAS7 -- MXPAR, the maximum number of parameters, increased fromm
+       500 to 999.
+
+o Version 1.3
+   GWF2GAG7 -- Removed duplicate reference to RNF in USE statement in
+       subroutine SGWF2GAG7LO.  Modifications to format statements.
+   GWF2UZF1 -- Fixed memory allocation problem when using UZF to simulate
+       discharge to land surface while not simulating unsaturated flow.
+       The calculation was changed for simulating head-dependent recharge
+       and discharge when the ground-water head is near or above land
+       surface.
+   GWF2SFR7 -- Fixed logic for reading mixed parameter and nonparameter
+       input data.
+   GWF2SFR7 -- Fixed problem where FLOWC was uninitialized when ICALC=0.
+       Added ability for SFR to be used with HUF.
+   GWF2RCH7, GWF2EVT7, GWF2ETS7 -- Added a check to not use the layer
+       indicator value if the indicator value is 0.
+   OBS2BAS7 -- Changed format for saving observations in a disk file to
+       write less digits..
+   OBS2BAS7 -- Fixed problem with head-change observations at cells that
+       have an initally dry simulated value, but values at later time are
+       wet.  The later values were being computed based on the dry value,
+       and now all of the values at later times will be dry.
+
+o Version 1.2.01  10/24/2006
+   GWF2SFR7 -- A bug was discovered in SFR7 when NSTRM is postive or when
+       NSTRM is negative and ISFROPT is 0. The error  occurs because record
+       6 is not read after the first stress period. This causes the read
+       sequence following stress period 2 to be incorrect. Many different
+       problems can occur due to this bug, including stopping of the model.
+
+o Version 1.2  10/16/2006
+   Added SFR, LAK, UZF, and GAG Packages
+   GWF2MNW7 -- Converted PLOSS to double precision
+   DE47 -- Added missing arguments in the call from MAIN to DE47AP
+   KDEP capability in GWF2HUF2 -- Corrected memory allocation for GS array
+          when IFKDEP is 0.
+   GWF2DRT7 -- A bug that caused a budget error when a drain-return cell 
+       is inactive has been fixed.  Now, if the return cell is inactive
+       (IBOUND=0) or constant-head (IBOUND<0), no return flow takes place,
+       and all drain flow exits the model.  Also a bug that caused an error
+       reading non-parameter data was fixed.
+   GWF2SUB7 -- Modified to allow comment lines to be inserted into the SUB
+       input file anywhere except where arrays are to be read by one of the
+       array-reader subroutines (U2DREL or U2DINT).
+
+Note to users of the Hydraulic-Conductivity Depth-Dependence (KDEP) capability:
+The memory allocation error for the GS array exists in the KDEP code
+beginning with its first release in version 1.12 of MODFLOW-2000 (MF2K)
+and continuing through version 1.15 of MF2K. The error was fixed beginning
+with version 1.16. The error also occurs in versions 1.0 and 1.1 of
+MODFLOW-2005.  The error has been found to cause problems in some (but not all)
+models that specify input variable IFKDEP equal to 0. Variable IFKDEP is a flag
+indicating the source of the array specifying reference-surface elevations used
+for the depth-dependent hydraulic-conductivity calculations. When IFKDEP = 0,
+the TOP array specified in the Discretization Package Input File is used; when
+IFKDEP = 1, the array is specified in the KDEP input file (variable RS). In
+some circumstances, specification of IFKDEP = 0 led to inadequate allocation
+of memory for the reference surface.  The error could cause errors in some of
+the budget calculations.  Models that specify IFKDEP = 1 should not be affected
+by this error.  If users are uncertain whether their simulations using KDEP are
+affected by this error, they are encouraged to run their data sets with MF2K
+version 1.16 (or higher) or MODFLOW-2005 version 1.2 (or higher) and compare the
+new results with those of the earlier version.
+
+
+o Version 1.1  05/18/2006
+   SGWF2LPF7DA -- Corrected deallocation statements for several variables
+   hufutl7.f -- Removed some unused code
+   De47.f -- Moved several variables into DE4MODULE to support Local Grid
+             Refinement (LGR)
+   GWF2BAS7AR -- added MFVNAM as an argument to allow different versions of
+                 MODFLOW to print a different version name -- e.g. MODFLOW-LGR
+                 as opposed to MODFLOW-2005.
+   Added DRT, ETS, RES, and SUB packages
+   Added Observation (OBS) Process
+   GWF2MNW7RP -- Corrected HDRY value when HUF is used
+              -- Fixed initialization problem with variable ICMN.
+   GWF2MNW7 -- Added an 18th element to the WELL2 list to store a well
+               identifier
+   GWF2STR7 -- Increased the number of digits for output of streamflow terms
+               in the Listing File.
+
+o Version 1.00 01/15/2006:
+
+This version is the initial release.
+
