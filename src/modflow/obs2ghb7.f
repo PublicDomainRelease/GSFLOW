@@ -324,16 +324,18 @@ C
 C1------WRITE OBSERVATIONS TO LISTING FILE.
       WRITE(IOUT,17)
    17 FORMAT(1X,/,1X,'GHB FLOW OBSERVATIONS',/,
-     1  1X,'OBSERVATION     OBSERVED      SIMULATED',/
-     2  1X,'  NAME            VALUE         VALUE      DIFFERENCE',/
-     3  1X,'-------------------------------------------------------')
+     1  1X,'OBSERVATION       OBSERVED           SIMULATED',/
+     2  1X,'  NAME              VALUE              VALUE',
+     3     '             DIFFERENCE',/
+     4  1X,'----------------------------------------------',
+     5     '----------------------')
       SUMSQ=0.
       DO 100 N=1,NQTGB
       DIFF=FLWOBS(N)-FLWSIM(N)
       SQ=DIFF*DIFF
       SUMSQ=SUMSQ+SQ
       WRITE(IOUT,27) OBSNAM(N),FLWOBS(N),FLWSIM(N),DIFF
-   27 FORMAT(1X,A,1P,3G14.6)
+   27 FORMAT(1X,A,1P,3G20.11)
   100 CONTINUE
       WRITE(IOUT,28) SUMSQ
    28 FORMAT(1X,/,1X,'SUM OF SQUARED DIFFERENCE:',1P,E15.5)

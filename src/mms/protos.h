@@ -1,5 +1,5 @@
 /*
- *  $Id: protos.h 3238 2007-03-27 22:22:44Z rsregan $
+ *  $Id: protos.h 5803 2010-12-08 22:38:20Z markstro $
  */
 
 /**1************* SWITCH FOR DEFINITION AND DECLARATION ***************/
@@ -115,25 +115,25 @@ EXTERN void opfloat (char *, float *, long);
 EXTERN void opdble_ (char *, double *, ftnint *, ftnlen);
 EXTERN void opdble (char *, double *, long);
 
-/***  rosopt.c  **************************************************/
-#undef EXTERN
-#ifdef ROSOPT_C
-#define EXTERN
-#else
-#define EXTERN extern
-#endif
+///***  rosopt.c  **************************************************/
+//#undef EXTERN
+//#ifdef ROSOPT_C
+//#define EXTERN
+//#else
+//#define EXTERN extern
+//#endif
+//
+//EXTERN char *rosopt (ROSEN_DATA *, float[], float[]);
 
-EXTERN char *rosopt (ROSEN_DATA *, float[], float[]);
-
-/***  opinit.c  **************************************************/
-#undef EXTERN
-#ifdef OPINIT_C
-#define EXTERN
-#else
-#define EXTERN extern
-#endif
-
-EXTERN char *opinit (float *, float *, int *, ROSEN_DATA *);
+///***  opinit.c  **************************************************/
+//#undef EXTERN
+//#ifdef OPINIT_C
+//#define EXTERN
+//#else
+//#define EXTERN extern
+//#endif
+//
+//EXTERN char *opinit (float *, float *, int *, ROSEN_DATA *);
 
 /***  bdry.c  **************************************************/
 #undef EXTERN
@@ -145,15 +145,15 @@ EXTERN char *opinit (float *, float *, int *, ROSEN_DATA *);
 
 EXTERN int bdry (float *, int *, float *, float *, int *, int *, float *);
 
-/***  param.c  **************************************************/
-#undef EXTERN
-#ifdef PARAM_C
-#define EXTERN
-#else
-#define EXTERN extern
-#endif
-
-EXTERN int param (int *, ROSEN_DATA *);
+///***  param.c  **************************************************/
+//#undef EXTERN
+//#ifdef PARAM_C
+//#define EXTERN
+//#else
+//#define EXTERN extern
+//#endif
+//
+//EXTERN int param (int *, ROSEN_DATA *);
 
 /***  coropt.c  **************************************************/
 #undef EXTERN
@@ -165,17 +165,17 @@ EXTERN int param (int *, ROSEN_DATA *);
 
 EXTERN int coropt (int *, float *, float *, int *);
 
-/***  sub1.c  **************************************************/
-#undef EXTERN
-#ifdef SUB1_C
-#define EXTERN
-#else
-#define EXTERN extern
-#endif
-
-EXTERN int sub1 (int *, float *, int *, float *, float *, float *,
-      float *, float *, int *, int *, float *,
-      int *, float *, float *, int *, int *, ROSEN_DATA *);
+///***  sub1.c  **************************************************/
+//#undef EXTERN
+//#ifdef SUB1_C
+//#define EXTERN
+//#else
+//#define EXTERN extern
+//#endif
+//
+//EXTERN int sub1 (int *, float *, int *, float *, float *, float *,
+//      float *, float *, int *, int *, float *,
+//      int *, float *, float *, int *, int *, ROSEN_DATA *);
 
 /***  tcale.c  **************************************************/
 #undef EXTERN
@@ -197,15 +197,15 @@ EXTERN int tcale (int *, float *, float *, float *, float *, int *);
 
 EXTERN int unscal (int *, float *, float *, float *, float *, int *);
 
-/***  sub3.c  **************************************************/
-#undef EXTERN
-#ifdef SUB3_C
-#define EXTERN
-#else
-#define EXTERN extern
-#endif
-
-EXTERN int sub3 (int *, float *, float *, float *, int *, float *, ROSEN_DATA *);
+///***  sub3.c  **************************************************/
+//#undef EXTERN
+//#ifdef SUB3_C
+//#define EXTERN
+//#else
+//#define EXTERN extern
+//#endif
+//
+//EXTERN int sub3 (int *, float *, float *, float *, int *, float *, ROSEN_DATA *);
 
 /***  parse_args.c  **************************************************/
 #undef EXTERN
@@ -264,7 +264,7 @@ EXTERN void setup_cont (void);
 #define EXTERN extern
 #endif
 
-EXTERN void BATCH_run (void);
+EXTERN int BATCH_run (void);
 
 /***  graph_single_run.c  **************************************************/
 #undef EXTERN
@@ -376,7 +376,7 @@ EXTERN char *control_array (char *, long);
 EXTERN long *control_larray (char *, long);
 EXTERN float *control_farray (char *, long);
 EXTERN double *control_darray (char *, long);
-EXTERN char **control_sarray (char *, long);
+EXTERN char *control_sarray (char *, long);
 
 /***  control_var.c  **************************************************/
 #undef EXTERN
@@ -431,6 +431,17 @@ EXTERN long declparam_ (char *, char *, char *, char *, char *,
 	char *, char *, char *, char *, char *, ftnlen, ftnlen, ftnlen, ftnlen, ftnlen, ftnlen, ftnlen, ftnlen, ftnlen, ftnlen);
 EXTERN long declparam (char *, char *, char *, char *, char *,
 	char *, char *, char *, char *, char *);
+
+EXTERN long declparam_u_ (char *, char *, char *, char *, char *,
+	char *, char *, char *, char *, char *, char *, long *,
+       	ftnlen, ftnlen, ftnlen, ftnlen, ftnlen, ftnlen, ftnlen, ftnlen, ftnlen, ftnlen, ftnlen, ftnlen);
+EXTERN long declparam_u (char *, char *, char *, char *, char *,
+	char *, char *, char *, char *, char *, char *, long *);
+
+EXTERN long declparam_p_ (char *, char *, char *, char *, char *,
+	char *, char *, char *, char *, char *, char *, ftnlen, ftnlen, ftnlen, ftnlen, ftnlen, ftnlen, ftnlen, ftnlen, ftnlen, ftnlen, ftnlen);
+EXTERN long declparam_p (char *, char *, char *, char *, char *,
+	char *, char *, char *, char *, char *, char *);
 
 /***  declvar.c  **************************************************/
 #undef EXTERN
@@ -490,6 +501,7 @@ EXTERN void getdimdesc (char *, long, char *);
 #define EXTERN extern
 #endif
 
+EXTERN long updateparam (char *);
 EXTERN long getparam_ (char *, char *, ftnint *, char *, double *, ftnlen, ftnlen, ftnlen);
 EXTERN long getparam (char *, char *, int, char *, double *);
 EXTERN long getdatainfo_ (char *, ftnlen);
@@ -563,7 +575,7 @@ EXTERN int print_vars (void);
 #define EXTERN extern
 #endif
 
-EXTERN long putvar_ (char *, char *, ftnint *, char *, double *value, 
+EXTERN long putvar_ (char *, char *, ftnint *, char *, double *value,
 	     ftnlen, ftnlen, ftnlen);
 EXTERN long putvar (char *, char *, long, char *, double *);
 
@@ -585,7 +597,7 @@ EXTERN char *read_control (char *);
 #define EXTERN extern
 #endif
 
-EXTERN char *read_params (char *);
+EXTERN char *read_params (char *, int);
 EXTERN char *read_dims (char *);
 
 /***  read_vars.c  **************************************************/
@@ -638,6 +650,7 @@ EXTERN void save_control (char *);
 #endif
 
 EXTERN int save_params (char *);
+EXTERN int write_preprocess_params (void);
 
 /***  save_vars.c  **************************************************/
 #undef EXTERN

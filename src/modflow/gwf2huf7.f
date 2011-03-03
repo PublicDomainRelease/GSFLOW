@@ -1,7 +1,7 @@
       MODULE GWFHUFMODULE
         INTEGER, SAVE,   POINTER ::IHUFCB,NHUF,NPHUF,IWETIT,IHDWET,
      1                             IOHUFHDS,IOHUFFLWS
-        REAL,    SAVE,   POINTER ::WETFCT,HDRY
+        REAL,    SAVE,   POINTER ::WETFCT
         CHARACTER(LEN=10),SAVE, POINTER, DIMENSION(:)     ::HGUNAM    
         INTEGER, SAVE,   POINTER, DIMENSION(:)     ::LTHUF
         INTEGER, SAVE,   POINTER, DIMENSION(:)     ::LAYWT
@@ -28,7 +28,7 @@
       TYPE GWFHUFTYPE
         INTEGER, POINTER ::IHUFCB,NHUF,NPHUF,IWETIT,IHDWET,
      1                     IOHUFHDS,IOHUFFLWS 
-        REAL, POINTER    ::WETFCT,HDRY
+        REAL, POINTER    ::WETFCT
         CHARACTER(LEN=10), POINTER, DIMENSION(:)     ::HGUNAM    
         INTEGER,   POINTER, DIMENSION(:)     ::LTHUF
         INTEGER,   POINTER, DIMENSION(:)     ::LAYWT
@@ -57,7 +57,7 @@
       END MODULE GWFHUFMODULE
 
 ! Time of File Save by ERB: 7/16/2004 5:20PM
-      SUBROUTINE GWF2HUF7AR(IN,ILVDA,IKDEP,HDRYHUF,IGRID)
+      SUBROUTINE GWF2HUF7AR(IN,ILVDA,IKDEP,IGRID)
 C
 C     ******************************************************************
 C     ALLOCATE ARRAY STORAGE FOR HYDROGEOLOGIC UNIT PACKAGE
@@ -67,8 +67,9 @@ C        SPECIFICATIONS:
 C     ------------------------------------------------------------------
       USE GLOBAL,      ONLY:NCOL,NROW,NLAY,BOTM,ITRSS,LAYHDT,LAYHDS,
      1                      IOUT,ISSFLG,NPER,IBOUND,LBOTM
+      USE GWFBASMODULE,ONLY:HDRY
       USE GWFHUFMODULE,ONLY:IHUFCB,NHUF,NPHUF,IWETIT,IHDWET,IOHUFHDS,
-     1                      IOHUFFLWS,WETFCT,HDRY,HGUNAM,LTHUF,LAYWT,
+     1                      IOHUFFLWS,WETFCT,HGUNAM,LTHUF,LAYWT,
      2                      IHGUFLG,HGUHANI,HGUVANI,HUFHK,HUFVK,HUFSS,
      3                      HUFSY,HUFHANI,HUFKDEP,GS,VKAH,SC1,WETDRY,HK,
      4                      HKCC,HUFTMP,VDHD,HUFTHK,VDHT,A9,SC2HUF 
@@ -87,7 +88,6 @@ C
       CHARACTER*24 ANAME(8)
       CHARACTER*4 PTYP
       DOUBLE PRECISION HN
-      REAL HDRYHUF
 C
       DATA ANAME(1) /'   HYD. COND. ALONG ROWS'/
       DATA ANAME(2) /'  HORIZ. ANI. (COL./ROW)'/
@@ -101,7 +101,7 @@ C
 C     ------------------------------------------------------------------
       ALLOCATE(IHUFCB,NHUF,NPHUF,IWETIT,IHDWET,IOHUFHDS,
      &         IOHUFFLWS)
-      ALLOCATE(WETFCT,HDRY)
+      ALLOCATE(WETFCT)
 C
 C1------IDENTIFY PACKAGE
       WRITE(IOUT,1) IN
@@ -113,7 +113,6 @@ C2------READ FIRST RECORD AND WRITE
       LLOC=1
       CALL URWORD(LINE,LLOC,ISTART,ISTOP,2,IHUFCB,R,IOUT,IN)
       CALL URWORD(LINE,LLOC,ISTART,ISTOP,3,I,HDRY,IOUT,IN)
-      HDRYHUF = HDRY
       CALL URWORD(LINE,LLOC,ISTART,ISTOP,2,NHUF,R,IOUT,IN)
       CALL URWORD(LINE,LLOC,ISTART,ISTOP,2,NPHUF,R,IOUT,IN)
       CALL URWORD(LINE,LLOC,ISTART,ISTOP,2,IOHUFHDS,R,IOUT,IN)
@@ -553,7 +552,7 @@ C-------SUBSTITUTE AND PREPARE DATA FOR HYDROGEOLOGIC-UNIT FLOW PACKAGE
 C
 C-------RETURN
       CALL GWF2HUF7PSV(IGRID)
-!  RGN DEFINE SECONDARY STORAGE COEFFICIENT FOR SFR2 AND UZF
+!  RGN DEFINE SECONDARY STORAGE COEFFICIENT FOR SFR2 AND UZF1
 !  DETERMINE IF THERE IS A TRANSIENT STRESS PERIOD
       ISS = 1
       DO KPER = 1 , NPER
@@ -639,8 +638,9 @@ C     ------------------------------------------------------------------
 C
 c      USE PARAMMODULE, ONLY:RMLT,IZON,NMLTAR,NZONAR
       USE PARAMMODULE
+      USE GWFBASMODULE,ONLY:HDRY
 C
-      USE GWFHUFMODULE,ONLY:NHUF,IWETIT,IHDWET,HDRY,WETFCT,HK,VKAH,SC1,
+      USE GWFHUFMODULE,ONLY:NHUF,IWETIT,IHDWET,WETFCT,HK,VKAH,SC1,
      1                      WETDRY,HUFTHK,HKCC,HUFHK,HUFHANI,HUFVK,
      2                      HUFSS,IHGUFLG,HUFSY,VDHD,HUFTMP,VDHT,
      3                      HUFKDEP,GS,A9,HGUHANI,HGUVANI,HGUNAM  
@@ -731,11 +731,12 @@ C---Populate MODEL arrays
           IF(ABS(THCKU).LT.1E-4) GOTO 130
           BOTU=TOPU-THCKU
 C-----Determine which layer(s) unit applies to
+          IFLG=1
           CALL SGWF2HUF7HSRCH(NCOL,NROW,NLAY,BOTM,NBOTM,I,J,TOPU,BOTU,
      &                        HNEW,IBOUND,KT,KB,IFLG)
 C-----Skip unit if thickness is zero
           IF(IFLG.EQ.1) GOTO 130
-C-----Populate arrays
+C-----Populate HK and VKA arrays
           CALL SGWF2HUF7HK(NCOL,NROW,NLAY,BOTM,NBOTM,I,J,TOPU,BOTU,KT,
      &                     KB,HK,HKCC,HUFHK,HUFHANI,HUFKDEP(NU),NHUF,NU,
      &                     HNEW,GS)
@@ -747,6 +748,12 @@ C
      &       KSTP.EQ.0) THEN
             TOPU = HUFTHK(J,I,NU,1)
             BOTU = TOPU - THCKU
+C-----Determine which layer(s) unit applies to, assuming for the sake of
+C       computing SC1 that every layer is confined
+            IFLG=0
+            CALL SGWF2HUF7HSRCH(NCOL,NROW,NLAY,BOTM,NBOTM,I,J,TOPU,BOTU,
+     &                        HNEW,IBOUND,KT,KB,IFLG)
+C-----Populate SC1 array
             CALL SGWF2HUF7SC1(NCOL,NROW,NLAY,BOTM,NBOTM,I,J,TOPU,
      &                        BOTU,SC1,HUFSS,KT,KB,NHUF,NU)
           ENDIF
@@ -962,15 +969,15 @@ C---Check to see if negative thickness
   300 CONTINUE
 C
   500 FORMAT(//,2X,
-     & 'Vertical K is zero in column ',I3,' of row ',I3,' of unit ',
+     & 'Vertical K is zero in row ',I3,' of column ',I3,' of unit ',
      & I3,' and vertical conductance cannot be calculated',
      & ' (STOP SGWF2HUF7VKA)')
   510 FORMAT(//,2X,
-     & 'Horizontal K is zero in column ',I3,' of row ',I3,' of unit ',
+     & 'Horizontal K is zero in row ',I3,' of column ',I3,' of unit ',
      & I3,' and vertical conductance cannot be calculated',
      & ' (STOP SGWF2HUF7VKA)')
   520 FORMAT(//,2X,
-     & 'MULTKDEP is zero in column ',I3,' of row ',I3,' of unit ',
+     & 'MULTKDEP is zero in row ',I3,' of column ',I3,' of unit ',
      & I3,' and vertical conductance cannot be calculated',
      & ' (STOP SGWF2HUF7VKA)')
 C
@@ -1010,6 +1017,7 @@ C           FIND TOP AND BOTTOM LAYERS THIS UNIT APPLIES TO
             IF(ABS(THCKU).LT.1E-4) GOTO 210
             BOTU=TOPU-THCKU
 C-----------Determine which layer(s) unit applies to
+            IFLG=1
             CALL SGWF2HUF7HSRCH(NCOL,NROW,NLAY,BOTM,NBOTM,I,J,TOPU,
      &                          BOTU,HNEW,IBOUND,KT,KB,IFLG)
             IF(IFLG.EQ.1) GOTO 210
@@ -1137,7 +1145,10 @@ c======================================================================
 C
 C     ******************************************************************
 C     Search for top and bottom layer the unit applies to.
-C     Values for IFLG:
+C     Values for IFLG on input:
+C       IFLG = 0, Do not adjust top of unconfined layer to HNEW
+C       IFLG <> 0, Adjust top of unconfined layer to HNEW
+C     Values for IFLG on output:
 C       IFLG = 0, Unit successfully found
 C       IFLG = 1, Unit not found
 C     ******************************************************************
@@ -1151,6 +1162,7 @@ C     ------------------------------------------------------------------
      &  IBOUND(NCOL,NROW,NLAY)
 C
 C Reset IFLG
+      IHNEW=IFLG
       IFLG=1
 C
 C Loop through layers to determine where unit applies
@@ -1159,8 +1171,9 @@ C First, search for top
       DO 100 KT=1,NLAY
         IF(IBOUND(J,I,KT).EQ.0) GOTO 100
         TOP=BOTM(J,I,LBOTM(KT)-1)
-C---Adjust top of model layer for unconfined layer
-        IF(LTHUF(KT).NE.0.AND.HNEW(J,I,KT).LT.TOP) TOP=HNEW(J,I,KT)
+C---Adjust top of model layer for unconfined layer (if IFLG<>0 on input)
+        IF(IHNEW.NE.0.AND.LTHUF(KT).NE.0.AND.HNEW(J,I,KT).LT.TOP)
+     &    TOP=HNEW(J,I,KT)
 C---If unit top is in this layer, exit loop
         IF(TOPU.LE.TOP.AND.TOPU.GT.BOTM(J,I,LBOTM(KT))) GOTO 110
 C---If unit top is above model top, adjust unit top elevation, exit loop
@@ -1180,8 +1193,8 @@ C Now search for bottom
       DO 200 KKB=KT,NLAY
         IF(IBOUND(J,I,KKB).EQ.0) GOTO 200
         TOP=BOTM(J,I,LBOTM(KKB)-1)
-C---Adjust top of model layer for unconfined layer
-        IF(LTHUF(KKB).NE.0.AND.HNEW(J,I,KKB).LT.TOP)
+C---Adjust top of model layer for unconfined layer (if IFLG<>0 on input)
+        IF(IHNEW.NE.0.AND.LTHUF(KKB).NE.0.AND.HNEW(J,I,KKB).LT.TOP)
      &    TOP=HNEW(J,I,KKB)
 C---If unit bottom is in this layer, set KB=KKB, return
         IF(BOTU.LE.TOP.AND.BOTU.GE.BOTM(J,I,LBOTM(KKB))) THEN
@@ -1263,6 +1276,7 @@ C
 C        SPECIFICATIONS:
 C     ------------------------------------------------------------------
       USE GLOBAL,      ONLY:LBOTM
+      USE GWFBASMODULE,ONLY:HNOFLO
       USE GWFHUFMODULE,ONLY:LAYWT
 C
       DOUBLE PRECISION HNEW
@@ -1273,7 +1287,7 @@ C
 C
 C     ------------------------------------------------------------------
       ZERO=0.
-      HCNV=888.88
+      HCNV=HNOFLO
       IZFLG=0
 C
 C-------CONVERT CELL TO NO FLOW IF CELL THICKNESS IS 0.
@@ -1289,9 +1303,10 @@ C-------CONVERT CELL TO NO FLOW IF CELL THICKNESS IS 0.
             HNEW(J,I,K)=HCNV
             IF(LAYWT(K).NE.0) WETDRY(J,I,LAYWT(K))=ZERO
             WRITE(IOUT,25) K,I,J
-   25       FORMAT(1X,
-     &  'Converting cell to no flow due to 0 thickness (Layer,row,col)',
-     &     I4,',',I4,',',I4)
+   25       FORMAT(1X,'WARNING: Converting cell to no flow due to 0',
+     &      ' thickness (Layer,row,col)',I4,',',I4,',',I4,/,1X,
+     &      'Head at this cell set to HNOFLO. To avoid warning, set',
+     &      ' IBOUND=0 or thickness>0.')
          END IF
       END IF
    30 CONTINUE
@@ -2151,7 +2166,7 @@ C-----------Compute contributions for this unit to flow in layer
 C-------------Layer converts, water table is coming down
                 IF(HN.LT.TOPU.AND.HN.GT.BOTU) THEN
 C---------------New head is in this unit
-                  CHCOF=RMLT0*BNP
+                  CHCOF=CHCOF+RMLT0*BNP
                   CRHS=CRHS+RMLT0*BNP*TOPU
                   IF(IFLG.EQ.1) CRHS=CRHS-RMLT0*BNP*HN
                 ELSEIF(HN.LT.BOTU) THEN
@@ -2174,7 +2189,7 @@ C---------------Water table is coming down
                   IF(HO.LT.TOPU.AND.HO.GT.BOTU .AND.
      &               HN.LT.TOPU.AND.HN.GT.BOTU) THEN
 C-----------------Old and new heads are both in this unit
-                    CHCOF=RMLT0*BNP
+                    CHCOF=CHCOF+RMLT0*BNP
                     CRHS=CRHS+RMLT0*BNP*HO
                     IF(IFLG.EQ.1) CRHS=CRHS-RMLT0*BNP*HN
                   ELSEIF(HO.LT.TOPU.AND.HO.GT.BOTU) THEN
@@ -2182,7 +2197,7 @@ C-----------------Old head is in this unit
                     CRHS=CRHS+RMLT0*BNP*(HO-BOTU)
                   ELSEIF(HN.LT.TOPU.AND.HN.GT.BOTU) THEN
 C-----------------New head is in this unit
-                    CHCOF=RMLT0*BNP
+                    CHCOF=CHCOF+RMLT0*BNP
                     CRHS=CRHS+RMLT0*BNP*TOPU
                     IF(IFLG.EQ.1) CRHS=CRHS-RMLT0*BNP*HN
                   ELSEIF(HO.GT.TOPU.AND.HN.LT.BOTU) THEN
@@ -2194,7 +2209,7 @@ C---------------Water table is going up
                   IF(HO.LT.TOPU.AND.HO.GT.BOTU .AND.
      &               HN.LT.TOPU.AND.HN.GT.BOTU) THEN
 C-----------------Old and new heads are both in this unit
-                    CHCOF=RMLT0*BNP
+                    CHCOF=CHCOF+RMLT0*BNP
                     CRHS=CRHS+RMLT0*BNP*HO
                     IF(IFLG.EQ.1) CRHS=CRHS-RMLT0*BNP*HN
                   ELSEIF(HO.LT.TOPU.AND.HO.GT.BOTU) THEN
@@ -2202,7 +2217,7 @@ C-----------------Old head is in this unit
                     CRHS=CRHS+RMLT0*BNP*(HO-TOPU)
                   ELSEIF(HN.LT.TOPU.AND.HN.GT.BOTU) THEN
 C-----------------New head is in this unit
-                    CHCOF=RMLT0*BNP
+                    CHCOF=CHCOF+RMLT0*BNP
                     CRHS=CRHS+RMLT0*BNP*BOTU
                     IF(IFLG.EQ.1) CRHS=CRHS-RMLT0*BNP*HN
                   ELSEIF(HO.LT.BOTU.AND.HN.GT.TOPU) THEN
@@ -2899,6 +2914,7 @@ C-----LOOP THROUGH ROWS AND COLUMNS
             ENDIF
             BOTU=TOPU-THCKU
             IF(ICNT.LT.3) THEN
+              IFLG=1
               CALL SGWF2HUF7HSRCH(NCOL,NROW,NLAY,BOTM,NBOTM,I,J,TOPU,
      &                            BOTU,HNEW,IBOUND,KT,KB,IFLG)
 C-------------UNIT ABOVE/BELOW MODEL
@@ -3026,35 +3042,14 @@ C     ------------------------------------------------------------------
      &    DELR(NCOL),DELC(NROW),CV(NCOL,NROW,NLAY),
      &    HUFTHK(NCOL,NROW,NHUF,2),INDX(NHUF),GS(NCOL,NROW)
 C     ------------------------------------------------------------------
-
-C
-C     SORT HYDROGEOLOGIC UNITS
-      CALL SGWF2HUF7IND(NCOL,NROW,NHUF,HUFTHK,1,1,INDX)
-C     CHECK SORTING TO CORRECT FOR ZERO-THICKNESS UNITS
-      DO 50 NU=1,NHUF
-        IF(HUFTHK(1,1,INDX(NU),2).EQ.0) THEN
-          DO 60 I=1,NROW
-          DO 60 J=1,NCOL
-            IF(HUFTHK(J,I,INDX(NU),2).GT.0) THEN
-              IF(NU.GT.1 .AND. HUFTHK(J,I,INDX(NU),1).LT.
-     &           HUFTHK(J,I,INDX(NU-1),1)) THEN
-                NNU=INDX(NU)
-                INDX(NU)=INDX(NU-1)
-                INDX(NU-1)=NNU
-              ELSEIF(NU.LT.NHUF .AND. HUFTHK(J,I,INDX(NU),1).GT.
-     &               HUFTHK(J,I,INDX(NU+1),1)) THEN
-                NNU=INDX(NU)
-                INDX(NU)=INDX(NU+1)
-                INDX(NU+1)=NNU
-              ENDIF
-            ENDIF
-   60     CONTINUE
-        ENDIF
-   50 CONTINUE
 C
 C-----LOOP THROUGH ROWS AND COLUMNS
       DO 100 I=1,NROW
       DO 200 J=1,NCOL
+C
+C     SORT HYDROGEOLOGIC UNITS
+        CALL SGWF2HUF7IND(NCOL,NROW,NHUF,HUFTHK,J,I,INDX)
+C
 C Zero out arrays
         DO 210 NU=1,NHUF
           HUFHK(NU)=0.
@@ -3074,8 +3069,6 @@ c     a parameter
           IF(HGUVANI(NU).GT.0..AND.HUFVK(NU).EQ.0.)
      &          HUFVK(NU)=HGUVANI(NU)
   220   CONTINUE
-
-
         DRDC=DELR(J)*DELC(I)
         IFRST=0
         DO 300 NNU=NHUF,1,-1
@@ -3226,6 +3219,7 @@ C4------CONSTANT-HEAD CELL.
             GOTO 300
           ENDIF
           BOTU=TOPU-THCKU
+          IFLG=1
           CALL SGWF2HUF7HSRCH(NCOL,NROW,NLAY,BOTM,NBOTM,I,J,TOPU,BOTU,
      &                        HNEW,IBOUND,KT,KB,IFLG)
 C-------UNIT ABOVE/BELOW MODEL
@@ -3859,6 +3853,7 @@ c     a parameter
           IF(ABS(THCKU).LT.1E-4) GOTO 130
           BOTU=TOPU-THCKU
 C-----Determine which layer(s) unit applies to
+          IFLG=1
           CALL SGWF2HUF7HSRCH(NCOL,NROW,NLAY,BOTM,NBOTM,I,J,TOPU,BOTU,
      &                        HNEW,IBOUND,KT,KB,IFLG)
 C-----Skip unit if thickness is zero
@@ -5062,7 +5057,6 @@ C     ------------------------------------------------------------------
       DEALLOCATE(GWFHUFDAT(IGRID)%IOHUFHDS)
       DEALLOCATE(GWFHUFDAT(IGRID)%IOHUFFLWS)
       DEALLOCATE(GWFHUFDAT(IGRID)%WETFCT)
-      DEALLOCATE(GWFHUFDAT(IGRID)%HDRY)
       DEALLOCATE(GWFHUFDAT(IGRID)%HGUNAM)
       DEALLOCATE(GWFHUFDAT(IGRID)%LTHUF)
       DEALLOCATE(GWFHUFDAT(IGRID)%LAYWT)
@@ -5108,7 +5102,6 @@ C     ------------------------------------------------------------------
       IOHUFHDS=>GWFHUFDAT(IGRID)%IOHUFHDS
       IOHUFFLWS=>GWFHUFDAT(IGRID)%IOHUFFLWS
       WETFCT=>GWFHUFDAT(IGRID)%WETFCT
-      HDRY=>GWFHUFDAT(IGRID)%HDRY
       HGUNAM=>GWFHUFDAT(IGRID)%HGUNAM
       LTHUF=>GWFHUFDAT(IGRID)%LTHUF
       LAYWT=>GWFHUFDAT(IGRID)%LAYWT
@@ -5154,7 +5147,6 @@ C     ------------------------------------------------------------------
       GWFHUFDAT(IGRID)%IOHUFHDS=>IOHUFHDS
       GWFHUFDAT(IGRID)%IOHUFFLWS=>IOHUFFLWS
       GWFHUFDAT(IGRID)%WETFCT=>WETFCT
-      GWFHUFDAT(IGRID)%HDRY=>HDRY
       GWFHUFDAT(IGRID)%HGUNAM=>HGUNAM
       GWFHUFDAT(IGRID)%LTHUF=>LTHUF
       GWFHUFDAT(IGRID)%LAYWT=>LAYWT

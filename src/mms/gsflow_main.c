@@ -10,7 +10,7 @@
  * REF      :
  * REVIEW   :
  * PR NRS   :
- * $Id: mmf.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mmf.c 5803 2010-12-08 22:38:20Z markstro $
  *
  -*/
 
@@ -58,8 +58,18 @@ int main (int argc, char *argv[]) {
    struct stat stbuf;
    char	buf[512];
    char	*err;
+   static int      num_param_files = 0;
+   char   **fname;
+   char pathname[MAXDATALNLEN];
 
-   declmodule("$Id: mmf.c 3058 2007-01-25 22:25:59Z rsregan $");
+   
+	/*
+	**  List of modules that are used by the model. This is
+	**  determined by calls to declmodule
+	*/
+	module_db = ALLOC_list ("Module Data Base", 0, 100);
+
+   declmodule("$Id: mmf.c 5803 2010-12-08 22:38:20Z markstro $");
 
   /*
   **	parse the command-line arguments
@@ -82,6 +92,9 @@ int main (int argc, char *argv[]) {
        (void)fprintf (stderr,"%s\n", err);
         exit (1);           
    }
+
+	fname =   control_svar ("param_file");
+    num_param_files = control_var_size ("param_file");
 
    for (i = 0; i < set_count; i++) {
       cp = control_addr (*(set_name + i));
@@ -118,6 +131,9 @@ int main (int argc, char *argv[]) {
       }
    }
 
+	fname =   control_svar ("param_file");
+    num_param_files = control_var_size ("param_file");
+
 /*
    append_env (MAltEnvFile, MAltContFile);
 */
@@ -127,6 +143,7 @@ int main (int argc, char *argv[]) {
       (void)fprintf(stderr, "Calling function 'call_setdims'\n");
     }
     
+
     /*
     **	read dimension info from parameter file
     */
@@ -143,6 +160,10 @@ int main (int argc, char *argv[]) {
       (void)fprintf (stderr,"MMS - Warning: %s\n", err);
     }
 
+
+	fname =   control_svar ("param_file");
+    num_param_files = control_var_size ("param_file");
+
     if (call_modules("declare")) {
       (void)fprintf(stderr, "ERROR - mmf\n");
       (void)fprintf(stderr, "Calling function 'call_modules'\n");
@@ -151,18 +172,23 @@ int main (int argc, char *argv[]) {
     /*
     **	read in parameter values from parameter file
     */
-    if (stat (*control_svar("param_file"), &stbuf) != -1) {
-       if (stbuf.st_size) {
-      } else {
-	     (void)fprintf (stderr,buf, "Parameter file: %s is empty.",
-		               *control_svar("param_file"));
-      }
-    }
-    
-    err = read_params (*control_svar("param_file"));
-    if (err) {
-      (void)fprintf (stderr,"MMS - Warning: %s\n", err);
-    }
+	fname =   control_svar ("param_file");
+    num_param_files = control_var_size ("param_file");
+
+	for (i = 0; i < num_param_files; i++) {
+		if (stat (fname[i], &stbuf) != -1) {
+		   if (stbuf.st_size) {
+		  } else {
+			 (void)fprintf (stderr,buf, "Parameter file: %s is empty.",
+						   fname[i]);
+		  }
+		}
+	    
+		err = read_params (fname[i], i);
+		if (err) {
+		  (void)fprintf (stderr,"MMS - Warning: %s\n", err);
+		}
+	}
     
     /*
     **  get data info string into the global
@@ -179,6 +205,8 @@ int main (int argc, char *argv[]) {
       print_params();
       print_vars();
       print_model_info();
+	  (void)sprintf (pathname, "%s.param", MAltContFile);
+	  save_params (pathname);
 /*
     } else if (esp_mode) {
       ESP_batch_run ();
@@ -186,10 +214,13 @@ int main (int argc, char *argv[]) {
       ROSENBROCK_batch_run ();
 */
     } else {
+
+//      exit(BATCH_run ());
       BATCH_run ();
+
     }
 
-    exit (1);
+    exit (0);
 }
 
 

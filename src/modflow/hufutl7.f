@@ -111,18 +111,9 @@ C
   121 FORMAT(1X/,1X,'PARAMETER NAME:',A,'   TYPE:',A,' UNITS:',I4)
       WRITE(IOUT,122) PV
   122 FORMAT(1X,'The parameter value from the package file is:',1PG13.5)
-      IF(B(NP).NE.PV) THEN
-         IF(ITERP.EQ.1) THEN
-            WRITE(IOUT,123) B(NP)
+      IF(B(NP).NE.PV) WRITE(IOUT,123) B(NP)
   123  FORMAT(1X,'This parameter value has been replaced by the',
-     &  ' value from the',/1X,'Sensitivity Process file:',1PG13.5)
-         ELSE
-            WRITE(IOUT,124)B(NP)
-  124  FORMAT(1X,'This parameter value has been replaced by the',
-     &  ' value estimated by',/1X,'the Parameter Estimation Process:',
-     &   1PG13.5)
-         END IF
-      END IF
+     &  ' value from the',/1X,'Parameter Value file:',1PG13.5)
 C
 C  Read clusters
       DO 200 I=IPLOC(1,NP),IPLOC(2,NP)

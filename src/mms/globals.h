@@ -1,9 +1,9 @@
 /*
- *  $Id: globals.h 3058 2007-01-25 22:25:59Z rsregan $
+ *  $Id: globals.h 5648 2010-05-28 18:48:15Z markstro $
  */
 /*
 **
-**		$Author: rsregan $
+**		$Author: markstro $
 **
 **		$Date: 1996/02/19 20:05:09 $
 **
@@ -12,7 +12,7 @@
 **		$Log: globals.h,v $
 **		Revision 1.15  1996/02/19 20:05:09  markstro
 **		After first lint session
-**		
+**
 **		Revision 1.14  1996/01/23 20:09:23  markstro
 **		Fixed menu_bar
 **
@@ -57,24 +57,24 @@
  *
  * Revision 1.1  91/07/24  08:20:04  schmitz
  * Initial revision
- * 
+ *
  * Revision 2.1  91/07/07  13:46:30  farah
  * *** empty log message ***
- * 
+ *
  * Revision 2.0  91/04/16  13:49:37  brannon
  * new revision branch started by Jim Brannon
- * 
+ *
  * Revision 1.2  91/04/12  14:01:11  brannon
  * left locked by steve
- * 
+ *
  * Revision 1.1  90/07/31  12:25:05  markb
  * Initial revision
- * 
+ *
 **Revision 1.1  90/07/31  12:11:30  markb
 **Initial revision
 **
 **
-**		$Revision: 3058 $
+**		$Revision: 5648 $
 **
 **		$Source: /z/runoff/work4/mms_cvs/mms/src/include/globals.h,v $
 **
@@ -100,11 +100,14 @@ int esp_mode = FALSE;               /* flag for running esp in batch mode  */
 int rosenbrock_mode = FALSE;        /* flag for running rosenbrock opt in
                                             batch mode  */
 int run_period_of_record = FALSE;   /* flag for running entire period of
-                                            record in batch mode  */ 
+                                            record in batch mode  */
 int print_mode = FALSE;
 int runtime_graph_on = FALSE;
+int preprocess_on = FALSE;         /* flag for running in preprocess mode */
 LIST *cont_db;
 LIST *dim_db;
+LIST *module_db;
+MODULE_DATA *current_module;
 PUBVAR **Mvarbase = NULL;           /* pointer to public variables data base */
 long Mnvars = 0;                    /* no of public variables in data base */
 PARAM **Mparambase = NULL;          /* pointer to parameter data base */
@@ -128,7 +131,7 @@ FILE *Moutfile = NULL;              /* pointer to model output file */
 int MuserFiles = 0;                 /* to allow or disallow user-written files */
 int  M_stop_run = 0;                /* Run switch 0 -or 1 */
 STAT_LIST_TYPE *Mfirst_stat_list = NULL;     /* pointer to first entry
-						in stats link list */ 
+						in stats link list */
 char scen[80];
 char scen_info[80];
 char *Mtypes[] = {"", "long", "float", "double", "string", "", "","", "", ""};
@@ -157,8 +160,11 @@ extern int rosenbrock_mode;
 extern int run_period_of_record;
 extern int print_mode;
 extern int runtime_graph_on;
+extern int preprocess_on;
 extern LIST *cont_db;
 extern LIST *dim_db;
+extern LIST *module_db;
+extern MODULE_DATA *current_module;
 extern PUBVAR **Mvarbase;
 extern long Mnvars;
 extern PARAM **Mparambase;

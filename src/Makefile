@@ -4,7 +4,7 @@
 # Top-level makefile for the GSFLOW
 #
 #-------------------------------------------------------------------
-# $Id: Makefile 1996 2006-03-06 19:39:43Z rsregan $
+# $Id: Makefile 1880 2010-08-25 16:04:14Z rsregan $
 #-------------------------------------------------------------------
 
 include ./makelist
@@ -19,7 +19,7 @@ standard:
 	cd mms; $(MAKE);
 	cd modflow; $(MAKE);
 	cd prms; $(MAKE);
-	cd gsflow; $(MAKE);
+	cd gsflow; $(MAKE)
 
 clean:
 	cd mms; $(MAKE) clean;

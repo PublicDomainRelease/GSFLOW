@@ -1,24 +1,15 @@
 #
-# Makefile for mmf
+# Makefile for mms
 # markstro
 # Tue Jul 26 08:43:10 MST 2005
 #
-# $Id: Makefile 2939 2006-11-16 21:28:00Z markstro $
+# $Id: Makefile 2155 2010-11-19 19:22:06Z rsregan $
 #
 
+include ../makelist
 MLIBDIR  = ../../lib
 
-CC       = gcc
-RM       = rm -f
-AR       = ar ruv
-RANLIB   = ranlib
-
-#CFLAGS   = -g -Wall -Werror-implicit-function-declaration
-#CFLAGS   = -O -Wall -Werror-implicit-function-declaration
-CFLAGS   = -O3 -Wall -Werror-implicit-function-declaration
-
 SRCS = 	gsflow_main.c mms_util.c
-
 
 MMSOBJS = ${SRCS:.c=.o}
 
@@ -28,7 +19,7 @@ MMSOBJS = ${SRCS:.c=.o}
 #
 # Private makefile defines
 #
-MMSLIB = $(MLIBDIR)/libmmf.a
+MMSLIB = $(MLIBDIR)/libmms.a
 
 #
 # Standard Targets for Users

@@ -1,70 +1,43 @@
 !***********************************************************************
-! Sums values for daily, monthly, yearly and total flow
+! Computes daily, monthly, yearly, and total flow summaries of volumes
+! and flows for each HRU
 !***********************************************************************
       MODULE PRMS_HRUSUM
       IMPLICIT NONE
 !   Local Variables
-      INTEGER :: Modays(12), Nowtime(6)
-      REAL :: Yrdays
+      INTEGER, SAVE :: Gwflg, Hrutot_flg
 !   Declared Variables
-      REAL, ALLOCATABLE :: Hru_ppt_mo(:), Hru_net_ppt_mo(:)
-      REAL, ALLOCATABLE :: Hru_potet_mo(:), Hru_actet_mo(:)
-      REAL, ALLOCATABLE :: Hru_snowmelt_mo(:), Hru_sroff_mo(:)
-!   Declared Variables from other modules - solrad
-      REAL, ALLOCATABLE :: Swr(:)
-!   Declared Variables from other modules - temp
-      REAL, ALLOCATABLE :: Tmx(:), Tmn(:)
-!   Declared Variables from other modules - precip
-      REAL, ALLOCATABLE :: Hru_ppt(:)
-!   Declared Variables from other modules - intcp
-      REAL, ALLOCATABLE :: Nppt(:), Hru_intcpstor(:), Hru_intcpevap(:)
-!   Declared Variables from other modules - potet
-      INTEGER, ALLOCATABLE :: Transp_on(:)
-      REAL, ALLOCATABLE :: Pet(:)
-!   Declared Variables from other modules - smbal or soilzone
-      REAL, ALLOCATABLE :: Aet(:), Smav(:), Soil_to_gw(:)
-!   Declared Variables from other modules - srunoff
-      REAL, ALLOCATABLE :: Infl(:), Sroff(:), Hru_impervstor(:)
-!   Declared Variables from other modules - snow
-      REAL, ALLOCATABLE :: Pweqv(:), Pk_den(:), Pk_temp(:)
-      REAL, ALLOCATABLE :: Smlt(:), Albedo(:), Tcal(:)
-!   Declared Variables from other modules - ssflow or soilzone
-      REAL, ALLOCATABLE :: Soil_to_ssr(:)
-!   Declared Variables from other modules - basin
-      INTEGER :: Active_hrus
-      INTEGER, ALLOCATABLE :: Hru_route_order(:)
-      REAL, ALLOCATABLE :: Hru_percent_perv(:)
+      REAL, SAVE, ALLOCATABLE :: Hru_ppt_mo(:), Hru_net_ppt_mo(:)
+      REAL, SAVE, ALLOCATABLE :: Hru_potet_mo(:), Hru_actet_mo(:)
+      REAL, SAVE, ALLOCATABLE :: Hru_snowmelt_mo(:), Hru_sroff_mo(:)
+      REAL, SAVE, ALLOCATABLE :: Hru_timestep_outflow_tot(:)
 !   Declared Private Variables
-      INTEGER :: Nhru
-      REAL, ALLOCATABLE :: Hru_ppt_yr(:), Hru_net_ppt_yr(:)
-      REAL, ALLOCATABLE :: Hru_potet_yr(:), Hru_actet_yr(:)
-      REAL, ALLOCATABLE :: Hru_snowmelt_yr(:), Hru_sroff_yr(:)
-      REAL, ALLOCATABLE :: Soil_to_gw_mo(:), Soil_to_ssr_mo(:)
-      REAL, ALLOCATABLE :: Soil_to_gw_yr(:), Soil_to_ssr_yr(:)
-      REAL, ALLOCATABLE :: Stor_last(:)
+      REAL, SAVE, ALLOCATABLE :: Hru_ppt_yr(:), Hru_net_ppt_yr(:)
+      REAL, SAVE, ALLOCATABLE :: Hru_potet_yr(:), Hru_actet_yr(:)
+      REAL, SAVE, ALLOCATABLE :: Hru_snowmelt_yr(:), Hru_sroff_yr(:)
+      REAL, SAVE, ALLOCATABLE :: Soil_to_gw_mo(:), Soil_to_ssr_mo(:)
+      REAL, SAVE, ALLOCATABLE :: Soil_to_gw_yr(:), Soil_to_ssr_yr(:)
+      REAL, SAVE, ALLOCATABLE :: Stor_last(:)
 !   Declared Parameters
-      INTEGER :: Pmo, Moyrsum
-      INTEGER, ALLOCATABLE :: Hru_type(:)
+      INTEGER, SAVE :: Pmo, Moyrsum
       END MODULE PRMS_HRUSUM
 
 !***********************************************************************
 !     Main hru_sum routine
 !***********************************************************************
-      INTEGER FUNCTION hru_sum_prms(Arg)
-      USE PRMS_HRUSUM
+      INTEGER FUNCTION hru_sum_prms()
+      USE PRMS_MODULE, ONLY: Process_flag
       IMPLICIT NONE
-! Arguments
-      CHARACTER(LEN=*), INTENT(IN) :: Arg
 ! Functions
       INTEGER, EXTERNAL :: hsumbdecl, hsumbinit, hsumbrun
 !***********************************************************************
       hru_sum_prms = 0
 
-      IF ( Arg.EQ.'run' ) THEN
+      IF ( Process_flag==0 ) THEN
         hru_sum_prms = hsumbrun()
-      ELSEIF ( Arg.EQ.'declare' ) THEN
+      ELSEIF ( Process_flag==1 ) THEN
         hru_sum_prms = hsumbdecl()
-      ELSEIF ( Arg.EQ.'initialize' ) THEN
+      ELSEIF ( Process_flag==2 ) THEN
         hru_sum_prms = hsumbinit()
       ENDIF
 
@@ -73,21 +46,19 @@
 !***********************************************************************
 !     hsumbdecl - set up basin summary parameters
 !   Declared Parameters
-!     pmo, moyrsum, hru_type
+!     pmo, moyrsum, hru_area
 !***********************************************************************
       INTEGER FUNCTION hsumbdecl()
       USE PRMS_HRUSUM
+      USE PRMS_BASIN, ONLY: Nhru
       IMPLICIT NONE
-      INCLUDE 'fmodules.inc'
+      INTEGER, EXTERNAL :: declmodule, declparam, declpri, declvar
 !***********************************************************************
       hsumbdecl = 1
 
       IF ( declmodule(
-     +'$Id: hru_sum_prms.f 3911 2008-02-28 19:44:50Z rsregan $'
+     +'$Id: hru_sum_prms.f 2242 2010-12-10 00:41:16Z rsregan $'
      +).NE.0 ) RETURN
-
-      Nhru = getdim('nhru')
-      IF ( Nhru.EQ.-1 ) RETURN
 
       ALLOCATE (Hru_ppt_yr(Nhru), Hru_net_ppt_yr(Nhru))
       IF ( declpri('hsumb_hru_ppt_yr', Nhru, 'real', Hru_ppt_yr)
@@ -130,12 +101,6 @@
      +     'Switch for HRU monthly and yearly summary (0=off, 1=on)',
      +     'none').NE.0 ) RETURN
 
-      ALLOCATE (Hru_type(Nhru))
-      IF ( declparam('hru_sum', 'hru_type', 'nhru', 'integer',
-     +     '1', '0', '2',
-     +     'HRU type', 'Type of each HRU (0=inactive; 1=land; 2=lake)',
-     +     'none').NE.0 ) RETURN
-
 ! Declare Variables
       ALLOCATE (Hru_ppt_mo(Nhru))
       IF ( declvar('hru_sum', 'hru_ppt_mo', 'nhru', Nhru, 'real',
@@ -173,15 +138,12 @@
      +     'inches',
      +     Hru_sroff_mo).NE.0 ) RETURN
 
-! Allocate arrays for variables from other modules
-      ALLOCATE (Swr(Nhru), Tmx(Nhru), Tmn(Nhru), Hru_ppt(Nhru))
-      ALLOCATE (Nppt(Nhru), Hru_intcpstor(Nhru), Hru_intcpevap(Nhru))
-      ALLOCATE (Transp_on(Nhru), Pet(Nhru), Hru_impervstor(Nhru))
-      ALLOCATE (Aet(Nhru), Smav(Nhru), Soil_to_gw(Nhru))
-      ALLOCATE (Infl(Nhru), Sroff(Nhru), Pweqv(Nhru))
-      ALLOCATE (Hru_route_order(Nhru), Hru_percent_perv(Nhru))
-      ALLOCATE (Pk_den(Nhru), Pk_temp(Nhru), Smlt(Nhru))
-      ALLOCATE (Albedo(Nhru), Tcal(Nhru), Soil_to_ssr(Nhru))
+      ALLOCATE (Hru_timestep_outflow_tot(Nhru))
+      IF ( declvar('hru_sum', 'hru_timestep_outflow_tot', 'nhru', Nhru,
+     +     'real',
+     +     'Total outflow (sroff, interflow, gwflow) from each HRU',
+     +     'cfs',
+     +     Hru_timestep_outflow_tot).NE.0 ) RETURN
 
       hsumbdecl = 0
       END FUNCTION hsumbdecl
@@ -192,8 +154,11 @@
 !***********************************************************************
       INTEGER FUNCTION hsumbinit()
       USE PRMS_HRUSUM
+      USE PRMS_MODULE, ONLY: Ncascdgw
+      USE PRMS_BASIN, ONLY: Timestep, Nhru, Nssr, Ngw
       IMPLICIT NONE
-      INCLUDE 'fmodules.inc'
+      INTEGER, EXTERNAL :: getparam
+      INTEGER :: i
 !***********************************************************************
       hsumbinit = 1
 
@@ -203,57 +168,33 @@
       IF ( getparam('hru_sum', 'moyrsum', 1, 'integer', Moyrsum)
      +     .NE.0 ) RETURN
 
-      IF ( getparam('hru_sum', 'hru_type', Nhru, 'integer', Hru_type)
-     +     .NE.0 ) RETURN
-
-      IF ( getvar('basin', 'active_hrus', 1, 'integer', Active_hrus)
-     +     .NE.0 ) RETURN
-
-      IF ( getvar('basin', 'hru_route_order', Nhru, 'integer',
-     +     Hru_route_order).NE.0 ) RETURN
-
-      IF ( getvar('basin', 'hru_percent_perv', Nhru, 'real',
-     +     Hru_percent_perv).NE.0 ) RETURN
-
-      IF ( getstep().EQ.0 ) THEN
-        Hru_ppt_mo = 0.0
-        Hru_net_ppt_mo = 0.0
-        Hru_potet_mo = 0.0
-        Hru_actet_mo = 0.0
-        Hru_snowmelt_mo = 0.0
-        Hru_sroff_mo = 0.0
-        Hru_ppt_yr = 0.0
-        Hru_net_ppt_yr = 0.0
-        Hru_potet_yr = 0.0
-        Hru_actet_yr = 0.0
-        Hru_snowmelt_yr = 0.0
-        Hru_sroff_yr = 0.0
-        Soil_to_gw_mo = 0.0
-        Soil_to_gw_yr = 0.0
-        Soil_to_ssr_mo = 0.0
-        Soil_to_ssr_yr = 0.0
-        Stor_last = 0.0
+      IF ( Timestep==0 ) THEN
+        DO i = 1, Nhru
+          Hru_ppt_mo(i) = 0.0
+          Hru_net_ppt_mo(i) = 0.0
+          Hru_potet_mo(i) = 0.0
+          Hru_actet_mo(i) = 0.0
+          Hru_snowmelt_mo(i) = 0.0
+          Hru_sroff_mo(i) = 0.0
+          Hru_ppt_yr(i) = 0.0
+          Hru_net_ppt_yr(i) = 0.0
+          Hru_potet_yr(i) = 0.0
+          Hru_actet_yr(i) = 0.0
+          Hru_snowmelt_yr(i) = 0.0
+          Hru_sroff_yr(i) = 0.0
+          Soil_to_gw_mo(i) = 0.0
+          Soil_to_gw_yr(i) = 0.0
+          Soil_to_ssr_mo(i) = 0.0
+          Soil_to_ssr_yr(i) = 0.0
+          Stor_last(i) = 0.0
+          Hru_timestep_outflow_tot(i) = 0.0
+        ENDDO
       ENDIF
 
-      Modays(1) = 31
-      Modays(3) = 31
-      Modays(4) = 30
-      Modays(5) = 31
-      Modays(6) = 30
-      Modays(7) = 31
-      Modays(8) = 31
-      Modays(9) = 30
-      Modays(10) = 31
-      Modays(11) = 30
-      Modays(12) = 31
-      CALL dattim('now', Nowtime)
-      IF ( isleap(Nowtime(1)).EQ.1 ) THEN
-        Yrdays = 366
-        Modays(2) = 29
-      ELSE
-        Yrdays = 365
-        Modays(2) = 28
-      ENDIF
+      Hrutot_flg = 0
+      IF ( Nhru==Nssr .AND. Nhru==Ngw ) Hrutot_flg = 1
+      Gwflg = 0
+      IF ( Ncascdgw>0 .AND. Nhru==Ngw ) Gwflg = 1
 
       hsumbinit = 0
       END FUNCTION hsumbinit
@@ -263,160 +204,116 @@
 !***********************************************************************
       INTEGER FUNCTION hsumbrun()
       USE PRMS_HRUSUM
+      USE PRMS_MODULE, ONLY: Ncascade
+      USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type,
+     +    Hru_percent_perv, Hru_area, Nhru, Nssr, Hru_gwres, Hru_ssres
+      USE PRMS_CLIMATEVARS, ONLY: Tmaxf, Tminf, Hru_ppt, Transp_on,
+     +    Potet, Swrad
+      USE PRMS_FLOWVARS, ONLY: Soil_to_gw, Soil_to_ssr, Hru_impervstor,
+     +    Hru_actet, Infil, Sroff, Ssres_flow, Hru_hortonian_cascadeflow
+      USE PRMS_OBS, ONLY: Jday, Nowyear, Nowmonth, Nowday, Cfs_conv,
+     +    Yrdays, Modays
+      USE PRMS_INTCP, ONLY: Hru_intcpstor, Net_ppt, Hru_intcpevap
+      USE PRMS_SNOW, ONLY: Tcal, Pk_den, Pk_temp, Pkwater_equiv,
+     +    Snowmelt, Albedo
+      USE PRMS_SOILZONE, ONLY: Hru_sz_cascadeflow, Soil_moist
+      USE PRMS_GWFLOW_CASC, ONLY: Gwres_flow, Hru_gw_cascadeflow
       IMPLICIT NONE
       INTRINSIC FLOAT
-      INCLUDE 'fmodules.inc'
+      INTEGER, EXTERNAL :: julian
 ! Local Variables
       CHARACTER(LEN=150) :: buffer
-      INTEGER :: mo, day, wyday, jday, i, j
-!     INTEGER :: endtime(6)
+      INTEGER :: wyday, i, j, k, ii, jj
       REAL :: hruprt(24), ri, rmo, rdy, ryr, stor, wbal
 !***********************************************************************
-      IF ( Pmo.EQ.0 .AND. Moyrsum.EQ.0 ) THEN
-        hsumbrun = 0
-        RETURN
-      ELSE
-        hsumbrun = 1
+      hsumbrun = 1
+
+      IF ( Hrutot_flg==1 ) THEN
+        IF ( Pmo.EQ.0 .AND. Moyrsum.EQ.0 ) THEN
+          ! Cfs_conv converts acre-inches per timestep to cfs
+          DO jj = 1, Active_hrus
+            i = Hru_route_order(jj)
+            j = Hru_gwres(i)
+            k = Hru_ssres(i)
+            Hru_timestep_outflow_tot(i) = Hru_area(i)*Cfs_conv*
+     +         (Sroff(i)+Gwres_flow(j)+Ssres_flow(k))
+            IF ( Ncascade>0 ) Hru_timestep_outflow_tot(i) =
+     +           Hru_timestep_outflow_tot(i) + Hru_area(i)*Cfs_conv*
+     +           (Hru_hortonian_cascadeflow(i)+Hru_sz_cascadeflow(i))
+            IF ( Gwflg==1 ) Hru_timestep_outflow_tot(i) =
+     +           Hru_timestep_outflow_tot(i) + Hru_area(i)*Cfs_conv*
+     +           Hru_gw_cascadeflow(j)
+          ENDDO
+          hsumbrun = 0
+          RETURN
+        ENDIF
       ENDIF
 
-      CALL dattim('now', Nowtime)
-!     CALL dattim('end', endtime)
       wyday = julian('now', 'water')
-      jday = julian('now', 'calendar')
-      mo = Nowtime(2)
-      day = Nowtime(3)
 
       IF ( Moyrsum.EQ.1 ) THEN
-        IF ( jday.EQ.1 ) THEN
-          IF ( isleap(Nowtime(1)).EQ.1 ) THEN
-            Yrdays = 366
-            Modays(2) = 29
-          ELSE
-            Yrdays = 365
-            Modays(2) = 28
-          ENDIF
-        ENDIF
-        IF ( day.EQ.1 ) THEN
-          Hru_ppt_mo = 0.0
-          Hru_net_ppt_mo = 0.0
-          Hru_potet_mo = 0.0
-          Hru_actet_mo = 0.0
-          Hru_snowmelt_mo = 0.0
-          Hru_sroff_mo = 0.0
-          Soil_to_gw_mo = 0.0
-          Soil_to_ssr_mo = 0.0
+        IF ( Nowday.EQ.1 ) THEN
+          DO j = 1, Active_hrus
+            i = Hru_route_order(j)
+            Hru_ppt_mo(i) = 0.0
+            Hru_net_ppt_mo(i) = 0.0
+            Hru_potet_mo(i) = 0.0
+            Hru_actet_mo(i) = 0.0
+            Hru_snowmelt_mo(i) = 0.0
+            Hru_sroff_mo(i) = 0.0
+            Soil_to_gw_mo(i) = 0.0
+            Soil_to_ssr_mo(i) = 0.0
+          ENDDO
         ENDIF
         IF ( wyday.EQ.1 ) THEN
-          Hru_ppt_yr = 0.0
-          Hru_net_ppt_yr = 0.0
-          Hru_potet_yr = 0.0
-          Hru_actet_yr = 0.0
-          Hru_snowmelt_yr = 0.0
-          Hru_sroff_yr = 0.0
-          Soil_to_gw_yr = 0.0
-          Soil_to_ssr_yr = 0.0
+          DO j = 1, Active_hrus
+            i = Hru_route_order(j)
+            Hru_ppt_yr(i) = 0.0
+            Hru_net_ppt_yr(i) = 0.0
+            Hru_potet_yr(i) = 0.0
+            Hru_actet_yr(i) = 0.0
+            Hru_snowmelt_yr(i) = 0.0
+            Hru_sroff_yr(i) = 0.0
+            Soil_to_gw_yr(i) = 0.0
+            Soil_to_ssr_yr(i) = 0.0
+          ENDDO
         ENDIF
       ENDIF
 
-      IF ( getvar('potet', 'transp_on', Nhru, 'integer', Transp_on)
-     +     .NE.0 ) RETURN
-
-      IF ( getvar('solrad', 'swrad', Nhru, 'real', Swr)
-     +     .NE.0 ) RETURN
-
-      IF ( getvar('temp', 'tmaxf', Nhru, 'real', Tmx)
-     +     .NE.0 ) RETURN
-
-      IF ( getvar('temp', 'tminf', Nhru, 'real', Tmn)
-     +     .NE.0 ) RETURN
-
-      IF ( getvar('precip', 'hru_ppt', Nhru, 'real', Hru_ppt)
-     +     .NE.0 ) RETURN
-
-      IF ( getvar('intcp', 'net_ppt', Nhru, 'real', Nppt)
-     +     .NE.0 ) RETURN
-
-      IF ( getvar('intcp', 'hru_intcpstor', Nhru, 'real', Hru_intcpstor)
-     +     .NE.0 ) RETURN
-
-      IF ( getvar('intcp', 'hru_intcpevap', Nhru, 'real', Hru_intcpevap)
-     +     .NE.0 ) RETURN
-
-      IF ( getvar('potet', 'potet', Nhru, 'real',
-     +     Pet).NE.0 ) RETURN
-
-      IF ( getvar('smbal', 'hru_actet', Nhru, 'real',
-     +     Aet).NE.0 ) RETURN
-
-      IF ( getvar('smbal', 'soil_moist', Nhru, 'real',
-     +     Smav).NE.0 ) RETURN
-
-      IF ( getvar('srunoff', 'infil', Nhru, 'real',
-     +     Infl).NE.0 ) RETURN
-
-      IF ( getvar('srunoff', 'sroff', Nhru, 'real',
-     +     Sroff).NE.0 ) RETURN
-
-      IF ( getvar('snow', 'pkwater_equiv', Nhru, 'real', Pweqv)
-     +     .NE.0 ) RETURN
-
-      IF ( getvar('snow', 'snowmelt', Nhru, 'real', Smlt)
-     +     .NE.0 ) RETURN
-
-      IF ( getvar('snow', 'albedo', Nhru, 'real', Albedo)
-     +     .NE.0 ) RETURN
-
-      IF ( getvar('snow', 'pk_temp', Nhru, 'real', Pk_temp)
-     +     .NE.0 ) RETURN
-       
-      IF ( getvar('snow', 'pk_den', Nhru, 'real', Pk_den)
-     +     .NE.0 ) RETURN
-
-      IF ( getvar('snow', 'tcal', Nhru, 'real', Tcal)
-     +     .NE.0 ) RETURN
-
-      IF ( getvar('smbal', 'soil_to_gw', Nhru, 'real',
-     +     Soil_to_gw).NE.0 ) RETURN
-
-      IF ( getvar('smbal', 'soil_to_ssr', Nhru, 'real',
-     +     Soil_to_ssr).NE.0 ) RETURN
-
-      IF ( getvar('srunoff', 'hru_impervstor', Nhru, 'real',
-     +     Hru_impervstor).NE.0 ) RETURN
-
-      IF ( mo.EQ.Pmo ) THEN
-        rdy = FLOAT(day)
+      IF ( Nowmonth.EQ.Pmo ) THEN
+        rdy = FLOAT(Nowday)
         CALL opstr('   hru   day   swr   tmx   tmn  oppt  nppt   int '//
      +             ' inls   pet   aet  smav pweqv   den  pact   alb  '//
      +            'tcal  smlt   infl    sro   s2gw   s2ss  imst   wbal')
-        DO i = 1, Nhru
+        DO ii = 1, Active_hrus
+          i = Hru_route_order(ii)
           IF ( Hru_type(i).EQ.0 ) CYCLE
           hruprt(1) = i
           hruprt(2) = rdy
-          hruprt(3) = Swr(i)
-          hruprt(4) = Tmx(i)
-          hruprt(5) = Tmn(i)
+          hruprt(3) = Swrad(i)
+          hruprt(4) = Tmaxf(i)
+          hruprt(5) = Tminf(i)
           hruprt(6) = Hru_ppt(i)
-          hruprt(7) = Nppt(i)
+          hruprt(7) = Net_ppt(i)
           hruprt(8) = Hru_intcpstor(i)
           hruprt(9) = Hru_intcpevap(i)
-          hruprt(10) = Pet(i)
-          hruprt(11) = Aet(i)
-          hruprt(12) = Smav(i)*Hru_percent_perv(i)
-          hruprt(13) = Pweqv(i)
+          hruprt(10) = Potet(i)
+          hruprt(11) = Hru_actet(i)
+          hruprt(12) = Soil_moist(i)*Hru_percent_perv(i)
+          hruprt(13) = Pkwater_equiv(i)
           hruprt(14) = Pk_den(i)
           hruprt(15) = Pk_temp(i)
           hruprt(16) = Albedo(i)
           hruprt(17) = Tcal(i)
-          hruprt(18) = Smlt(i)
-          hruprt(19) = Infl(i)
+          hruprt(18) = Snowmelt(i)
+          hruprt(19) = Infil(i)
           hruprt(20) = Sroff(i)
           hruprt(21) = Soil_to_gw(i)
           hruprt(22) = Soil_to_ssr(i)
           hruprt(23) = Hru_impervstor(i)
-          stor = Pweqv(i) + hruprt(12) + hruprt(8) + hruprt(23)
+          stor = hruprt(13) + hruprt(12) + hruprt(8) + hruprt(23)
 !Hru_actet includes perv_actet, imperv_evap, intcp_evap, and snow_evap
-          wbal = Hru_ppt(i) + Stor_last(i) - stor - Aet(i)
+          wbal = Hru_ppt(i) + Stor_last(i) - stor - Hru_actet(i)
      +           - Sroff(i) - Soil_to_gw(i) - Soil_to_ssr(i)
           hruprt(24) = wbal
           Stor_last(i) = stor
@@ -427,44 +324,45 @@
       ELSEIF ( Pmo.GT.0 ) THEN
         DO j = 1, Active_hrus
           i = Hru_route_order(j)
-          Stor_last(i) = Pweqv(i) + Smav(i)*Hru_percent_perv(i)
+          Stor_last(i) = Pkwater_equiv(i)
+     +                   + Soil_moist(i)*Hru_percent_perv(i)
      +                   + Hru_intcpstor(i) + Hru_impervstor(i)
         ENDDO
       ENDIF
-
 
       IF ( Moyrsum.EQ.1 ) THEN
         DO j = 1, Active_hrus
           i = Hru_route_order(j)
           Hru_ppt_mo(i) = Hru_ppt_mo(i) + Hru_ppt(i)
-          Hru_net_ppt_mo(i) = Hru_net_ppt_mo(i) + Nppt(i)
-          Hru_potet_mo(i) = Hru_potet_mo(i) + Pet(i)
-          Hru_actet_mo(i) = Hru_actet_mo(i) + Aet(i)
-          Hru_snowmelt_mo(i) = Hru_snowmelt_mo(i) + Smlt(i)
+          Hru_net_ppt_mo(i) = Hru_net_ppt_mo(i) + Net_ppt(i)
+          Hru_potet_mo(i) = Hru_potet_mo(i) + Potet(i)
+          Hru_actet_mo(i) = Hru_actet_mo(i) + Hru_actet(i)
+          Hru_snowmelt_mo(i) = Hru_snowmelt_mo(i) + Snowmelt(i)
           Hru_sroff_mo(i) = Hru_sroff_mo(i) + Sroff(i)
           Soil_to_gw_mo(i) = Soil_to_gw_mo(i) + Soil_to_gw(i)
           Soil_to_ssr_mo(i) = Soil_to_ssr_mo(i) + Soil_to_ssr(i)
           Hru_ppt_yr(i) = Hru_ppt_yr(i) + Hru_ppt(i)
-          Hru_net_ppt_yr(i) = Hru_net_ppt_yr(i) + Nppt(i)
-          Hru_potet_yr(i) = Hru_potet_yr(i) + Pet(i)
-          Hru_actet_yr(i) = Hru_actet_yr(i) + Aet(i)
-          Hru_snowmelt_yr(i) = Hru_snowmelt_yr(i) + Smlt(i)
+          Hru_net_ppt_yr(i) = Hru_net_ppt_yr(i) + Net_ppt(i)
+          Hru_potet_yr(i) = Hru_potet_yr(i) + Potet(i)
+          Hru_actet_yr(i) = Hru_actet_yr(i) + Hru_actet(i)
+          Hru_snowmelt_yr(i) = Hru_snowmelt_yr(i) + Snowmelt(i)
           Hru_sroff_yr(i) = Hru_sroff_yr(i) + Sroff(i)
           Soil_to_gw_yr(i) = Soil_to_gw_yr(i) + Soil_to_gw(i)
           Soil_to_ssr_yr(i) = Soil_to_ssr_yr(i) + Soil_to_ssr(i)
         ENDDO
 
-        IF ( day.EQ.Modays(mo) ) THEN
-          rmo = FLOAT(mo)
+        IF ( Nowday.EQ.Modays(Nowmonth) ) THEN
+          rmo = FLOAT(Nowmonth)
           CALL opstr('   hru   mo                    oppt   nppt     '//
      +   '        pet   aet        pweqv  2ssres  2gwres   smlt sroff')
 
-          DO i = 1, Nhru
+          DO j = 1, Active_hrus
+            i = Hru_route_order(j)
             IF ( Hru_type(i).EQ.0 ) CYCLE
             ri = FLOAT(i)
             WRITE (buffer, 9001) ri, rmo, Hru_ppt_mo(i),
      +                           Hru_net_ppt_mo(i), Hru_potet_mo(i),
-     +                           Hru_actet_mo(i), Pweqv(i),
+     +                           Hru_actet_mo(i), Pkwater_equiv(i),
      +                           Soil_to_ssr_mo(i), Soil_to_gw_mo(i),
      +                           Hru_snowmelt_mo(i), Hru_sroff_mo(i)
             CALL opstr(buffer(:106))
@@ -472,16 +370,17 @@
         ENDIF
 
         IF ( wyday.EQ.Yrdays ) THEN
-          ryr = FLOAT(Nowtime(1))
+          ryr = FLOAT(Nowyear)
           CALL opstr('   hru year                    oppt   nppt     '//
      +   '        pet   aet        pweqv  2ssres  2gwres   smlt sroff')
 
-          DO i = 1, Nhru
+          DO j = 1, Active_hrus
+            i = Hru_route_order(j)
             IF ( Hru_type(i).EQ.0 ) CYCLE
             ri = FLOAT(i)
             WRITE (buffer, 9001) ri, ryr, Hru_ppt_yr(i),
      +                           Hru_net_ppt_yr(i), Hru_potet_yr(i),
-     +                           Hru_actet_yr(i), Pweqv(i),
+     +                           Hru_actet_yr(i), Pkwater_equiv(i),
      +                           Soil_to_ssr_yr(i), Soil_to_gw_yr(i),
      +                           Hru_snowmelt_yr(i), Hru_sroff_yr(i)
             CALL opstr(buffer(:106))

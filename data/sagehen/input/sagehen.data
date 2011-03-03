@@ -14,9 +14,6 @@ tmin 2
 //   INDEPENDENCE LAKE
 //   SAGEHEN CREEK
 precip 2
-solrad 0
-pan_evap 0
-form_data 0
 
 // runoff value is:
 //   10343500 	SAGEHEN C NR TRUCKEE C

@@ -11,9 +11,9 @@
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: alloc_space.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
- *  $Revision: 3058 $
+ *  $Revision: 2491 $
  *       $Log: alloc_space.c,v $
  *       Revision 1.19  1996/04/29 16:22:56  markstro
  *       Unknown
@@ -181,8 +181,8 @@ void alloc_space (void) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: batch_run.c 3058 2007-01-25 22:25:59Z rsregan $
-   $Revision: 3058 $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
+   $Revision: 2491 $
         $Log: batch_run.c,v $
         Revision 1.10  2000/02/18 18:27:03  markstro
         Made previous Julian time a global.  It is set to -1.0 before the run
@@ -251,24 +251,24 @@ extern char *single_run_post_cleanup (void);
  | RETURN VALUE : char * - error message if there is one.
  | RESTRICTIONS : None
 \*--------------------------------------------------------------------*/
-void BATCH_run (void) {
+int BATCH_run (void) {
    char *ret;
    long endofdata = 0;
 
    ret = single_run_pre_init ();
    if (ret) {
       fprintf (stderr, ret);
-      return;
+      return(1);
    }
 
    if (call_modules("initialize")) {
       closeUserFiles();
       fprintf (stderr, "single_run:  Problem with initializing modules.");
-      return;
+      return(1);
    }
 
    ret = single_run_post_init ();
-   if (ret) return;
+   if (ret) return(1);
 
 /*
 * perform the main loop
@@ -281,7 +281,7 @@ void BATCH_run (void) {
    while(!endofdata) {
       if(!(endofdata = read_line ())) {
          ret = single_run_pre_run ();
-         if (ret) return;
+         if (ret) return(1);
 
 /*
          if ((Mnowtime->month == 1) && (Mnowtime->day == 1)) {
@@ -293,16 +293,16 @@ void BATCH_run (void) {
          if(call_modules("run")) {
             closeUserFiles ();
             fprintf (stderr, "Problem while running modules.");
-            return;
+            return(1);
          }
 
          ret = single_run_post_run ();
-         if (ret) return;
+         if (ret) return(1);
       }
    }
 
    ret = single_run_pre_cleanup ();
-   if (ret) return;
+   if (ret) return(1);
 
 /*
 * cleanup modules
@@ -310,13 +310,13 @@ void BATCH_run (void) {
 
    if (call_modules("cleanup")) {
        fprintf (stderr, "Problem with module cleanup.");
-       return;
+       return(1);
    }
 
    ret = single_run_post_cleanup ();
-   if (ret) return;
+   if (ret) return(1);
 
-   return;
+   return(0);
 }
 
 /**7****************** LOCAL FUNCTION DEFINITIONS *********************/
@@ -337,9 +337,9 @@ void BATCH_run (void) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: batch_run_functions.c 3642 2007-12-05 22:00:34Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3642 $
+   $Revision: 2491 $
         $Log: single_run.c,v $
         Revision 1.47  2006/11/27 14:30:50  rsregan
 	changed GIS file to animation (ani) file
@@ -491,6 +491,7 @@ void BATCH_run (void) {
 #include <math.h>
 #include <errno.h>
 #include <string.h>
+#include <sys/stat.h>
 #include "mms.h"
 
 /**2************************* LOCAL MACROS ****************************/
@@ -505,9 +506,9 @@ void BATCH_run (void) {
   static long nstatVars, naniVars;
   static char **statVar_names, **statVar_element;
   static char **aniVar_names;
-  static char statvar_path[MAXPATHLEN];
-  static char ani_path[MAXPATHLEN];
-  static char output_path[MAXPATHLEN];
+  static char statvar_path[MAXDATALNLEN];
+  static char ani_path[MAXDATALNLEN];
+  static char output_path[MAXDATALNLEN];
   static char buf[256];
   static long i, j, init_flag, stats_flag, ani_out_flag;
   static char  *err_message, *c;
@@ -519,7 +520,8 @@ void BATCH_run (void) {
   static int num_ani_dims, found, k;
   static char *pathname, *endptr;
   static FILE *var_file;
-  static char line[MAXINFOLEN];
+  static char line[MAXDATALNLEN];
+  static DATETIME start_of_data, end_of_data;
 
 /**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
 /*--------------------------------------------------------------------*\
@@ -530,7 +532,6 @@ void BATCH_run (void) {
  | RESTRICTIONS :
 \*--------------------------------------------------------------------*/
 char *single_run_pre_init () {
-  DATETIME start_of_data, end_of_data;
 
   stats_flag = *control_lvar ("statsON_OFF");
   if (stats_flag == 1)
@@ -776,7 +777,7 @@ char *single_run_pre_init () {
 /*
 * read in run info string
 */
-      if (fgets(line, MAXINFOLEN, var_file) == NULL) {
+      if (fgets(line, MAXDATALNLEN, var_file) == NULL) {
          fclose(var_file);
          return("WARNING - read_vars - no run info string");
       }
@@ -784,7 +785,7 @@ char *single_run_pre_init () {
 /*
 * read in last nstep
 */
-      if (fgets(line, MAXINFOLEN, var_file) == NULL) {
+      if (fgets(line, MAXDATALNLEN, var_file) == NULL) {
          fclose(var_file);
          return("WARNING - read_vars - no last nstep");
       }
@@ -841,6 +842,7 @@ char *single_run_post_init () {
 	return;
     }
 */
+
   initializeRuntimeGraphs();
 
 /*
@@ -873,7 +875,14 @@ char *single_run_post_init () {
  | RESTRICTIONS :
 \*--------------------------------------------------------------------*/
 char *single_run_pre_run () {
-      started = TRUE;
+	/*
+	static char nameToCheck[256], path[256];
+	struct stat stbuf;
+	char	*err;
+	*/
+
+	started = TRUE;
+
 
 /*
 *  print debug  information
@@ -881,9 +890,36 @@ char *single_run_pre_run () {
 /*
       runDebugInfo();
 */
+	/* DANGER markstro commenting out this hardwired dynamic parameter stuff
+	 * Not sure how this got in here.
+	 
+	  strncpy (path, "C:\\markstro\\development\\prms\\dynamic_param_test\\input\\parameters\\imperv_area\\", 256);
+	  sprintf (nameToCheck, "%s%4ld%02ld%02ld%s", path, Mnowtime->year, Mnowtime->month, Mnowtime->day, '\0');
 
-      errno = 0;
-   return (NULL);
+
+	if (stat (nameToCheck, &stbuf) != -1) {
+		if (stbuf.st_size) {
+			printf ("single_run_pre_run: found %s\n", nameToCheck);
+
+			err = read_params (nameToCheck, 1);
+			if (err) {
+				(void)fprintf (stderr,"single_run_pre_run:  %s\n", err);
+				return (err);
+			}
+
+			updateparam ("hru_percent_imperv");
+
+		} else {
+			printf ("single_run_pre_run: found but empty %s\n", nameToCheck);
+
+		}
+	} else {
+		//printf ("single_run_pre_run: did not find %s\n", nameToCheck);
+	}
+*/
+
+	errno = 0;
+	return (NULL);
 }
 
 /*--------------------------------------------------------------------*\
@@ -1041,6 +1077,13 @@ char *single_run_post_cleanup () {
   if (*control_lvar("save_vars_to_file"))
     save_vars (*control_svar("var_save_file"));
 
+/*
+* if required, save vars to file
+*/
+  if (preprocess_on) {
+    write_preprocess_params ();
+  }
+
    return (NULL);
 }
 
@@ -1061,9 +1104,9 @@ char *single_run_post_cleanup () {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: build_lists.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: build_lists.c,v $
         Revision 1.4  1996/04/09 21:04:02  markstro
         (1) Work on control files
@@ -1195,9 +1238,9 @@ void ADD_to_list (LIST *list, void *itm) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: check_vars.c 3621 2007-11-15 21:01:11Z markstro $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3621 $
+   $Revision: 2491 $
         Revision 1.12  2006/11/27  rsregan
 	change gis to ani
 
@@ -1301,7 +1344,7 @@ char * CHECK_disp_vars (void) {
        static char	err_message[256];
 	int		status = 0;
 	int		i, j;
-	char	buf[MAXLNLEN], buf0[MAXLNLEN], buf1[MAXLNLEN], buf2[MAXLNLEN];
+	char	buf[MAXDATALNLEN], buf0[MAXDATALNLEN], buf1[MAXDATALNLEN], buf2[MAXDATALNLEN];
 	char	*dv_name, *dv_index, *ptr;
 
 	for (i = 0; i < *(control_lvar ("ndispGraphs")); i++) {
@@ -1383,9 +1426,9 @@ char *CHECK_ani_vars (void) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: control_addr.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: control_addr.c,v $
         Revision 1.5  1996/04/09 21:04:03  markstro
         (1) Work on control files
@@ -1450,9 +1493,9 @@ CONTROL *control_addr (char *key) {
  * control_darray - returns double *
  * control_sarray - returns char ** - string
 
- * $Id: control_array.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: control_array.c,v $
         Revision 1.7  1996/02/19 19:59:35  markstro
         Now lints pretty clean
@@ -1515,16 +1558,18 @@ char *control_array (char *key, long ind) {
 
 	switch (control->type) {
 		case M_DOUBLE:
-			return (char *) (control->start_ptr + ind * sizeof(double));
+			return (char *) ((double *)(control->start_ptr) + ind * sizeof(double));
 
 		case M_FLOAT:
-			return (char *) (control->start_ptr + ind * sizeof(float));
+			return (char *) ((float *)(control->start_ptr) + ind * sizeof(float));
 
 		case M_LONG:
-			return (char *) (control->start_ptr + ind * sizeof(long));
+			return (char *) ((long *)(control->start_ptr) + ind * sizeof(long));
 
 		case M_STRING:
-			return (char *) (control->start_ptr + ind * sizeof(char *));
+			printf ("control_array: key = %s ind = %d val = %s\n", key, ind, *((char **)control->start_ptr + ind));
+//			return (char *) (((char **)(control->start_ptr)) + (ind * sizeof(char *)));
+			return *((char **)control->start_ptr + ind);
 	}
 
 	return (NULL);
@@ -1570,8 +1615,8 @@ double *control_darray (char *key, long ind) {
  | RETURN VALUE : 
  | RESTRICTIONS :
 \*--------------------------------------------------------------------*/
-char **control_sarray (char *key, long ind) {
-  return ((char **) control_array(key, ind));
+char *control_sarray (char *key, long ind) {
+  return control_array(key, ind);
 }
 /*************************************************************************
  * control_var.c : returns pointers to various control array entries
@@ -1582,9 +1627,9 @@ char **control_sarray (char *key, long ind) {
  * control_dvar - returns double *
  * control_svar - returns char ** - string
 
- * $Id: control_var.c 3643 2007-12-06 20:26:02Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3643 $
+   $Revision: 2491 $
         $Log: control_var.c,v $
         Revision 1.6  1996/02/19 19:59:36  markstro
         Now lints pretty clean
@@ -1702,7 +1747,7 @@ long control_string_ (char *retval, char *tag, ftnlen len, ftnlen tlen) {
  | RETURN VALUE : 
  | RESTRICTIONS :
 \*--------------------------------------------------------------------*/
-long control_integer_ (long *retval, char *key, ftnlen len) {
+long control_integer_ (int *retval, char *key, ftnlen len) {
 	char *foo;
 
 	foo = (char *) umalloc(len + 1);
@@ -1725,9 +1770,9 @@ long control_integer_ (long *retval, char *key, ftnlen len) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: create_vstats.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: create_vstats.c,v $
         Revision 1.10  1996/06/28 19:32:22  markstro
         (1) Fixed 3d control window.
@@ -1863,9 +1908,9 @@ void create_vstats (void) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: decl_control.c 3241 2007-03-29 18:39:54Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3241 $
+   $Revision: 2491 $
         $Log: decl_control.c,v $
         Revision 1.12  1996/04/09 21:04:05  markstro
         (1) Work on control files
@@ -1956,6 +2001,7 @@ CONTROL *add_control (char *key, long type, long size) {
    cp->key = strdup (key);
    cp->size = size;
    cp->type = type;
+   cp->set_in_file = 0;
 
    if (type == M_STRING) {
       cp->start_ptr = (char *)umalloc (sizeof (char *) * size);
@@ -2008,7 +2054,8 @@ void decl_control (char *key, long type, long size, void *valstr) {
    cp->key = key;
    cp->size = size;
    cp->type = type;
-   cp->start_ptr = valstr;
+   cp->start_ptr = (char *)valstr;
+   cp->set_in_file = 0;
 
 }
 
@@ -2114,9 +2161,9 @@ void decl_control_ (char *ckey, ftnint *ctype, ftnint *csize, void *value, ftnle
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: decldim.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: decldim.c,v $
         Revision 1.13  1996/09/10 16:25:21  markstro
         Unknown
@@ -2295,6 +2342,7 @@ long decldim (char *name, long value, long max, char *descr) {
    dim->format = NULL;
    dim->column_width = 10;
    dim->fixed = FALSE;
+   dim->got = FALSE;
 
    sort_dims ();
    return(0);
@@ -2339,7 +2387,25 @@ long declfix_ (char *dname, ftnint *dval, ftnint *dmax, char *ddescr, ftnlen nam
  | RESTRICTIONS :
 \*--------------------------------------------------------------------*/
 long declmodule (char *id) {
+	char *foo, *cp;
+
 	printf ("declmodule: %s\n", id);
+
+	foo = strdup (id);
+	foo = foo + 5;
+	cp = strchr (foo, '.');
+	if (cp != NULL) {
+		*cp = '\0';
+	}
+	
+	current_module = (MODULE_DATA *) umalloc (sizeof(MODULE_DATA));
+	current_module->name = strdup (foo);
+	current_module->version = strdup (id);
+	current_module->params = ALLOC_list ("params", 0, 100);
+	current_module->vars = ALLOC_list ("vars", 0, 100);
+
+    ADD_to_list (module_db, current_module);
+
 	return 0;
 }
 /*--------------------------------------------------------------------*\
@@ -2384,9 +2450,9 @@ long declmodule_ (char *id, ftnlen idlen) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: declparam.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: declparam.c,v $
         Revision 1.21  2001/05/04 20:58:22  markstro
         Added the xml print file
@@ -2479,14 +2545,125 @@ static int VAR_type (char *);
 static char *types[] = {"long (or integer)", "real (or float)", "double"};
 
 /**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
+
+/*--------------------------------------------------------------------*\
+ | FUNCTION     : declparam_
+ | COMMENT		: declparam_() is called from Fortran, sorts out args
+ |                 and calls declparam()
+ | PARAMETERS   :
+ | RETURN VALUE : 
+ | RESTRICTIONS :
+\*--------------------------------------------------------------------*/
+long declparam_u_ (char *mname, char *pname, char *pdimen, char *ptype,
+	char *pvalstr, char *minstr, char *maxstr, char *dstr, char *hstr,
+	char *ustr, char *var, long *update, ftnlen mnamelen,
+	ftnlen pnamelen, ftnlen pdimenlen, ftnlen ptypelen,
+	ftnlen pvallen, ftnlen minlen, ftnlen maxlen, ftnlen dlen,
+	ftnlen hlen, ftnlen ulen, ftnlen varlen, ftnlen uplen) {
+
+	char *module, *name, *dimen, *type, *value;
+	char *minimum, *maximum, *descr, *help, *units;
+	long retval;
+
 /*
-**	OBJECTCENTER: Memory fault
-**		problem:  char *type was passed as a parameter to getparam
-**					realloced, and then freed in the calling procedure.
-**					for this action, the pointer of type must be passed.
-**		solution: change declparam to use local integer variable
-**					to reflect incoming type.  This eliminates realloc error
+* copy args to new strings, and terminate correctly
 */
+
+	module = (char *) umalloc(mnamelen + 1);
+	strncpy(module, mname, mnamelen);
+	module[mnamelen] = '\0';
+
+	name = (char *) umalloc(pnamelen + 1);
+	strncpy(name, pname, pnamelen);
+	name[pnamelen] = '\0';
+
+	dimen = (char *) umalloc(pdimenlen + 1);
+	strncpy(dimen, pdimen, pdimenlen);
+	dimen[pdimenlen] = '\0';
+
+	type = (char *) umalloc(ptypelen + 1);
+	strncpy(type, ptype, ptypelen);
+	type[ptypelen] = '\0';
+
+	value = (char *) umalloc(pvallen + 1);
+	strncpy(value, pvalstr, pvallen);
+	value[pvallen] = '\0';
+
+	minimum = (char *) umalloc(minlen + 1);
+	strncpy(minimum, minstr, minlen);
+	minimum[minlen] = '\0';
+
+	maximum = (char *) umalloc(maxlen + 1);
+	strncpy(maximum, maxstr, maxlen);
+	maximum[maxlen] = '\0';
+
+	descr = (char *) umalloc(dlen + 1);
+	strncpy(descr, dstr, dlen);
+	descr[dlen] = '\0';
+
+	help = (char *) umalloc(hlen + 1);
+	strncpy(help, hstr, hlen);
+	help[hlen] = '\0';
+
+	units = (char *) umalloc(ulen + 1);
+	strncpy(units, ustr, ulen);
+	units[ulen] = '\0';
+
+/*
+* call C version of declparam_u()
+*/
+
+	retval = declparam_u(module, name, dimen, type, value,
+	    minimum, maximum, descr, help, units, var, update);
+
+	return(0);
+}
+
+/*--------------------------------------------------------------------*\
+ | FUNCTION     : declparam_u
+ | COMMENT		: declparam is called from C
+ | PARAMETERS   :
+ | RETURN VALUE : 
+ | RESTRICTIONS :
+\*--------------------------------------------------------------------*/
+long declparam_u (char *module, char *name, char *dimen, char *type, char *value,
+	char *minimum, char *maximum, char *descr, char *help, char *units, char *var,
+	long *update) {
+
+	PARAM *param;
+
+	*update = 0;
+/*
+* get pointer to parameter with key
+*/
+
+	param = param_addr(name);
+
+	if (param == NULL) {  // Parameter has not been declared, do so now. Set up array for pointers to local arrays of values.
+		declparam (module, name, dimen, type, value, minimum, maximum, descr, help, units);
+		param = param_addr(name);
+		param->num_references = 0;
+		param->size_references = 100;
+		param->references = (void **)umalloc (param->size_references * sizeof(void *));
+	}
+
+/*
+**	 realloc if too large
+*/
+	if (param->num_references >= param->size_references - 1) {
+		param->size_references += 100;
+		param->references = (void **) urealloc ((char *)(param->references),
+			param->size_references * sizeof(void *));
+	}
+
+	param->references[param->num_references++] = var;
+
+	//((float *)(var))[0] = 1234.5;
+	//((float *)(var))[1] = 234.5;
+
+	return 0;
+}
+
 
 /*--------------------------------------------------------------------*\
  | FUNCTION     : declparam_
@@ -2616,6 +2793,12 @@ long declparam (char *module, char *name, char *dimen, char *type, char *value,
 	if (!(var_type = VAR_type (type)))
 		return (0);
 
+	// DANGER - markstro - this overrides the module name that is passed in
+	// from the module and replaces it with the name of the last module that
+	// called declmodule
+	module = current_module->name;
+	ADD_to_list (current_module->params, pkey);
+
 	if (CHECK_param_in_db (pkey, module, dimen, var_type, value,
 									minimum, maximum, descr, help, units)) {
 		return (0);
@@ -2649,6 +2832,7 @@ long declparam (char *module, char *name, char *dimen, char *type, char *value,
 	param->column_width = 4;
 	param->type = var_type;
 	param->read_in = 0;
+	param->preprocess = FALSE;
 
 /*
 * determine dimensions
@@ -2754,6 +2938,127 @@ long declparam (char *module, char *name, char *dimen, char *type, char *value,
 
 	sort_params();
 	return(0);
+}
+
+/*--------------------------------------------------------------------*\
+ | FUNCTION     : declparam_p_
+ | COMMENT		: declparam_p() is called from Fortran, sorts out args
+ |                 and calls declparam()
+ | PARAMETERS   :
+ | RETURN VALUE : 
+ | RESTRICTIONS :
+\*--------------------------------------------------------------------*/
+long declparam_p_ (char *mname, char *pname, char *pdimen, char *ptype,
+	char *pvalstr, char *minstr, char *maxstr, char *dstr, char *hstr,
+	char *ustr, char *val, ftnlen mnamelen, ftnlen pnamelen,
+	ftnlen pdimenlen, ftnlen ptypelen, ftnlen pvallen, ftnlen minlen,
+	ftnlen maxlen, ftnlen dlen, ftnlen hlen, ftnlen ulen, ftnlen vallen) {
+
+	char *module, *name, *dimen, *type, *value;
+	char *minimum, *maximum, *descr, *help, *units;
+	long retval;
+
+/*
+* copy args to new strings, and terminate correctly
+*/
+
+	module = (char *) umalloc(mnamelen + 1);
+	strncpy(module, mname, mnamelen);
+	module[mnamelen] = '\0';
+
+	name = (char *) umalloc(pnamelen + 1);
+	strncpy(name, pname, pnamelen);
+	name[pnamelen] = '\0';
+
+	dimen = (char *) umalloc(pdimenlen + 1);
+	strncpy(dimen, pdimen, pdimenlen);
+	dimen[pdimenlen] = '\0';
+
+	type = (char *) umalloc(ptypelen + 1);
+	strncpy(type, ptype, ptypelen);
+	type[ptypelen] = '\0';
+
+	value = (char *) umalloc(pvallen + 1);
+	strncpy(value, pvalstr, pvallen);
+	value[pvallen] = '\0';
+
+	minimum = (char *) umalloc(minlen + 1);
+	strncpy(minimum, minstr, minlen);
+	minimum[minlen] = '\0';
+
+	maximum = (char *) umalloc(maxlen + 1);
+	strncpy(maximum, maxstr, maxlen);
+	maximum[maxlen] = '\0';
+
+	descr = (char *) umalloc(dlen + 1);
+	strncpy(descr, dstr, dlen);
+	descr[dlen] = '\0';
+
+	help = (char *) umalloc(hlen + 1);
+	strncpy(help, hstr, hlen);
+	help[hlen] = '\0';
+
+	units = (char *) umalloc(ulen + 1);
+	strncpy(units, ustr, ulen);
+	units[ulen] = '\0';
+
+/*
+* call C version of declparam_p()
+*/
+
+	retval = declparam_p(module, name, dimen, type, value,
+	    minimum, maximum, descr, help, units, val);
+
+	return(0);
+}
+
+/*--------------------------------------------------------------------*\
+ | FUNCTION     : declparam_p
+ | COMMENT		: declparam is called from C
+ | PARAMETERS   :
+ | RETURN VALUE : 
+ | RESTRICTIONS :
+\*--------------------------------------------------------------------*/
+long declparam_p (char *module, char *name, char *dimen, char *type, char *value,
+	char *minimum, char *maximum, char *descr, char *help, char *units, char *var) {
+	PARAM *param;
+
+	// If the -preprocess command line arguement is not set, don't allow declaration of any "preprocess parameters."
+	if (!preprocess_on) {
+		return 0;
+	}
+
+/*
+* get pointer to parameter with key
+*/
+
+	param = param_addr(name);
+
+	if (param == NULL) {  // Parameter has not been declared, do so now. Set up array for pointers to local arrays of values.
+		declparam (module, name, dimen, type, value, minimum, maximum, descr, help, units);
+		param = param_addr(name);
+		param->num_references = 0;
+		param->size_references = 100;
+		param->references = (void **)umalloc (param->size_references * sizeof(void *));
+		param->preprocess = TRUE;
+	}
+
+/*
+**	 realloc if too large
+**  LOOK AT THIS!
+*/
+	if (param->num_references >= param->size_references - 1) {
+		param->size_references += 100;
+		param->references = (void **) urealloc ((char *)(param->references),
+			param->size_references * sizeof(void *));
+	}
+
+	param->references[param->num_references++] = var;
+
+	//((float *)(var))[0] = 1234.5;
+	//((float *)(var))[1] = 234.5;
+
+	return 0;
 }
 
 /**7****************** LOCAL FUNCTION DEFINITIONS *********************/
@@ -2870,9 +3175,9 @@ static int VAR_type (char *type) {
  *
  * Returns 0 if successful, 1 otherwise.
 
- * $Id: declvar.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: declvar.c,v $
         Revision 1.17  1999/10/22 17:14:35  markstro
         Added private variables
@@ -3038,23 +3343,29 @@ long declvar (char *module, char *name, char *dimen, long maxsize, char *type,
 */
 
   if (var_addr(vkey) != NULL) {
-    (void)fprintf(stderr,
-	    "ERROR - declvar - key '%s' already exists.\n", vkey);
-    return(1);
+	  if (print_mode) {
+	      return(0);
+	  } else {
+              fprintf(stderr,
+	      "ERROR - declvar - key '%s' already exists.\n", vkey);
+              return(1); }
   }
+
+  	// DANGER - markstro - this overrides the module name that is passed in
+	// from the module and replaces it with the name of the last module that
+	// called declmodule
+	module = current_module->name;
+	ADD_to_list (current_module->vars, vkey);
 
   /*
    * convert fortran types to C equivalents
    */
 
-  if (!strcmp(type, "integer") || !strcmp(type, "long"))
-    var_type = M_LONG;
-  else
-    if (!strcmp(type, "real") || !strcmp(type, "float"))
-      var_type = M_FLOAT;
-    else
-      if (!strcmp(type, "double precision") || !strcmp(type, "double"))
-        var_type = M_DOUBLE;
+  var_type = M_LONG;
+  if (!strcmp(type, "real") || !strcmp(type, "float"))
+    var_type = M_FLOAT;
+  else if (!strcmp(type, "double precision") || !strcmp(type, "double"))
+    var_type = M_DOUBLE;
 
   /*
    * check that type is possible
@@ -3279,14 +3590,11 @@ long declpri (char *name, long size, char *type, char *value) {
    * convert fortran types to C equivalents
    */
 
-  if (!strcmp(type, "integer") || !strcmp(type, "long"))
-    var_type = M_LONG;
-  else
-    if (!strcmp(type, "real") || !strcmp(type, "float"))
-      var_type = M_FLOAT;
-    else
-      if (!strcmp(type, "double precision") || !strcmp(type, "double"))
-        var_type = M_DOUBLE;
+  var_type = M_LONG;
+  if (!strcmp(type, "real") || !strcmp(type, "float"))
+    var_type = M_FLOAT;
+  else if (!strcmp(type, "double precision") || !strcmp(type, "double"))
+    var_type = M_DOUBLE;
 
   /*
    * check that type is possible
@@ -3354,9 +3662,9 @@ long declpri (char *name, long size, char *type, char *value) {
  * returns a pointer to a DIMEN struct which contains the given name
  * returns NULL if name not found
  *
- * $Id: dim_addr.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: dim_addr.c,v $
         Revision 1.7  1996/04/29 16:23:00  markstro
         Unknown
@@ -3446,9 +3754,9 @@ char *dim_notes (char *ch_ptr) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: dprint.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: dprint.c,v $
         Revision 1.5  1996/02/19 19:59:54  markstro
         Now lints pretty clean
@@ -3742,9 +4050,9 @@ void dpdble (char *string, double *array, long n, long dlevel) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: free_vstats.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: free_vstats.c,v $
         Revision 1.7  1996/06/28 19:32:23  markstro
         (1) Fixed 3d control window.
@@ -3828,9 +4136,9 @@ void free_vstats (void) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: get_elem_add.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: get_elem_add.c,v $
         Revision 1.12  1996/02/19 20:00:01  markstro
         Now lints pretty clean
@@ -4200,9 +4508,9 @@ char *GetElemAddress (char *key, char *elemString, int type) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: get_times.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: get_times.c,v $
         Revision 1.5  1996/02/19 20:00:02  markstro
         Now lints pretty clean
@@ -4281,9 +4589,9 @@ void get_times (void) {
  * There are 2 functions: getdim() to be called from C
  *                        getdim_() to be called from Fortran
  *
- * $Id: getdim.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: getdim.c,v $
         Revision 1.5  1996/02/19 20:00:03  markstro
         Now lints pretty clean
@@ -4372,6 +4680,7 @@ long getdim (char *name) {
    * return the dimension
    */
 
+  dim->got = TRUE;
   return dim->value;
 
 }
@@ -4385,9 +4694,9 @@ long getdim (char *name) {
  *
  * Returns 0 if successful, 1 otherwise.
  *
- * $Id: getparam.c 3640 2007-12-05 21:59:19Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3640 $
+   $Revision: 2491 $
         $Log: getparam.c,v $
         Revision 1.10  1997/03/26 17:04:14  markstro
         Added function getdataname
@@ -4422,20 +4731,45 @@ long getdim (char *name) {
  * Make sure that all source files have CVS log.
  *
  **************************************************************************/
-
-/*
-**	OBJECTCENTER: Memory fault
-**		problem:  char *type was passed as a parameter to getparam
-**					realloced, and then freed in the calling procedure.
-**					for this action, the pointer of type must be passed.
-**		solution: change getparam to use local integer varible to
-**					avoid realloc error
-*/
 #define GETPARAM_C
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include "mms.h"
+
+/**4***************** DECLARATION LOCAL FUNCTIONS *********************/
+static long paramcopy (PARAM *, double *, int);
+
+/*--------------------------------------------------------------------*\
+ | FUNCTION     : updateparam
+ | COMMENT		: This function updates the local parameter value arrays
+ |                in the modules with the current values in the parameter
+ |                data structure. The local arrays are registered with the
+ |                param structures by declaring them with the "declparam_u"
+ |                function. This essentually implements a "listener"
+ |                pattern, making each module a listener for new parameter
+ |                values.
+ | PARAMETERS   : name is the name of the parameter to update.
+ | RETURN VALUE : integer error code
+ | RESTRICTIONS :
+\*--------------------------------------------------------------------*/
+long updateparam (char *name) {
+	PARAM *param;
+	int i;
+
+	param = param_addr(name);
+
+	if (param == NULL) {
+		(void)fprintf(stderr, "updateparam: %s not found.\n", name);
+
+	} else {
+		for (i = 0; i < param->num_references; i++) {
+			paramcopy (param, (double *)(param->references[i]), -1);
+		}
+	}
+
+	return (0);
+}
 
 /*--------------------------------------------------------------------*\
  | FUNCTION     : getparam_
@@ -4446,10 +4780,6 @@ long getdim (char *name) {
 \*--------------------------------------------------------------------*/
 long getparam_ (char *mname, char *pname, ftnint *pmaxsize, char *ptype, double *pval,
 	       ftnlen mnamelen, ftnlen pnamelen, ftnlen ptypelen) {
-/*
-** ANSI CHANGE ptypelen had no decleration
-**		temp fix: added long ptypelen to list of parameters
-*/
 
   char *module, *name, *type;
   int maxsize;
@@ -4506,10 +4836,6 @@ long getparam (char *module, char *name, int maxsize, char *type, double *pval) 
   int var_type;
   PARAM *param;
   char *pkey;
-  int i;
-  DIMEN *dim, *dim1, *dim2;
-  char * ptr;
-  int max1, max2, val1, val2, nrow;
 
 
   /*
@@ -4525,14 +4851,11 @@ long getparam (char *module, char *name, int maxsize, char *type, double *pval) 
   /*
    * convert fortran types to C types
    */
-  if (!strcmp(type, "integer") || !strcmp(type, "long"))
-    var_type = M_LONG;
-  else
-    if (!strcmp(type, "real") || !strcmp(type, "float"))
-      var_type = M_FLOAT;
-    else
-      if (!strcmp(type, "double precision") || !strcmp(type, "double"))
-        var_type = M_DOUBLE;
+  var_type = M_LONG;
+  if (!strcmp(type, "real") || !strcmp(type, "float"))
+    var_type = M_FLOAT;
+  else if (!strcmp(type, "double precision") || !strcmp(type, "double"))
+    var_type = M_DOUBLE;
 
   /*
    * check that type is possible
@@ -4592,29 +4915,41 @@ long getparam (char *module, char *name, int maxsize, char *type, double *pval) 
   }
 */
 
+  return paramcopy (param, pval, maxsize);
+}
+
+/*--------------------------------------------------------------------*\
+ | FUNCTION     : paramcopy
+ | COMMENT		: called from C
+ | PARAMETERS   :
+ | RETURN VALUE :
+ | RESTRICTIONS :
+\*--------------------------------------------------------------------*/
+static long paramcopy (PARAM *param, double *pval, int maxsize) {
+	DIMEN *dim1, *dim2;
+	char * ptr;
+	int max1, max2, val1, val2, nrow;
+	int i;
   /*
    * copy the parameter across
    */
 
-  if (param->ndimen == 1) {
-    switch (param->type) {
+	if (param->ndimen == 1) {
+		switch (param->type) {
 
-    case M_LONG:
-      memcpy ((char *) pval, (char *) param->value, param->size * sizeof(int));
-      break;
+			case M_LONG:
+				memcpy ((char *) pval, (char *) param->value, param->size * sizeof(int));
+				break;
 
-    case M_FLOAT:
-      memcpy ((char *)pval, (char *)param->value, param->size * sizeof(float));
-      break;
+			case M_FLOAT:
+				memcpy ((char *)pval, (char *)param->value, param->size * sizeof(float));
+				break;
 
-    case M_DOUBLE:
-      memcpy ((char *)pval, (char *)param->value, param->size * sizeof(double));
-      break;
-
-    }
-  }
-  else
-    {
+			case M_DOUBLE:
+				memcpy ((char *)pval, (char *)param->value, param->size * sizeof(double));
+				break;
+		}
+	} else {
       ptr = (char *) pval;
 
       dim1 = param->dimen[0];
@@ -4626,13 +4961,13 @@ long getparam (char *module, char *name, int maxsize, char *type, double *pval) 
       val2 = dim2->value;
  	  max2 = dim2->max;
 
- 	  if (max1*max2 == val1*val2 == maxsize ) {
+ 	  if ((max1*max2 == val1*val2) == maxsize ) {
  		  if (max1 == val1 && max2 == val2 ) {
  			  nrow = val1;
  		  } else {
  			  nrow = val1;
- 			  (void)fprintf(stderr, "getparam: DANGER. Mismatch in array sizes.\n");
-			  (void)fprintf(stderr, "Key:   '%s'\n", pkey);
+ 			  (void)fprintf(stderr, "paramcopy: DANGER. Mismatch in array sizes.\n");
+			  (void)fprintf(stderr, "Key:   '%s'\n", param->name);
  		  }
  	  } else if (val1*val2 == maxsize) {
  		  nrow = val1;
@@ -4640,8 +4975,8 @@ long getparam (char *module, char *name, int maxsize, char *type, double *pval) 
  		  nrow = max1;
  	  } else {
  		  nrow = val1;
- 		  (void)fprintf(stderr, "getparam: DANGER 2. Mismatch in array sizes.\n");
-		  (void)fprintf(stderr, "Key:   '%s'\n", pkey);
+ 		  (void)fprintf(stderr, "paramcopy: DANGER 2. Mismatch in array sizes.\n");
+		  (void)fprintf(stderr, "Key:   '%s'\n", param->name);
  	  }
 
 
@@ -4666,12 +5001,7 @@ long getparam (char *module, char *name, int maxsize, char *type, double *pval) 
  		  }
  	  }
 	}
-
-  /*
-   * free up arrays
-   */
-//ufree(pkey);
-  return(0);
+	return(0);
 }
 
 /*--------------------------------------------------------------------*\
@@ -4773,7 +5103,7 @@ long getdataname (char *dinfo, char *ext) {
  | RETURN VALUE :
  | RESTRICTIONS :
 \*--------------------------------------------------------------------*/
-long getoutdirfile_ (char *dinfo, char *ext, ftnlen len, ftnlen elen) {
+/*long getoutdirfile_ (char *dinfo, char *ext, ftnlen len, ftnlen elen) {
 	char *foo;
 	long retval;
 
@@ -4784,7 +5114,7 @@ long getoutdirfile_ (char *dinfo, char *ext, ftnlen len, ftnlen elen) {
    retval = getoutdirfile (dinfo, foo);
    return(retval);
 }
-
+*/
 /*--------------------------------------------------------------------*\
  | FUNCTION     : getoutdirfile
  | COMMENT      : called from C
@@ -4792,11 +5122,11 @@ long getoutdirfile_ (char *dinfo, char *ext, ftnlen len, ftnlen elen) {
  | RETURN VALUE :
  | RESTRICTIONS :
 \*--------------------------------------------------------------------*/
-long getoutdirfile (char *dinfo, char *foo) {
+/*long getoutdirfile (char *dinfo, char *foo) {
    sprintf(dinfo, "%s%s", *control_svar("mms_user_out_dir"), foo);
    return(0);
 }
-
+*/
 /*--------------------------------------------------------------------*\
  | FUNCTION     : getuserdirfile_
  | COMMENT		: called from Fortran
@@ -4804,7 +5134,7 @@ long getoutdirfile (char *dinfo, char *foo) {
  | RETURN VALUE :
  | RESTRICTIONS :
 \*--------------------------------------------------------------------*/
-long getuserdirfile_ (char *dinfo, char *ext, ftnlen len, ftnlen elen) {
+/*long getuserdirfile_ (char *dinfo, char *ext, ftnlen len, ftnlen elen) {
 	char *foo;
 	long retval;
 
@@ -4815,7 +5145,7 @@ long getuserdirfile_ (char *dinfo, char *ext, ftnlen len, ftnlen elen) {
    retval = getuserdirfile (dinfo, foo);
    return(retval);
 }
-
+*/
 /*--------------------------------------------------------------------*\
  | FUNCTION     : getuserdirfile
  | COMMENT      : called from C
@@ -4823,11 +5153,11 @@ long getuserdirfile_ (char *dinfo, char *ext, ftnlen len, ftnlen elen) {
  | RETURN VALUE :
  | RESTRICTIONS :
 \*--------------------------------------------------------------------*/
-long getuserdirfile (char *dinfo, char *foo) {
+/*long getuserdirfile (char *dinfo, char *foo) {
    sprintf(dinfo, "%s%s", *control_svar("mms_user_dir"), foo);
    return (0);
 }
-
+*/
 /*--------------------------------------------------------------------*\
  | FUNCTION     : getparamfile
  | COMMENT		: called from C
@@ -4874,9 +5204,9 @@ long getparamfile_ (char *dinfo, ftnlen len) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: getvar.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: getvar.c,v $
         Revision 1.8  1996/04/09 21:04:06  markstro
         (1) Work on control files
@@ -4986,12 +5316,11 @@ long getvar (char *module, char *name, long maxsize, char *type, double *value) 
 * convert fortran types to C types
 */
 
-	if (!strcmp(type, "integer") || !strcmp(type, "long"))
-		var_type = M_LONG;
-	else if (!strcmp(type, "real") || !strcmp(type, "float"))
-		var_type = M_FLOAT;
+	var_type = M_LONG;
+	if (!strcmp(type, "real") || !strcmp(type, "float"))
+	  var_type = M_FLOAT;
 	else if (!strcmp(type, "double precision") || !strcmp(type, "double"))
-		var_type = M_DOUBLE;
+	  var_type = M_DOUBLE;
 
 /*
 * check that type is possible
@@ -5118,7 +5447,7 @@ long getvar (char *module, char *name, long maxsize, char *type, double *value) 
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: graph_single_run.c 3641 2007-12-05 21:59:51Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
  */
 
@@ -5157,6 +5486,7 @@ int initializeRuntimeGraphs (void) {
    int i;
    //long datetime[6];
    DATETIME starttime_copy;
+   char *cptr, *cptr2;
 
    if (!runtime_graph_on) return (FALSE);
 
@@ -5180,7 +5510,8 @@ int initializeRuntimeGraphs (void) {
 /*
 ** Get the number of display vars
 */
-   control = control_addr("dispVar_names");
+   cptr = strdup ("dispVar_names");
+   control = control_addr(cptr);
    if (control) {
       numDispVars = control->size;
 
@@ -5194,8 +5525,14 @@ int initializeRuntimeGraphs (void) {
 /**
 ** Get address of each display variable for each graph
 **/
-         disp_var[i] = var_addr (*(control_sarray("dispVar_names",i)));
-         disp_ele[i] =  atoi (*control_sarray("dispVar_element",i)) - 1;
+         cptr = strdup ("dispVar_names");
+		 cptr2 = (char *)control_sarray(cptr, i);
+
+         disp_var[i] = var_addr (cptr2);
+
+         cptr = strdup ("dispVar_element");
+//         disp_ele[i] =  atoi (*control_sarray(cptr,i)) - 1;
+         disp_ele[i] =  atoi (control_sarray(cptr,i)) - 1;
       }
    } else {
 	   numDispVars = 0;
@@ -5203,7 +5540,6 @@ int initializeRuntimeGraphs (void) {
 	   disp_ele = NULL;
 	   runtime_graph_on = 0;
    }
-
    return (FALSE);
 }
 
@@ -5241,6 +5577,7 @@ int plotRuntimeGraphValue (void) {
    printf ("plotRuntimeGraphValue: xval = %f", xval);
 
    for (i = 0; i < numDispVars; i++) {
+      yval = 0.0;
       switch ((disp_var[i])->type) {
          case M_LONG :
             yval = (float)(*(((long *)((disp_var[i])->value)) + disp_ele[i]));
@@ -5290,9 +5627,9 @@ int closeRuntimeGraphs (void) {
  * The Julian day starts at noon of the Gregorian day and extends
  * to noon the next Gregorian day.
  *
- * $Id: julconvert.c 3622 2007-11-15 22:19:26Z markstro $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3622 $
+   $Revision: 2491 $
 		$Log: julconvert.c,v $
 		Revision 1.6  2001/04/03 18:18:06  markstro
 		Unknown
@@ -5418,7 +5755,7 @@ int isleap (int year) {
  *
  * Mike Dixon CADSWES CU July 1990
  *
- * $Id: julday.c 3606 2007-11-13 17:53:23Z markstro $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
  **********************************************************************/
 #define JULDAY_C
@@ -5491,9 +5828,9 @@ int julday (DATETIME *datetime) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: load_param.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: load_param.c,v $
         Revision 1.5  1996/02/19 20:00:15  markstro
         Now lints pretty clean
@@ -5763,9 +6100,9 @@ long load_param (PARAM *param) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: oprint.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: oprint.c,v $
         Revision 1.4  1996/02/19 20:00:29  markstro
         Now lints pretty clean
@@ -6075,7 +6412,7 @@ void opdble (char *string, double *array, long n) {
  * returns a pointer to a PARAM struct which contains the given key
  * returns NULL if key not found
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: param_addr.c,v $
         Revision 1.4  1996/02/19 20:00:33  markstro
         Now lints pretty clean
@@ -6086,7 +6423,7 @@ void opdble (char *string, double *array, long n) {
  * Revision 1.2  1994/01/31  20:17:02  markstro
  * Make sure that all source files have CVS log.
  *
- * $Id: param_addr.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
  **************************************************************************/
 #define PARAM_ADDR_C
@@ -6138,9 +6475,9 @@ PARAM * param_addr (char *key) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: parse_args.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: parse_args.c,v $
         Revision 1.15  1999/10/22 17:14:36  markstro
         Added private variables
@@ -6219,7 +6556,7 @@ void parse_args (int argc, char **argv, int *set_count, char **set_name, char **
    char *ptr;
 
    Mdebuglevel = 0;
-   MAltContFile = strdup ("gsflow.control");
+   MAltContFile = strdup ("control");
 
 /*
 **  Get the model name.
@@ -6266,6 +6603,9 @@ void parse_args (int argc, char **argv, int *set_count, char **set_name, char **
          } else if (!strncmp(argv[i],"-rtg", 4)){
             runtime_graph_on = TRUE;
 
+		 } else if (!strncmp(argv[i],"-preprocess", 11)){
+            preprocess_on = TRUE;
+
          } else if (!strncmp(argv[i],"-set",4)){
             i++;
             *(set_name + *set_count) = strdup ((char *)((argv[i])));
@@ -6284,7 +6624,7 @@ void parse_args (int argc, char **argv, int *set_count, char **set_name, char **
 /**8************************** TEST DRIVER ****************************/
 
 /*
- * $Id: print_model_info.c 3083 2007-02-01 23:41:48Z markstro $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  */
 #define PRINT_MODEL_INFO_C
 #include <string.h>
@@ -6293,15 +6633,6 @@ void parse_args (int argc, char **argv, int *set_count, char **set_name, char **
 #include "mms.h"
 
 #define PRINTLEN 77
-
-//typedef struct node_type {
-//   char  *name;
-//   int   x, y;
-//   int   num_connectnions;
-//} NODE;
-
-//extern NODE nodes[];
-//extern int con_index[];
 
 /*--------------------------------------------------------------------*\
  | FUNCTION     : print_model_info
@@ -6312,77 +6643,55 @@ void parse_args (int argc, char **argv, int *set_count, char **set_name, char **
 \*--------------------------------------------------------------------*/
 int print_model_info (void) {
 
-  char pathname[MAXPATHLEN];
-  FILE *param_file;
-  //NODE *np;
-  char *module_names, str[21], *ptr, *end;
-  int *xpos, *ypos, *con_index, *num_connectnions;
-  int num_modules;
-  long i, j, k;
-  CONTROL *cp;
+  char pathname[MAXDATALNLEN];
+  FILE *model_info_file;
+  int i, j;
+  MODULE_DATA *module;
+  LIST *vlist, *plist;
 
-  /*
-   * get param file path name, open file
-   */
+	(void)sprintf (pathname, "%s.mod_name", MAltContFile);
 
-
-  (void)sprintf (pathname, "%s.mod_name", executable_model);
-
-  if ((param_file = fopen (pathname, "w")) == NULL) {
-    (void)fprintf(stderr,
-	    "ERROR - print_model_info - creating file '%s'\n", pathname);
-    perror("");
-    return(1);
-  }
+	if ((model_info_file = fopen (pathname, "w")) == NULL) {
+		(void)fprintf(stderr, "ERROR - print_model_info - creating file '%s'\n", pathname);
+		perror("");
+		return(1);
+	}
 
   /*
    * write header
    */
 
-  (void)fprintf(param_file, "%s\n", model_name);
-  (void)fprintf(param_file, "============\n\n");
+	(void)fprintf(model_info_file, "%s\n", model_name);
+	(void)fprintf(model_info_file, "============\n\n");
 
-  (void)fprintf(param_file, "Printout of module call order, X, Y, and number of connections.\n\n");
+	(void)fprintf(model_info_file, "Printout of module call order, version, variables, and parameters.\n\n");
 
-  cp = control_addr ("module_names");
-  num_modules = cp->size;
-   module_names = (char *)(cp->start_ptr);
+	for (i = 0; i < module_db->count; i++) {
+		// print module name
+		module = (MODULE_DATA *)(module_db->itm[i]);
+		fprintf(model_info_file, "%s,%s\n", module->name, module->version);
 
-   cp = control_addr ("module_x");
-   xpos = (int *)(cp->start_ptr);
+		// print the variables
+		vlist = module->vars;
+		fprintf(model_info_file, "   ");
+		for (j = 0; j < vlist->count; j++) {
+			fprintf(model_info_file, "%s,", (char *)(vlist->itm[j]));
+		}
+		fprintf(model_info_file, "\n");
 
-   cp = control_addr ("module_y");
-   ypos = (int *)(cp->start_ptr);
+		// print the parameters
+		plist = module->params;
+		fprintf(model_info_file, "   ");
+		for (j = 0; j < plist->count; j++) {
+			fprintf(model_info_file, "%s,", (char *)(plist->itm[j]));
+		}
+		fprintf(model_info_file, "\n");
 
-   cp = control_addr ("module_num_con");
-   num_connectnions = (int *)(cp->start_ptr);
-
-   cp = control_addr ("module_connections");
-   con_index = (int *)(cp->start_ptr);
-
-   ptr = module_names;
-   str[20] = '\0';
-   for (i = 0; i < num_modules; i++) {
-		strncpy (str, "                     ", 20);
-		strncpy (str, ptr, 20);
-		end = strchr(str, ' ');
-		if (end) *(end) = '\0';
-	   (void)fprintf(param_file, "%s, %d, %d, %d\n", str, xpos[i], ypos[i], num_connectnions[i]);
-	   ptr = ptr + 20;
-   }
-
-  (void)fprintf(param_file, "\n\nPrintout of connections.\n\n");
-
-  j = 0;
-   for (k = 0; k < num_modules; k++) {
-       for (i = 0; i < num_connectnions[k]; i++) {
-	      fprintf(param_file, "%d ", con_index[j++]);
-       }
 	}
-	fprintf(param_file, "\n");
+	//fprintf(model_info_file, "\n\n\n\n\n\n");
 
-
-  fclose(param_file);
+ 
+  fclose(model_info_file);
 
   return(0);
 
@@ -6390,9 +6699,9 @@ int print_model_info (void) {
 /**************************************************************************
  * print_params.c: prints the param data base to a file
  *
- * $Id: print_params.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: print_params.c,v $
         Revision 1.15  2001/11/27 16:00:10  markstro
         Unknown
@@ -6445,8 +6754,8 @@ int print_model_info (void) {
 #include <stdio.h>
 #include <stdlib.h>
 #include "mms.h"
-
-#define PRINTLEN 77
+//
+//#define PRINTLEN 77
 
 /*--------------------------------------------------------------------*\
  | FUNCTION     : print_params
@@ -6457,7 +6766,7 @@ int print_model_info (void) {
 \*--------------------------------------------------------------------*/
 int print_params (void) {
 
-  char pathname[MAXPATHLEN], *infostr;
+  char pathname[MAXDATALNLEN], *infostr;
   FILE *param_file;
   PARAM *param;
   DIMEN *dim;
@@ -6467,7 +6776,7 @@ int print_params (void) {
    * get param file path name, open file
    */
 
-  (void)sprintf (pathname, "%s.par_name", executable_model);
+  (void)sprintf (pathname, "%s.par_name", MAltContFile);
 
   if ((param_file = fopen (pathname, "w")) == NULL) {
     (void)fprintf(stderr,
@@ -6512,14 +6821,17 @@ int print_params (void) {
 
 	for (i = 0; i < dim_db->count; i++) {
 		dim = (DIMEN *)(dim_db->itm[i]);
-		(void)fprintf(param_file, "\n");
-		(void)fprintf(param_file, "Name  : %s\n", dim->name);
-		(void)fprintf(param_file, "Value : %ld\n", dim->value);
-/*  DANGER added for data dictionary print out */
-		(void)fprintf(param_file, "Desc  : %s\n", dim->descr);
-        if (dim->fixed)
-		   (void)fprintf(param_file, "Fixed\n");
-/*  end DANGER */
+//  Only print out dimensions that have calls to "getdim" from the modules
+//  markstro -- this didn't work.
+		//if (dim->got) {
+			(void)fprintf(param_file, "\n");
+			(void)fprintf(param_file, "Name  : %s\n", dim->name);
+			(void)fprintf(param_file, "Value : %ld\n", dim->value);
+			(void)fprintf(param_file, "Desc  : %s\n", dim->descr);
+			if (dim->fixed) {
+			   (void)fprintf(param_file, "Fixed\n");
+			}
+		//}
 	}
 
   /*
@@ -6702,9 +7014,9 @@ void print_param (FILE *param_file, PARAM *param, long l, long nl, long k,
 /**************************************************************************
  * print_vars.c: prints the var data base to a file
  *
- * $Id: print_vars.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: print_vars.c,v $
         Revision 1.10  1999/10/22 17:14:37  markstro
         Added private variables
@@ -6753,7 +7065,7 @@ void print_param (FILE *param_file, PARAM *param, long l, long nl, long k,
 \*--------------------------------------------------------------------*/
 int print_vars (void) {
 
-  char pathname[MAXPATHLEN], *infostr;
+  char pathname[MAXDATALNLEN], *infostr;
   FILE *var_file;
   PUBVAR *var;
   long i, j;
@@ -6762,7 +7074,7 @@ int print_vars (void) {
    * get var file path name, open file
    */
 
-  (void)sprintf (pathname, "%s.var_name", executable_model);
+  (void)sprintf (pathname, "%s.var_name", MAltContFile);
 
 
   if ((var_file = fopen (pathname, "w")) == NULL) {
@@ -6975,9 +7287,9 @@ void print_var (FILE *var_file, PUBVAR *var, long l, long nl, long k, long nk,
  *
  * Returns 0 if successful, 1 otherwise.
  *
- * $Id: putvar.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: putvar.c,v $
         Revision 1.7  1996/02/19 20:00:38  markstro
         Now lints pretty clean
@@ -7109,14 +7421,11 @@ long putvar (char *module, char *name, long maxsize, char *type, double *value) 
   /*
    * convert fortran types to C types
    */
-  if (!strcmp(type, "integer") || !strcmp(type, "long"))
-    var_type = M_LONG;
-  else
-    if (!strcmp(type, "real") || !strcmp(type, "float"))
-      var_type = M_FLOAT;
-    else
-      if (!strcmp(type, "double precision") || !strcmp(type, "double"))
-        var_type = M_DOUBLE;
+  var_type = M_LONG;
+  if (!strcmp(type, "real") || !strcmp(type, "float"))
+    var_type = M_FLOAT;
+  else if (!strcmp(type, "double precision") || !strcmp(type, "double"))
+    var_type = M_DOUBLE;
 
   /*
    * check that type is possible
@@ -7250,9 +7559,9 @@ long putvar (char *module, char *name, long maxsize, char *type, double *value) 
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: read_control.c 3384 2007-06-04 19:46:44Z markstro $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3384 $
+   $Revision: 2491 $
         $Log: read_control.c,v $
         Revision 1.21  1996/08/28 15:24:10  markstro
         Unknown
@@ -7335,7 +7644,7 @@ static char *rc (char *control_name) {
    float   *fptr;
    long   *lptr;
    char   **cptr;
-   char   line[MAXLNLEN], key[MAXKEYLEN];
+   char   line[MAXDATALNLEN], *key;
    static char      buf[256];
 
 /*
@@ -7346,7 +7655,7 @@ static char *rc (char *control_name) {
       return (buf);
    }
 
-   if (!fgets_rc(line, MAXLNLEN, control_file)) {
+   if (!fgets_rc(line, MAXDATALNLEN, control_file)) {
       fclose (control_file);
       (void)sprintf (buf, "read_control: Problems reading %s", control_name);
       return (buf);
@@ -7361,7 +7670,7 @@ static char *rc (char *control_name) {
 **   Space fwd to #### header.
 */
       while (strncmp(line, "####", 4)) {
-         if (fgets_rc(line, MAXLNLEN, control_file) == NULL) {
+         if (fgets_rc(line, MAXDATALNLEN, control_file) == NULL) {
             fclose(control_file);
             return(NULL);
          }
@@ -7369,25 +7678,21 @@ static char *rc (char *control_name) {
 /*
 **   get key
 */
-      if (!fgets_rc (key, MAXKEYLEN, control_file)) {
+      if (!fgets_rc (line, MAXDATALNLEN, control_file)) {
          (void)sprintf (buf, "read_control: reading key; Early end-of-file");
+         printf ("read_control: reading key; Early end-of-file\n");
          return (buf);
       }
 
-      *(key + strlen (key) - 1) = '\0';
+	  /* Replace the end of line with a null */
+      *(line + strlen (line) - 1) = '\0';
+	  key = strdup (line);
 
-      cp = control_addr (key);
-/*
-      if (cp) {
-         (void)sprintf (buf, "read_control: control variable %s already declared", key);
-         return (buf);
-      }
-*/
 
 /*
 **   get size
 */
-      if (!fgets_rc (line, MAXLNLEN, control_file)) {
+      if (!fgets_rc (line, MAXDATALNLEN, control_file)) {
          (void)sprintf (buf,"read_control: reading size; key = %s", key);
          return (buf);
       }
@@ -7399,24 +7704,40 @@ static char *rc (char *control_name) {
 /*
 **   get type
 */
-      if (!fgets_rc (line, MAXLNLEN, control_file)) {
+      if (!fgets_rc (line, MAXDATALNLEN, control_file)) {
          (void)sprintf (buf, "read_control: reading type; key = %s", key);
          return (buf);
       }
 
       if (!(type = atol(line))) {
-        (void)sprintf (buf, "read_control: invalid type; key = %s, line = %s", key, line);
-        return (buf);
+         (void)sprintf (buf, "read_control: invalid type; key = %s, line = %s", key, line);
+         return (buf);
       }
 
-      if (!cp) cp = add_control (key, type, size);
+      cp = control_addr (key);
+      if (!cp) {
+         cp = add_control (key, type, size); // This is if the control variable was not set in the setupcont function
+//	  printf ("   read_control E %s NOT FOUND in SETUPCONT\n", key);
+     }
+     
+	  if (cp->set_in_file > 0) {
+		   printf ("\n\nread_control: %s is duplicated in the control file %s.\n\n\n", key, control_name);
+	  }
+
+//  Set the values to what was just read from the file
+      cp->key = strdup(key);
+      cp->type = type;
+      cp->size = size;
+      cp->set_in_file = 1;
 
       switch (type) {
          case M_DOUBLE:
-            dptr = (double *)(cp->start_ptr);
+			dptr = (double *)umalloc (sizeof (double) * size);
+            cp->start_ptr = (void *)dptr;
             for (i = 0; i < size; i++) {
-               if (fgets_rc(line, MAXLNLEN, control_file) == NULL) {
+               if (fgets_rc(line, MAXDATALNLEN, control_file) == NULL) {
                   (void)sprintf (buf, "read_control: key is %s.\n, file: %s", key, control_name);
+                  printf ("read_control CRASH reading control file: key is %s.\n, file: %s\n", key, control_name);
                   return (buf);
                }
                dptr[i] = atof(line);
@@ -7424,10 +7745,12 @@ static char *rc (char *control_name) {
             break;
 
          case M_FLOAT:
-            fptr = (float *) cp->start_ptr;
+			fptr = (float *)umalloc (sizeof (float) * size);
+            cp->start_ptr = (void *)fptr;
             for (i = 0; i < size; i++) {
-               if (fgets_rc(line, MAXLNLEN, control_file) == NULL) {
+               if (fgets_rc(line, MAXDATALNLEN, control_file) == NULL) {
                   (void)sprintf (buf, "read_control: key is %s.\n, file: %s", key, control_name);
+                  printf ("read_control CRASH reading control file: key is %s.\n, file: %s\n", key, control_name);
                   return (buf);
                }
                fptr[i] = (float) atof(line);
@@ -7435,10 +7758,12 @@ static char *rc (char *control_name) {
             break;
 
          case M_LONG:
-            lptr = (long *) cp->start_ptr;
+			lptr = (long *)umalloc (sizeof (long) * size);
+            cp->start_ptr = (void *)lptr;
             for (i = 0; i < size; i++) {
-               if (fgets_rc(line, MAXLNLEN, control_file) == NULL) {
+               if (fgets_rc(line, MAXDATALNLEN, control_file) == NULL) {
                   (void)sprintf (buf, "read_control: key is %s.\n, file: %s", key, control_name);
+                  printf ("read_control CRASH reading control file: key is %s.\n, file: %s\n", key, control_name);
                   return (buf);
                }
                lptr[i] =  atol(line);
@@ -7446,19 +7771,21 @@ static char *rc (char *control_name) {
             break;
 
          case M_STRING:
-            cptr = (char **) cp->start_ptr;
+			cp->start_ptr = umalloc (sizeof (char *) * size);
             for (i = 0; i < size; i++) {
-               if (fgets_rc(line, MAXLNLEN, control_file) == NULL) {
+               if (fgets_rc(line, MAXDATALNLEN, control_file) == NULL) {
                   (void)sprintf (buf, "read_control: key is %s.\n, file: %s", key, control_name);
+                  printf ("read_control CRASH reading control file: key is %s.\n, file: %s\n", key, control_name);
                   return (buf);
                }
                line[strlen(line)-1] = '\0';
-               *(cptr + i) = strdup (line);
+               *((char **)cp->start_ptr + i) = strdup (line);
+
+/*			   printf ("read_control just put in string value %s\n", *((char **)cp->start_ptr + i));*/
             }
             break;
       }
    }
-
    fclose (control_file);
    return (NULL);
 }
@@ -7472,42 +7799,42 @@ static char *rc (char *control_name) {
  | RESTRICTIONS :
 \*--------------------------------------------------------------------*/
 char *fgets_rc (char *str, int num, FILE *stream) {
-	char *ptr, *ptr2;
-	// Four situations: (1) Line is blank, (2) line starts with //,
-	//   (3) line has info and contains //, (4) line has info and
-	//   does not contain //
+   char *ptr, *ptr2;
+   // Four situations: (1) Line is blank, (2) line starts with //,
+   //   (3) line has info and contains //, (4) line has info and
+   //   does not contain //
 
-	ptr = fgets(str, num, stream);
-	if (!ptr) return ptr;
+   ptr = fgets(str, num, stream);
+   if (!ptr) return ptr;
 
 /*
 **  A line that starts with "//" is a comment (as far as MMS is concerned).
 */
-		if ((str[0] == '/') && (str[1] == '/')) {
-			return fgets_rc (str, num, stream);
+      if ((str[0] == '/') && (str[1] == '/')) {
+         return fgets_rc (str, num, stream);
 
 /*
 **  Ignore blank lines
 */
-		} else if (strlen (str) <= 1) {
-			return fgets_rc (str, num, stream);
+      } else if (strlen (str) <= 1) {
+         return fgets_rc (str, num, stream);
 /*
 ** Assume anything else is a data line
 */
 
-		} else if (strstr (str, "//")) {
+      } else if (strstr (str, "//")) {
 /*
 ** comment in data line
 */
-			ptr2 = strstr (str, "//");
-			ptr2--;
-			while (*ptr2 != ' ') ptr2--;
-			*(ptr2 + 1) = '\0';
-			return ptr;
+         ptr2 = strstr (str, "//");
+         ptr2--;
+         while (*ptr2 != ' ') ptr2--;
+         *(ptr2 + 1) = '\0';
+         return ptr;
 
-		} else {
-			return ptr;
-		}
+      } else {
+         return ptr;
+      }
 }
 
 /**7****************** LOCAL FUNCTION DEFINITIONS *********************/
@@ -7529,9 +7856,9 @@ char *fgets_rc (char *str, int num, FILE *stream) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: read_datainfo.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: read_datainfo.c,v $
         Revision 1.15  2000/03/07 20:35:18  markstro
         Added comments to data file header
@@ -7609,7 +7936,7 @@ char *read_datainfo (FILE_DATA *fd) {
 
    Mnreads = 0;
 
-   if (!(fgets (fd->info, MAXINFOLEN, fd->fp))) {
+   if (!(fgets (fd->info, MAXDATALNLEN, fd->fp))) {
       (void)sprintf (err_buf, "Can't read data file info string\n%s", fd->name);
       return (err_buf);
    }
@@ -7772,9 +8099,9 @@ char *read_datainfo (FILE_DATA *fd) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: read_line.c 3608 2007-11-13 18:22:00Z markstro $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3608 $
+   $Revision: 2491 $
         $Log: read_line.c,v $
         Revision 1.35  2001/01/22 22:26:41  markstro
         unknown
@@ -7917,7 +8244,7 @@ static double   prevjt = -1.0;
 \*--------------------------------------------------------------------*/
 long read_line (void) {
 
-   static char err[80];
+   /*static char err[80];*/
 
    char   *start_point, *end_point;
    float   initial_deltat;
@@ -8053,6 +8380,7 @@ cur_fd->time = {year = 1956, month = 2, day = 19, hour = 0, min = 0, sec = 0,
 */
          for (i = 0; i < Mnreads; i++) {
             for (j = 0; j < Mcheckbase[i]->count; j++) {
+               start_point = NULL;
                if (Mcheckbase[i]->var) {
                   start_point = end_point;
                   errno = 0;
@@ -8667,9 +8995,9 @@ static void INSERT_time (char *line, DATETIME *ptr) {
  * read_params.c: reads the params data base from a file
  * File name is passed in as an argument
  *
- * $Id: read_params.c 3236 2007-03-27 22:21:33Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3236 $
+   $Revision: 2491 $
         $Log: read_params.c,v $
         Revision 1.30  1998/10/20 15:53:02  markstro
         Fixed "blank" format.
@@ -8788,10 +9116,10 @@ static void INSERT_time (char *line, DATETIME *ptr) {
 #include <stdlib.h>
 #include "mms.h"
 
-static char *READ_param_head (PARAM **, FILE *, char *, char[]);
+static char *READ_param_head (PARAM **, FILE **, char *, char[]);
 static char *READ_param_values (PARAM *, FILE *, char []);
-static char *rp (char *);
-static int ver = 0, rev = 0;
+static char *rp (char *, int);
+//static int ver = 0, rev = 0;
 
 int nComments;
 char **Comments;
@@ -8803,7 +9131,7 @@ char **Comments;
  | RETURN VALUE : 
  | RESTRICTIONS :
 \*--------------------------------------------------------------------*/
-char *read_params (char *param_file_name) {
+char *read_params (char *param_file_name, int index) {
   	static char *foo = NULL;
   	char old[256], *cptr;
 
@@ -8816,10 +9144,10 @@ char *read_params (char *param_file_name) {
 		foo = strdup (param_file_name);
 	}
 
-	cptr = rp (param_file_name);
+	cptr = rp (param_file_name, index);
 
 	if (cptr) {
-		rp (old);
+		rp (old, index);
 
 		free (foo);
 		foo = strdup (old);
@@ -8840,7 +9168,7 @@ char *read_dims (char *param_file_name) {
   DIMEN *dim;
   int dim_size, i, j;
 
-  char line[MAXLNLEN], key[MAXKEYLEN];
+  char line[MAXDATALNLEN], key[MAXDATALNLEN];
   static char buf[256];
   char *endptr;
   char *nch;
@@ -8850,232 +9178,255 @@ char *read_dims (char *param_file_name) {
 /*
 * get param name, open file
 */
-  if ((param_file = fopen (param_file_name, "r")) == NULL) {
-    if (param_file_name)
-      (void)sprintf (buf, "read_dims: cannot open file: %s", param_file_name);
-    else
-      (void)sprintf (buf, "read_dims: cannot open file:");
-    return (buf);
-  }
+	if ((param_file = fopen (param_file_name, "r")) == NULL) {
+		if (param_file_name) {
+			(void)sprintf (buf, "read_dims: cannot open file: %s", param_file_name);
+		} else {
+			(void)sprintf (buf, "read_dims: cannot open file:");
+		}
+		return (buf);
+	}
 
 /*
 * read in run info string
 */
-  if (!fgets (line, MAXINFOLEN, param_file)) {
-    fclose (param_file);
-     (void)sprintf (buf, "read_dims: problems reading info line");
-    return (buf);
-  }
+	if (!fgets (line, MAXDATALNLEN, param_file)) {
+		if (param_file != NULL) {
+		   fclose (param_file);
+		   param_file = NULL;
+		}
 
-  if (Mparaminfo) free (Mparaminfo);
-  Mparaminfo = strdup (line);
+		(void)sprintf (buf, "read_dims: problems reading info line");
+		return (buf);
+	}
+
+	if (Mparaminfo) {
+		free (Mparaminfo);
+	}
+	Mparaminfo = strdup (line);
 
 /*
 **	See if version number is set
 */
-  if (!fgets (line, MAXINFOLEN, param_file)) {
-    fclose (param_file);
-     (void)sprintf (buf, "read_dims: problems reading version number");
-    return (buf);
-  }
+	if (!fgets (line, MAXDATALNLEN, param_file)) {
+		if (param_file != NULL) {
+		   fclose (param_file);
+		   param_file = NULL;
+		}
 
-  if (!strncmp (line, "Version:", 8)) {
-    nch = (char *)strchr (line, ' ');
-    if (nch) {
-      *nch = '\0';
-      nch++;
-      ver = atoi (nch);
-    }
+		(void)sprintf (buf, "read_dims: problems reading version number");
+		return (buf);
+	}
 
-    nch = (char *)strchr (nch, '.');
-    if (nch) {
-      *nch = '\0';
-      nch++;
-      rev = atoi (nch);
-    }
+  //if (!strncmp (line, "Version:", 8)) {
+  //  nch = (char *)strchr (line, ' ');
+  //  if (nch) {
+  //    *nch = '\0';
+  //    nch++;
+  //    ver = atoi (nch);
+  //  }
 
-    if (!fgets (line, MAXINFOLEN, param_file)) {
-      fclose (param_file);
-      (void)sprintf (buf, "read_dims: problems reading dimension label");
-      return (buf);
-    }
+  //  nch = (char *)strchr (nch, '.');
+  //  if (nch) {
+  //    *nch = '\0';
+  //    nch++;
+  //    rev = atoi (nch);
+  //  }
+
+	if (!fgets (line, MAXDATALNLEN, param_file)) {
+		if (param_file != NULL) {
+		   fclose (param_file);
+		   param_file = NULL;
+		}
+		(void)sprintf (buf, "read_dims: problems reading dimension label");
+		return (buf);
+	}
 
 /*
  *  Read in comments -- everything between version line and
  *  "** Dimensions **" line is a comment
  */
 
-    Comments = (char **)malloc (1000 * sizeof (char *));
-    nComments = 0;
+	Comments = (char **)malloc (1000 * sizeof (char *));
+	nComments = 0;
 
-    while (strncmp (line, "** Dimensions **", 16)) {
-      if (!fgets (line, MAXLNLEN, param_file)) {
-        fclose (param_file);
-        (void)sprintf (buf, "read_dims: problems skipping comments");
-        return (buf);
-      }
+	while (strncmp (line, "** Dimensions **", 16)) {
+		if (!fgets (line, MAXDATALNLEN, param_file)) {
+		   if (param_file != NULL) {
+		      fclose (param_file);
+		      param_file = NULL;
+		   }
+			(void)sprintf (buf, "read_dims: problems skipping comments");
+			return (buf);
+		}
 
-      if (strncmp (line, "** Dimensions **", 16)) {
-        printf ("Comment line = %s\n", line);
-        Comments[nComments++] = strdup (line);
-      }
-    }
-  }
+		if (strncmp (line, "** Dimensions **", 16)) {
+			printf ("Comment line = %s\n", line);
+			Comments[nComments++] = strdup (line);
+		}
+	}
+	//}
 
 /*
 **	Check dimension label
 */
-  if (strncmp (line, "** Dimensions **", 16)) {
-    fclose (param_file);
-    (void)sprintf (buf,
-       "read_dims: file: %s '** Dimensions **' label expected but not found.",
-       param_file_name);
-    return (buf);
-  }
+	if (strncmp (line, "** Dimensions **", 16)) {
+		if (param_file != NULL) {
+		   fclose (param_file);
+		   param_file = NULL;
+		}
+		(void)sprintf (buf, "read_dims: file: %s '** Dimensions **' label expected but not found.",
+		param_file_name);
+		return (buf);
+	}
   
-  if (!fgets (line, MAXLNLEN, param_file)) {
-    fclose (param_file);
-     (void)sprintf (buf, "read_dims: unexpected end of file");
-    return (buf);
-  }
+	if (!fgets (line, MAXDATALNLEN, param_file)) {
+		if (param_file != NULL) {
+		   fclose (param_file);
+		   param_file = NULL;
+		}
+		(void)sprintf (buf, "read_dims: unexpected end of file");
+		return (buf);
+	}
 
 /*
 * read in dimensions
 */
-  while (strncmp (line, "** Parameters **", 16)) {
+	while (strncmp (line, "** Parameters **", 16)) {
 
-    if (strncmp (line, "####", 4)) {
-      fclose (param_file);
-      (void)sprintf (buf,
-		     "read_dims: file: %s.  Expecting '####' found %s.",
-		     param_file_name, line);
-      return (buf);
-    }
+		if (strncmp (line, "####", 4)) {
+		   if (param_file != NULL) {
+		      fclose (param_file);
+		      param_file = NULL;
+		   }
+			(void)sprintf (buf, "read_dims: file: %s.  Expecting '####' found %s.", param_file_name, line);
+			return (buf);
+		}
 
 /*
 **	Read dimension name from parameter file.
 */
-    if (fgets (key, MAXKEYLEN, param_file) == NULL) {
-      fclose (param_file);
-      (void)sprintf (buf,
-            "read_dims: file: %s.  Trying to read dimension name.",
-            param_file_name);
-      return (buf);
-    }
+		if (fgets (key, MAXDATALNLEN, param_file) == NULL) {
+		   if (param_file != NULL) {
+		      fclose (param_file);
+		      param_file = NULL;
+	       }
+			(void)sprintf (buf, "read_dims: file: %s.  Trying to read dimension name.", param_file_name);
+			return (buf);
+		}
 
-    key[strlen(key)-1] = '\0';
-    
-    dim = dim_addr (key);
-    if (dim) {
+		key[strlen(key)-1] = '\0';
+
+		dim = dim_addr (key);
+		if (dim) {
 /*
 **	Read dimension size from parameter file.
 */
-      if (fgets (line, MAXLNLEN, param_file) == NULL) {
-	fclose (param_file);
-	(void)sprintf (buf,
-            "read_dims: file: %s key: %s Can't read dimension size.",
-            param_file_name, key);
-	return (buf);
-      }
+			if (fgets (line, MAXDATALNLEN, param_file) == NULL) {
+		       if (param_file != NULL) {
+		          fclose (param_file);
+		          param_file = NULL;
+	           }
+				(void)sprintf (buf, "read_dims: file: %s key: %s Can't read dimension size.", param_file_name, key);
+				return (buf);
+			}
 
-      errno = 0;
-      dim_size = strtol(line, &endptr, 10);
-      if (errno != 0) {
-	fclose (param_file);
-	(void)sprintf (buf,
-           "read_dims: Trouble decoding size from: %s file: %s",
-            line, param_file_name);
-	return (buf);
-      }
+			errno = 0;
+			dim_size = strtol(line, &endptr, 10);
+			if (errno != 0) {
+		       if (param_file != NULL) {
+		          fclose (param_file);
+		          param_file = NULL;
+		       }
+				(void)sprintf (buf, "read_dims: Trouble decoding size from: %s file: %s", line, param_file_name);
+				return (buf);
+			}
 
 /*
 **	If necessary, reset dimension to value read from file.
 */
-      if (dim->value != dim_size)
-	reset_dim (dim, dim_size);
+			if (dim->value != dim_size) {
+				reset_dim (dim, dim_size);
+			}
 
 /*
 * check if there are index names below
 */
-      fgets (line, MAXLNLEN, param_file);
+			if (fgets (line, MAXDATALNLEN, param_file)) {
+				if (strncmp (line, "** Parameters **", 16)) {
+					if (dim->names) {
+				//        free (dim->names);
+						dim->names = NULL;
+					}
 
-      if (strncmp (line, "** Parameters **", 16)) {
+					if (dim->notes) {
+					//        free (dim->notes);
+						dim->notes = NULL;
+					}
 
+					if (strncmp (line, "####", 4)) {
+						dim->names = (char **)calloc (dim_size, sizeof (char *));
+						dim->notes = (char **)calloc (dim_size, sizeof (char *));
 
-/*
-**	Free everything and start over
-*/
-/*
-	for (i = 0; i < dim->value; i++) {
-	  if (dim->names && dim->names[i])
-	    free (dim->names[i]);
+						done = FALSE;
+						i = 0;
+						while (!done) {
+							if (!strncmp (line, "####", 4)) {
+								for (j = i; j < dim_size; j++) {
+									dim->names[j] = NULL;
+									dim->notes[j] = NULL;
+								}
+								done = TRUE;
 
-	  if (dim->notes && dim->notes[i])
-	    free (dim->notes[i]);
+							} else if (line[0] == '@') {
+								i--;
+								nch = (char *)strchr (line, '\n');
+								if (nch) {
+									*nch = '\0';
+								}
+								dim->notes[i] = strdup (&(line[1]));
+								fgets (line, MAXDATALNLEN, param_file);
+								i++;
+
+							} else {
+								nch = (char *)strchr (line, '\n');
+								if (nch) {
+									*nch = '\0';
+								}
+								dim->names[i] = strdup (line);
+								fgets (line, MAXDATALNLEN, param_file);
+								i++;
+							}
+
+							if ((i > dim_size) || ((i == dim_size) && (line[0] != '@'))) {
+								done = TRUE;
+							}
+						}
+					} else {
+						dim->names = NULL;
+						dim->files = NULL;
+						dim->notes = NULL;
+					}
+				}
+			} else {
+		       if (param_file != NULL) {
+		          fclose (param_file);  // EOL was returned -- done reading dimensions from this file;
+		          param_file = NULL;
+		       }
+				return (NULL);
+			}
+		} else {
+			(void)fprintf (stderr,"\nMMS Warning -- from read_dims:\ndimension '%s' is set in parameter file:\n%s\nbut has never been declared.\n\n", key, param_file_name);
+			fgets (line, MAXDATALNLEN, param_file);
+			fgets (line, MAXDATALNLEN, param_file);
+		}
 	}
-*/
 
-	if (dim->names) {
-//        free (dim->names);
-	  dim->names = NULL;
+	if (param_file != NULL) {
+	   fclose (param_file);
+	   param_file = NULL;
 	}
-
-	if (dim->notes) {
-//        free (dim->notes);
-	  dim->notes = NULL;
-	}
-
-	if (strncmp (line, "####", 4)) {
-
-	  dim->names = (char **)calloc (dim_size, sizeof (char *));
-	  dim->notes = (char **)calloc (dim_size, sizeof (char *));
-
-	  done = FALSE;
-	  i = 0;
-	  while (!done) {
-	    if (!strncmp (line, "####", 4)) {
-	      for (j = i; j < dim_size; j++) {
-		dim->names[j] = NULL;
-		dim->notes[j] = NULL;
-	      }
-	      done = TRUE;
-
-	    } else if (line[0] == '@') {
-	      i--;
-	      nch = (char *)strchr (line, '\n');
-	      if (nch) *nch = '\0';
-	      dim->notes[i] = strdup (&(line[1]));
-	      fgets (line, MAXLNLEN, param_file);
-	      i++;
-
-	    } else {
-	      nch = (char *)strchr (line, '\n');
-	      if (nch) *nch = '\0';
-	      dim->names[i] = strdup (line);
-	      fgets (line, MAXLNLEN, param_file);
-	      i++;
-	    }
-
-	    if ((i > dim_size) || ((i == dim_size) && (line[0] != '@')))
-	      done = TRUE;
-	  }
-	} else {
-	  dim->names = NULL;
-	  dim->files = NULL;
-	  dim->notes = NULL;
-	}
-      }
-    } else {
-      (void)fprintf (stderr,"\nMMS Warning -- from read_dims:\ndimension '%s' is set in parameter file:\n%s\nbut has never been declared.\n\n",
-		    key, param_file_name);
-      fgets (line, MAXLNLEN, param_file);
-      fgets (line, MAXLNLEN, param_file);
-    }
-  }
-
-  fclose (param_file);
-
-  return (NULL);
+	return (NULL);
 }
 
 /*--------------------------------------------------------------------*\
@@ -9085,52 +9436,80 @@ char *read_dims (char *param_file_name) {
  | RETURN VALUE : 
  | RESTRICTIONS :
 \*--------------------------------------------------------------------*/
-static char *rp (char *param_file_name) {
+static char *rp (char *param_file_name, int index) {
 
   FILE *param_file;
   PARAM *param;
 
-  char line[MAXLNLEN];
+  char line[MAXDATALNLEN];
   static char buf[256], *buf_ptr;
 
 
 /*
 * get param name, open file
 */
-  if ((param_file = fopen (param_file_name, "r")) == NULL) {
-    if (param_file_name)
-      (void)sprintf (buf, "read_params: cannot open file: %s", param_file_name);
-    else
-      (void)sprintf (buf, "read_params: cannot open file:");
-    return (buf);
-  }
+	if ((param_file = fopen (param_file_name, "r")) == NULL) {
+		if (param_file_name)
+			(void)sprintf (buf, "read_params: cannot open file: %s", param_file_name);
+		else
+			(void)sprintf (buf, "read_params: cannot open file:");
 
-  fgets (line, MAXLNLEN, param_file);
-  while (strncmp (line, "** Parameters **", 16)) {
-      fgets (line, MAXLNLEN, param_file);
-  }
-  fgets (line, MAXLNLEN, param_file);
+		return (buf);
+	}
+
+	fgets (line, MAXDATALNLEN, param_file);
+	if (index == 0) {  // if index equals zero, than this parameter file has dimension stuff and we need to skip over it.
+		while (strncmp (line, "** Parameters **", 16)) {
+			if (!fgets (line, MAXDATALNLEN, param_file)) {  // return if hits eol
+		       if (param_file != NULL) {
+		          fclose (param_file);
+		          param_file = NULL;
+		       }
+			   return (NULL);
+			}
+		}
+		fgets (line, MAXDATALNLEN, param_file);
+	}
 
 /*
 **	Read in parameters.
 */
-  while (!feof (param_file)) {
-    buf_ptr = READ_param_head (&param, param_file, param_file_name, line);
-    if (buf_ptr) {
-      if ((int)buf_ptr == -1) {
-        return (NULL);
-      } else {
-        return (buf_ptr);
-      }
-    }
-    
-    buf_ptr = READ_param_values (param, param_file, line);
-    if (buf_ptr)
-      return (buf_ptr);
-  }
-  fclose (param_file);
+	while (!feof (param_file)) {
+		buf_ptr = READ_param_head (&param, &param_file, param_file_name, line);
+		if (buf_ptr) {
+			if (buf_ptr == (char *)-1) {
+		      if (param_file != NULL) {
+		         fclose (param_file);
+		         param_file = NULL;
+		      }
+			  return (NULL);
+			} else {
+		       if (param_file != NULL) {
+		          fclose (param_file);
+		          param_file = NULL;
+		       }
+			   return (buf_ptr);
+			}
+		}
 
-  return (NULL);
+		if (param != NULL) {
+			buf_ptr = READ_param_values (param, param_file, line);
+			if (buf_ptr) {
+		        if (param_file != NULL) {
+		           fclose (param_file);
+		           param_file = NULL;
+		        }
+				return (buf_ptr);
+			}
+			updateparam (param->name);
+		}
+	}
+    if (param_file != NULL) {
+	   fclose (param_file);
+	   param_file = NULL;
+    }
+
+	return (NULL);
 }
 
 /*--------------------------------------------------------------------*\
@@ -9142,9 +9521,9 @@ static char *rp (char *param_file_name) {
  | RETURN VALUE : 
  | RESTRICTIONS :
 \*--------------------------------------------------------------------*/
-static char *READ_param_head (PARAM **param_ptr, FILE *param_file, char *param_file_name, char line[]) {
-  char key[MAXKEYLEN];
-  char dimen[MAXDIMLEN];
+static char *READ_param_head (PARAM **param_ptr, FILE **param_file, char *param_file_name, char line[]) {
+  char key[MAXDATALNLEN];
+  char dimen[MAXDATALNLEN];
   static char buf[256];
   char *temp, *npos, *tempfmt;
   int tempwidth, i, param_size, type;
@@ -9153,15 +9532,18 @@ static char *READ_param_head (PARAM **param_ptr, FILE *param_file, char *param_f
 * space fwd to #### header
 */
   while (strncmp (line, "####", 4))
-    if (!fgets (line, MAXLNLEN, param_file)) {
-      fclose (param_file);
+    if (!fgets (line, MAXDATALNLEN, *param_file)) {
+		if (*param_file != NULL) {
+		   fclose (*param_file);
+		   *param_file = NULL;
+		}
       return ((char *)-1);
     }
   
 /*
 * get key, column width and format
 */
-  if (fgets (line, MAXLNLEN, param_file) == NULL) {
+  if (fgets (line, MAXDATALNLEN, *param_file) == NULL) {
     (void)sprintf (buf, "\nread_params: Early end-of-file: %s", param_file_name);
     return (buf);
   }
@@ -9220,16 +9602,16 @@ static char *READ_param_head (PARAM **param_ptr, FILE *param_file, char *param_f
     if (tempfmt) {
       tempfmt[strlen(tempfmt)-1] = '\0';
       if(!(*param_ptr)->format)
-	(*param_ptr)->format = malloc(strlen(tempfmt)+1);
+	(*param_ptr)->format = (char *)(malloc(strlen(tempfmt)+1));
       else
-	(*param_ptr)->format = realloc((*param_ptr)->format, strlen(tempfmt) + 1);
+	(*param_ptr)->format = (char *)(realloc((*param_ptr)->format, strlen(tempfmt) + 1));
       (void)strcpy((*param_ptr)->format, tempfmt);
     } else
       (*param_ptr)->format = NULL;
 /*
 * get number of dimensions
 */
-    if(fgets(line, MAXLNLEN, param_file) == NULL) {
+    if(fgets(line, MAXDATALNLEN, *param_file) == NULL) {
       (void)sprintf (buf,
 		     "read_params: reading param ndimen, Early end-of-file: %s",
 		     param_file_name);
@@ -9255,7 +9637,7 @@ static char *READ_param_head (PARAM **param_ptr, FILE *param_file, char *param_f
 */
 
       for (i = 0; i < (*param_ptr)->ndimen; i++) {
-        if(fgets(dimen, MAXDIMLEN, param_file) == NULL) {
+        if(fgets(dimen, MAXDATALNLEN, *param_file) == NULL) {
            (void)sprintf (buf,
                    "read_params: reading param dimen, Early end-of-file: %s",
 			       param_file_name);
@@ -9275,7 +9657,7 @@ static char *READ_param_head (PARAM **param_ptr, FILE *param_file, char *param_f
 * get param size
 */
 
-     if(fgets(line, MAXLNLEN, param_file) == NULL) {
+     if(fgets(line, MAXDATALNLEN, *param_file) == NULL) {
         (void)sprintf (buf, "read_params: reading param size, Early end-of-file: %s", param_file_name);
         return (buf);
      }
@@ -9308,7 +9690,7 @@ static char *READ_param_head (PARAM **param_ptr, FILE *param_file, char *param_f
 * get type
 */
 
-    if(fgets(line, MAXLNLEN, param_file) == NULL) {
+    if(fgets(line, MAXDATALNLEN, *param_file) == NULL) {
       (void)sprintf (buf, "read_params: reading param type, Early end-of-file: %s",
 		     param_file_name);
       return (buf);
@@ -9341,22 +9723,34 @@ static char *READ_param_head (PARAM **param_ptr, FILE *param_file, char *param_f
  | RESTRICTIONS :
 \*--------------------------------------------------------------------*/
 static char *READ_param_values (PARAM *param, FILE *param_file, char line[]) {
-
-	int i;
+	int i, j;
 	char *nch;
 	int l1, l2, done;
 	int	desc_count = 0;
+	int repeat_count;
+	char delims[] = " ";
+	char *result = NULL;
+	char *comp_ptr = NULL;
+	static char crap[MAXDATALNLEN], crap2[MAXDATALNLEN];
+	static char buf[256];
+	float foo;
+	double d;
+	char *endp;
+	long l;
 
+	//if (!strncmp (param->name, "imperv_stor_max", 15)) {
+	//	printf ("imperv_stor_max\n");
+	//}
 /*
 **  Space for the values and value_desc are allocated in declparam
 */
 	done = FALSE;
 	i = 0;
 	while (!done) {
-		if (!fgets (line, MAXLNLEN, param_file))
+		if (!fgets (line, MAXDATALNLEN, param_file)) {
 			done = TRUE;
 
-		else if (!strncmp (line, "####", 4)) {
+		} else if (!strncmp (line, "####", 4)) {
 			done = TRUE;
 
 		} else if (!param) {
@@ -9389,39 +9783,110 @@ static char *READ_param_values (PARAM *param, FILE *param_file, char line[]) {
 
 		} else {
 			desc_count = 0;
-			if (i < param->size) {
-				switch (param->type) {
-					case M_DOUBLE:
-						((double *)(param->value))[i++] = atof(line);
-						break;
+			result = NULL;
+			//printf ("READ_param_values: line is %s\n", line);
+			strncpy (crap, line, MAXDATALNLEN);
+			//printf ("crap is %s\n", crap);
 
-					case M_FLOAT:
-						((float *)(param->value))[i++] = (float) atof(line);
-						break;
+			result = strtok (crap, delims);
+			while (result != NULL && !done) {
+				//printf ("   READ_param_values: result is |%s|\n", result);
 
-					case M_LONG:
-						((int *)(param->value))[i++] =  atol(line);
-						break;
+				strncpy (crap2, result, MAXDATALNLEN);
+				//printf ("crap2 is %s\n", crap2);
+				comp_ptr = strchr (crap2, '*');
+				//printf ("comp_ptr is %s\n", comp_ptr);
+				if (comp_ptr == NULL){
+					repeat_count = 1;
+					comp_ptr = crap2;
+					//printf ("comp_ptr is %s\n", comp_ptr);
+				} else {
+					*comp_ptr = '\0';
+					repeat_count = atol(crap2);
+					comp_ptr++;
+					//printf ("comp_ptr is %s\n", comp_ptr);
+					foo = (float) atof(comp_ptr);
 				}
+
+				for (j = 0; j < repeat_count && !done; j++) {
+					if (i < param->size) {
+						switch (param->type) {
+							case M_DOUBLE:
+								d = strtod(comp_ptr, &endp);
+								if (comp_ptr != endp && *endp == '\n') {
+									((double *)(param->value))[i++] = d;
+								} else {
+									sprintf (buf, "There is a parameter format error. Parameter name: %s Index = %d\n   The data type should be a double precision float or there could be white spaces after the values on the line.", param->name, (i+1));
+									//printf ("%s", buf);
+									return (buf);
+								}
+
+								//((double *)(param->value))[i++] = atof(comp_ptr);
+								break;
+
+							case M_FLOAT:
+								d = strtod(comp_ptr, &endp);
+								if (comp_ptr != endp && *endp == '\n') {
+									((float *)(param->value))[i++] = (float)d;
+								} else {
+									sprintf (buf, "Parameter format error. Parameter name: %s Index = %d\n   The data type should be a float or there could be white spaces after the values on the line.", param->name, (i+1));
+									//printf ("%s", buf);
+									return (buf);
+								}
+
+								//((float *)(param->value))[i++] = (float) atof(comp_ptr);
+								break;
+
+							case M_LONG:
+								l = strtol(comp_ptr, &endp, 0);
+								if (comp_ptr != endp && *endp == '\n') {
+									((int *)(param->value))[i++] = (int)l;
+								} else {
+									sprintf (buf, "Parameter format error. Parameter name: %s Index = %d\n   The data type should be an integer or there could be white spaces after the values on the line.", param->name, (i+1));
+									//printf ("%s", buf);
+									return (buf);
+								}
+
+								//((int *)(param->value))[i++] =  atol(comp_ptr);
+								break;
+						} // switch
+				 
+					} else { // if (i < param->size)
+						done = TRUE;
+						i++;
+					} // if (i < param->size)
+				}
+				result = strtok(NULL, delims);
+				//printf ("foo\n");
+			} // while
 
 /*
 **	If the parameter file was written by version 1.6 (or eariler) of
 **	save_params, read the line for minimum and maximum parameter values, but
 **	disregard them.
 */
-				if ((ver < 1)  || ((ver == 1) && (rev <=6))) {
-					if (!fgets (line, MAXLNLEN, param_file))
-						done = TRUE;
-					if (!fgets (line, MAXLNLEN, param_file))
-						done = TRUE;
-				}
-			} else
-				done = TRUE;
-		}	
+			//if ((ver < 1)  || ((ver == 1) && (rev <=6))) {
+			//	if (!fgets (line, MAXLNLEN, param_file))
+			//		done = TRUE;
+			//	if (!fgets (line, MAXLNLEN, param_file))
+			//		done = TRUE;
+			//}
+		}
 	}
+
+	if (i < param->size) {
+		sprintf (buf, "READ_param_values: too FEW values read. param = %s read_count = %d size = %ld\n", param->name, i, param->size);
+		printf ("%s", buf);
+		return (buf);
+		//printf ("READ_param_values: too few values read. param = %s read_count = %d size = %ld\n", param->name, i, param->size);
+	} else if (i > param->size) {
+		sprintf (buf, "READ_param_values: too MANY values read. param = %s read_count = %d size = %ld\n", param->name, i, param->size);
+		printf ("%s", buf);
+		return (buf);
+	}
+
 	return (NULL);
 }
-
 /**8************************** TEST DRIVER ****************************/
 /*+
  * United States Geological Survey
@@ -9437,9 +9902,9 @@ static char *READ_param_values (PARAM *param, FILE *param_file, char line[]) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: read_vars.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: read_vars.c,v $
         Revision 1.12  2000/02/18 18:27:06  markstro
         Made previous Julian time a global.  It is set to -1.0 before the run
@@ -9518,8 +9983,8 @@ int read_vars (char *var_file_name) {
 	double *dvalptr;
 	float *fvalptr;
 	long *lvalptr;
-	char line[MAXLNLEN], key[MAXKEYLEN];
-	char dimen[MAXDIMLEN];
+	char line[MAXDATALNLEN], key[MAXDATALNLEN];
+	char dimen[MAXDATALNLEN];
 	char *pathname;
 	char *endptr;
 
@@ -9538,7 +10003,7 @@ int read_vars (char *var_file_name) {
 /*
 * read in run info string
 */
-   if (fgets(line, MAXINFOLEN, var_file) == NULL) {
+   if (fgets(line, MAXDATALNLEN, var_file) == NULL) {
       fclose(var_file);
       return(0);
    }
@@ -9548,7 +10013,7 @@ int read_vars (char *var_file_name) {
 /*
 * read in last nstep
 */
-   if (fgets(line, MAXINFOLEN, var_file) == NULL) {
+   if (fgets(line, MAXDATALNLEN, var_file) == NULL) {
       fclose(var_file);
       return(0);
    }
@@ -9558,7 +10023,7 @@ int read_vars (char *var_file_name) {
 /*
 * read in last time step
 */
-   if (fgets(line, MAXINFOLEN, var_file) == NULL) {
+   if (fgets(line, MAXDATALNLEN, var_file) == NULL) {
       fclose(var_file);
       return(0);
    }
@@ -9572,7 +10037,7 @@ int read_vars (char *var_file_name) {
 /*
 * read in last delta time
 */
-   if (fgets(line, MAXINFOLEN, var_file) == NULL) {
+   if (fgets(line, MAXDATALNLEN, var_file) == NULL) {
       fclose(var_file);
       return(0);
    }
@@ -9590,7 +10055,7 @@ int read_vars (char *var_file_name) {
 */
    (void)strcpy(line, " ");
    while (strncmp(line, "####", 4)) {
-      if (fgets(line, MAXLNLEN, var_file) == NULL) {
+      if (fgets(line, MAXDATALNLEN, var_file) == NULL) {
          fclose(var_file);
          return(0);
       }
@@ -9606,7 +10071,7 @@ int read_vars (char *var_file_name) {
 * get dimen name
 */
 
-      if(fgets(key, MAXKEYLEN, var_file) == NULL) {
+      if(fgets(key, MAXDATALNLEN, var_file) == NULL) {
          (void)fprintf(stderr, "ERROR - read_var, reading dimen name.\n");
          (void)fprintf(stderr, "Early end-of-file, file '%s'\n", var_file_name);
          return(1);
@@ -9625,7 +10090,7 @@ int read_vars (char *var_file_name) {
 /*
 * get dimen size
 */
-         if(fgets(line, MAXLNLEN, var_file) == NULL) {
+         if(fgets(line, MAXDATALNLEN, var_file) == NULL) {
             (void)fprintf(stderr, "ERROR - read_var, reading dimen size.\n");
             fprintf(stderr,"Early end-of-file, file '%s'\n",var_file_name);
             return(1);
@@ -9667,7 +10132,7 @@ variables:
 */
       (void)strcpy(line, " ");
       while (strncmp(line, "####", 4)) {
-         if (fgets(line, MAXLNLEN, var_file) == NULL) {
+         if (fgets(line, MAXDATALNLEN, var_file) == NULL) {
             fclose(var_file);
             return(0);
          }
@@ -9676,7 +10141,7 @@ variables:
 /*
 * get key
 */
-      if(fgets(key, MAXKEYLEN, var_file) == NULL) {
+      if(fgets(key, MAXDATALNLEN, var_file) == NULL) {
          (void)fprintf(stderr, "ERROR - read_var, reading var key.\n");
          (void)fprintf(stderr, "Early end-of-file, file '%s'\n", var_file_name);
          return(1);
@@ -9687,7 +10152,7 @@ variables:
 /*
 * get number of dimensions
 */
-         if(fgets(line, MAXLNLEN, var_file) == NULL) {
+         if(fgets(line, MAXDATALNLEN, var_file) == NULL) {
             (void)fprintf(stderr, "ERROR - read_var, reading var ndimen.\n");
             fprintf(stderr, "Early end-of-file, file '%s'\n", var_file_name);
             return(1);
@@ -9706,7 +10171,7 @@ variables:
 */
 
          for (i = 0; i < var->ndimen; i++) {
-            if(fgets(dimen, MAXDIMLEN, var_file) == NULL) {
+            if(fgets(dimen, MAXDATALNLEN, var_file) == NULL) {
                (void)fprintf(stderr, "ERROR - read_var, reading var dimen.\n");
                (void)fprintf(stderr, "Early end-of-file, file '%s'\n", var_file_name);
                return(1);
@@ -9729,7 +10194,7 @@ variables:
 * get var size
 */
 
-         if(fgets(line, MAXLNLEN, var_file) == NULL) {
+         if(fgets(line, MAXDATALNLEN, var_file) == NULL) {
             (void)fprintf(stderr, "ERROR - read_var, reading var size.\n");
             (void)fprintf(stderr, "Early end-of-file, file '%s'\n", var_file_name);
             return(1);
@@ -9754,7 +10219,7 @@ variables:
 /*
 * get type
 */
-         if(fgets(line, MAXLNLEN, var_file) == NULL) {
+         if(fgets(line, MAXDATALNLEN, var_file) == NULL) {
             (void)fprintf(stderr, "ERROR - read_var, reading var type.\n");
             (void)fprintf(stderr, "Early end-of-file, file '%s'\n", var_file_name);
             return(1);
@@ -9824,7 +10289,7 @@ variables:
 \*--------------------------------------------------------------------*/
 static int read_var_line (char *key, char *line, FILE *var_file, char *var_file_name) {
 
-	if (fgets(line, MAXLNLEN, var_file) == NULL) {
+	if (fgets(line, MAXDATALNLEN, var_file) == NULL) {
 		(void)fprintf(stderr,
 		    "ERROR - read_var, reading data.\n");
 		(void)fprintf(stderr,
@@ -9860,9 +10325,9 @@ static int read_var_line (char *key, char *line, FILE *var_file, char *var_file_
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: readvar.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: readvar.c,v $
         Revision 1.8  1996/04/09 21:04:14  markstro
         (1) Work on control files
@@ -10063,9 +10528,9 @@ long readvar (char *module, char *name) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: reset_dim.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: reset_dim.c,v $
         Revision 1.15  1999/10/22 17:14:37  markstro
         Added private variables
@@ -10215,6 +10680,7 @@ void reset_dim (DIMEN *dim, long nnew) {
 		param = Mparambase[iparam];
 		dimen_used = FALSE;
 		size_new = 1;
+		dimen_num = 1;
 
 		for (idimen = 0; idimen < param->ndimen; idimen++) {
 			size_new *= param->dimen[idimen]->value;
@@ -10458,9 +10924,9 @@ static void resize_param (PARAM *param, long dimen_num, long nold, long nnew, lo
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: save_vars.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: save_vars.c,v $
         Revision 1.14  2000/02/18 18:27:07  markstro
         Made previous Julian time a global.  It is set to -1.0 before the run
@@ -10648,6 +11114,303 @@ int save_vars (char *var_file_name) {
  * United States Geological Survey
  *
  * PROJECT  : Modular Modeling System (MMS)
+ * NAME     : save_params.c
+ * AUTHOR   : CADSWES; modified by Markstrom
+ * DATE     :
+ * FUNCTION : save_params
+ * COMMENT  : saves the param data base to a file. File name is passed in.
+ * REF      :
+ * REVIEW   :
+ * PR NRS   :
+   $Revision: 2491 $
+        $Log: save_params.c,v $
+        Revision 1.17  1998/03/04 17:20:20  markstro
+        Added seperate runcontrol functions for each run type.
+
+        Revision 1.16  1996/06/28 19:32:29  markstro
+        (1) Fixed 3d control window.
+        (2) Fixed stats.
+
+ * Revision 1.15  1996/04/29  16:23:19  markstro
+ * Unknown
+ *
+ * Revision 1.14  1996/02/19  20:00:58  markstro
+ * Now lints pretty clean
+ *
+        Revision 1.13  1994/12/21 21:36:22  markstro
+        (1) Fixed ESP to work with multiple data files.
+        (2) Fixed Optimization to work with multiple data files.
+        (3) Fixed Sensitivity to work with multiple data files.
+
+ * Revision 1.12  1994/11/25  18:13:43  markstro
+ * unknown
+ *
+ * Revision 1.11  1994/11/22  17:20:23  markstro
+ * (1) Cleaned up dimensions and parameters.
+ * (2) Some changes due to use of malloc_dbg.
+ *
+ * Revision 1.10  1994/11/08  16:17:45  markstro
+ * (1) More proto type fine tuning
+ * (2) fixed up data file reading
+ *
+ * Revision 1.9  1994/10/13  17:53:38  markstro
+ * (1) Added annotation to parameter values through the spreadsheet
+ * (2) Included <string.h> in a few more files that needed it.
+ *
+ * Revision 1.8  1994/09/30  14:55:08  markstro
+ * Initial work on function prototypes.
+ *
+ * Revision 1.7  1994/09/13  15:59:20  markstro
+ * (1)  Version of save_params is now written into parameter file.
+ * (2)  Took out min and max values for parameters -- these were not necessary.
+ *
+ * Revision 1.6  1994/09/09  14:56:32  markstro
+ * (1)  Fixed up main edit menu.
+ * (2)  Added a "notes" field to dimension indicies
+ * (3)  A little more Rosenbrock work.
+ * (4)  Fixed the list selector -- changed button names & first item
+ *      selected by default.
+ * (5)  Modified spread sheet help to be able to display dimension notes
+ * (6)  Ran some source through "cb"
+ *
+ * Revision 1.5  1994/05/18  17:16:03  markstro
+ * TERRA changed mhms to mms
+ *
+ * Revision 1.4  1994/03/29  19:07:53  markstro
+ * Save parameter file selector now comes up in exit sequence (if necessary).
+ *
+ * Revision 1.3  1994/03/11  21:16:41  markstro
+ * Got rid of client_data data types.
+ *
+ * Revision 1.2  1994/01/31  20:17:24  markstro
+ * Make sure that all source files have CVS log.
+ *
+-*/
+
+/**1************************ INCLUDE FILES ****************************/
+#define SAVE_PARAMS_C
+#include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include "mms.h"
+
+/**2************************* LOCAL MACROS ****************************/
+
+/**3************************ LOCAL TYPEDEFS ***************************/
+
+/**4***************** DECLARATION LOCAL FUNCTIONS *********************/
+static void write_parameters (FILE *, int);
+static void write_dimensions (FILE *);
+static void write_header (FILE *, char *);
+
+/**5*********************** LOCAL VARIABLES ***************************/
+
+/**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
+/*--------------------------------------------------------------------*\
+ | FUNCTION     : save_params
+ | COMMENT		:
+ | PARAMETERS   :
+ | RETURN VALUE :
+ | RESTRICTIONS :
+\*--------------------------------------------------------------------*/
+int save_params (char *param_file_name) {
+	FILE *param_file;
+	//PARAM *param;
+	//DIMEN *dim;
+	//char *ptr;
+	//long i,j;
+	//double	*dvalptr;
+	//float	*fvalptr;
+	//long	*lvalptr;
+
+	if ((param_file = fopen (param_file_name, "w")) == NULL) {
+		(void)fprintf(stderr, "ERROR - save_params - creating file '%s'\n", param_file_name);
+		return(1);
+	}
+
+	write_header (param_file, "Default file generated by model\n");
+	write_dimensions (param_file);
+	write_parameters (param_file, TRUE);
+	
+	fclose(param_file);
+	return(0);
+}
+
+int write_preprocess_params () {
+	FILE *param_file;
+	char param_file_name[512];
+	char   **fname;
+	/*char *extension, *ptr, *ptr1;*/
+	char *ptr, *ptr1;
+
+	fname =   control_svar ("param_file");
+	strcpy (param_file_name, fname[0]);
+
+// Isolate the file name from the path
+	ptr1 = strrchr (param_file_name, '/');
+
+// Find the last "." in the file name
+	if (!ptr1) {
+		ptr = NULL;
+	} else {
+		ptr = strrchr (ptr1, '.');
+	}
+
+	if (!ptr) {
+		ptr = param_file_name + strlen(param_file_name);
+	}
+	strcpy (ptr, "_preprocess.params");
+
+
+	printf ("NOTICE: preprocessed parameters are being written to file: %s\n", param_file_name);
+
+	if ((param_file = fopen (param_file_name, "w")) == NULL) {
+		(void)fprintf(stderr, "ERROR - save_params - creating file '%s'\n", param_file_name);
+		return(1);
+	}
+
+	write_parameters (param_file, FALSE);
+	return(0);
+}
+
+static void write_header (FILE *param_file, char *desc) {
+    (void)fprintf (param_file, desc);
+	(void)fprintf (param_file, "Version: 1.7\n");
+}
+
+static void write_dimensions (FILE *param_file) {
+	DIMEN *dim;
+	long i,j;
+	(void)fprintf(param_file, "** Dimensions **\n");
+
+	for (i = 0; i < dim_db->count; i++) {
+
+		dim = (DIMEN *)(dim_db->itm[i]);
+
+		(void)fprintf(param_file, "####\n");
+		(void)fprintf(param_file, "%s\n", dim->name);
+		(void)fprintf(param_file, "%ld\n", dim->value);
+		for (j = 0; j < dim->value; j++) {
+			if (dim->names && dim->names[j])
+				(void)fprintf (param_file, "%s\n", dim->names[j]);
+			if (dim->notes && dim->notes[j])
+				(void)fprintf (param_file, "@%s\n", dim->notes[j]);
+		}
+	}
+}
+
+
+static void write_parameters (FILE *param_file, int writeAllParams) {
+	PARAM *param;
+	char *ptr;
+	long i,j;
+	double	*dvalptr;
+	float	*fvalptr;
+	long	*lvalptr;
+/*
+* Write out parameter values and description if any.
+*/
+	if (writeAllParams) {
+		(void)fprintf(param_file, "** Parameters **\n");
+	}
+
+	for (i = 0; i < Mnparams; i++) {
+		param = Mparambase[i];
+
+		if (writeAllParams || param->preprocess ) {
+
+			(void)fprintf(param_file, "####\n");
+			(void)fprintf(param_file, "%s %ld", param->key, param->column_width);
+			if (param->format)
+				(void)fprintf(param_file, " %s\n", param->format);
+			else
+				(void)fprintf (param_file, "\n");
+			(void)fprintf (param_file, "%ld\n", param->ndimen);
+			for (j = 0; j < param->ndimen; j++)
+				(void)fprintf(param_file, "%s\n", param->dimen[j]->name);
+
+			(void)fprintf(param_file, "%ld\n", param->size);
+			(void)fprintf(param_file, "%ld\n", param->type);
+
+			switch (param->type) {
+				case M_DOUBLE:
+					if (writeAllParams) {
+						dvalptr = (double *) param->value;
+					} else {
+						dvalptr = (double *) (param->references[0]);
+					}
+
+					for (j = 0; j < param->size; j++) {
+						(void)fprintf(param_file, "%.20le\n", *dvalptr);
+						dvalptr++;
+						if (param->value_desc[j]) {
+						  while ((ptr = strchr (param->value_desc[j], '\n'))) {
+							*ptr = '\0';
+							(void)fprintf (param_file, "@%s\n", param->value_desc[j]);
+							param->value_desc[j] = ptr + 1;
+						  }
+						  if (param->value_desc[j] && strlen (param->value_desc[j]))
+							(void)fprintf (param_file, "@%s\n", param->value_desc[j]);
+						}
+					}
+					break;
+
+				case M_FLOAT:
+					if (writeAllParams) {
+						fvalptr = (float *) param->value;
+					} else {
+						fvalptr = (float *) (param->references[0]);
+					}
+
+					for (j = 0; j < param->size; j++) {
+						(void)fprintf(param_file, "%.12e\n", *fvalptr);
+						fvalptr++;
+						if (param->value_desc[j]) {
+						  while ((ptr = strchr (param->value_desc[j], '\n'))) {
+							*ptr = '\0';
+							(void)fprintf (param_file, "@%s\n", param->value_desc[j]);
+							param->value_desc[j] = ptr + 1;
+						  }
+						  if (param->value_desc[j] && strlen (param->value_desc[j]))
+							(void)fprintf (param_file, "@%s\n", param->value_desc[j]);
+						}
+					}
+					break;
+
+				case M_LONG:
+					if (writeAllParams) {
+						lvalptr = (long *) param->value;
+					} else {
+						lvalptr = (long *) (param->references[0]);
+					}
+
+					for (j = 0; j < param->size; j++) {
+						(void)fprintf(param_file, "%ld\n", *lvalptr);
+						lvalptr++;
+						if (param->value_desc[j]) {
+						  while ((ptr = strchr (param->value_desc[j], '\n'))) {
+							*ptr = '\0';
+							(void)fprintf (param_file, "@%s\n", param->value_desc[j]);
+							param->value_desc[j] = ptr + 1;
+						  }
+						  if (param->value_desc[j] && strlen (param->value_desc[j]))
+							(void)fprintf (param_file, "@%s\n", param->value_desc[j]);
+						}
+					}
+					break;
+			}
+		}
+	}
+}
+
+/**7****************** LOCAL FUNCTION DEFINITIONS *********************/
+
+/**8************************** TEST DRIVER ****************************/
+
+/*+
+ * United States Geological Survey
+ *
+ * PROJECT  : Modular Modeling System (MMS)
  * NAME     : setup_cont.c
  * AUTHOR   : CADSWES
  * DATE     : Fri 14 Oct 1994
@@ -10657,9 +11420,9 @@ int save_vars (char *var_file_name) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: setup_cont.c 3789 2008-02-04 18:07:27Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3789 $
+   $Revision: 2491 $
         $Log: setup_cont.c,v $
         Revision 1.31  1999/08/24 16:34:16  markstro
         Version 1.1.1
@@ -10793,50 +11556,101 @@ extern void decl_control_float_array (char *key, long size, float *valstr);
  | RESTRICTIONS :
 \*--------------------------------------------------------------------*/
 void setup_cont (void) {
-	char	*err;
-        long lval;
-        float fval;
+        long *lval;
+        float *fval;
 //      char **cp;
 //      int i;
 
-        long start_date[] = {2000,10,1,0,0,0};
-        long end_date[] = {2001,9,30,0,0,0};
+        static long start_date[] = {2000,10,1,0,0,0};
+        static long end_date[] = {2001,9,30,0,0,0};
 
 /*
 **	GSFLOW control variables
 */
-        decl_control_string ("model_mode", "GSFLOW");
+        decl_control_string ("model_mode", "PRMS");
         decl_control_string ("modflow_name", "modflow.nam");
         decl_control_string ("precip_module", "precip_prms");
         decl_control_string ("temp_module", "temp_1sta_prms");
         decl_control_string ("et_module", "potet_jh_prms");
-        decl_control_string ("srunoff_module", "srunoff_smidx_prms");
+        decl_control_string ("srunoff_module", "srunoff_smidx_casc");
         decl_control_string ("solrad_module", "ddsolrad_hru_prms");
+        decl_control_string ("soltab_module", "soltab_hru_prms");
+        decl_control_string ("capillary_module", "soilzone_prms");
+        decl_control_string ("gravity_module", "soilzone_prms");
+        decl_control_string ("stats_module", "null");
+        decl_control_string ("filename_divert", "null");
+        decl_control_string ("filename_return", "null");
+        decl_control_string ("filename_apply", "null");
+		decl_control_string ("strmflow_module", "strmflow_prms");
+        decl_control_string ("transp_module", "transp_tindex_prms");
         decl_control_string ("gsflow_output_file", "gsflow.out");
         decl_control_string ("gsflow_csv_file", "gsflow.csv");
-        lval = 7;
-        decl_control_int_array ("rpt_days", 1, &lval);
-		lval = 1;
-        decl_control_int_array ("gsf_rpt", 1, &lval);
-		lval = 0;
-		decl_control_int_array ("print_debug", 1, &lval);
+        decl_control_string ("gridreport_file", "grid_varnames");
+
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 7;
+        decl_control_int_array ("rpt_days", 1, lval);
+
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 1;
+        decl_control_int_array ("gsf_rpt", 1, lval);
+
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("print_debug", 1, lval);
+
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("cfgi_flag", 1, lval);
+
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("frozen_flag", 1, lval);
+
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("dprst_flag", 1, lval);
+
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("glacier_flag", 1, lval);
+
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("gwflow_flag", 1, lval);
+
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("musroute_flag", 1, lval);
+
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("app_div_flag", 1, lval);
+
+		lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("prms_warmup", 1, lval);
+
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("lake_flag", 1, lval);
+
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+        decl_control_int_array ("grid_reportON_OFF", 1, lval);
 /*
 **	file names
 */
-//      decl_control_string ("executable_desc", "mmf executable model");
-//      decl_control_string ("executable_model", "GSFLOW");
-        //decl_control_string ("data_file", "prms.data");
+        decl_control_string ("executable_desc", "MOWS executable");
+        decl_control_string ("executable_model", "prms2010");
+        decl_control_string ("data_file", "prms.data");
         decl_control_string ("param_file", "prms.params");
         decl_control_string ("var_save_file", "prms_ic.out");
         decl_control_string ("var_init_file", "prms_ic.in");
-//      decl_control_string ("param_print_file", "params.prt");
-//      decl_control_string ("var_print_file", "vars.prt");
-//      decl_control_string ("stats_output_file", "stats.out");
+        //decl_control_string ("stats_output_file", "stats.out");
         decl_control_string ("stat_var_file", "statvar.dat");
         decl_control_string ("ani_output_file", "animation.out");
         decl_control_string ("model_output_file", "prms.out");
-//      decl_control_string ("mms_user_out_dir", "./output/");
-//      decl_control_string ("mms_user_dir", "./");
 /*
 **	run start and end times
 */
@@ -10846,20 +11660,24 @@ void setup_cont (void) {
 /*
 **	flag for initializing vars from file
 */
-        lval = 0;
-        decl_control_int_array ("init_vars_from_file", 1, &lval);
-        decl_control_int_array ("save_vars_to_file", 1, &lval);
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+        decl_control_int_array ("init_vars_from_file", 1, lval);
+
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+        decl_control_int_array ("save_vars_to_file", 1, lval);
 
 /*
 **	initial delta-t - hours
 */
-        fval = 24.0;
-        decl_control_float_array ("initial_deltat", 1, &fval);
+        fval = (float *)umalloc (sizeof (float));
+		fval[0] = 24.0;
+        decl_control_float_array ("initial_deltat", 1, fval);
 
 /*
 **	stats analysis
 */
-        lval = 0;
 //      decl_control_int_array ("nstatVars", 1, &lval);
 //      cp = (char **)umalloc (sizeof (char *) * MAXSTATVARS);
 //      for (i = 0; i < MAXSTATVARS; i++) *(cp+i) = strdup ("inactive");
@@ -10867,17 +11685,21 @@ void setup_cont (void) {
 //      cp = (char **)umalloc (sizeof (char *) * MAXSTATVARS);
 //      for (i = 0; i < MAXSTATVARS; i++) *(cp+i) = strdup ("-1");
 //      decl_control ("statVar_element", M_STRING, MAXSTATVARS, cp);
-        decl_control_int_array ("statsON_OFF", 1, &lval);
+//
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+        decl_control_int_array ("statsON_OFF", 1, lval);
 
 /*
 **	animation output
 */
-        lval = 0;
 //      decl_control_int_array ("naniOutVars", 1, &lval);
 //      cp = (char **)umalloc (sizeof (char *) * MAXSTATVARS);
 //      for (i = 0; i < MAXSTATVARS; i++) cp[i] = strdup ("inactive");
 //      decl_control ("aniOutVar_names", M_STRING, MAXSTATVARS, cp);
-        decl_control_int_array ("aniOutON_OFF", 1, &lval);
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+        decl_control_int_array ("aniOutON_OFF", 1, lval);
 /*
 **	graphics display
 */
@@ -10890,16 +11712,20 @@ void setup_cont (void) {
 //      lval = -1;
 //      decl_control_int_array ("dispVar_plot", 1, &lval);
 
-//      lval = 50;
-//      decl_control_int_array ("dispGraphsBuffSize", 1, &lval);
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 50;
+        decl_control_int_array ("dispGraphsBuffSize", 1, lval);
+
 /*
 **  Env file
 */
+/*
 	err = read_control (MAltContFile);
 	if (err) {
            (void)fprintf (stderr,"%s\n", err);
            exit (1);
         }
+*/
 
 /*
         if (MAltEnvFile == NULL) MAltEnvFile = strdup (*control_svar ("env_file"));
@@ -10914,9 +11740,9 @@ void setup_cont (void) {
  * sort_dims.c: sorts the dimen array so that the key for each
  * structure is in increasing alphabetical order
  *
- * $Id: sort_dims.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: sort_dims.c,v $
         Revision 1.5  1996/04/29 16:23:25  markstro
         Unknown
@@ -10973,9 +11799,9 @@ void sort_dims (void) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: sort_params.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: sort_params.c,v $
         Revision 1.5  1996/02/19 20:01:12  markstro
         Now lints pretty clean
@@ -11052,9 +11878,9 @@ void sort_params (void) {
  * sort_vars.c: sorts the pubvar array so that the key for each
  * structure is in increasing alphabetical order
  *
- * $Id: sort_vars.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: sort_vars.c,v $
         Revision 1.5  1996/02/19 20:01:12  markstro
         Now lints pretty clean
@@ -11137,9 +11963,9 @@ void sort_vars (void) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: stats.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: stats.c,v $
         Revision 1.13  1998/11/10 15:17:44  markstro
         unknown
@@ -11228,10 +12054,11 @@ int stats (void) {
   int     nvars;                 /* number of variables in the file*/
   STATS   st[MAXSTATVARS];            /* array of statistics structures */
   FILE    *statvar_file;
-  FILE    *stats_file;
-  char    path[MAXPATHLEN];
-  char    line[MAXLNLEN];
-  int     i,j,nvals;
+  //FILE    *stats_file;
+  char    path[MAXDATALNLEN];
+  char    line[MAXDATALNLEN];
+  int     i,nvals;
+  //int     j;
   int     recNo;
   int     year;
   int     month;
@@ -11239,10 +12066,10 @@ int stats (void) {
   int     hour;
   int     minute;
   int     second;
-  char    elem_number[MAXLNLEN];
+  char    elem_number[MAXDATALNLEN];
   double  x[MAXSTATVARS];
   float   squared;
-  float   cumul,comp;
+  //float   cumul,comp;
 
   /*
    * Open statvar file, and store number of variables and variable names 
@@ -11352,7 +12179,7 @@ int stats (void) {
    */
 
   for (i = 0; i < nvars+1; i++) {
-    if (fgets(line, MAXLNLEN, statvar_file) == NULL) {
+    if (fgets(line, MAXDATALNLEN, statvar_file) == NULL) {
       (void)fprintf(stderr, "ERROR - stats.\n");
       (void)fprintf(stderr, "Reading statvar file for histogram comps.\n");
       perror(path);
@@ -11385,48 +12212,48 @@ int stats (void) {
    * Open output file
    */
 
-  (void)sprintf(path, "%s", *control_svar("stats_output_file"));
-  
-  if ((stats_file = fopen(path, "w")) == NULL)
-    {
-      (void)fprintf(stderr, "ERROR - stats - ");
-      (void)fprintf(stderr, "Could not create statistics output file\n");
-      perror(path);
-      return(1);
-    }
-
-  for (i=0;i<nvars;i++) 
-    {
-      for (j = 0;j < st[i].ncells;j++)
-	st[i].histog[j] /= nvals;
-  
-      (void)fprintf(stats_file,"\n");
-      (void)fprintf(stats_file,"Variable:  %s\n",st[i].varName);
-      (void)fprintf(stats_file,"Elem #     %s\n",st[i].elem_number);
-      (void)fprintf(stats_file,"Mean       %f\n",st[i].mx);
-      (void)fprintf(stats_file,"Std Dev    %f\n",st[i].sdev);
-      (void)fprintf(stats_file,"Skewness   %f\n",st[i].skew);
-      (void)fprintf(stats_file,"Minimum    %f\n",st[i].min);
-      (void)fprintf(stats_file,"Maximum    %f\n",st[i].max);
-      (void)fprintf(stats_file,"#. Cells   %d\n",st[i].ncells);
-      (void)fprintf(stats_file,"Cell width %f\n",st[i].width);
-      (void)fprintf(stats_file,
-	      "\nHistogram\nCellNo. Lower Limit   Upper Limit   Frequency   Cumulative Complementary\n");
-  
-      cumul = 0.0;
-      comp = 1.0;
-      for (j = 0;j < st[i].ncells;j++){
-	cumul += st[i].histog[j];
-	comp = 1.0-cumul;
-	(void)fprintf(stats_file,"%4d %11f %13f %13f %13f %13f\n", j,
-		st[i].histmin+j*st[i].width,
-		st[i].histmin+(j+1)*st[i].width,
-		st[i].histog[j],cumul,comp);
-      }
-//    free((char *)st[i].elem_number);
-    }
-
-  fclose(stats_file);
+//  (void)sprintf(path, "%s", *control_svar("stats_output_file"));
+//  
+//  if ((stats_file = fopen(path, "w")) == NULL)
+//    {
+//      (void)fprintf(stderr, "ERROR - stats - ");
+//      (void)fprintf(stderr, "Could not create statistics output file\n");
+//      perror(path);
+//      return(1);
+//    }
+//
+//  for (i=0;i<nvars;i++) 
+//    {
+//      for (j = 0;j < st[i].ncells;j++)
+//	st[i].histog[j] /= nvals;
+//  
+//      (void)fprintf(stats_file,"\n");
+//      (void)fprintf(stats_file,"Variable:  %s\n",st[i].varName);
+//      (void)fprintf(stats_file,"Elem #     %s\n",st[i].elem_number);
+//      (void)fprintf(stats_file,"Mean       %f\n",st[i].mx);
+//      (void)fprintf(stats_file,"Std Dev    %f\n",st[i].sdev);
+//      (void)fprintf(stats_file,"Skewness   %f\n",st[i].skew);
+//      (void)fprintf(stats_file,"Minimum    %f\n",st[i].min);
+//      (void)fprintf(stats_file,"Maximum    %f\n",st[i].max);
+//      (void)fprintf(stats_file,"#. Cells   %d\n",st[i].ncells);
+//      (void)fprintf(stats_file,"Cell width %f\n",st[i].width);
+//      (void)fprintf(stats_file,
+//	      "\nHistogram\nCellNo. Lower Limit   Upper Limit   Frequency   Cumulative Complementary\n");
+//  
+//      cumul = 0.0;
+//      comp = 1.0;
+//      for (j = 0;j < st[i].ncells;j++){
+//	cumul += st[i].histog[j];
+//	comp = 1.0-cumul;
+//	(void)fprintf(stats_file,"%4d %11f %13f %13f %13f %13f\n", j,
+//		st[i].histmin+j*st[i].width,
+//		st[i].histmin+(j+1)*st[i].width,
+//		st[i].histog[j],cumul,comp);
+//      }
+////    free((char *)st[i].elem_number);
+//    }
+//
+//  fclose(stats_file);
 
   return(0);
 
@@ -11450,9 +12277,9 @@ int stats (void) {
  * If the total number of entries is less than required, the sequence
  * is repeated.
  *
- * $Id: str_to_vals.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: str_to_vals.c,v $
         Revision 1.7  1996/02/19 20:01:17  markstro
         Now lints pretty clean
@@ -11497,7 +12324,7 @@ long str_to_vals (char *encoded_string, long size, long type, char *store_addr) 
   long i, isource;
   long ndecoded, repeat;
   char *scopy, *token, *valstr, *asterisk, *end_point;
-  char tcopy[MAXTOKLEN];
+  char tcopy[MAXDATALNLEN];
   double dvalue, *dval;
   float fvalue, *fval;
   long lvalue, *lval;
@@ -11506,6 +12333,9 @@ long str_to_vals (char *encoded_string, long size, long type, char *store_addr) 
    * set up pointer for data type
    */
 
+  dval = NULL;
+  fval = NULL;
+  lval = NULL;
   switch (type) {
   case M_DOUBLE:
     dval = (double *) store_addr;
@@ -11559,6 +12389,9 @@ long str_to_vals (char *encoded_string, long size, long type, char *store_addr) 
 
     errno = 0;
 
+    dvalue = 0.0;
+    fvalue = 0.0;
+    lvalue = 0;
     switch (type) {
 
     case M_DOUBLE:
@@ -11669,9 +12502,9 @@ long str_to_vals (char *encoded_string, long size, long type, char *store_addr) 
  *
  * The routines without the suffix are called from C
  *
- * $Id: timing.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: timing.c,v $
         Revision 1.7  1997/04/18 16:44:15  markstro
         (1)  Commented out errno problem with opening files from fortran.
@@ -11916,6 +12749,14 @@ long julian (char *when, char *type) {
       reftime.year = time->year - 1;
     reftime.month = 12;
     reftime.day = 21;
+  } else if(!strcmp(type, "spring")) {
+	  if ((time->month > 3) || (time->month == 3 && time->day > 20)) {
+		reftime.year = time->year;
+	  } else {
+		reftime.year = time->year - 1;
+	  }
+	reftime.month = 3;
+	reftime.day = 20;
   } else if (!strcmp(type, "water")) {
     if (time->month > 9)
       reftime.year = time->year;
@@ -12162,7 +13003,7 @@ double delnex (void) {
  *
  * Mike Dixon CADSWES CU July 1990
  *
- * $Id: umalloc_etc.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
  **********************************************************************/
 #define UMALLOC_ETC_C
@@ -12183,7 +13024,7 @@ char *umalloc (unsigned size) {
   if (!size)
     return (NULL);
 
-  if ((ptr = malloc(size)) == NULL)
+  if ((ptr = (char *)malloc(size)) == NULL)
     if (size != 0) {
       (void)fprintf(stderr, "Cannot perform malloc, size = %d\n",size);
       exit(1);
@@ -12200,7 +13041,7 @@ char *umalloc (unsigned size) {
 \*--------------------------------------------------------------------*/
 char *urealloc (char *ptr, unsigned size) {
   if (ptr == NULL) return(umalloc(size));
-  if ((ptr = realloc(ptr, size)) == NULL)
+  if ((ptr = (char *)realloc(ptr, size)) == NULL)
     if (size != 0) {
       (void)fprintf(stderr, "Cannot perform realloc, size = %d\n",size);
       exit(1);
@@ -12217,7 +13058,7 @@ char *urealloc (char *ptr, unsigned size) {
 \*--------------------------------------------------------------------*/
 char *ucalloc (unsigned num, unsigned size) {
   char *ptr;
-  if ((ptr = calloc(num, size)) == NULL) 
+  if ((ptr = (char *)calloc(num, size)) == NULL) 
     if ((size != 0) && (num != 0))
       (void)fprintf(stderr, "Cannot perform calloc, num, size = %d,%d\n",num,size);
       exit(1);
@@ -12252,9 +13093,9 @@ void ufree (char *ptr) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: uprint.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: uprint.c,v $
         Revision 1.10  1996/04/29 16:23:26  markstro
         Unknown
@@ -12312,7 +13153,7 @@ void ufree (char *ptr) {
 \*--------------------------------------------------------------------*/
 FILE *GetUserFile (char *name, long dimNo) {
 	DIMEN *dim;
-	char pathname[512];
+	//char pathname[512];
 	int i;
 
 	/*
@@ -12349,15 +13190,15 @@ FILE *GetUserFile (char *name, long dimNo) {
 			dim->files[i] = NULL;
 	}
 
-	if (!dim->files[dimNo-1] && MuserFiles)
-	{
-		/*
-       * get user output directory from environment
-       */
+	//if (!dim->files[dimNo-1] && MuserFiles)
+	//{
+	//	/*
+ //      * get user output directory from environment
+ //      */
 
-      (void)sprintf (pathname, "%s%s", *control_svar("stats_output_file"), dim->names[dimNo-1]);
-      dim->files[dimNo-1] = fopen(pathname,"w");
-	}
+ //     (void)sprintf (pathname, "%s%s", *control_svar("stats_output_file"), dim->names[dimNo-1]);
+ //     dim->files[dimNo-1] = fopen(pathname,"w");
+	//}
 
 	/* 
    * return file pointer
@@ -12713,9 +13554,9 @@ void updble (char *dimname, long dimNo, char *string, double *array, long n) {
  * returns a pointer to a PUBVAR struct which contains the given key
  * returns NULL if key not found
  *
- * $Id: var_addr.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: var_addr.c,v $
         Revision 1.5  1999/10/22 17:14:38  markstro
         Added private variables
@@ -12822,9 +13663,9 @@ PUBVAR *var_addr (char *key) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: write_vstats.c 3058 2007-01-25 22:25:59Z rsregan $
+ * $Id: mms_util.c 2491 2011-02-23 19:02:54Z rsregan $
  *
-   $Revision: 3058 $
+   $Revision: 2491 $
         $Log: write_vstats.c,v $
         Revision 1.4  1996/02/19 20:01:24  markstro
         Now lints pretty clean
@@ -12929,6 +13770,7 @@ void write_vstats (FILE *statvar_file) {
  *************************************************/
 
 #include <stdio.h>
+#include "mms.h"
 
 extern long setdims_();
 
@@ -12939,7 +13781,6 @@ int call_setdims()
   long retval;
 
   retval = setdims_();
-
   if (retval) {
     fprintf(stderr,"ERROR in 'setdims' routine.\n");
     fprintf(stderr,"Return val = %ld\n", retval);
@@ -12961,7 +13802,7 @@ int call_setdims()
  * REVIEW   :
  * PR NRS   :
  *
-   $Revision: 1.10 $
+   $Revision: 2491 $
         $Log: getdimname.c,v $
         Revision 1.10  1999/08/24 16:34:04  markstro
         Version 1.1.1
@@ -13154,55 +13995,15 @@ void getdimdesc (char *name, long i, char *descname) {
 
 #include <stdlib.h>
 #include <string.h>
-#include "nodes.h"
 #include "mms.h"
 
 extern long call_modules_ (char *, ftnlen);
 
-int call_modules(char *arg)
+int call_modules(char *arg) {
+	 long retval;
+	 ftnlen len;
 
-{
-
- long retval;
- long nmodules;
- long nconi;
- char *mname, *cptr;
- int *xpos, *ypos, *ncon, i;
- ftnlen len;
-
- if (strncmp (arg, "declare", 7) == 0) {
-     nmodules = sizeof(nodes)/sizeof(NODE) - 1;  // subtract one becuase last element is NULL
-     nconi = sizeof(con_index)/sizeof(int);
-
-     mname = (char *)malloc (nmodules * sizeof (char) * 21);
-     xpos = (int *)malloc (nmodules * sizeof (int));
-     ypos = (int *)malloc (nmodules * sizeof (int));
-     ncon = (int *)malloc (nmodules * sizeof (int));
-
-     for (i = 0; i < nmodules; i++ ) {
-         cptr = strrchr (nodes[i].name, '/');
-         if (cptr == NULL) {
-             cptr = nodes[i].name;
-         } else {
-             cptr++; // move to the next char after the /
-         }
-
-         strncpy (mname+(i * 20), cptr, 20);
-         xpos[i] = nodes[i].x;
-         ypos[i] = nodes[i].y;
-         ncon[i] = nodes[i].num_connectnions;
-     }
-
-
-    decl_control("module_names", 4, nmodules, mname);
-    decl_control("module_x", 1, nmodules, xpos);
-    decl_control("module_y", 1, nmodules, ypos);
-    decl_control("module_num_con", 1, nmodules, ncon);
-    decl_control("module_connections", 1, nconi, con_index);
- }
-
- len = (ftnlen)strlen(arg);
- retval = call_modules_ (arg, len);
- return((int)retval);
-
+	 len = (ftnlen)strlen(arg);
+	 retval = call_modules_ (arg, len);
+	 return((int)retval);
 }

@@ -20,7 +20,7 @@ C  FORM specifier --
 C
 C    Standard Fortran, which results in vender dependent (non-portable)
 C    files.  Use unless there is a reason to do otherwise.
-        DATA FORM/'UNFORMATTED'/
+      DATA FORM/'UNFORMATTED'/
 C
 C    Non-standard Fortran that causes code compiled by Compaq (Digital)
 C    Fortran on personal computers to use unstructured non-formatted

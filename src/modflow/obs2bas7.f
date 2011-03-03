@@ -138,7 +138,7 @@ C6------ALLOCATE ARRAY DATA.
       ALLOCATE(ROFF(NH))
       ALLOCATE(COFF(NH))
       ALLOCATE(RINT(4,NH))
-      IF(MOBS.GT.1 .AND. MAXM.GT.1) THEN
+      IF(MOBS.GT.0 .AND. MAXM.GT.1) THEN
         ALLOCATE(MLAY(MAXM,MOBS))
         ALLOCATE(PR(MAXM,MOBS))
       ELSE
@@ -223,6 +223,9 @@ C13B----MULTI-LAYER -- CHECK LIMITS AND READ THE LAYERS AND PROPORTIONS.
      &    I3,' -- INCREASE MAXM.')
            CALL USTOP(' ')
          END IF
+         DO 268 M=1,MAXM
+           MLAY(M,ML) = 0
+  268    CONTINUE
          READ (IUHDOB,*) (MLAY(M,ML),PR(M,ML),M=1,NL)
          WRITE(IOUT,540) (MLAY(M,ML),PR(M,ML),M=1,NL)
   540  FORMAT (5X,'MULTIPLE LAYERS AND PROPORTIONS :',5(I5,',',F5.2,3X))
@@ -352,10 +355,10 @@ C     INTERPOLATE HEADS.  ACCOUNT FOR DRY CELLS, IF NEEDED.
 C     ******************************************************************
 C        SPECIFICATIONS:
 C     ------------------------------------------------------------------
-      USE GLOBAL, ONLY: NCOL,NROW,NLAY,DELR,DELC,IBOUND,HNEW,STRT,
+      USE GLOBAL, ONLY: NCOL,NROW,NLAY,DELR,DELC,IBOUND,HNEW,
      1                  NPER,NSTP,PERLEN,TSMULT,ISSFLG,IOUT
       USE OBSBASMODULE
-      DOUBLE PRECISION V, V0
+      DOUBLE PRECISION V
 C     ------------------------------------------------------------------
       CALL SOBS2BAS7PNT(IUHDOB,IGRID)
 C
@@ -374,88 +377,70 @@ C2------IDRY = # OBS OMITTED; JDRY = # INTERPOLATIONS CHANGED
       ML = 0
       DO 30 N = 1, NH
         K = NDER(1,N)
+        MM = 1
+        IF (K.LT.0) THEN
+          ML = ML + 1
+          MM = -K
+        ENDIF
+        IF((IHOBWET(N).LT. 0) .OR.
+     &     (ITS.NE.NDER(4,N) .AND. ITS.NE.NDER(4,N)+1)) GO TO 30
         II = NDER(2,N)
         JJ = NDER(3,N)
         IO = IOFF(N)
         JO = JOFF(N)
-        MM = 1
-        IF (K.LT.0) THEN
-          ML = ML + 1
-          MM = MAXM
-        ENDIF
-        IF (NDER(4,N).EQ.ITS.OR.(TOFF(N).GT.ZERO.AND.
-     &       NDER(4,N).EQ.ITS-1)) THEN
-C
-C3------IF THE OBSERVATION THIS IS TO BE SUBTRACTED FROM IS DRY, MAKE
-C3------THIS ONE DRY, TOO
-          N1 = NDER(5,N)
-          IF (N1.GT.0) THEN
-            IF (COFF(N1).GE.5.) THEN
-              IDRY = IDRY + 1
-              IHOBWET(N)=-1
-              WRITE (IOUT,490) N, OBSNAM(N)
-  490 FORMAT (/,' HEAD OBS#',I5,', ID ',A,
-     &' OMITTED BECAUSE INITIAL OBSERVATION IS DRY OR',/,' HAS HAD ITS',
-     &' INTERPOLATION CHANGED (OBS2BAS7SE)')
-              GOTO 30
-            ENDIF
-          ENDIF
 C
 C4------CHECK FOR DRY OBSERVATIONS OR INTERPOLATIONS AFFECTED BY DRY
 C4------CELLS
-          DO 20 M = 1, MM
-            KK = K
-            IF (K.LT.0) KK = MLAY(M,ML)
-            IF (KK.EQ.0) GOTO 30
-              IF (IBOUND(JJ,II,KK).EQ.0) THEN
-                IDRY = IDRY + 1
-                IHOBWET(N)=-1
-                WRITE (IOUT,495) N, OBSNAM(N)
+        DO 20 M = 1, MM
+          KK = K
+          IF (K.LT.0) KK = MLAY(M,ML)
+          IF (KK.EQ.0) GOTO 30
+          IF (IBOUND(JJ,II,KK).EQ.0) THEN
+            IDRY = IDRY + 1
+            IHOBWET(N)=-1
+             WRITE (IOUT,495) N, OBSNAM(N)
   495 FORMAT (/,' HEAD OBS#',I5,', ID ',A,' IS DRY -- OMIT',
      &        ' (OBS2BAS7SE)')
-                GOTO 30
+            GOTO 30
 C
 C5------CHECK TO SEE IF A CELL USED IN INTERPOLATION IS INACTIVE
-              ELSEIF ((RINT(2,N).NE.ZERO.AND.IBOUND(JJ+JO,II,KK)
+          ELSEIF ((RINT(2,N).NE.ZERO.AND.IBOUND(JJ+JO,II,KK)
      &                .EQ.0) .OR.
      &                (RINT(3,N).NE.ZERO.AND.IBOUND(JJ,II+IO,KK)
      &                .EQ.0) .OR.
      &                (RINT(4,N).NE.ZERO.AND.IBOUND(JJ+JO,II+IO,KK)
      &                .EQ.0)) THEN
-                IF (MM.GT.1 .OR. TOFF(N).GT.ZERO) THEN
-                  IDRY = IDRY + 1
-                  IHOBWET(N)=-1
-                  WRITE (IOUT,500) N, OBSNAM(N)
+            IF(M.GT.1) THEN
+              IDRY = IDRY + 1
+              IHOBWET(N)=-1
+              WRITE (IOUT,500) N, OBSNAM(N)
   500 FORMAT (/,' HEAD OBS#',I5,', ID ',A,
      &' OMITTED BECAUSE IBOUND=0 FOR CELL(S)',/,' REQUIRED FOR',
-     &' INTERPOLATION AND OBSERVATION IS MULTILAYER OR INVOLVES',/,
-     &' TEMPORAL INTERPOLATION (OBS2BAS7SE)')
-                  GOTO 30
-                ENDIF
-                WRITE (IOUT,505) N, OBSNAM(N)
+     &' MULTILAYER INTERPOLATION (OBS2BAS7SE)')
+              GOTO 30
+            ENDIF
+            WRITE (IOUT,505) N, OBSNAM(N)
   505 FORMAT (/,' INTERPOLATION FOR HEAD OBS#',I5,', ID ',A,' CHANGED',
      &     ' BECAUSE AT LEAST ONE',/,
      &' NEIGHBORING CELL REQUIRED FOR INTERPOLATION IS DRY',
      &' OR INACTIVE (OBS2BAS7SE)')
-                IF (COFF(N).GT..5) COFF(N) = COFF(N) - 5.
-                MLL = 0
-                IF (NDER(1,N).LT.0) MLL = MLAY(1,ML)
-                CALL SOBS2BAS7HIB(NDER(1,N),COFF(N),ROFF(N),DELR,DELC,
-     &                            IBOUND,NCOL,NROW,NLAY,RINT(1,N),
+            MLL = 0
+            IF (NDER(1,N).LT.0) MLL = MLAY(1,ML)
+            CALL SOBS2BAS7HIB(NDER(:,N),COFF(N),ROFF(N),DELR,DELC,
+     &                            IBOUND,NCOL,NROW,NLAY,RINT(:,N),
      &                            JOFF(N),IOFF(N),MLL)
-                COFF(N) = COFF(N) + 5.
-                JDRY = JDRY + 1
+            JDRY = JDRY + 1
 C
 C6------COULD INSERT ELSEIF TO SEE IF A NEIGHBORING CELL HAS REWET, IF SO,
 C6------RECALCULATE RINT
-              ENDIF
-   20     CONTINUE
-        ENDIF
+          ENDIF
+   20   CONTINUE
    30 CONTINUE
 C
 C7------INTERPOLATION
       ML = 0
       DO 60 N = 1, NH
+C
 C8------UPDATE COUNTER FOR MULTILAYER WELLS
         K = NDER(1,N)
         MM = 1
@@ -465,14 +450,14 @@ C8------UPDATE COUNTER FOR MULTILAYER WELLS
         ENDIF
 C
 C9------OBSERVATION AT THIS TIME STEP?
-        IF ((NDER(4,N).NE.ITS-1.OR.TOFF(N).LE.ZERO) .AND.
-     &      NDER(4,N).NE.ITS. OR. IHOBWET(N).LT.0) GOTO 60
+        IF((IHOBWET(N).LT.0) .OR.
+     &     (NDER(4,N).NE.ITS .AND. NDER(4,N)+1.NE.ITS)) GO TO 60
+C
         II = NDER(2,N)
         JJ = NDER(3,N)
         IO = IOFF(N)
         JO = JOFF(N)
         V = 0.0
-        V0 = 0.0
         DO 40 M = 1, MM
           KK = K
           PROP = 1.
@@ -487,12 +472,6 @@ C10-----CALCULATE CONTRIBUTION FROM THIS LAYER TO HEADS
      &                  RINT(2,N)*HNEW(JJ+JO,II,KK)+
      &                  RINT(3,N)*HNEW(JJ,II+IO,KK)+
      &                  RINT(4,N)*HNEW(JJ+JO,II+IO,KK))
-          IF (ITS.EQ.1) THEN
-            V0 = V0 + PROP*(RINT(1,N)*STRT(JJ,II,KK)+
-     &                      RINT(2,N)*STRT(JJ+JO,II,KK)+
-     &                      RINT(3,N)*STRT(JJ,II+IO,KK)+
-     &                      RINT(4,N)*STRT(JJ+JO,II+IO,KK))
-          ENDIF
    40   CONTINUE
 C
 C11-----INDEX WHICH, IF NOT ZERO, IDENTIFIES THE HEAD USED TO
@@ -500,17 +479,26 @@ C11-----CALCULATE DRAWDOWN
    50   N1 = NDER(5,N)
 C
 C12-----INTERPOLATE OVER TIME AND COMPUTE DRAWDOWN IF INDICATED.
-        IF (NDER(4,N).EQ.ITS) H(N) = V
-        IF (ITS.EQ.1 .AND. NDER(4,N).EQ.0) H(N) = V0
-        IF (NDER(4,N).EQ.ITS-1 .AND. TOFF(N).GT.ZERO)
-     &      H(N) = H(N) + TOFF(N)*(V-H(N))
-        IF (N1.GT.0 .AND. ((NDER(4,N).EQ.ITS.AND.TOFF(N).EQ.ZERO).OR.
-     &      (NDER(4,N).EQ.ITS-1.AND.TOFF(N).GT.ZERO))) THEN
-          IF(IHOBWET(N1).LT.0) THEN
-            IHOBWET(N)=-1
-          ELSE
-            H(N) = H(N) - H(N1)
-          END IF
+        IF(ITS.EQ.NDER(4,N)) THEN
+           H(N)=V
+C
+        ELSE IF(NDER(4,N)+1.EQ.ITS) THEN
+           IF(ITS.EQ.1) THEN
+C  For observations in first time, H(N) will not have been initialized
+C  because this routine is not called at the beginning of the simulation.
+C  Set H(N)=V because observations in the first time step must be at
+C  the end -- i.e. no interpolation between time steps 0 and 1.
+              H(N)=V
+           ELSE
+              H(N) = H(N) + TOFF(N)*(V-H(N))
+           END IF
+           IF(N1.GT.0) THEN
+             IF(IHOBWET(N1).LT.0) THEN
+               IHOBWET(N)=-1
+             ELSE
+               H(N) = H(N) - H(N1)
+             END IF
+           END IF
         END IF
    60 CONTINUE
 C
@@ -532,9 +520,11 @@ C
 C1------WRITE OBSERVATIONS TO LISTING FILE.
       WRITE(IOUT,17)
    17 FORMAT(1X,/,1X,'HEAD AND DRAWDOWN OBSERVATIONS',/,
-     1  1X,'OBSERVATION     OBSERVED      SIMULATED',/
-     2  1X,'  NAME            VALUE         VALUE      DIFFERENCE',/
-     3  1X,'-------------------------------------------------------')
+     1  1X,'OBSERVATION       OBSERVED           SIMULATED',/
+     2  1X,'  NAME              VALUE              VALUE',
+     3     '             DIFFERENCE',/
+     4  1X,'-----------------------------------------------',
+     5     '---------------------')
       SUMSQ=0.
       DO 100 N=1,NH
       IF(IHOBWET(N).LT.0) THEN
@@ -546,7 +536,7 @@ C1------WRITE OBSERVATIONS TO LISTING FILE.
         SUMSQ=SUMSQ+SQ
         WRITE(IOUT,27) OBSNAM(N),HOBS(N),H(N),DIFF
       END IF
-   27 FORMAT(1X,A,1P,3G14.6)
+   27 FORMAT(1X,A,1P,3G20.11)
   100 CONTINUE
       WRITE(IOUT,28) SUMSQ
    28 FORMAT(1X,/,1X,'SUM OF SQUARED DIFFERENCE:',1P,E15.5)
@@ -600,7 +590,7 @@ C
       IF (I1.LT.1 .OR. I1.GT.NROW .OR. J1.LT.1 .OR. J1.GT.NCOL) IBIJ = 0
 C
       CALL SOBS2BAS7HBF(COFF(N),DELC,DELR,I,I1,IBI,IBIJ,IBJ,IOFF(N),
-     1                  J,J1,JOFF(N),NCOL,NROW,RINT(1,N),ROFF(N))
+     1                  J,J1,JOFF(N),NCOL,NROW,RINT(:,N),ROFF(N))
 C
       RETURN
       END
@@ -660,6 +650,7 @@ C        SPECIFICATIONS:
 C     ------------------------------------------------------------------
       DIMENSION DELR(NCOL), DELC(NROW), RINT(4)
 C     ------------------------------------------------------------------
+      A=0.
 C
 C1------MOVE OBSERVATION TO NODE IF CLOSE TO NODE OR IF NEIGHBORS ARE
 C1------NO FLOW
@@ -815,8 +806,7 @@ C8------THE OBSERVATION TIME IS THE END OF THE TIME STEP
    33   FORMAT(1X,'Observation within a steady-state time step has',
      1       ' been moved to the end of the time step.')
                 END IF
-                TOFF1 = ZERO
-                NUMTS = NUMTS+1
+                TOFF1 = 1.0
               ELSE
 C
 C9------Transient time step.
@@ -836,8 +826,7 @@ C9C-----TIME STEP.  ITR1ST=1 INDICATES IT CAN'T.
    37      FORMAT(1X,'The observation is in the first time step of the',
      1  ' simulation, but the observation type does not allow this.',/
      2 1X,'The observation is being moved to the end of the time step.')
-                    NUMTS = 1
-                    TOFF1 = ZERO
+                    TOFF1 = 1.0
                   ELSE
 C
 C9D-----STOP IF THE OBSERVATION IS AT THE BEGINNING OF AN INITIAL TRANSIENT
@@ -868,7 +857,8 @@ C10-----AT THE EXACT END OF THE SIMULATION ARE NOT FLAGGED AS ERRORS
       TOLERANCE = 1.0E-6*PERLEN(NPER)
       TDIFF = TOFFMULT-TIME
       IF (TDIFF.LT.TOLERANCE) THEN
-        TOFF1 = 0.0
+        TOFF1 = 1.0
+        NUMTS=NUMTS-1
       ELSE
         WRITE(IOUT,500) ID
  500    FORMAT(/,' TIME SPECIFIED FOR OBSERVATION "',A,
@@ -876,7 +866,7 @@ C10-----AT THE EXACT END OF THE SIMULATION ARE NOT FLAGGED AS ERRORS
         CALL USTOP(' ')
       ENDIF
 C
-C11-----
+C11-----The Time step and interpolation coefficient have been determined.
  80   CONTINUE
       RETURN
       END
@@ -894,13 +884,13 @@ C
 C
 C1------WRITE LABEL IF "LABEL" IS NOT 0
         IF(LABEL.NE.0) WRITE(IUOBSSV,18)
-   18   FORMAT('"SIMULATED EQUIVALENT"',3X,'"OBSERVED VALUE"',4X,
-     1       '"OBSERVATION NAME"')
+   18   FORMAT('"SIMULATED EQUIVALENT"',3X,'"OBSERVED VALUE"',
+     1       4X,'"OBSERVATION NAME"')
 C
 C2------WRITE OBSERVATIONS
         DO 100 N=1,NOBS
           WRITE(IUOBSSV,28) H(N),HOBS(N),OBSNAM(N)
-   28     FORMAT(1P,1P,E15.6,3X,E15.6,2X,A)
+   28     FORMAT(1X,1P,E19.11,E20.11,2X,A)
   100   CONTINUE
       END IF
 C

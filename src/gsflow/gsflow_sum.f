@@ -7,101 +7,76 @@
       IMPLICIT NONE
 !   Local Variables
       INTEGER, PARAMETER :: BALUNT = 188
-      REAL, PARAMETER :: CLOSEZERO = 1.0E-15, ERRCHK = 0.00001
-      INTEGER :: Nobs, Nreach
-      INTEGER :: Balance_unt, Vbnm_index(10), Gsf_unt, Rpt_count
-      REAL :: Cumvol_precip, Rate_precip, Cumvol_strmin, Rate_strmin
-      REAL :: Cumvol_gwbndin, Rate_gwbndin, Cumvol_wellin, Rate_wellin
-      REAL :: Cumvol_et, Rate_et, Cumvol_strmot, Rate_strmot
-      REAL :: Cumvol_gwbndot, Rate_gwbndot, Cumvol_wellot, Rate_wellot
-      REAL :: Cum_delstore, Rate_delstore, Cum_surfstor, Rate_surfstor
-      REAL :: Rate_farout, Cumvol_farout, Basin_convert
-      REAL :: Last_basin_soil_moist, Last_basin_ssstor
+      REAL, PARAMETER :: ERRCHK = 0.00001
+      INTEGER, SAVE :: Balance_unt, Vbnm_index(13), Gsf_unt, Rpt_count
+      REAL, SAVE :: Cumvol_precip, Rate_precip, Cumvol_strmin
+      REAL, SAVE :: Cumvol_gwbndin, Rate_gwbndin, Cumvol_wellin
+      REAL, SAVE :: Cumvol_et, Rate_et, Cumvol_strmot, Rate_strmot
+      REAL, SAVE :: Cumvol_gwbndot, Rate_gwbndot, Cumvol_wellot
+      REAL, SAVE :: Cum_delstore, Rate_delstore, Cum_surfstor
+      REAL, SAVE :: Rate_farout, Cumvol_farout, Basin_convert
+      REAL, SAVE :: Last_basin_soil_moist, Last_basin_ssstor
+      REAL, SAVE :: Rate_strmin, Rate_wellin, Rate_wellot, Rate_surfstor
+      REAL, SAVE :: Last_basinintcpstor, Last_basinimpervstor
+      REAL, SAVE :: Last_basinpweqv, Last_basinsoilmoist
+      REAL, SAVE :: Basin_gsfstor, Last_basinprefstor,Last_basingravstor
+!      REAL, SAVE :: Cumvol_lakeppt, Cumvol_lakeevap, Cumvol_uzfet
 ! Added lake variables
-      REAL :: Rate_lakin, Rate_lakot, Cumvol_lakin, Cumvol_lakot
-      REAL :: Rate_lakestor, Cum_lakestor
-      REAL :: Last_basinintcpstor, Last_basinimpervstor
-      REAL :: Last_basinpweqv, Last_basinsoilmoist, Last_basingravstor
-      REAL :: Basin_gsfstor, Last_basinprefstor
+      REAL, SAVE :: Rate_lakin, Rate_lakot, Cumvol_lakin, Cumvol_lakot
+      REAL, SAVE :: Rate_lakestor, Cum_lakestor
 !   Declared Variables
-      REAL :: Cum_soilstor, Rate_soilstor, Cum_uzstor, Rate_uzstor
-      REAL :: Cum_satstor, Rate_satstor, Cum_pweqv, Rate_pweqv
-      REAL :: Basinpweqv, Basinsoilstor, Uzf_infil, Ave_uzf_infil
-      REAL :: Basinppt, Basinpervet, Basinimpervevap, Basinintcpevap
-      REAL :: Basinsnowevap, Basinstrmflow, Basinsz2gw, Basingw2sz
-      REAL :: Uzf_recharge, Basinseepout, Basinsoilmoist, Basingravstor
-      REAL :: Basingwstor, Basinintcpstor, Basinimpervstor
-      REAL :: Basininterflow, Basinsroff, Strm_stor, Lake_stor
-      REAL :: Obs_strmflow, Basinszreject, Basinprefstor, Uzf_et
-      REAL :: Basinrain, Basinsnow, Basingvr2pfr, Basinslowflow
-      REAL :: Basinprefflow, Basinhortonian, Basinhortonianlakes
-      REAL :: Basinlakeinsz, Basinlakeevap, Basinlakeprecip
-      REAL :: Uzf_del_stor, Streambed_loss, Gwflow2strms
-      REAL :: Sfruz_change_stor, Lakebed_loss, Lake_change_stor
-      REAL :: Gwflow2lakes, Basininfil, Basindunnian, Basinsm2gvr
-      REAL :: Basingvr2sm, Basininfil_tot, Basininfil2pref, Basindnflow
-      REAL :: Basinactet, Basinsnowmelt, Sfruz_tot_stor
-      REAL :: Basinfarfieldflow, Basinsoiltogw
-!   Declared Variables from other modules - obs
-      REAL, ALLOCATABLE :: Runoff(:)
-!   Declared Variables from other modules - precip
-      REAL :: Basin_ppt, Basin_rain, Basin_snow
-!   Declared Variables from other modules - soilzone
-      REAL :: Basin_perv_et, Basin_soil_moist, Basin_sz2gw, Basin_gw2sm
-      REAL :: Basin_ssstor, Basin_ssflow, Basin_actet, Basin_dnflow
-      REAL :: Basin_dunnian, Basin_sm2gvr, Basin_pref_stor
-      REAL :: Basin_infil_tot, Basin_pref_flow_in, Basin_gvr2sm
-      REAL :: Basin_gvr2pfr, Basin_slowflow, Basin_prefflow
-      REAL :: Basin_lakeinsz, Basin_lakeprecip, Basin_soil_to_gw
-      REAL :: Basin_szfarflow
-!   Declared Variables from other modules - snow
-      REAL :: Basin_snowevap, Basin_pweqv, Basin_snowmelt
-!   Declared Variables from other modules - basin
-      INTEGER :: Prt_debug
-      REAL :: Basin_area_inv
-!   Declared Variables from other modules - cascade
-      INTEGER :: Outflow_flg
+      REAL, SAVE :: Cum_soilstor, Rate_soilstor, Cum_uzstor, Rate_uzstor
+      REAL, SAVE :: Cum_satstor, Rate_satstor, Cum_pweqv, Rate_pweqv
+      REAL, SAVE :: Basinpweqv, Basinsoilstor, Uzf_infil, Ave_uzf_infil
+      REAL, SAVE :: Basinppt, Basinpervet, Basinimpervevap
+      REAL, SAVE :: Basinsnowevap, Basinstrmflow, Basinsz2gw, Basingw2sz
+      REAL, SAVE :: Uzf_recharge, Basinseepout, Basinsoilmoist
+      REAL, SAVE :: Basingwstor, Basinintcpstor, Basinimpervstor
+      REAL, SAVE :: Basininterflow, Basinsroff, Strm_stor, Lake_stor
+      REAL, SAVE :: Obs_strmflow, Basinszreject, Basinprefstor, Uzf_et
+      REAL, SAVE :: Unsat_et, Sat_et
+      REAL, SAVE :: Basinrain, Basinsnow, Basingvr2pfr, Basinslowflow
+      REAL, SAVE :: Basinprefflow, Basinhortonian, Basinhortonianlakes
+      REAL, SAVE :: Basinlakeinsz, Basinlakeevap, Basinlakeprecip
+      REAL, SAVE :: Uzf_del_stor, Streambed_loss, Gwflow2strms
+      REAL, SAVE :: Sfruz_change_stor, Lakebed_loss, Lake_change_stor
+      REAL, SAVE :: Gwflow2lakes, Basininfil, Basindunnian, Basinsm2gvr
+      REAL, SAVE :: Basingvr2sm, Basininfil_tot, Basininfil2pref
+      REAL, SAVE :: Basinactet, Basinsnowmelt, Sfruz_tot_stor
+      REAL, SAVE :: Basinfarfieldflow, Basinsoiltogw, Basinszfarflow
+      REAL, SAVE :: Basinsrofffarflow, Basinintcpevap, Basingravstor
+      REAL, SAVE :: Basindnflow, Basinswaleet, Basinnetgwwel
 !   Declared Variables from other modules - srunoff
       REAL :: Basin_sroff, Basin_imperv_evap, Basin_imperv_stor
       REAL :: Basin_infil, Basin_hortonian, Basin_hortonian_lakes
-      REAL :: Strm_farfield
-!   Declared Variables from other modules - strmflow
-      REAL :: Basin_cfs
-!   Declared Variables from other modules - gwflow
-!     REAL :: Basin_gwstor
-!   Declared Variables from other modules - intcp
-      REAL :: Basin_intcp_evap, Basin_intcp_stor
-!   Declared Variables from other modules - gsflow_budget
-      REAL :: Sat_store, Unsat_store, Basin_szreject, Basin_lakeevap
-      REAL :: Stream_leakage, Basin_reach_latflow, Sat_change_stor
+      REAL :: Strm_farfield, Basin_sroff_farflow
 !   Declared Parameters
-      INTEGER :: Id_obsrunoff, Runoff_units
+      INTEGER, SAVE :: Id_obsrunoff, Runoff_units
 !   Control Parameters
-      INTEGER :: Rpt_days, Gsf_rpt
-      CHARACTER(LEN=256) :: Csv_output_file, Gsflow_output_file
-      CHARACTER(LEN=256) :: Model_output_file
+      INTEGER, SAVE :: Rpt_days, Gsf_rpt
+      CHARACTER(LEN=256), SAVE :: Csv_output_file, Gsflow_output_file
+      CHARACTER(LEN=256), SAVE :: Model_output_file
       END MODULE GSFSUM
 
 !***********************************************************************
 !     Main gsflow_sum routine
 !***********************************************************************
-      INTEGER FUNCTION gsflow_sum(Arg)
+      INTEGER FUNCTION gsflow_sum()
+      USE PRMS_MODULE, ONLY: Process_flag
       IMPLICIT NONE
-! Arguments
-      CHARACTER(LEN=*), INTENT(IN) :: Arg
 ! Functions
       INTEGER, EXTERNAL :: gsfsumdecl, gsfsuminit, gsfsumrun
       INTEGER, EXTERNAL :: gsfsumclean
 !***********************************************************************
       gsflow_sum = 0
 
-      IF ( Arg.EQ.'run' ) THEN
+      IF ( Process_flag==0 ) THEN
         gsflow_sum = gsfsumrun()
-      ELSEIF ( Arg.EQ.'declare' ) THEN
+      ELSEIF ( Process_flag==1 ) THEN
         gsflow_sum = gsfsumdecl()
-      ELSEIF ( Arg.EQ.'initialize' ) THEN
+      ELSEIF ( Process_flag==2 ) THEN
         gsflow_sum = gsfsuminit()
-      ELSEIF ( Arg.EQ.'cleanup' ) THEN
+      ELSEIF ( Process_flag==3 ) THEN
         gsflow_sum = gsfsumclean()
       ENDIF
 
@@ -117,19 +92,25 @@
       INTEGER FUNCTION gsfsumdecl()
       USE GSFSUM
       IMPLICIT NONE
-      INCLUDE 'fmodules.inc'
+      INTEGER, EXTERNAL :: declmodule, declparam, declvar
 !***********************************************************************
       gsfsumdecl = 1
 
       IF ( declmodule(
-     &'$Id: gsflow_sum.f 3810 2008-02-07 16:30:09Z rsregan $')
+     &'$Id: gsflow_sum.f 2306 2011-01-03 22:43:48Z rsregan $')
      &     .NE.0 ) RETURN
 
-      Nobs = getdim('nobs')
-      IF ( Nobs.EQ.-1 ) RETURN
+      IF ( declvar('gsflow_sum', 'basinsrofffarflow', 'one', 1, 'real',
+     &     'Volumetric flow rate of PRMS surface runoff'//
+     &     ' leaving land surface as far-field flow',
+     &     'L3/T',
+     &     Basinsrofffarflow).NE.0 ) RETURN
 
-      Nreach = getdim('nreach')
-      IF ( Nreach.EQ.-1 ) RETURN
+      IF ( declvar('gsflow_sum', 'basinszfarflow', 'one', 1, 'real',
+     &     'Volumetric flow rate of PRMS interflow and surface runoff'//
+     &     ' leaving soilzone modeled region as far-field flow',
+     &     'L3/T',
+     &     Basinszfarflow).NE.0 ) RETURN
 
       IF ( declvar('gsflow_sum', 'basinfarfieldflow', 'one', 1, 'real',
      &     'Volumetric flow rate of PRMS interflow and surface runoff'//
@@ -224,11 +205,6 @@
      &     'L3',
      &     Basingravstor).NE.0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basingwstor', 'one', 1, 'real',
-     &     'Volume of water in PRMS ground-water reservoirs'//
-     &     ' (PRMS-only simulations)', 'L3',
-     &     Basingwstor).NE.0 ) RETURN
-
       IF ( declvar('gsflow_sum', 'basinintcpstor', 'one', 1, 'real',
      &     'Volume of intercepted percipitation in plant-canopy'//
      &     ' reservoirs', 'L3',
@@ -285,6 +261,16 @@
      &     'Volumetric flow rate of evapotranspiration from the'//
      &     ' unsaturated and saturated zones', 'L3/T',
      &     Uzf_et).NE.0 ) RETURN
+
+      IF ( declvar('gsflow_sum', 'unsat_et', 'one', 1, 'real',
+     &     'Volumetric flow rate of evapotranspiration from the'//
+     &     ' unsaturated zone', 'L3/T',
+     &     Unsat_et).NE.0 ) RETURN
+
+      IF ( declvar('gsflow_sum', 'sat_et', 'one', 1, 'real',
+     &     'Volumetric flow rate of evapotranspiration from the'//
+     &     ' saturated zone', 'L3/T',
+     &     Sat_et).NE.0 ) RETURN
 
       IF ( declvar('gsflow_sum', 'uzf_del_stor', 'one', 1, 'real',
      &     'Change in unsaturated-zone storage', 'L3',
@@ -420,6 +406,10 @@
      &     'Soil moisture storage in volume of MODFLOW units', 'L3',
      &     Basinsoilstor).NE.0 ) RETURN
 
+      IF ( declvar('gsflow_sum', 'basinnetgwwel', 'one', 1, 'real',
+     &     'Net groundwater pumping in volume of MODFLOW units', 'L3',
+     &     Basinnetgwwel).NE.0 ) RETURN
+
       IF ( declparam('gsflow_sum', 'id_obsrunoff', 'one', 'integer',
      &     '0', 'bounded', 'nobs',
      &     'Index of basin outlet observed runoff station',
@@ -428,11 +418,9 @@
 
       IF ( declparam('gsflow_sum', 'runoff_units', 'one', 'integer',
      &     '0', '0', '1',
-     &     'Observed runoff units',
-     &     'Observed runoff units (0=cfs; 1=cms)',
+     &     'Measured runoff units',
+     &     'Measured runoff units (0=cfs; 1=cms)',
      &     'none').NE.0 ) RETURN
-
-      IF ( Nobs.GT.0 ) ALLOCATE (Runoff(Nobs))
 
       gsfsumdecl = 0
 
@@ -445,8 +433,13 @@
       INTEGER FUNCTION gsfsuminit()
       USE GSFSUM
       USE GSFCONVERT, ONLY:Acre_inches_to_mfl3
+      USE GWFLAKMODULE, ONLY:TOTSTOR_LAK
+      USE GWFSFRMODULE, ONLY:IRTFLG
+      USE GLOBAL, ONLY:IUNIT
+      USE PRMS_BASIN, ONLY: Print_debug, Basin_area_inv
+      USE PRMS_SOILZONE, ONLY: Basin_soil_moist, Basin_ssstor
       IMPLICIT NONE
-      INCLUDE 'fmodules.inc'
+      INTEGER, EXTERNAL :: getparam
       EXTERNAL GSF_PRINT
 !***********************************************************************
       gsfsuminit = 1
@@ -458,17 +451,11 @@
       IF ( getparam('gsflow_sum', 'runoff_units', 1, 'real',
      &     Runoff_units).NE.0 ) RETURN
 
-      IF ( getvar('basin', 'prt_debug', 1, 'integer', Prt_debug)
-     &     .NE.0 ) RETURN
-      IF ( Prt_debug.EQ.1 ) THEN
+      IF ( Print_debug.EQ.1 ) THEN
         OPEN (BALUNT, FILE='gsflow_sum.wbal')
         WRITE (BALUNT, 9001)
       ENDIF
-      IF ( getvar('cascade', 'outflow_flg', 1, 'integer', Outflow_flg)
-     &     .NE.0 ) RETURN
 
-      IF ( getvar('basin', 'basin_area_inv', 1, 'real', Basin_area_inv)
-     &     .NE.0 ) RETURN
       Basin_convert = Acre_inches_to_mfl3/Basin_area_inv
 
 !  Set the volume budget indicies to -1 anytime "init" is called.
@@ -515,22 +502,20 @@
       Basingw2sz = 0.0
       Uzf_recharge = 0.0
       Basinseepout = 0.0
-      Basinsoilmoist = 0.0
-      Basingravstor = 0.0
+!     Basingwstor not computed, was the PRMS GWR storage which
+!     is not available
       Basingwstor = 0.0
-      Basinintcpstor = 0.0
-      Basinimpervstor = 0.0
-      Basinpweqv = 0.0
       Basininterflow = 0.0
       Basinsroff = 0.0
       Basinhortonianlakes = 0.0
       Basinlakeinsz = 0.0
-      Strm_stor = 0.0
       Lake_stor = 0.0
+      IF ( IUNIT(22).GT.0 ) Lake_stor = TOTSTOR_LAK
       Obs_strmflow = 0.0
       Basinszreject = 0.0
-      Basinprefstor = 0.0
       Uzf_et = 0.0
+      Unsat_et = 0.0
+      Sat_et = 0.0
       Uzf_del_stor = 0.0
       Streambed_loss = 0.0
       Sfruz_change_stor = 0.0
@@ -544,7 +529,9 @@
       Basininfil_tot = 0.0
       Basininfil2pref = 0.0
       Basinfarfieldflow = 0.0
+      Basinszfarflow = 0.0
       Basinsoiltogw = 0.0
+      Basinsrofffarflow = 0.0
       Strm_farfield = 0.0
 ! Added lake variables
       Rate_lakin = 0.0
@@ -553,23 +540,20 @@
       Cumvol_lakot = 0.0
       Rate_lakestor = 0.0
       Cum_lakestor = 0.0
-
-      CALL BASIN_GET_STORAGE
-
-! LAND SURFACE STORAGE
-      Last_basinintcpstor = Basinintcpstor
-      Last_basinimpervstor = Basinimpervstor
-      Last_basinpweqv = Basinpweqv
+      Basinnetgwwel = 0.0
+!      Cumvol_lakeppt = 0.0
+!      Cumvol_lakeevap = 0.0
+!      Cumvol_uzfet = 0.0
       Last_basin_soil_moist = Basin_soil_moist
       Last_basin_ssstor = Basin_ssstor
 
-! SOIL STORAGE
-      Last_basinsoilmoist = Basinsoilmoist
-      Last_basingravstor = Basingravstor
-      Last_basinprefstor = Basinprefstor
+      Strm_stor = 0.0
+      IF ( IRTFLG.GT.0 ) CALL MODFLOW_SFR_GET_STORAGE
+
+      CALL BASIN_GET_STORAGE
 
       Rpt_count = 0
-            
+
       gsfsuminit = 0
 
  9001 FORMAT('    Date         SZ Bal    lakeinsz     Dunnian',
@@ -584,23 +568,40 @@
 !***********************************************************************
       INTEGER FUNCTION gsfsumrun()
       USE GSFSUM
-      USE GSFCONVERT, ONLY:Mfl3t_to_cfs, Mfl3_to_ft3, Cfs2inches
+      USE GSFCONVERT, ONLY:Mfl3t_to_cfs, Mfl3_to_ft3
       USE GSFPRMS2MF, ONLY:Net_sz2gw
       USE GSFBUDGET, ONLY:Gw_inout, Gw_bnd_in, Gw_bnd_out, Well_in,
-     &    Well_out, Stream_inflow, Basin_actetgw
-      USE GWFBASMODULE, ONLY:DELT
+     &    Well_out, Stream_inflow, Basin_gw2sm, Sat_change_stor,
+     &    Stream_leakage, Basin_szreject, Unsat_store, Sat_store
+!      USE GSFPRMS2MF, ONLY: Basin_reach_latflow
+      USE GSFBUDGET, ONLY: Basin_actetgw
       USE GLOBAL, ONLY:IUNIT
       USE GWFUZFMODULE, ONLY:UZTSRAT
-      USE GWFSFRMODULE, ONLY:SFRUZBD, STRMDELSTOR_RATE
+      USE GWFSFRMODULE, ONLY:SFRUZBD, STRMDELSTOR_RATE, SFRRATIN, 
+     &                       SFRRATOUT, IRTFLG
       USE GWFLAKMODULE, ONLY:TOTGWIN_LAK, TOTGWOT_LAK, TOTDELSTOR_LAK,
-     &                       TOTSTOR_LAK, TOTWTHDRW_LAK
-!rsr &           , TOTRUNF_LAK, TOTSURFIN_LAK, TOTPPT_LAK, TOTSURFOT_LAK
+     &                       TOTSTOR_LAK, TOTWTHDRW_LAK, TOTRUNF_LAK,
+     &                       TOTSURFIN_LAK, TOTSURFOT_LAK, TOTEVAP_LAK,
+     &                       TOTPPT_LAK
       USE GSFMODFLOW, ONLY:KKSTP, KKPER, KKITER
+      USE PRMS_OBS, ONLY: Runoff, Nowtime, Nobs
+      USE PRMS_CASCADE, ONLY: Outflow_flg
+      USE PRMS_BASIN, ONLY: Basin_cfs, Print_debug
+      USE PRMS_CLIMATEVARS, ONLY: Basin_ppt, Basin_rain, Basin_snow
+      USE PRMS_FLOWVARS, ONLY: Basin_perv_et, Basin_swale_et,
+     +    Basin_lakeevap, Basin_soil_to_gw, Basin_ssflow, Basin_actet
+      USE PRMS_SNOW, ONLY: Basin_snowevap, Basin_snowmelt
+      USE PRMS_INTCP, ONLY: Basin_intcp_evap
+      USE PRMS_SOILZONE, ONLY: Basin_lakeprecip, Basin_dunnian,
+     &    Basin_slowflow, Basin_prefflow, Basin_lakeinsz,
+     &    Basin_infil_tot, Basin_pref_flow_in, Basin_sz2gw,
+     &    Basin_szfarflow, Basin_sm2gvr, Basin_gvr2sm,
+     &    Basin_gvr2pfr, Basin_dnflow, Basin_ssstor, Basin_soil_moist
       IMPLICIT NONE
       INTRINSIC SNGL
-      INCLUDE 'fmodules.inc'
+      INTEGER, EXTERNAL :: getvar, getstep
 ! Local variables
-      INTEGER :: nowtime(6), year, mo, day, nstep
+      INTEGER :: year, mo, day, nstep
       REAL :: obsq_cfs, obsq_cms
 !     REAL :: gw_out, basinreachlatflowm3
       REAL :: sz_bal, et, rnf, gvf, szin, szout, szdstor
@@ -608,45 +609,48 @@
       gsfsumrun = 1
 
 !*****Evapotranspiration
-      IF ( getvar('soilzone', 'basin_perv_et', 1, 'real', Basin_perv_et)
-     &     .NE.0 ) RETURN
-      IF ( getvar('snow', 'basin_snowevap', 1, 'real', Basin_snowevap)
-     &     .NE.0 ) RETURN
       IF ( getvar('srunoff', 'basin_imperv_evap', 1, 'real',
      &     Basin_imperv_evap).NE.0 ) RETURN
-      IF ( getvar('intcp', 'basin_intcp_evap', 1, 'real',
-     &     Basin_intcp_evap).NE.0 ) RETURN
-      IF ( getvar('soilzone', 'basin_lakeevap', 1, 'real',
-     &     Basin_lakeevap).NE.0 ) RETURN
 
-      ! basin_actet only includes land HRU ET
-      IF ( getvar('soilzone', 'basin_actet', 1, 'real', Basin_actet)
-     &     .NE.0 ) RETURN
+      ! basin_actet includes land HRU and lake ET
 
-      Uzf_et = SNGL(UZTSRAT(2)) !???does this equal sum of actet_gw
-      et = Basin_actetgw*Basin_convert
-!     print *, 'uzfet', uzf_et-et, uzf_et, et
+      Uzf_et = SNGL(UZTSRAT(2)+UZTSRAT(7))
+      Unsat_et = SNGL(UZTSRAT(2))
+      Sat_et = SNGL(UZTSRAT(7))
+!      Cumvol_uzfet = Cumvol_uzfet + Uzf_et
+!      et = Basin_actetgw*Basin_convert
+!      IF (abs(uzf_et-et)>0.0001 )
+!    +  print *, 'uzfet',uzf_et-et,uzf_et,unsat_et,sat_et,
+!    + et,basin_actetgw,basin_actet,basin_perv_et
 
 ! convert PRMS variables acre-inches over the basin area (depth)
 ! to modflow length cubed (total volume)
       Basinpervet = Basin_perv_et*Basin_convert
+      Basinswaleet = Basin_swale_et*Basin_convert
       Basinimpervevap = Basin_imperv_evap*Basin_convert
       Basinintcpevap = Basin_intcp_evap*Basin_convert
       Basinsnowevap = Basin_snowevap*Basin_convert
       Basinlakeevap = Basin_lakeevap*Basin_convert
-      Basinactet = Basin_actet*Basin_convert + Uzf_et + Basinlakeevap
+!      IF ( IUNIT(22)>1 ) Basinlakeevap = TOTEVAP_LAK
+      ! sanity check
+!      IF ( IUNIT(22)>0 ) THEN
+!        IF ( ABS(Basinlakeevap+TOTEVAP_LAK)>0.0001 ) PRINT *, 
+!     &       'LAKE EVAP PROBLEM, MF lake evap not equal PRMS lake evap',
+!     &       Basinlakeevap+TOTEVAP_LAK, Basinlakeevap, TOTEVAP_LAK
+!      ENDIF
+!      Basinactet = Basin_actet*Basin_convert + Uzf_et + Basinlakeevap
+!rsr, 3/16/2010 basinactet includes PRMS lake evaporation = TOTEVAP_LAK
+!      Basinactet = Basin_actet*Basin_convert + Uzf_et
+      Basinactet = Basin_actet*Basin_convert
 
 ! STREAMFLOW
 
 ! convert basin_cfs from cfs over to modflow l3/t (volume per time step)
-      IF ( getvar('strmflow', 'basin_cfs', 1, 'real', Basin_cfs)
-     &     .NE.0 ) RETURN
       Basinstrmflow = Basin_cfs/Mfl3t_to_cfs
 
       IF ( Nobs.LT.1 ) THEN
         obsq_cfs = -1.0
       ELSE
-        IF ( getvar('obs', 'runoff', Nobs, 'real', Runoff).NE.0 ) RETURN
         IF ( Runoff_units.EQ.1 ) THEN
           obsq_cms = Runoff(Id_obsrunoff)
           obsq_cfs = obsq_cms*Mfl3_to_ft3
@@ -656,23 +660,12 @@
       ENDIF
       Obs_strmflow = obsq_cfs/Mfl3t_to_cfs
 
-      IF ( getvar('gsflow', 'basin_reach_latflow', 1, 'real',
-     &     Basin_reach_latflow).NE.0 ) RETURN
 !rsr  basinreachlatflowm3 = Basin_reach_latflow/Mfl3t_to_cfs
 
 ! PRECIPITATION
-! DANGER markstro convert Basin_ppt from acre-inches over the
-!                 basin area (depth) to m3 (total volume)
-      IF ( getvar('precip', 'basin_ppt', 1, 'real', Basin_ppt)
-     &     .NE.0 ) RETURN
-      IF ( getvar('precip', 'basin_rain', 1, 'real', Basin_rain)
-     &     .NE.0 ) RETURN
-      IF ( getvar('precip', 'basin_snow', 1, 'real', Basin_snow)
-     &     .NE.0 ) RETURN
-      IF ( getvar('gsfbud', 'basin_lakeprecip', 1, 'real',
-     &     Basin_lakeprecip).NE.0 ) RETURN
       !Basinppt includes precipitation on lakes
       Basinppt = Basin_ppt*Basin_convert
+!rsr, 3/16/2010 do not subtract lake evaporation, not included in lake in below
       Basinrain = Basin_rain*Basin_convert
       Basinsnow = Basin_snow*Basin_convert
       Basinlakeprecip = Basin_lakeprecip*Basin_convert
@@ -684,14 +677,6 @@
      &     .NE.0 ) RETURN
       IF ( getvar('srunoff', 'basin_hortonian', 1, 'real',
      &     Basin_hortonian).NE.0 ) RETURN
-      IF ( getvar('soilzone', 'basin_dunnian', 1, 'real', Basin_dunnian)
-     &     .NE.0 ) RETURN
-      IF ( getvar('soilzone', 'basin_ssflow', 1, 'real', Basin_ssflow)
-     &     .NE.0 ) RETURN
-      IF ( getvar('soilzone', 'basin_slowflow', 1, 'real',
-     &     Basin_slowflow).NE.0 ) RETURN
-      IF ( getvar('soilzone', 'basin_prefflow', 1, 'real',
-     &     Basin_prefflow).NE.0 ) RETURN
       Basinsroff = Basin_sroff*Basin_convert  !Hortonian and Dunnian
       Basinhortonian = Basin_hortonian*Basin_convert
       Basindunnian = Basin_dunnian*Basin_convert
@@ -701,88 +686,67 @@
       !flows to lakes
       IF ( getvar('srunoff', 'basin_hortonian_lakes', 1, 'real',
      &     Basin_hortonian_lakes).NE.0 ) RETURN
-      IF ( getvar('soilzone', 'basin_lakeinsz', 1, 'real',
-     &     Basin_lakeinsz).NE.0 ) RETURN
       Basinhortonianlakes = Basin_hortonian_lakes*Basin_convert
-      Basinlakeinsz = Basin_lakeinsz*Basin_convert    !interflow + Dunnian soilzone
+      !interflow + Dunnian soilzone
+      Basinlakeinsz = Basin_lakeinsz*Basin_convert
 
 ! SOIL/GW TOTALS
       !flows to soilzone
       IF ( getvar('srunoff', 'basin_infil', 1, 'real', Basin_infil)
      &     .NE.0 ) RETURN
-      IF ( getvar('soilzone', 'basin_gw2sm', 1, 'real', Basin_gw2sm)
-     &     .NE.0 ) RETURN
-      IF ( getvar('soilzone', 'basin_infil_tot', 1, 'real',
-     &     Basin_infil_tot).NE.0 ) RETURN
-      IF ( getvar('soilzone', 'basin_pref_flow_in', 1, 'real',
-     &     Basin_pref_flow_in).NE.0 ) RETURN
-      IF ( getvar('snow', 'basin_snowmelt', 1, 'real', Basin_snowmelt)
-     &     .NE.0 ) RETURN
-      Basininfil = Basin_infil*Basin_convert !to capillary and preferential
+      !to capillary and preferential
+      Basininfil = Basin_infil*Basin_convert
       Basingw2sz = Basin_gw2sm*Basin_convert !to gravity
-      Basininfil_tot = Basin_infil_tot*Basin_convert !infil plus cascading flow to capillary
-      Basininfil2pref = Basin_pref_flow_in*Basin_convert !portion of infil to preferential
+      !infil plus cascading flow to capillary
+      Basininfil_tot = Basin_infil_tot*Basin_convert
+      !portion of infil to preferential
+      Basininfil2pref = Basin_pref_flow_in*Basin_convert
       Basinsnowmelt = Basin_snowmelt*Basin_convert
 
       !flows from soilzone
-      IF ( getvar('soilzone', 'basin_sz2gw', 1, 'real', Basin_sz2gw)
-     &     .NE.0 ) RETURN
-      IF ( getvar('soilzone', 'basin_szreject', 1, 'real',
-     &     Basin_szreject).NE.0 ) RETURN
-      IF ( getvar('soilzone', 'basin_soil_to_gw', 1, 'real',
-     &     Basin_soil_to_gw).NE.0 ) RETURN
-      IF ( getvar('soilzone', 'basin_szfarflow', 1, 'real',
-     &     Basin_szfarflow).NE.0 ) RETURN
       Basinsoiltogw = Basin_soil_to_gw*Basin_convert
       Basinsz2gw = Basin_sz2gw*Basin_convert
       Basinszreject = Basin_szreject*Basin_convert
+      Basinszfarflow = Basin_szfarflow*Basin_convert
 
       !internal soilzone flows
-      IF ( getvar('soilzone', 'basin_sm2gvr', 1, 'real', Basin_sm2gvr)
-     &     .NE.0 ) RETURN
-      IF ( getvar('soilzone', 'basin_gvr2sm', 1, 'real', Basin_gvr2sm)
-     &     .NE.0 ) RETURN
-      IF ( getvar('soilzone', 'basin_gvr2pfr', 1, 'real', Basin_gvr2pfr)
-     &     .NE.0 ) RETURN
-      IF ( getvar('soilzone', 'basin_dnflow', 1, 'real', Basin_dnflow)
-     &     .NE.0 ) RETURN
       Basinsm2gvr = Basin_sm2gvr*Basin_convert !> field capacity
       Basingvr2sm = Basin_gvr2sm*Basin_convert !replenish soil moist
       Basingvr2pfr = Basin_gvr2pfr*Basin_convert !>pref_flow threshold
-      Basindnflow = Basin_dnflow*Basin_convert !cascading slow, pref, and Dunnian
+      !cascading slow, pref, and Dunnian
+      Basindnflow = Basin_dnflow*Basin_convert
 
       !flows from PRMS that go outside of basin and not to MODFLOW
       IF ( Outflow_flg==1 ) THEN
         IF ( getvar('srunoff', 'strm_farfield', 1, 'real',
      &       Strm_farfield).NE.0 ) RETURN
         Basinfarfieldflow = Strm_farfield/Mfl3t_to_cfs
+        IF ( getvar('srunoff', 'basin_sroff_farflow', 1, 'real',
+     &       Basin_sroff_farflow).NE.0 ) RETURN
+        !cascading surface runoff
+        Basinsrofffarflow = Basin_sroff_farflow*Basin_convert
       ENDIF
       
 !  Stuff from MODFLOW
       IF ( Vbnm_index(1).EQ.-1 ) CALL MODFLOW_VB_DECODE(Vbnm_index)
 
-      IF ( getvar('gsfbud', 'sat_change_stor', 1, 'real',
-     &     Sat_change_stor).NE.0 ) RETURN
-
-      IF ( getvar('gsfbud', 'stream_leakage', 1, 'real', Stream_leakage)
-     &     .NE.0 ) RETURN
-
       Uzf_recharge = SNGL(UZTSRAT(3))
+      !?? doesn't match basin_gw2sm from budget
       Basinseepout = SNGL(UZTSRAT(5))
       Uzf_infil = SNGL(UZTSRAT(1))
       Uzf_del_stor = SNGL(UZTSRAT(4))
 
-      Streambed_loss = SFRUZBD(4)
+      Streambed_loss = SFRRATIN
       Sfruz_change_stor = SFRUZBD(5)
-      Gwflow2strms = SFRUZBD(8)
+      Gwflow2strms = SFRRATOUT
       sfruz_tot_stor = SFRUZBD(10)
 
       nstep = getstep()
       IF ( nstep.GT.1 ) THEN
         Ave_uzf_infil = (Ave_uzf_infil*(nstep-1)) + Basin_sz2gw -
-     &                  Basin_szreject
+     &                  Basin_szreject + Basin_soil_to_gw
       ELSE
-        Ave_uzf_infil = Basin_sz2gw - Basin_szreject
+        Ave_uzf_infil = Basin_sz2gw - Basin_szreject + Basin_soil_to_gw
       ENDIF
       Ave_uzf_infil = Ave_uzf_infil/nstep
 
@@ -793,23 +757,39 @@
         Lake_change_stor = TOTDELSTOR_LAK
       ENDIF
 
-      CALL MODFLOW_SFR_GET_STORAGE
+      IF ( IRTFLG.GT.0 ) CALL MODFLOW_SFR_GET_STORAGE
+
+!  Save old values before computation of new ones
+      Last_basinintcpstor = Basinintcpstor
+      Last_basinimpervstor = Basinimpervstor
+      Last_basinpweqv = Basinpweqv
+      Last_basinsoilmoist = Basinsoilmoist
+      Last_basingravstor = Basingravstor
+      Last_basinprefstor = Basinprefstor
 
       CALL BASIN_GET_STORAGE
 
-      CALL dattim('now', nowtime)
-      year = nowtime(1)
-      mo = nowtime(2)
-      day = nowtime(3)
+! Moved Well calculations up here for printing to CSV file
+      Cumvol_wellin = Cumvol_wellin + Well_in
+      Rate_wellin = Well_in
+      Cumvol_wellot = Cumvol_wellot + Well_out
+      Rate_wellot = Well_out
+      Basinnetgwwel = Cumvol_wellin - Cumvol_wellot
 
-      IF ( Prt_debug==1 ) THEN
+      year = Nowtime(1)
+      mo = Nowtime(2)
+      day = Nowtime(3)
+
+      IF ( Print_debug==1 ) THEN
         et = Basin_perv_et + Basin_snowevap + Basin_imperv_evap +
-     &       Basin_intcp_evap
+     &       Basin_intcp_evap + Basin_lakeevap + Basin_swale_et +
+     &       Basin_actetgw
         IF ( ABS(Basin_actet-et)>ERRCHK ) THEN
           WRITE (BALUNT, *) 'ET', Basin_actet - et, Basin_actet, et
           WRITE (BALUNT, *) 'ET', Basin_perv_et, Basin_snowevap,
      &                      Basin_imperv_evap, Basin_intcp_evap,
-     &                      Basin_lakeevap, Uzf_et
+     &                      Basin_lakeevap, Unsat_et, Sat_et, 
+     &                      Basin_swale_et, Basin_actetgw
         ENDIF
 
         rnf = Basin_hortonian + Basin_dunnian - Basin_sroff
@@ -824,7 +804,7 @@
      &            - Basin_soil_moist - Basin_ssstor
         szout = Basin_sz2gw + Basin_ssflow + Basin_lakeinsz +
      &          Basin_dunnian + Basin_perv_et + Basin_szfarflow
-     &          + Basin_soil_to_gw
+     &          + Basin_soil_to_gw + Basin_swale_et
         IF ( ABS(szin-szout+szdstor)/Basin_soil_moist>ERRCHK ) THEN
           WRITE (BALUNT, 9002) year, mo, day
           WRITE (BALUNT, *) 'SZ flow', szin-szout+szdstor, szin, szout,
@@ -835,25 +815,29 @@
      &                      Basin_ssstor, Basin_sz2gw, Basin_ssflow,
      &                      Basin_lakeinsz, Basin_dunnian,
      &                      Basin_perv_et, Basin_szfarflow,
-     &                      Basin_soil_to_gw
+     &                      Basin_soil_to_gw, Strm_farfield,
+     &                      Basin_sroff_farflow, Basin_swale_et
         ENDIF
+        Last_basin_soil_moist = Basin_soil_moist
+        Last_basin_ssstor = Basin_ssstor
 
         sz_bal = Basinlakeinsz + Basindunnian + Basinslowflow +
      &           Basinprefflow + Basinpervet - Basininfil +
      &           Basinsoilmoist - Last_basinsoilmoist +
      &           Basingravstor - Last_basingravstor - Basingw2sz -
      &           Basinszreject + Basinsz2gw + Basinsoiltogw +
-     &           Basin_szfarflow*Basin_convert
-        IF ( ABS(sz_bal/Basinsoilmoist).GT.ERRCHK )
-     &       WRITE (BALUNT, *) 'Possible water balance problem'
-        WRITE (BALUNT, 9002) year, mo, day, sz_bal, Basinlakeinsz,
-     &                       Basindunnian, Basinslowflow, Basinprefflow,
-     &                       Basinpervet, Basininfil, Basinsoilmoist,
-     &                       Last_basinsoilmoist, Basingravstor,
-     &                       Last_basingravstor, Basingw2sz, Basinsz2gw,
-     &                       Basinszreject, Basinsoiltogw,
-     &                       Basin_szfarflow*Basin_convert,
-     &                       Basinfarfieldflow
+     &           Basinszfarflow + Basinswaleet
+        IF ( Basinsoilmoist/=0.0 ) THEN
+          IF ( ABS(sz_bal/Basinsoilmoist).GT.ERRCHK )
+     &         WRITE (BALUNT, *) 'Possible water balance problem'
+          WRITE (BALUNT, 9002) year, mo, day, sz_bal, Basinlakeinsz,
+     &           Basindunnian, Basinslowflow, Basinprefflow,
+     &           Basinpervet, Basininfil, Basinsoilmoist,
+     &           Last_basinsoilmoist, Basingravstor,
+     &           Last_basingravstor, Basingw2sz, Basinsz2gw,
+     &           Basinszreject, Basinsoiltogw,
+     &           Basinszfarflow, Basinfarfieldflow, Basinswaleet
+        ENDIF
       ENDIF
 
       IF ( Gsf_rpt.EQ.1 ) THEN
@@ -872,7 +856,9 @@
      &         Basinsm2gvr, Basingvr2sm, Basininfil_tot,
      &         Basininfil2pref, Basindnflow, Basinactet, Basinsnowmelt,
      &         Basinhortonianlakes, Basinlakeinsz, Basinlakeevap,
-     &         Basinlakeprecip, Basinfarfieldflow, Basinsoiltogw, KKITER
+     &         Basinlakeprecip, Basinfarfieldflow, Basinsoiltogw,
+     &         Basinszfarflow, Basinsrofffarflow, Basinswaleet,
+     &         Unsat_et, Sat_et, Basinnetgwwel, KKITER
 !     &        basinreachlatflowm3, Basinrain,
 !     &        Basinsnow, Basingvr2pfr, Basinslowflow, Basinprefflow
       ENDIF
@@ -886,31 +872,39 @@
       Cumvol_strmin = Cumvol_strmin + Rate_strmin
       Cumvol_gwbndin = Cumvol_gwbndin + Gw_bnd_in
       Rate_gwbndin = Gw_bnd_in
-      Cumvol_wellin = Cumvol_wellin + Well_in
-      Rate_wellin = Well_in
       Rate_et = Basinactet
       Cumvol_et = Cumvol_et + Rate_et
       Rate_strmot = Basinstrmflow
       Cumvol_strmot = Cumvol_strmot + Rate_strmot
       Cumvol_gwbndot = Cumvol_gwbndot + Gw_bnd_out
       Rate_gwbndot = Gw_bnd_out
-      Cumvol_wellot = Cumvol_wellot + Well_out
-      Rate_wellot = Well_out
       IF ( Outflow_flg.EQ.1 ) THEN
         Rate_farout = Basinfarfieldflow
         Cumvol_farout = Cumvol_farout + Rate_farout
       ENDIF
  ! RGN added specified lake inflow/outflow and storage change
       IF ( IUNIT(22).GT.0 ) THEN
-        IF ( TOTWTHDRW_LAK.GT.0.0 ) THEN
-          Rate_lakot = TOTWTHDRW_LAK
-          Cumvol_lakot = Cumvol_lakot + Rate_lakot
-        ELSE
-          Rate_lakin = TOTWTHDRW_LAK
-          Cumvol_lakin = Cumvol_lakin + Rate_lakin
-        END IF
-        Rate_lakestor = TOTDELSTOR_LAK
+!        IF ( TOTWTHDRW_LAK.GT.0.0 ) THEN
+!          Rate_lakin = 0.0
+!          Rate_lakot = TOTWTHDRW_LAK
+!        ELSE
+!          Rate_lakot = 0.0
+!          Rate_lakin = TOTWTHDRW_LAK
+!        END IF
+       !rsr, 3/16/2010 TOTEVAP_LAK included in basinactet
+        Rate_lakot = -TOTSURFOT_LAK - TOTGWOT_LAK
+     +               - TOTEVAP_LAK - TOTWTHDRW_LAK
+!        Cumvol_lakeevap = Cumvol_lakeevap + TOTEVAP_LAK
+        Rate_lakin = TOTRUNF_LAK + TOTSURFIN_LAK
+     +               + TOTGWIN_LAK + TOTPPT_LAK
+!        Cumvol_lakeppt = Cumvol_lakeppt + TOTPPT_LAK
+        Cumvol_lakot = Cumvol_lakot + Rate_lakot
+        Cumvol_lakin = Cumvol_lakin + Rate_lakin
+        Rate_lakestor = Rate_lakin - Rate_lakot
         Cum_lakestor = Cum_lakestor + Rate_lakestor
+!        Cum_lakestor = TOTSTOR_LAK
+!        print *, totsurfot_lak, totevap_lak, totgwot_lak, totrunf_lak
+!        print *, totsurfin_lak, totgwin_lak
       END IF
       Rate_pweqv = Basinpweqv - Last_basinpweqv
       Cum_pweqv = Cum_pweqv + Rate_pweqv
@@ -932,7 +926,7 @@
 
       Rate_delstore = Rate_surfstor + Rate_soilstor + Rate_satstor +
      &                Rate_uzstor + Rate_lakestor + STRMDELSTOR_RATE
-      Cum_delstore = Cum_delstore + Rate_delstore + STRMDELSTOR_RATE
+      Cum_delstore = Cum_delstore + Rate_delstore
 
       Rpt_count = Rpt_count + 1
       IF ( Rpt_count.EQ.Rpt_days ) THEN  !rpt_days default = 7
@@ -940,30 +934,23 @@
         Rpt_count = 0
       ENDIF
 
-!  Save old values before computation of new ones
-      Last_basinintcpstor = Basinintcpstor
-      Last_basinimpervstor = Basinimpervstor
-      Last_basinpweqv = Basinpweqv
-      Last_basinsoilmoist = Basinsoilmoist
-      Last_basingravstor = Basingravstor
-      Last_basin_soil_moist = Basin_soil_moist
-      Last_basin_ssstor = Basin_ssstor
-
       gsfsumrun = 0
 
- 9001 FORMAT (2(I2.2, '/'), I4, 55(',', E15.7), ',', I5)
- 9002 FORMAT (I5, 2('/', I2.2), F12.3, 16(F12.0))
+ 9001 FORMAT (2(I2.2, '/'), I4, 61(',', E15.7), ',', I5)
+ 9002 FORMAT (I5, 2('/', I2.2), F12.3, 17(F12.0))
       END FUNCTION gsfsumrun
 
 !***********************************************************************
 !     gsfsumclean - Computes summary values
 !***********************************************************************
       INTEGER FUNCTION gsfsumclean()
-      USE GSFSUM, ONLY:Balance_unt, Gsf_unt
+      USE GSFSUM, ONLY: Balance_unt, Gsf_unt, Gsf_rpt, BALUNT
+      USE PRMS_BASIN, ONLY: Print_debug
       IMPLICIT NONE
 !***********************************************************************
       gsfsumclean = 1
-      CLOSE (Balance_unt)
+      IF ( Print_debug==1 ) CLOSE (BALUNT)
+      IF ( Gsf_rpt==1 ) CLOSE (Balance_unt)
       CLOSE (Gsf_unt)
       gsfsumclean = 0
       END FUNCTION gsfsumclean
@@ -976,7 +963,7 @@
      &    Gsflow_output_file, Model_output_file, Gsf_rpt
       USE GSFMODFLOW, ONLY:Logunt
       IMPLICIT NONE
-      INCLUDE 'fmodules.inc'
+      INTEGER, EXTERNAL :: control_integer, control_string
       EXTERNAL GSF_HEADERS
       INTRINSIC CHAR, INDEX
 ! Local Variables
@@ -1070,7 +1057,9 @@
      &        ',basinhortonian,basinsm2gvr,basingvr2sm,basininfil_tot',
      &        ',basininfil2pref,basindnflow,basinactet,basinsnowmelt',
      &        ',basinhortonianlakes,basinlakeinsz,basinlakeevap',
-     &        ',basinlakeprecip,basinfarfieldflow,basinsoiltogw,kkiter')
+     &        ',basinlakeprecip,basinfarfieldflow,basinsoiltogw',
+     &        ',basinszfarflow,basinsrofffarflow,basinswaleet',
+     &        ',unsat_et,sat_et,basinnetgwwel,kkiter')
 
       END SUBROUTINE GSF_HEADERS
 
@@ -1079,47 +1068,32 @@
 !***********************************************************************
       SUBROUTINE BASIN_GET_STORAGE()
       USE GSFSUM
+      USE PRMS_INTCP, ONLY: Basin_intcp_stor
+      USE PRMS_SNOW, ONLY: Basin_pweqv
+      USE PRMS_SOILZONE, ONLY: Basin_pref_stor, Basin_soil_moist,
+     &    Basin_ssstor
+      USE GSFBUDGET, ONLY: Sat_store, Unsat_store
       IMPLICIT NONE
-      INCLUDE 'fmodules.inc'
+      INTEGER, EXTERNAL :: getvar
 !***********************************************************************
 
 ! LAND SURFACE STORAGE
-      IF ( getvar('intcp', 'basin_intcp_stor', 1, 'real',
-     &     Basin_intcp_stor).NE.0 ) RETURN
       IF ( getvar('srunoff', 'basin_imperv_stor', 1, 'real',
      &     Basin_imperv_stor).NE.0 ) RETURN
-      IF ( getvar('snow', 'basin_pweqv', 1, 'real', Basin_pweqv)
-     &     .NE.0 ) RETURN
-
       Basinintcpstor = Basin_intcp_stor*Basin_convert
       Basinimpervstor = Basin_imperv_stor*Basin_convert
       Basinpweqv = Basin_pweqv*Basin_convert
 
 ! SOIL STORAGE
-      IF ( getvar('soilzone', 'basin_soil_moist', 1, 'real',
-     &     Basin_soil_moist).NE.0 ) RETURN
-      IF ( getvar('soilzone', 'basin_ssstor', 1, 'real', Basin_ssstor)
-     &     .NE.0 ) RETURN
-      IF ( getvar('soilzone', 'basin_pref_stor', 1, 'real',
-     &     Basin_pref_stor).NE.0 ) RETURN
-
       Basinsoilmoist = Basin_soil_moist*Basin_convert
       Basingravstor = Basin_ssstor*Basin_convert
       Basinsoilstor = Basingravstor + Basinsoilmoist
-
-! PRMS GW STORAGE
-!     IF ( getvar('gwflow', 'basin_gwstor', 1, 'real', Basin_gwstor)
-!    &     .NE.0 ) RETURN
-!     Basingwstor = Basin_gwstor*Basin_convert
+      Basinprefstor = Basin_pref_stor*Basin_convert
 
 ! MODFLOW STORAGE
-      IF ( getvar('gsfbud', 'sat_store', 1, 'real', Sat_store)
-     &     .NE.0 ) RETURN
-      IF ( getvar('gsfbud', 'unsat_store', 1, 'real', Unsat_store)
-     &     .NE.0 ) RETURN
-
+!rsr, 4/18/2010 Basingravstor includes gravity and preferential
       Basin_gsfstor = Sat_store + Unsat_store + Basinsoilmoist +
-     &                Basingravstor + Basin_pref_stor + Basinintcpstor +
+     &                Basingravstor + Basinintcpstor +
      &                Basinpweqv + Basinimpervstor + Lake_stor +
      &                Strm_stor
 
@@ -1134,6 +1108,7 @@
       USE GWFSFRMODULE, ONLY:STRMDELSTOR_RATE, STRMDELSTOR_CUM, IRTFLG
       USE GLOBAL, ONLY:IUNIT
       USE GSFMODFLOW, ONLY:KKITER
+      USE PRMS_CASCADE, ONLY: Outflow_flg
       IMPLICIT NONE
       INTRINSIC ABS
       EXTERNAL GSFFMTNUM
@@ -1220,16 +1195,24 @@
 !
 !3------CUMULATIVE INFLOW MINUS CUMULATIVE OUTFLOW.
       cumvol_in = Cumvol_precip + Cumvol_strmin + Cumvol_gwbndin +
-     &            Cumvol_wellin + Cumvol_lakin
+     &            Cumvol_wellin
+      ! rsr, need lake pipeline in???
+!     &            + Cumvol_lakin - Cumvol_lakeppt
       cumvol_out = Cumvol_et + Cumvol_strmot + Cumvol_gwbndot +
-     &             Cumvol_wellot + Cumvol_lakot + Cumvol_farout
+     &             Cumvol_wellot + Cumvol_farout
+      ! rsr, need lake pipeline out???
+!     &             + Cumvol_lakot - Cumvol_lakeevap - Cumvol_uzfet
       cumdiff = cumvol_in - cumvol_out
 !
 !4------INFLOW RATE MINUS OUTFLOW RATE.
-      rate_in = Rate_precip + Rate_strmin + Rate_gwbndin + Rate_wellin +
-     &          Rate_lakin
+!      rate_in = Rate_precip + Rate_strmin + Rate_gwbndin + Rate_wellin +
+!     &          Rate_lakin
+!      rate_out = Rate_et + Rate_strmot + Rate_gwbndot + Rate_wellot +
+!     &           Rate_lakot + Rate_farout
+
+      rate_in = Rate_precip + Rate_strmin + Rate_gwbndin + Rate_wellin
       rate_out = Rate_et + Rate_strmot + Rate_gwbndot + Rate_wellot +
-     &           Rate_lakot + Rate_farout
+     &           Rate_farout
       ratediff = rate_in - rate_out
 !
 !5------PRINT CUMULATIVE AND RATE DIFFERENCES.
@@ -1288,9 +1271,14 @@
       rate_percent = 100.0*(rate_error/
      &               ((rate_in+rate_out+ABS(Rate_delstore))/2.0))
       IF ( ABS(cum_percent).GT.5.0 ) WRITE (Gsf_unt, *)
-     &      ' ***WARNING, CUMULATIVE VOLUME OFF > 5%'
-      IF ( ABS(rate_percent).GT.3.0 ) WRITE (Gsf_unt, *)
-     &      ' ***WARNING, FLUX RATES OFF > 3%'
+     &     ' ***WARNING, CUMULATIVE VOLUME OFF > 5%'
+      IF ( ABS(rate_percent).GT.3.0 ) THEN
+        IF ( ABS(rate_percent).GT.10.0 ) THEN
+          WRITE (Gsf_unt, *) ' ***CAUTION, FLUX RATES OFF > 10%'
+        ELSE
+          WRITE (Gsf_unt, *) ' ***WARNING, FLUX RATES OFF > 3%'
+        ENDIF
+      ENDIF
       WRITE (Gsf_unt, 9008) cum_percent, rate_percent
 
  9001 FORMAT ('1', /, ' SUMMARY VOLUMETRIC BUDGET FOR GSFLOW ', /,
@@ -1305,10 +1293,10 @@
  9004 FORMAT (//, 36X, 'OUT', 40X, 'OUT', /, 36X, '---', 40X, '---') 
  9005 FORMAT (/, 3X, 'INFLOWS - OUTFLOWS =', A18, 5X,
      &        'INFLOWS - OUTFLOWS =', A18, /, 13X, 8('-'), 35X, 8('-'))
- 9006 FORMAT (/, 7X, 'STORAGE CHANGE =', A18, 9X, 'STORAGE CHANGE =',
+ 9006 FORMAT (/, ' TOTAL STORAGE CHANGE =', A18, 9X, 'STORAGE CHANGE =',
      &        A18, /, 7X, 14('-'), 29X, 14('-'))
- 9007 FORMAT (/, ' OVERALL BUDGET ERROR =', A18, 3X,
-     &        'OVERALL BUDGET ERROR =', A18, /)
+ 9007 FORMAT (/, ' OVERALL BUDGET ERROR =', A18, 11X,
+     &        'BUDGET ERROR =', A18, /)
  9008 FORMAT (/, '  PERCENT DISCREPANCY =', F18.2, 3X,
      &        ' PERCENT DISCREPANCY =', F18.2, ///)
 !
@@ -1320,7 +1308,7 @@
 !     ******************************************************************
 !     FORMAT VALUE BASED ON VALUE SIZE
 !     ******************************************************************
-      USE GSFSUM, ONLY:CLOSEZERO
+      USE PRMS_BASIN, ONLY:NEARZERO
       IMPLICIT NONE
       INTRINSIC ABS, INT
 ! Arguments
@@ -1331,7 +1319,7 @@
       REAL :: absval
 !***********************************************************************
       absval = ABS(Val)
-      IF ( absval.LT.CLOSEZERO ) THEN
+      IF ( absval.LT.NEARZERO ) THEN
 !       WRITE (Strng, '(I18)') INT(Val)
         Strng = ' '
       ELSEIF ( absval.GT.BIG .OR. absval.LT.SMALL ) THEN
@@ -1345,20 +1333,20 @@
 ! Figure out the total storage of the streams
 !***********************************************************************
       SUBROUTINE MODFLOW_SFR_GET_STORAGE
-      USE GSFSUM, ONLY:Nreach, Strm_stor
-      USE GWFSFRMODULE, ONLY:STRM
+      USE GSFSUM, ONLY:Strm_stor
+      USE GWFSFRMODULE, ONLY:STRM, NSTRM
       IMPLICIT NONE
 ! Local Variables
       INTEGER :: l
-      REAL :: depth, width, strlen
+!      REAL :: depth, width, strlen
 !***********************************************************************
       Strm_stor = 0.0
 
-      DO l = 1, Nreach
-        depth = STRM(7, l)
-        width = STRM(5, l)
-        strlen = STRM(1, l)
-        Strm_stor = Strm_stor + (depth*width*strlen)
+      DO l = 1, NSTRM
+!        depth = STRM(7, l)
+!        width = STRM(5, l)
+!        strlen = STRM(1, l)
+        Strm_stor = Strm_stor + (STRM(7, l)*STRM(5, l)*STRM(1, l))
       ENDDO
 
       END SUBROUTINE MODFLOW_SFR_GET_STORAGE

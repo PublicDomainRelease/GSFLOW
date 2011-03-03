@@ -1,6 +1,6 @@
 
 #-------------------------------------------------------------------
-# $Id: makelist 1997 2006-03-06 19:40:10Z rsregan $
+# $Id: makelist 2546 2011-03-03 17:32:28Z rsregan $
 #-------------------------------------------------------------------
 
 MMFDIR      = ./mmf
@@ -12,14 +12,14 @@ ARC		= LINUX
 #ARC		= WINDOWS
 
 #OPTLEVEL	= -g
-OPTLEVEL	= -O3
+OPTLEVEL	= -O
 LDFLAGS		=$(OPTLEVEL)
 
 ##########################################################
 # Define the Fortran compile flags
 ##########################################################
-#FFLAGS= $(OPTLEVEL) -fbounds-check -Wall -fno-second-underscore
-FFLAGS= $(OPTLEVEL) -Wall -fno-second-underscore
+#FFLAGS= $(OPTLEVEL) -fbounds-check -fno-second-underscore
+FFLAGS= $(OPTLEVEL) -fno-second-underscore
 FC		= gfortran
 
 ##########################################################

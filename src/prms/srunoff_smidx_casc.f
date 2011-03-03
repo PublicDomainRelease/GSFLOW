@@ -1,67 +1,46 @@
 !***********************************************************************
-!     Computes surface runoff and infiltration
+! Computes surface runoff and infiltration for each HRU using a
+! non-linear variable-source-area method allowing for cascading flow;
+! modification of srunoff_smidx_prms
+!
 !     version: 2.2 added cascading flow for infiltration and runoff
 !***********************************************************************
       MODULE PRMS_SRUNOFF_SMIDX_CASC
       IMPLICIT NONE
 !   Local Variables
-      REAL, PARAMETER :: NEARZERO = 1.0E-15
-      INTEGER :: Nhru, Ncascade, Nsegment, Nsegmentp1
-      REAL :: Cfs_conv
+      INTEGER, PARAMETER :: BALUNT = 197
+      REAL, SAVE, ALLOCATABLE :: Pkwater_last(:)
 !   Declared Variables
-      REAL :: Basin_sroff, Basin_infil, Basin_imperv_evap
-      REAL :: Basin_imperv_stor, Basin_sroff_down, Basin_hortonian_lakes
-      REAL :: Basin_sroff_upslope, Basin_hortonian, Strm_farfield
-      REAL :: Basin_sroff_farflow
-      REAL, ALLOCATABLE :: Infil(:), Sroff(:), Hortonian_lakes(:)
-      REAL, ALLOCATABLE :: Imperv_stor(:), Imperv_evap(:)
-      REAL, ALLOCATABLE :: Upslope_hortonian(:), Strm_seg_in(:)
-      REAL, ALLOCATABLE :: Hortonian_flow(:)
-      REAL, ALLOCATABLE :: Hru_impervstor(:), Hru_impervevap(:)
-!   Declared Variables from other modules - obs
-      INTEGER :: Route_on
-!   Declared Variables from other modules - intcp
-      REAL, ALLOCATABLE :: Net_rain(:), Net_snow(:), Net_ppt(:)
-      REAL, ALLOCATABLE :: Hru_intcpevap(:)
+      REAL, SAVE :: Basin_sroff_down, Basin_hortonian_lakes
+      REAL, SAVE :: Basin_sroff_upslope, Basin_hortonian
+      REAL, SAVE :: Basin_sroff_farflow
+      REAL, SAVE, ALLOCATABLE :: Imperv_stor(:), Imperv_evap(:)
+      REAL, SAVE, ALLOCATABLE :: Upslope_hortonian(:)
+      REAL, SAVE, ALLOCATABLE :: Hortonian_flow(:)
 !   Declared Variables from other modules - smbal
-      REAL, ALLOCATABLE :: Soil_moist(:)
-!   Declared Variables from other modules - potet
-      REAL, ALLOCATABLE :: Potet(:)
-!   Declared Variables from other modules - snow
-      INTEGER, ALLOCATABLE :: Pptmix_nopack(:)
-      REAL, ALLOCATABLE :: Snow_evap(:), Snowmelt(:), Pkwater_equiv(:)
-      REAL, ALLOCATABLE :: Snowcov_area(:), Pkwater_ante(:)
-!   Declared Variables from other modules - basin
-      INTEGER :: Prt_debug, Active_hrus
-      INTEGER, ALLOCATABLE :: Hru_route_order(:), Ncascade_hru(:)
-      REAL :: Basin_area_inv
-      REAL, ALLOCATABLE :: Hru_perv(:), Hru_imperv(:)
-      REAL, ALLOCATABLE :: Hru_percent_perv(:)
+      ! RSR: Caution, using values from previous time step
+      REAL :: Basin_soil_moist
+      REAL, ALLOCATABLE :: Soil_moist(:), Soil_rechr(:)
 !   Declared Parameters
-      INTEGER, ALLOCATABLE :: Hru_type(:)
-      REAL, ALLOCATABLE :: Snowinfil_max(:), Soil_moist_max(:)
-      REAL, ALLOCATABLE :: Imperv_stor_max(:), Carea_max(:), Hru_area(:)
-      REAL, ALLOCATABLE :: Smidx_coef(:), Smidx_exp(:)
-      REAL, ALLOCATABLE :: Hru_percent_imperv(:)
+      REAL, SAVE, ALLOCATABLE :: Smidx_coef(:), Smidx_exp(:)
       END MODULE PRMS_SRUNOFF_SMIDX_CASC
 
 !***********************************************************************
 !     Main srunoff_smidx routine
 !***********************************************************************
-      INTEGER FUNCTION srunoff_smidx_casc(Arg)
+      INTEGER FUNCTION srunoff_smidx_casc()
+      USE PRMS_MODULE, ONLY: Process_flag
       IMPLICIT NONE
 ! Functions
       INTEGER, EXTERNAL :: srosmcadecl, srosmcainit, srosmcarun
-! Arguments
-      CHARACTER(LEN=*), INTENT(IN) :: Arg
 !***********************************************************************
       srunoff_smidx_casc = 0
 
-      IF ( Arg.EQ.'run' ) THEN
+      IF ( Process_flag==0 ) THEN
         srunoff_smidx_casc = srosmcarun()
-      ELSEIF ( Arg.EQ.'declare' ) THEN
+      ELSEIF ( Process_flag==1 ) THEN
         srunoff_smidx_casc = srosmcadecl()
-      ELSEIF ( Arg.EQ.'initialize' ) THEN
+      ELSEIF ( Process_flag==2 ) THEN
         srunoff_smidx_casc = srosmcainit()
       ENDIF
 
@@ -71,69 +50,27 @@
 !     srosmcadecl - set up parameters for surface runoff computations
 !   Declared Parameters
 !     smidx_coef, smidx_exp, carea_max, imperv_stor_max, snowinfil_max
-!     hru_area, soil_moist_max, hru_percent_imperv
+!     hru_area, soil_moist_max
 !***********************************************************************
       INTEGER FUNCTION srosmcadecl()
       USE PRMS_SRUNOFF_SMIDX_CASC
+      USE PRMS_MODULE, ONLY: Model, Ncascade
+      USE PRMS_BASIN, ONLY: Nhru
       IMPLICIT NONE
-      INCLUDE 'fmodules.inc'
+      INTEGER, EXTERNAL :: declmodule, declparam, declvar
 !***********************************************************************
       srosmcadecl = 1
 
       IF ( declmodule(
-     +'$Id: srunoff_smidx_casc.f 3923 2008-03-05 20:08:22Z rsregan $'
+     +'$Id: srunoff_smidx_casc.f 2250 2010-12-10 17:24:28Z rsregan $'
      +).NE.0 ) RETURN
 
-      Nhru = getdim('nhru')
-      IF ( Nhru.EQ.-1 ) RETURN
-
-      Ncascade = getdim('ncascade')
-      IF ( Ncascade.EQ.-1 ) RETURN
-
-      Nsegment = getdim('nsegment')
-      IF ( Nsegment.EQ.-1 ) RETURN
-      Nsegmentp1 = Nsegment + 1
-
 ! srunoff variables
-      ALLOCATE (Infil(Nhru))
-      IF ( declvar('srunoff', 'infil', 'nhru', Nhru, 'real',
-     +     'Amount of water infiltrating the soil on each HRU',
-     +     'inches',
-     +     Infil).NE.0 ) RETURN
-
-      ALLOCATE (Sroff(Nhru))
-      IF ( declvar('srunoff', 'sroff', 'nhru', Nhru, 'real',
-     +     'Surface runoff to streams for each HRU',
-     +     'inches',
-     +     Sroff).NE.0 ) RETURN
-
-      ALLOCATE (Hortonian_lakes(Nhru))
-      IF ( declvar('srunoff', 'hortonian_lakes', 'nhru', Nhru, 'real',
-     +     'Surface runoff to lakes for each HRU',
-     +     'inches',
-     +     Hortonian_lakes).NE.0 ) RETURN
-
       ALLOCATE (Imperv_stor(Nhru))
       IF ( declvar('srunoff', 'imperv_stor', 'nhru', Nhru, 'real',
      +     'Current storage on impervious area for each HRU',
      +     'inches',
      +     Imperv_stor).NE.0 ) RETURN
-
-      IF ( declvar('srunoff', 'basin_sroff', 'one', 1, 'real',
-     +     'Basin area-weighted average of surface runoff',
-     +     'inches',
-     +     Basin_sroff).NE.0 ) RETURN
-
-      IF ( declvar('srunoff', 'basin_hortonian_lakes', 'one', 1, 'real',
-     +     'Basin area-weighted average of Hortonian surface runoff'//
-     +     ' to lakes',
-     +     'inches',
-     +     Basin_hortonian_lakes).NE.0 ) RETURN
-
-      IF ( declvar('srunoff', 'basin_infil', 'one', 1, 'real',
-     +     'Basin area-weighted average for infiltration',
-     +     'inches',
-     +     Basin_infil).NE.0 ) RETURN
 
       ALLOCATE (Imperv_evap(Nhru))
       IF ( declvar('srunoff', 'imperv_evap', 'nhru', Nhru, 'real',
@@ -141,79 +78,53 @@
      +     'inches',
      +     Imperv_evap).NE.0 ) RETURN
 
-      ALLOCATE (Hru_impervevap(Nhru))
-      IF ( declvar('srunoff', 'hru_impervevap', 'nhru', Nhru, 'real',
-     +     'Evaporation from impervious area for each HRU',
-     +     'inches',
-     +     Hru_impervevap).NE.0 ) RETURN
-
-      ALLOCATE (Hru_impervstor(Nhru))
-      IF ( declvar('srunoff', 'hru_impervstor', 'nhru', Nhru, 'real',
-     +     'Storage on impervious area for each HRU',
-     +     'inches',
-     +     Hru_impervstor).NE.0 ) RETURN
-
-      IF ( declvar('srunoff', 'basin_imperv_evap', 'one', 1, 'real',
-     +     'Basin area-weighted average for evaporation from'//
-     +     ' impervious area',
-     +     'inches',
-     +     Basin_imperv_evap).NE.0 ) RETURN
-
-      IF ( declvar('srunoff', 'basin_imperv_stor', 'one', 1, 'real',
-     +     'Basin area-weighted average for storage on'//
-     +     ' impervious area',
-     +     'inches',
-     +     Basin_imperv_stor).NE.0 ) RETURN
-
 ! cascading variables and parameters
-      ALLOCATE (Hortonian_flow(Nhru))
-      IF ( declvar('srunoff', 'hortonian_flow', 'nhru', Nhru, 'real',
-     +     'Hortonian surface runoff reaching stream network',
-     +     'inches',
-     +     Hortonian_flow).NE.0 ) RETURN
-
-      IF ( declvar('srunoff', 'basin_hortonian', 'one', 1, 'real',
-     +     'Basin weighted average Hortonian runoff',
-     +     'inches',
-     +     Basin_Hortonian).NE.0 ) RETURN
-
       ALLOCATE (Upslope_hortonian(Nhru))
-      IF ( declvar('srunoff', 'upslope_hortonian', 'nhru', Nhru,
-     +     'real',
-     +     'Hortonian surface runoff received from HRUs upslope',
-     +     'inches',
-     +     Upslope_hortonian).NE.0 ) RETURN
+      IF ( Ncascade>0 .OR. Model==99 ) THEN
+        IF ( declvar('srunoff', 'basin_hortonian_lakes', 'one', 1,
+     +       'real',
+     +       'Basin area-weighted average of Hortonian surface runoff'//
+     +       ' to lakes',
+     +       'inches',
+     +       Basin_hortonian_lakes).NE.0 ) RETURN
 
-      IF ( declvar('srunoff', 'basin_sroff_down', 'one', 1, 'real',
-     +     'Basin area-weighted average of cascading surface runoff',
-     +     'inches',
-     +     Basin_sroff_down).NE.0 ) RETURN
+        ALLOCATE (Hortonian_flow(Nhru))
+        IF ( declvar('srunoff', 'hortonian_flow', 'nhru', Nhru, 'real',
+     +       'Hortonian surface runoff reaching stream network',
+     +       'inches',
+     +       Hortonian_flow).NE.0 ) RETURN
 
-      ALLOCATE (Strm_seg_in(Nsegment))
-      IF ( declvar('srunoff', 'strm_seg_in', 'nsegment', Nsegment,
-     +     'real',
-     +     'Flow in stream segments as a result of cascading flow',
-     +     'cfs',
-     +     Strm_seg_in).NE.0 ) RETURN
+        IF ( declvar('srunoff', 'basin_hortonian', 'one', 1, 'real',
+     +       'Basin weighted average Hortonian runoff',
+     +       'inches',
+     +       Basin_Hortonian).NE.0 ) RETURN
 
-      IF ( declvar('srunoff', 'strm_farfield', 'one', 1, 'real',
-     +     'Flow out of basin as far-field flow',
-     +     'cfs',
-     +     Strm_farfield).NE.0 ) RETURN
+        IF ( declvar('srunoff', 'upslope_hortonian', 'nhru', Nhru,
+     +       'real',
+     +       'Hortonian surface runoff received from HRUs upslope',
+     +       'inches',
+     +       Upslope_hortonian).NE.0 ) RETURN
 
-      IF ( declvar('srunoff', 'basin_sroff_upslope', 'one', 1, 'real',
-     +     'Basin area-weighted average of cascading surface runoff'//
-     +     ' received from HRUs up slope',
-     +     'inches',
-     +     Basin_sroff_upslope).NE.0 ) RETURN
+        IF ( declvar('srunoff', 'basin_sroff_down', 'one', 1, 'real',
+     +       'Basin area-weighted average of cascading surface runoff',
+     +       'inches',
+     +       Basin_sroff_down).NE.0 ) RETURN
 
-      IF ( declvar('srunoff', 'basin_sroff_farflow', 'one', 1, 'real',
-     +     'Basin area-weighted average of cascading surface runoff'//
-     +     ' to farfield',
-     +     'inches',
-     +     Basin_sroff_farflow).NE.0 ) RETURN
+        IF ( declvar('srunoff', 'basin_sroff_upslope', 'one', 1, 'real',
+     +       'Basin area-weighted average of cascading surface runoff'//
+     +       ' received from HRUs up slope',
+     +       'inches',
+     +       Basin_sroff_upslope).NE.0 ) RETURN
 
-! original srunoff parameters
+        IF ( declvar('srunoff', 'basin_sroff_farflow', 'one', 1, 'real',
+     +       'Basin area-weighted average of cascading surface runoff'//
+     +       ' to farfield',
+     +       'inches',
+     +       Basin_sroff_farflow).NE.0 ) RETURN
+
+      ENDIF
+
+! Declare parameters
       ALLOCATE (Smidx_coef(Nhru))
       IF ( declparam('srunoff', 'smidx_coef', 'nhru', 'real',
      +     '0.01', '0.0001', '1.0',
@@ -234,155 +145,71 @@
      +     ' .5 * ppt_net',
      +     '1/inch').NE.0 ) RETURN
 
-      ALLOCATE (Carea_max(Nhru))
-      IF ( declparam('srunoff', 'carea_max', 'nhru', 'real',
-     +     '.6', '0.', '1.0',
-     +     'Maximum contributing area',
-     +     'Maximum possible area contributing to surface runoff'//
-     +     ' expressed as a portion of the HRU area',
-     +     'decimal fraction').NE.0 ) RETURN
-
-      ALLOCATE (Imperv_stor_max(Nhru))
-      IF ( declparam('srunoff', 'imperv_stor_max', 'nhru', 'real',
-     +     '0.', '0.', '10.',
-     +     'HRU maximum impervious area retention storage',
-     +     'Maximum impervious area retention storage for each HRU',
-     +     'inches').NE.0 ) RETURN
-
-      ALLOCATE (Snowinfil_max(Nhru))
-      IF ( declparam('srunoff', 'snowinfil_max', 'nhru', 'real',
-     +     '2.', '0.', '20.',
-     +     'Maximum snow infiltration per day',
-     +     'Maximum snow infiltration per day',
-     +     'inches/day').NE.0 ) RETURN
-
-      ALLOCATE (Hru_area(Nhru))
-      IF ( declparam('srunoff', 'hru_area', 'nhru', 'real',
-     +     '1.0', '0.01', '1e+09',
-     +     'HRU area', 'Area of each HRU',
-     +     'acres').NE.0 ) RETURN
-
-      ALLOCATE (Soil_moist_max(Nhru))
-      IF ( declparam('srunoff', 'soil_moist_max', 'nhru', 'real',
-     +     '6.', '0.', '20.',
-     +     'Maximum value of water for soil zone',
-     +     'Maximum available water holding capacity of soil profile.'//
-     +     ' Soil profile is surface to bottom of rooting zone',
-     +     'inches').NE.0 ) RETURN
-
-      ALLOCATE (Hru_type(Nhru))
-      IF ( declparam('srunoff', 'hru_type', 'nhru', 'integer',
-     +     '1', '0', '2',
-     +     'HRU type', 'Type of each HRU (0=inactive; 1=land; 2=lake)',
-     +     'none').NE.0 ) RETURN
-
-      ALLOCATE (Hru_percent_imperv(Nhru))
-      IF ( declparam('srunoff', 'hru_percent_imperv', 'nhru', 'real',
-     +     '0.0', '0.0', '1.0',
-     +     'HRU percent impervious',
-     +     'Proportion of each HRU area that is impervious',
-     +     'decimal fraction').NE.0 ) RETURN
 
 ! Allocate arrays for local variables and variables from other modules
-      ALLOCATE (Net_rain(Nhru), Net_snow(Nhru), Net_ppt(Nhru))
-      ALLOCATE (Potet(Nhru), Pptmix_nopack(Nhru))
-      ALLOCATE (Snow_evap(Nhru), Snowmelt(Nhru), Pkwater_equiv(Nhru))
-      ALLOCATE (Snowcov_area(Nhru), Soil_moist(Nhru))
-      ALLOCATE (Hru_perv(Nhru), Hru_imperv(Nhru), Pkwater_ante(Nhru))
-      ALLOCATE (Hru_route_order(Nhru), Ncascade_hru(Nhru))
-      ALLOCATE (Hru_percent_perv(Nhru), Hru_intcpevap(Nhru))
+      ALLOCATE ( Soil_moist(Nhru), Pkwater_last(Nhru) )
+      ALLOCATE ( Soil_rechr(Nhru) )
 
       srosmcadecl = 0
       END FUNCTION srosmcadecl
 
 !***********************************************************************
-!     srosmcainit - Initialize srunoff module - get parameter values,
+!     srosmcainit - Initialize srunoff module - get parameter values
 !***********************************************************************
       INTEGER FUNCTION srosmcainit()
       USE PRMS_SRUNOFF_SMIDX_CASC
+      USE PRMS_MODULE, ONLY: Ncascade
+      USE PRMS_BASIN, ONLY: Hru_perv, Hru_percent_impv, Hru_imperv,
+     +    Print_debug, NEARZERO, Hru_area, Hru_percent_perv,
+     +    Basin_area_inv, Timestep, Nhru
+      USE PRMS_FLOWVARS, ONLY: Hru_hortonian_cascadeflow
       IMPLICIT NONE
-      INCLUDE 'fmodules.inc'
+      INTRINSIC EXP, LOG
+      INTEGER, EXTERNAL :: getparam
+! Local Variables
+      INTEGER :: i
 !***********************************************************************
       srosmcainit = 1
+
+      IF ( Timestep==0 ) THEN
+        DO i = 1, Nhru
+          Imperv_stor(i) = 0.0
+          Imperv_evap(i) = 0.0
+          Upslope_hortonian(i) = 0.0
+          IF ( Ncascade>0 ) Hortonian_flow(i) = 0.0
+        ENDDO
+        IF ( Ncascade>0 ) THEN
+          Basin_hortonian_lakes = 0.0
+          Basin_hortonian = 0.0
+          Basin_sroff_upslope = 0.0
+          Basin_sroff_farflow = 0.0
+          Basin_sroff_down = 0.0
+        ENDIF
+      ENDIF
 
 ! Smidx parameters
       IF ( getparam('srunoff', 'smidx_coef', Nhru, 'real', Smidx_coef)
      +     .NE.0 ) RETURN
 
-      IF ( getparam('srunoff', 'carea_max', Nhru, 'real', Carea_max)
-     +     .NE.0 ) RETURN
-
       IF ( getparam('srunoff', 'smidx_exp', Nhru, 'real', Smidx_exp)
      +     .NE.0 ) RETURN
 
-      IF ( getparam('srunoff', 'imperv_stor_max', Nhru, 'real',
-     +     Imperv_stor_max).NE.0 ) RETURN
 
-      IF ( getparam('srunoff', 'snowinfil_max', Nhru, 'real',
-     +     Snowinfil_max).NE.0 ) RETURN
-
-      IF ( getvar('basin', 'basin_area_inv', 1, 'real', Basin_area_inv)
-     +     .NE.0 ) RETURN
-
-      IF ( getparam('srunoff', 'hru_area', Nhru, 'real', Hru_area)
-     +     .NE.0 ) RETURN
-
-      IF ( getparam('srunoff', 'soil_moist_max', Nhru, 'real',
-     +     Soil_moist_max).NE.0 ) RETURN
-
-      IF ( getvar('basin', 'prt_debug', 1, 'integer', Prt_debug)
-     +     .NE.0 ) RETURN
-
-      IF ( getparam('srunoff', 'hru_type', Nhru, 'integer', Hru_type)
-     +     .NE.0 ) RETURN
-
-      IF ( getvar('basin', 'active_hrus', 1, 'real', Active_hrus)
-     +     .NE.0 ) RETURN
-
-      IF ( getvar('basin', 'hru_route_order', Nhru, 'integer',
-     +     Hru_route_order).NE.0 ) RETURN
-
-      IF ( getvar('basin', 'ncascade_hru', Nhru, 'real', Ncascade_hru)
-     +     .NE.0 ) RETURN
-
-      IF ( getparam('srunoff', 'hru_percent_imperv', Nhru, 'real',
-     +     Hru_percent_imperv).NE.0 ) RETURN
-
-      IF ( getvar('basin', 'hru_percent_perv', Nhru, 'real',
-     +     Hru_percent_perv).NE.0 ) RETURN
-
-      IF ( getstep().EQ.0 ) THEN
-        Imperv_stor = 0.0
-        Imperv_evap = 0.0
-        Hru_impervevap = 0.0
-        Hru_impervstor = 0.0
-        Infil = 0.0
-        Sroff = 0.0
-        Hortonian_lakes = 0.0
-        Basin_sroff = 0.0
-        Basin_hortonian_lakes = 0.0
-        Basin_infil = 0.0
-        Basin_imperv_evap = 0.0
-        Basin_imperv_stor = 0.0
-        Basin_hortonian = 0.0
-        Hortonian_flow = 0.0
-        Upslope_hortonian = 0.0
-        Basin_sroff_down = 0.0
-        Strm_seg_in = 0.0
-        Strm_farfield = 0.0
-        Basin_sroff_upslope = 0.0
-        Basin_sroff_farflow = 0.0
-      ENDIF
-
-      IF ( Prt_debug.EQ.1 ) THEN
-        OPEN (197, FILE='srunoff_smidx_casc.wbal')
-        WRITE (197, 9001)
+      IF ( Print_debug.EQ.1 ) THEN
+        OPEN (BALUNT, FILE='srunoff_smidx_casc.wbal')
+        IF ( Ncascade>0 ) THEN
+          WRITE (BALUNT, 9002)
+        ELSE
+          WRITE (BALUNT, 9001)
+        ENDIF
       ENDIF
 
       srosmcainit = 0
 
- 9001 FORMAT ('    Date     Water Bal     Robal      Sroff   Sroffdown',
-     +        '  Srofflake  Infiltrat Impervevap Impervstor   Farflow')
+ 9001 FORMAT ('    Date     Water Bal     Robal      Sroff',
+     +        '  Infiltrat  Impervevap Impervstor')
+ 9002 FORMAT ('    Date     Water Bal     Robal      Sroff   Sroffdown',
+     +        '  Srofflake  Infiltrat Impervevap Impervstor    Farflow')
 
       END FUNCTION srosmcainit
 
@@ -392,72 +219,44 @@
 !***********************************************************************
       INTEGER FUNCTION srosmcarun()
       USE PRMS_SRUNOFF_SMIDX_CASC
+      USE PRMS_MODULE, ONLY: Ncascade
+      USE PRMS_BASIN, ONLY: Print_debug, Active_hrus, Hru_route_order,
+     +    Hru_perv, Hru_imperv, Hru_percent_impv, Hru_percent_perv,
+     +    NEARZERO, Hru_area, Hru_type, Basin_area_inv, Nhru
+      USE PRMS_CLIMATEVARS, ONLY: Potet
+      USE PRMS_FLOWVARS, ONLY: Soil_moist_max, Hru_impervevap,
+     +    Sroff, Basin_sroff, Infil, Carea_max, Snowinfil_max,
+     +    Hru_impervstor, Basin_imperv_evap, Hortonian_lakes,
+     +    Basin_imperv_stor, Basin_infil, Hru_hortonian_cascadeflow,
+     +    Strm_seg_in, Strm_farfield, Imperv_stor_max
+      USE PRMS_CASCADE, ONLY: Ncascade_hru
+      USE PRMS_OBS, ONLY: Nowtime
+      USE PRMS_INTCP, ONLY: Hru_intcpevap, Net_rain, Net_snow, Net_ppt
+      USE PRMS_SNOW, ONLY: Pkwater_equiv, Pk_depth, Pptmix_nopack,
+     +    Snow_evap, Snowcov_area, Snowmelt
       IMPLICIT NONE
-      INTRINSIC ABS, SNGL
-      INCLUDE 'fmodules.inc'
-      EXTERNAL imperv_et_smcas, compute_infil_smcas, run_cascade_smcas
+      INTRINSIC ABS
+      INTEGER, EXTERNAL :: getvar
+      EXTERNAL imperv_et, compute_infil_smcas, run_cascade_smidx
+      EXTERNAL perv_sroff_smidx_smcas
 ! Local Variables
-      INTEGER :: i, k
-      INTEGER :: nowtime(6), day, mo
-      REAL :: srp, sri, hru_sroff_down, runoff, harea, farflow
-      REAL :: basin_robal, robal, basin_sroffp, basin_sroffi, last_stor
+      INTEGER :: i, k, day, mo
+      REAL :: srp, sri, runoff
+      REAL :: hru_sroff_down, harea, farflow, avail_et
+      REAL :: basin_robal, robal, basin_sroffp, basin_sroffi
+      REAL :: last_stor, tmp, himperv, hperv
 !***********************************************************************
       srosmcarun = 1
-
-      IF ( getvar('obs', 'route_on', 1, 'integer', Route_on)
-     +     .NE.0 ) RETURN
-
-      IF ( Route_on.EQ.1 ) THEN
-        srosmcarun = 0
-        RETURN
-      ENDIF
-
-      IF ( getvar('intcp', 'net_rain', Nhru, 'real', Net_rain)
-     +     .NE.0 ) RETURN
-
-      IF ( getvar('intcp', 'net_snow', Nhru, 'real', Net_snow)
-     +     .NE.0 ) RETURN
-
-      IF ( getvar('intcp', 'net_ppt', Nhru, 'real', Net_ppt)
-     +     .NE.0 ) RETURN
-
-      IF ( getvar('intcp', 'hru_intcpevap', Nhru, 'real', Hru_intcpevap)
-     +     .NE.0 ) RETURN
 
       IF ( getvar('smbal', 'soil_moist', Nhru, 'real', Soil_moist)
      +     .NE.0 ) RETURN
 
-      IF ( getvar('potet', 'potet', Nhru, 'real', Potet).NE.0 ) RETURN
-
-      IF ( getvar('snow', 'snow_evap', Nhru, 'real', Snow_evap)
+      IF ( getvar('smbal', 'soil_rechr', Nhru, 'real', Soil_rechr)
      +     .NE.0 ) RETURN
 
-      IF ( getvar('snow', 'snowmelt', Nhru, 'real', Snowmelt)
-     +     .NE.0 ) RETURN
-
-      IF ( getvar('snow', 'pkwater_equiv', Nhru, 'real', Pkwater_equiv)
-     +     .NE.0 ) RETURN
-
-      IF ( getvar('snow', 'pkwater_ante', Nhru, 'real', Pkwater_ante)
-     +     .NE.0 ) RETURN
-
-      IF ( getvar('snow', 'snowcov_area', Nhru, 'real', Snowcov_area)
-     +     .NE.0 ) RETURN
-
-      IF ( getvar('snow', 'pptmix_nopack', Nhru, 'integer',
-     +     Pptmix_nopack).NE.0 ) RETURN
-
-! get pervious/impervious states in case they have been updated
-      IF ( getvar('basin', 'hru_perv', Nhru, 'real', Hru_perv)
-     +     .NE.0 ) RETURN
-
-      IF ( getvar('basin', 'hru_imperv', Nhru, 'real', Hru_imperv)
-     +     .NE.0 ) RETURN
-
-      IF ( Prt_debug.EQ.1 ) THEN
-        CALL dattim('now', nowtime)
-        mo = nowtime(2)
-        day = nowtime(3)
+      mo = Nowtime(2)
+      day = Nowtime(3)
+      IF ( Print_debug.EQ.1 ) THEN
         basin_sroffi = 0.
         basin_sroffp = 0.
         basin_robal = 0.
@@ -466,13 +265,13 @@
       Basin_infil = 0.
       Basin_imperv_evap = 0.
       Basin_imperv_stor = 0.
-      Basin_sroff_down = 0.
-      Basin_sroff_upslope = 0.
-      Basin_hortonian = 0.
-      Basin_hortonian_lakes = 0.
 
-      IF ( Ncascade.GT.0 ) THEN
-        Cfs_conv = 43560.0/12.0/SNGL(deltim()*3600.0D0)
+      IF ( Ncascade>0 ) THEN
+        Basin_sroff_down = 0.
+        Basin_sroff_upslope = 0.
+        Basin_hortonian = 0.
+        Basin_hortonian_lakes = 0.
+!rsr??? is Upslope_hortonian for whole hru or pervious only
         Upslope_hortonian = 0.0
         Strm_seg_in = 0.0
         Strm_farfield = 0.0
@@ -482,63 +281,122 @@
       DO k = 1, Active_hrus
         i = Hru_route_order(k)
         harea = Hru_area(i)
+        runoff = 0.0
 
-!rsr??? is Upslope_hortonian for whole hru or pervious only
-        IF ( Hru_type(i).EQ.1 ) THEN
+        IF ( Hru_type(i).NE.2 ) THEN
           Infil(i) = 0.0
-          Hortonian_flow(i) = 0.0
-          hru_sroff_down = 0.0
-          farflow = 0.0
+          Pkwater_last(i) = Pkwater_equiv(i)
           last_stor = Imperv_stor(i)
+          hperv = Hru_perv(i)
+          himperv = Hru_imperv(i)
           srp = 0.
           sri = 0.
+
+!******Compute runoff for pervious and impervious
           CALL compute_infil_smcas(Pptmix_nopack(i), Smidx_coef(i),
      +         Smidx_exp(i), Soil_moist(i), Soil_moist_max(i),
-     +         Carea_max(i), Net_rain(i), Net_ppt(i), Hru_perv(i),
-     +         Hru_imperv(i), Imperv_stor(i), Imperv_stor_max(i),
-     +         Snowmelt(i), Snowinfil_max(i), Net_snow(i),
-     +         Pkwater_equiv(i), Upslope_hortonian(i), srp, sri,
-     +         Infil(i))
+     +         Carea_max(i), Net_rain(i), Net_ppt(i), himperv,
+     +         Imperv_stor(i), Imperv_stor_max(i), Snowmelt(i),
+     +         Snowinfil_max(i), Net_snow(i), Pkwater_equiv(i), srp,
+     +         sri, Infil(i), Hru_type(i), Upslope_hortonian(i))
 
-!******Comuute runoff for pervious and impervious area
-! There may or may not be some pervious area for this HRU
-          runoff = srp*Hru_perv(i) + sri*Hru_imperv(i)
+          avail_et = Potet(i) - Snow_evap(i) - Hru_intcpevap(i)
 
-!******Compute HRU weighted average (to units of inches/dt)
-
+! There must be some pervious area for this HRU
+          runoff = srp*hperv + sri*himperv
           Sroff(i) = runoff/harea
 
-          IF ( Ncascade_hru(i).GT.0 .AND. Sroff(i).GT.0.0 )
-     +         CALL run_cascade_smcas(i, Ncascade_hru(i), Sroff(i),
-     +                                hru_sroff_down, farflow)
-          Hortonian_flow(i) = Sroff(i)
-          Basin_sroff = Basin_sroff + Sroff(i)*harea
-          Basin_sroff_upslope = Basin_sroff_upslope +
-     +                          Upslope_hortonian(i)*harea
+!******Compute HRU weighted average (to units of inches/dt)
+          hru_sroff_down = 0.0
+          farflow = 0.0
+
+          IF ( Hru_type(i)==1 ) THEN
+            IF ( Ncascade>0 ) THEN
+              IF ( Ncascade_hru(i)>0 .AND. Sroff(i)>0.0 )
+     +             CALL run_cascade_smidx(i, Ncascade_hru(i), Sroff(i),
+     +                  hru_sroff_down, farflow)
+              Hru_hortonian_cascadeflow(i) = hru_sroff_down + farflow
+              Hortonian_flow(i) = Sroff(i)
+              Basin_sroff_upslope = Basin_sroff_upslope +
+     +                              Upslope_hortonian(i)*harea
+              Basin_sroff_down = Basin_sroff_down +
+     +                           hru_sroff_down*harea
+              Basin_sroff_farflow = Basin_sroff_farflow + farflow*harea
+              Basin_hortonian = Basin_hortonian +
+     +                          Hortonian_flow(i)*harea
+            ENDIF
+            Basin_sroff = Basin_sroff + Sroff(i)*harea
 
 !******Compute basin weighted average, lakes not included
 
-          Basin_infil = Basin_infil + Infil(i)*Hru_perv(i)
-          Basin_sroff_down = Basin_sroff_down +
-     +                       hru_sroff_down*harea
-          Basin_sroff_farflow = Basin_sroff_farflow + farflow*harea
-          Basin_hortonian = Basin_hortonian +
-     +                      Hortonian_flow(i)*harea
+          ENDIF
+
+          Basin_infil = Basin_infil + Infil(i)*hperv
 
 !******Compute evaporation from impervious area
 
-          IF ( Hru_imperv(i).GT.NEARZERO ) THEN
-            CALL imperv_et_smcas(Imperv_stor(i), Snow_evap(i), Potet(i),
-     +                           Hru_intcpevap(i), Imperv_evap(i),
-     +                           Snowcov_area(i))
-
-            Hru_impervevap(i) = Imperv_evap(i)*Hru_percent_imperv(i)
+          IF ( himperv.GT.NEARZERO ) THEN
+            tmp = avail_et/Hru_percent_impv(i)
+            CALL imperv_et(Imperv_stor(i), tmp, Imperv_evap(i),
+     +           Snowcov_area(i))
+            Hru_impervevap(i) = Imperv_evap(i)*Hru_percent_impv(i)
             Basin_imperv_evap = Basin_imperv_evap +
-     +                          Imperv_evap(i)*Hru_imperv(i)
+     +                          Imperv_evap(i)*himperv
 
-            Hru_impervstor(i) = Imperv_stor(i)*Hru_percent_imperv(i)
+            Hru_impervstor(i) = Imperv_stor(i)*Hru_percent_impv(i)
             Basin_imperv_stor = Basin_imperv_stor +
-     +                          Imperv_stor(i)*Hru_imperv(i)
+     +                          Imperv_stor(i)*himperv
+            avail_et = avail_et - Hru_impervevap(i)
+            IF ( avail_et<0.0 ) THEN
+            !rsr, sanity check
+              IF ( avail_et<-1.0E-5 ) PRINT *,
+     +             'avail_et<0 in srunoff imperv', i, mo, day, avail_et
+              Hru_impervevap(i) = Hru_impervevap(i) + avail_et
+              IF ( Hru_impervevap(i)<0.0 ) Hru_impervevap(i) = 0.0
+              avail_et = 0.0
+            ENDIF
+          ENDIF
+          IF ( Print_debug.EQ.1 ) THEN
+            basin_sroffp = basin_sroffp + srp*hperv
+            basin_sroffi = basin_sroffi + sri*himperv
+            robal = -Sroff(i) - Infil(i)*Hru_percent_perv(i)
+     +              + (last_stor-Imperv_stor(i)-Imperv_evap(i))
+     +              *Hru_percent_impv(i)
+            IF ( Ncascade>0 ) robal = robal + Upslope_hortonian(i)
+     +                                - hru_sroff_down - farflow
+            IF ( robal>NEARZERO ) THEN
+              robal = robal + Snowmelt(i)
+              IF ( Pptmix_nopack(i).EQ.1 ) THEN
+                robal = robal + Net_rain(i)
+              ELSEIF ( Pkwater_last(i)<NEARZERO ) THEN
+                 robal = robal + Net_rain(i)
+              ENDIF
+              basin_robal = basin_robal + robal
+              IF ( ABS(robal)>2.0E-5 ) THEN
+                IF ( ABS(robal)>1.0E-4 ) THEN
+                  WRITE (BALUNT, *) 'possible HRU water balance error'
+                ELSE
+                  WRITE (BALUNT, *) 'HRU robal rounding issue'
+                ENDIF
+                IF ( Ncascade>0 ) THEN
+                  WRITE (BALUNT, '(2I3,I6,F10.6,18F9.5,I3)') mo, day, i,
+     +                   robal, Snowmelt(i), Upslope_hortonian(i),
+     +                   last_stor, hru_sroff_down, Infil(i), Sroff(i),
+     +                   Imperv_stor(i), Imperv_evap(i), Net_ppt(i),
+     +                   Pkwater_last(i), Pkwater_equiv(i),
+     +                   Snow_evap(i), Net_snow(i), farflow,
+     +                   Net_rain(i), srp, sri, runoff,
+     +                   Pptmix_nopack(i)
+                ELSE
+                  WRITE (BALUNT,'(2I3,I4,13F9.5,I5)') mo, day, i, robal,
+     +                   Snowmelt(i), last_stor, Infil(i), Sroff(i),
+     +                   Imperv_stor(i), Imperv_evap(i), Net_ppt(i),
+     +                   Pkwater_last(i), Pkwater_equiv(i),
+     +                   Snow_evap(i), Net_snow(i), Net_rain(i),
+     +                   Pptmix_nopack(i)
+                ENDIF
+              ENDIF
+            ENDIF
           ENDIF
         ELSE
 ! HRU is a lake
@@ -547,36 +405,11 @@
           ! Sanity check
           IF ( Infil(i)+Sroff(i)+Imperv_stor(i)+Imperv_evap(i).GT.0.0 )
      +         PRINT *, 'smidx lake error', Infil(i), Sroff(i),
-     +               Imperv_stor(i), Imperv_evap(i)
-          Hortonian_lakes(i) = Upslope_hortonian(i)
-          Basin_hortonian_lakes = Basin_hortonian_lakes +
-     +                            Hortonian_lakes(i)*harea
-        ENDIF
-
-        IF ( Prt_debug.EQ.1 .AND. Hru_type(i).EQ.1 ) THEN
-          basin_sroffp = basin_sroffp + srp*Hru_perv(i)
-          basin_sroffi = basin_sroffi + sri*Hru_imperv(i)
-
-          robal = Snowmelt(i) + Upslope_hortonian(i) - Sroff(i)
-     +            - hru_sroff_down - Infil(i)*Hru_percent_perv(i)
-     +            + (last_stor-Imperv_stor(i)-Imperv_evap(i))
-     +            *Hru_percent_imperv(i) - farflow
-          IF ( Pptmix_nopack(i).EQ.1 .OR. (Pkwater_ante(i).LT.NEARZERO
-     +         .AND.Pkwater_equiv(i).LT.NEARZERO) )
-     +         robal = robal + Net_rain(i)
-          basin_robal = basin_robal + robal
-          IF ( ABS(robal).GT.1.0E-6 ) THEN
-            IF ( ABS(robal).GT.1.0E-5 ) THEN
-              WRITE (197, *) 'possible HRU water balance error'
-            ELSE
-              WRITE (197, *) 'HRU robal rounding issue'
-            ENDIF
-            WRITE (197, '(2I3,I4,19F9.5,I5)') mo, day, i, robal,
-     +             Snowmelt(i), Upslope_hortonian(i), last_stor,
-     +             hru_sroff_down, Infil(i), Sroff(i), Imperv_stor(i),
-     +             Imperv_evap(i), Net_ppt(i), Pkwater_ante(i),
-     +             Pkwater_equiv(i), Snow_evap(i), Net_snow(i), farflow,
-     +             Net_rain(i), srp, sri, runoff, Pptmix_nopack(i)
+     +               Imperv_stor(i), Imperv_evap(i), i
+          IF ( Ncascade>0 ) THEN
+            Hortonian_lakes(i) = Upslope_hortonian(i)
+            Basin_hortonian_lakes = Basin_hortonian_lakes +
+     +                              Hortonian_lakes(i)*harea
           ENDIF
         ENDIF
 
@@ -585,82 +418,89 @@
 !******Compute basin weighted averages (to units of inches/dt)
       !rsr, should be land_area???
       Basin_sroff = Basin_sroff*Basin_area_inv
-      Basin_hortonian_lakes = Basin_hortonian_lakes*Basin_area_inv
-      Basin_sroff_down = Basin_sroff_down*Basin_area_inv
-      Basin_sroff_farflow = Basin_sroff_farflow*Basin_area_inv
       Basin_imperv_evap = Basin_imperv_evap*Basin_area_inv
       Basin_imperv_stor = Basin_imperv_stor*Basin_area_inv
       Basin_infil = Basin_infil*Basin_area_inv
-      Basin_sroff_upslope = Basin_sroff_upslope*Basin_area_inv
-      Basin_hortonian = Basin_hortonian*Basin_area_inv
+      IF ( Ncascade>0 ) THEN
+        Basin_hortonian_lakes = Basin_hortonian_lakes*Basin_area_inv
+        Basin_sroff_down = Basin_sroff_down*Basin_area_inv
+        Basin_sroff_farflow = Basin_sroff_farflow*Basin_area_inv
+        Basin_sroff_upslope = Basin_sroff_upslope*Basin_area_inv
+        Basin_hortonian = Basin_hortonian*Basin_area_inv
+      ENDIF
 
-      IF ( Prt_debug.EQ.1 ) THEN
+      IF ( Print_debug.EQ.1 ) THEN
         basin_sroffp = basin_sroffp*Basin_area_inv
         basin_sroffi = basin_sroffi*Basin_area_inv
-        robal = Basin_sroff - basin_sroffp - basin_sroffi +
-     +          Basin_sroff_down + Basin_sroff_farflow
-        WRITE (197, 9001) nowtime(1), mo, day, basin_robal, robal,
-     +                    Basin_sroff, Basin_sroff_down,
-     +                    Basin_hortonian_lakes, Basin_infil,
-     +                    Basin_imperv_evap, Basin_imperv_stor,
-     +                    Basin_sroff_farflow
-        IF ( ABS(basin_robal).GT.1.0E-4 ) THEN
-          WRITE (197, *) 'possible basin water balance error'
-        ELSEIF ( ABS(basin_robal).GT.5.0E-6 ) THEN
-          WRITE (197, *) 'basin_robal rounding issue'
+        robal = Basin_sroff - basin_sroffp - basin_sroffi
+        IF ( Ncascade>0 ) THEN
+          robal = robal + Basin_sroff_down + Basin_sroff_farflow
+          WRITE (BALUNT, 9001) Nowtime(1), mo, day, basin_robal, robal,
+     +                         Basin_sroff, Basin_sroff_down,
+     +                         Basin_hortonian_lakes, Basin_infil,
+     +                         Basin_imperv_evap, Basin_imperv_stor,
+     +                         Basin_sroff_farflow
+        ELSE
+          WRITE (BALUNT, 9001) Nowtime(1), mo, day, basin_robal, robal,
+     +                      Basin_sroff, Basin_infil, Basin_imperv_evap,
+     +                      Basin_imperv_stor
+        ENDIF
+        IF ( ABS(basin_robal).GT.2.0E-4 ) THEN
+          WRITE (BALUNT, *) 'possible basin water balance error'
+        ELSEIF ( ABS(basin_robal).GT.2.0E-5 ) THEN
+          WRITE (BALUNT, *) 'basin_robal rounding issue'
         ENDIF
       ENDIF
 
       srosmcarun = 0
 
- 9001 FORMAT (I5, 2('/', I2.2), 9F11.5)
+ 9001 FORMAT (I5, 2('/', I2.2), 10F11.5)
 
       END FUNCTION srosmcarun
 
 !***********************************************************************
 !      Subroutine to compute evaporation from impervious area
 !***********************************************************************
-      SUBROUTINE imperv_et_smcas(Imperv_stor, Snow_evap, Potet,
-     +                           Hru_intcpevap, Imperv_evap, Sca)
-      USE PRMS_SRUNOFF_SMIDX_CASC, ONLY:NEARZERO
+      SUBROUTINE imperv_et(Imperv_stor, Avail_et, Imperv_evap, Sca)
+      USE PRMS_BASIN, ONLY:NEARZERO
       IMPLICIT NONE
 ! Arguments
-      REAL, INTENT(IN) :: Snow_evap, Potet, Sca, Hru_intcpevap
+      REAL, INTENT(IN) :: Avail_et, Sca
       REAL, INTENT(INOUT) :: Imperv_stor
       REAL, INTENT(OUT) :: Imperv_evap
-! Local Variables
-      REAL :: avail_et
 !***********************************************************************
-      Imperv_evap = 0.0
       IF ( Sca.LT.1.0 .AND. Imperv_stor.GT.NEARZERO ) THEN
-        avail_et = Potet - Snow_evap - Hru_intcpevap
-        IF ( avail_et.GE.Imperv_stor ) THEN
+        IF ( Avail_et.GE.Imperv_stor ) THEN
           Imperv_evap = Imperv_stor*(1.0-Sca)
         ELSE
-          Imperv_evap = avail_et*(1.0-Sca)
+          Imperv_evap = Avail_et*(1.0-Sca)
         ENDIF
         Imperv_stor = Imperv_stor - Imperv_evap
+      ELSE
+        Imperv_evap = 0.0
       ENDIF
+      !rsr, sanity check
+      IF ( Imperv_evap>Avail_et ) Imperv_evap = Avail_et
 
-      END SUBROUTINE imperv_et_smcas
+      END SUBROUTINE imperv_et
 
 !***********************************************************************
 !     Compute infiltration
 !***********************************************************************
       SUBROUTINE compute_infil_smcas(Pptmix_nopack, Smidx_coef,
      +           Smidx_exp, Soil_moist, Soil_moist_max, Carea_max,
-     +           Net_rain, Net_ppt, Hru_perv, Hru_imperv, Imperv_stor,
+     +           Net_rain, Net_ppt, Hru_imperv, Imperv_stor,
      +           Imperv_stor_max, Snowmelt, Snowinfil_max, Net_snow,
-     +           Pkwater_equiv, Upslope_hortonian, Srp, Sri, Infil)
-      USE PRMS_SRUNOFF_SMIDX_CASC, ONLY:NEARZERO
+     +           Pkwater_equiv, Srp, Sri, Infil, Hru_type,
+     +           Upslope_hortonian)
+      USE PRMS_BASIN, ONLY: NEARZERO
       IMPLICIT NONE
-      EXTERNAL imperv_sroff_smcas, perv_imperv_comp_smcas
-      EXTERNAL check_capacity_smcas
+      EXTERNAL imperv_sroff, perv_imperv_comp_smcas, check_capacity
 ! Arguments
-      INTEGER, INTENT(IN) :: Pptmix_nopack
+      INTEGER, INTENT(IN) :: Pptmix_nopack, Hru_type
       REAL, INTENT(IN) :: Smidx_coef, Smidx_exp, Carea_max
       REAL, INTENT(IN) :: Soil_moist_max, Soil_moist, Net_rain, Net_ppt
-      REAL, INTENT(IN) :: Hru_perv, Hru_imperv, Imperv_stor_max
+      REAL, INTENT(IN) :: Hru_imperv, Imperv_stor_max
       REAL, INTENT(IN) :: Snowmelt, Snowinfil_max, Net_snow
       REAL, INTENT(IN) :: Pkwater_equiv, Upslope_hortonian
       REAL, INTENT(INOUT) :: Imperv_stor, Srp, Sri, Infil
@@ -672,9 +512,9 @@
         ptc = Upslope_hortonian
         pptp = Upslope_hortonian
         ppti = Upslope_hortonian
-        CALL perv_imperv_comp_smcas(ptc, pptp, ppti, Hru_perv,
-     +       Hru_imperv, Smidx_coef, Smidx_exp, Soil_moist, Carea_max,
-     +       Imperv_stor_max, Imperv_stor, Srp, Sri, Infil)
+        CALL perv_imperv_comp_smcas(ptc, pptp, ppti, Hru_imperv,
+     +       Smidx_coef, Smidx_exp, Soil_moist, Carea_max,
+     +       Imperv_stor_max, Imperv_stor, Srp, Sri, Infil, Hru_type)
       ENDIF
 
 !******if rain/snow event with no antecedent snowpack,
@@ -685,9 +525,9 @@
         ptc = Net_rain
         pptp = Net_rain
         ppti = Net_rain
-        CALL perv_imperv_comp_smcas(ptc, pptp, ppti, Hru_perv,
-     +       Hru_imperv, Smidx_coef, Smidx_exp, Soil_moist, Carea_max,
-     +       Imperv_stor_max, Imperv_stor, Srp, Sri, Infil)
+        CALL perv_imperv_comp_smcas(ptc, pptp, ppti, Hru_imperv,
+     +       Smidx_coef, Smidx_exp, Soil_moist, Carea_max,
+     +       Imperv_stor_max, Imperv_stor, Srp, Sri, Infil, Hru_type)
       ENDIF
 
 !******If precip on snowpack, all water available to the surface is
@@ -701,17 +541,15 @@
         IF ( Pkwater_equiv.GT.0.0 .OR. Net_ppt.LE.Net_snow ) THEN
 
 !******Pervious area computations
-          IF ( Hru_perv.GT.NEARZERO ) THEN
-            Infil = Infil + Snowmelt
-            IF ( Pkwater_equiv.GT.0.0 )
-     +           CALL check_capacity_smcas(Soil_moist_max, Soil_moist,
-     +                                     Snowinfil_max, Srp, Infil)
-          ENDIF
+          Infil = Infil + Snowmelt
+          IF ( Infil>0 .AND. Hru_type==1 )
+     +         CALL check_capacity(Soil_moist_max,
+     +              Soil_moist, Snowinfil_max, Srp, Infil)
 
 !******Impervious area computations
           IF ( Hru_imperv.GT.NEARZERO ) THEN
-            CALL imperv_sroff_smcas(Imperv_stor_max, Imperv_stor,
-     +                              Snowmelt, snri)
+            CALL imperv_sroff(Imperv_stor_max, Imperv_stor, Snowmelt,
+     +           snri, Hru_type)
             Sri = Sri + snri
           ENDIF
 
@@ -722,9 +560,9 @@
           pptp = Snowmelt
           ppti = Snowmelt
 
-          CALL perv_imperv_comp_smcas(ptc, pptp, ppti, Hru_perv,
-     +         Hru_imperv, Smidx_coef, Smidx_exp, Soil_moist, Carea_max,
-     +         Imperv_stor_max, Imperv_stor, Srp, Sri, Infil)
+          CALL perv_imperv_comp_smcas(ptc, pptp, ppti, Hru_imperv,
+     +         Smidx_coef, Smidx_exp, Soil_moist, Carea_max,
+     +         Imperv_stor_max, Imperv_stor, Srp, Sri, Infil, Hru_type)
 
         ENDIF
 
@@ -733,26 +571,26 @@
 
       ELSEIF ( Pkwater_equiv.LT.NEARZERO ) THEN
 
-!      If no snowmelt and no snowpack but there was net snow then
-!      snowpack was small and was lost to sublimation.
+!       If no snowmelt and no snowpack but there was net snow then
+!       snowpack was small and was lost to sublimation.
 
         IF ( Net_snow.LT.NEARZERO .AND. Net_rain.GT.NEARZERO ) THEN
 ! no snow, some rain
           ptc = Net_rain
           pptp = Net_rain
           ppti = Net_rain
-          
-          CALL perv_imperv_comp_smcas(ptc, pptp, ppti, Hru_perv,
-     +         Hru_imperv, Smidx_coef, Smidx_exp, Soil_moist, Carea_max,
-     +         Imperv_stor_max, Imperv_stor, Srp, Sri, Infil)
+
+          CALL perv_imperv_comp_smcas(ptc, pptp, ppti, Hru_imperv,
+     +         Smidx_coef, Smidx_exp, Soil_moist, Carea_max,
+     +         Imperv_stor_max, Imperv_stor, Srp, Sri, Infil, Hru_type)
         ENDIF
 
 !***** Snowpack exists, check to see if infil exceeds maximum daily
 !***** snowmelt infiltration rate. Infil results from rain snow mix
 !***** on a snowfree surface.
-      ELSEIF ( Infil.GT.0.0 ) THEN
-        CALL check_capacity_smcas(Soil_moist_max, Soil_moist,
-     +                            Snowinfil_max, Srp, Infil)
+      ELSEIF ( Infil.GT.0.0 .AND. Hru_type==1 ) THEN
+        CALL check_capacity(Soil_moist_max, Soil_moist, Snowinfil_max,
+     +       Srp, Infil)
 
       ENDIF
 
@@ -760,15 +598,16 @@
 
 !***********************************************************************
 !***********************************************************************
-      SUBROUTINE perv_imperv_comp_smcas(Ptc, Pptp, Ppti, Hru_perv,
-     +           Hru_imperv, Smidx_coef, Smidx_exp, Soil_moist,
-     +           Carea_max, Imperv_stor_max, Imperv_stor, Srp, Sri,
-     +           Infil)
-      USE PRMS_SRUNOFF_SMIDX_CASC, ONLY:NEARZERO
+      SUBROUTINE perv_imperv_comp_smcas(Ptc, Pptp, Ppti, Hru_imperv,
+     +           Smidx_coef, Smidx_exp, Soil_moist, Carea_max,
+     +           Imperv_stor_max, Imperv_stor, Srp, Sri, Infil,
+     +           Hru_type)
+      USE PRMS_BASIN, ONLY:NEARZERO
       IMPLICIT NONE
-      EXTERNAL perv_sroff_smidx_smcas, imperv_sroff_smcas
+      EXTERNAL perv_sroff_smidx_smcas, imperv_sroff
 ! Arguments
-      REAL, INTENT(IN) :: Ptc, Pptp, Ppti, Hru_perv, Hru_imperv
+      INTEGER, INTENT(IN) :: Hru_type
+      REAL, INTENT(IN) :: Ptc, Pptp, Ppti, Hru_imperv
       REAL, INTENT(IN) :: Smidx_coef, Smidx_exp, Soil_moist, Carea_max
       REAL, INTENT(IN) :: Imperv_stor_max
       REAL, INTENT(INOUT) :: Srp, Sri, Infil, Imperv_stor
@@ -776,17 +615,19 @@
       REAL :: inp, snrp, snri
 !***********************************************************************
 !******Pervious area computations
-      IF ( Pptp.GT.0.0 .AND. Hru_perv.GT.NEARZERO ) THEN
+!     IF ( Pptp.GT.0.0 .AND. Hru_perv.GT.NEARZERO ) THEN
+      snrp = 0.0
+      IF ( Pptp.GT.0.0 ) THEN
         CALL perv_sroff_smidx_smcas(Smidx_coef, Smidx_exp, Soil_moist,
-     +                              Carea_max, Pptp, Ptc, inp, snrp)
+     +       Carea_max, Pptp, Ptc, inp, snrp, Hru_type)
         Infil = Infil + inp
-        Srp = Srp + snrp
       ENDIF
+      Srp = Srp + snrp
 
 !******Impervious area computations
       IF ( Ppti.GT.0.0 .AND. Hru_imperv.GT.NEARZERO ) THEN
-        CALL imperv_sroff_smcas(Imperv_stor_max, Imperv_stor, Ppti,
-     +                          snri)
+        CALL imperv_sroff(Imperv_stor_max, Imperv_stor, Ppti, snri,
+     +       Hru_type)
         Sri = Sri + snri
       ENDIF
 
@@ -798,80 +639,40 @@
 !***********************************************************************
 
       SUBROUTINE perv_sroff_smidx_smcas(Smidx_coef, Smidx_exp,
-     +                                  Soil_moist, Carea_max, Pptp,
-     +                                  Ptc, Infil, Srp)
+     +           Soil_moist, Carea_max, Pptp, Ptc, Infil, Srp, Hru_type)
       IMPLICIT NONE
 ! Arguments
+      INTEGER, INTENT(IN) :: Hru_type
       REAL, INTENT(IN) :: Smidx_coef, Smidx_exp, Soil_moist, Pptp, Ptc
       REAL, INTENT(IN) :: Carea_max
       REAL, INTENT(OUT) :: Infil, Srp
 ! Local Variables
       REAL :: smidx, ca_percent
 !***********************************************************************
-      smidx = Soil_moist + (.5*Ptc)
-      ca_percent = Smidx_coef*10.**(Smidx_exp*smidx)
-      IF ( ca_percent.GT.Carea_max ) ca_percent = Carea_max
-
-      Srp = ca_percent*Pptp
-      Infil = Pptp - Srp
+      IF ( Hru_type==1 ) THEN
+        smidx = Soil_moist + (.5*Ptc)
+        ca_percent = Smidx_coef*10.**(Smidx_exp*smidx)
+        IF ( ca_percent.GT.Carea_max ) ca_percent = Carea_max
+        Srp = ca_percent*Pptp
+        Infil = Pptp - Srp
+      ELSE ! Hru_type=3
+        Srp = 0.0
+        Infil = Pptp
+      ENDIF
 
       END SUBROUTINE perv_sroff_smidx_smcas
 
 !***********************************************************************
-!      Subroutine to compute runoff from impervious area
-!***********************************************************************
-      SUBROUTINE imperv_sroff_smcas(Imperv_stor_max, Imperv_stor, Ppti,
-     +                              Sri)
-      IMPLICIT NONE
-! Arguments
-      REAL, INTENT(IN) :: Imperv_stor_max, Ppti
-      REAL, INTENT(INOUT) :: Imperv_stor
-      REAL, INTENT(OUT) :: Sri
-! Local Variables
-      REAL :: avail_stor
-!***********************************************************************
-      avail_stor = Imperv_stor_max - Imperv_stor
-      IF ( Ppti.GT.avail_stor ) THEN
-        Imperv_stor = Imperv_stor_max
-        Sri = Ppti - avail_stor
-      ELSE
-        Imperv_stor = Imperv_stor + Ppti
-        Sri = 0.0
-      ENDIF
-
-      END SUBROUTINE imperv_sroff_smcas
-
-!***********************************************************************
-! fill soil to soil_moist_max, if more than capacity restrict
-! infiltration by snowinfil_max, with excess added to runoff
-!***********************************************************************
-      SUBROUTINE check_capacity_smcas(Soil_moist_max, Soil_moist,
-     +                                Snowinfil_max, Srp, Infil)
-      IMPLICIT NONE
-! Arguments
-      REAL, INTENT(IN) :: Soil_moist_max, Soil_moist, Snowinfil_max
-      REAL, INTENT(INOUT) :: Srp, Infil
-! Local Variables
-      REAL :: capacity, excess
-!***********************************************************************
-      capacity = Soil_moist_max - Soil_moist
-      excess = Infil - capacity
-      IF ( excess.GT.Snowinfil_max ) THEN
-        Srp = Srp + excess - Snowinfil_max
-        Infil = Snowinfil_max + capacity
-      ENDIF
-
-      END SUBROUTINE check_capacity_smcas
-
-!***********************************************************************
 !     Compute cascading runoff (runoff in inche*acre/dt)
 !***********************************************************************
-      SUBROUTINE run_cascade_smcas(Ihru, Ncascade_hru, Runoff,
-     +                             Hru_sroff_down, Farflow)
-      USE PRMS_SRUNOFF_SMIDX_CASC, ONLY:Cfs_conv, Strm_seg_in,
-     +    Upslope_hortonian, Nsegmentp1, Strm_farfield
-      USE PRMS_CASCADE, ONLY:Hru_down, Hru_down_pct, Hru_down_pctwt,
+      SUBROUTINE run_cascade_smidx(Ihru, Ncascade_hru, Runoff,
+     +           Hru_sroff_down, Farflow)
+      USE PRMS_SRUNOFF_SMIDX_CASC, ONLY: Upslope_hortonian
+      USE PRMS_BASIN, ONLY: Nsegmentp1
+      USE PRMS_FLOWVARS, ONLY: Strm_seg_in, Strm_farfield
+      USE PRMS_CASCADE, ONLY: Hru_down, Hru_down_pct, Hru_down_pctwt,
      +    Cascade_area
+      USE PRMS_OBS, ONLY: Cfs_conv
       IMPLICIT NONE
       INTRINSIC IABS
 ! Arguments
@@ -905,4 +706,56 @@
 ! reset Sroff as it accumulates flow to streams
       Runoff = Runoff - Hru_sroff_down - Farflow
 
-      END SUBROUTINE run_cascade_smcas
+      END SUBROUTINE run_cascade_smidx
+
+!***********************************************************************
+!      Subroutine to compute runoff from impervious area
+!***********************************************************************
+      SUBROUTINE imperv_sroff(Imperv_stor_max, Imperv_stor, Ppti, Sri,
+     +           Hru_type)
+      IMPLICIT NONE
+! Arguments
+      INTEGER, INTENT(IN) :: Hru_type
+      REAL, INTENT(IN) :: Imperv_stor_max, Ppti
+      REAL, INTENT(INOUT) :: Imperv_stor
+      REAL, INTENT(OUT) :: Sri
+! Local Variables
+      REAL :: avail_stor
+!***********************************************************************
+      IF ( Hru_type==1 ) THEN
+        avail_stor = Imperv_stor_max - Imperv_stor
+        IF ( Ppti.GT.avail_stor ) THEN
+          Imperv_stor = Imperv_stor_max
+          Sri = Ppti - avail_stor
+        ELSE
+          Imperv_stor = Imperv_stor + Ppti
+          Sri = 0.0
+        ENDIF
+      ELSE ! Hru_type=3
+        Imperv_stor = Imperv_stor + Ppti
+        Sri = 0.0
+      ENDIF
+
+      END SUBROUTINE imperv_sroff
+
+!***********************************************************************
+! fill soil to soil_moist_max, if more than capacity restrict
+! infiltration by snowinfil_max, with excess added to runoff
+!***********************************************************************
+      SUBROUTINE check_capacity(Soil_moist_max, Soil_moist,
+     +           Snowinfil_max, Srp, Infil)
+      IMPLICIT NONE
+! Arguments
+      REAL, INTENT(IN) :: Soil_moist_max, Soil_moist, Snowinfil_max
+      REAL, INTENT(INOUT) :: Srp, Infil
+! Local Variables
+      REAL :: capacity, excess
+!***********************************************************************
+      capacity = Soil_moist_max - Soil_moist
+      excess = Infil - capacity
+      IF ( excess.GT.Snowinfil_max ) THEN
+        Srp = Srp + excess - Snowinfil_max
+        Infil = Snowinfil_max + capacity
+      ENDIF
+
+      END SUBROUTINE check_capacity

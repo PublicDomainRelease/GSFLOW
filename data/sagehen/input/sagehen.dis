@@ -1,5 +1,6 @@
 #Sagehen Simulation -- Example problem for GSFLOW
-2    73     81     5     4      2                NLAY  NROW   NCOL  NPER   ITMUNI  LENUNI
+#  (File modified for version 1.1.00 release)
+2    73     81     2     4      2                NLAY  NROW   NCOL  NPER   ITMUNI  LENUNI
 0  0                                             LAYCBD
 CONSTANT 90.                                     DELR
 CONSTANT 90.                                     DELC
@@ -225,8 +226,5 @@ INTERNAL 1.0 (FREE)  0                          BOTTOM ELEVATION OF LAYER 2
 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 2215 2195 2165 2145 2115 2095 2070 0 0 0 0 0 0 0 0 0 0 2035 0 0 0 0 0 0
 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 2205 2175 2145 2125 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 2215 2185 2155 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
-   1    1  1.0 ss                           PERLEN   NSTP  TSMULT   Stress period 1 Steady state (1 day)
- 182  182  1.0 tr                           PERLEN   NSTP  TSMULT   Stress period 2 Transient    (182 days)
- 183  183  1.0 tr                           PERLEN   NSTP  TSMULT   Stress period 3 Transient    (183 days)
- 182  182  1.0 tr                           PERLEN   NSTP  TSMULT   Stress period 4 Transient    (182 days)
- 183  183  1.0 tr                           PERLEN   NSTP  TSMULT   Stress period 5 Transient    (183 days)
+    1    1  1.0 ss                           PERLEN   NSTP  TSMULT   Stress period 1 Steady state (1 day)
+ 5844 5844  1.0 tr                           PERLEN   NSTP  TSMULT   Stress period 2 Transient    (5,845 days)

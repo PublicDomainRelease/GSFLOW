@@ -1,10 +1,11 @@
+
 /*
- *  $Id: defs.h 3058 2007-01-25 22:25:59Z rsregan $
+ *  $Id: defs.h 5644 2010-05-25 13:32:09Z markstro $
  */
 
 /*
 **
-**		$Author: rsregan $
+**		$Author: markstro $
 **
 **		$Date: 1997/04/21 22:28:58 $
 **
@@ -13,7 +14,7 @@
 **		$Log: defs.h,v $
 **		Revision 1.11  1997/04/21 22:28:58  markstro
 **		Xmbuild fixes
-**		
+**
 **		Revision 1.10  1996/09/10 16:37:59  markstro
 **		(1) Bugs in XY plotter
 **		(2) Reworked file text widgets in run control.
@@ -46,15 +47,15 @@
  *
  * Revision 1.1  91/07/05  14:23:08  farah
  * Initial revision
- * 
+ *
  * Revision 1.1  90/07/31  12:25:03  markb
  * Initial revision
- * 
+ *
 **Revision 1.1  90/07/31  12:11:14  markb
 **Initial revision
 **
 **
-**		$Revision: 3058 $
+**		$Revision: 5644 $
 **
 **		$Source: /z/runoff/work4/mms_cvs/mms/src/include/defs.h,v $
 **
@@ -78,14 +79,15 @@
 #define M_PARAMETER 0
 #define M_VARIABLE  1
 
-#define MAX_OPT_ARRAY_SIZE 200
+// Markstrom 05/24/2010 found some unused defined constants and removed them.
+//#define MAX_OPT_ARRAY_SIZE 200
 
 #define M_BOUNDED 1
 #define M_UNBOUNDED 2
 
 #define ERROR_TIME 100
-#define M_NODEBUG 0
-#define M_PARTDEBUG 1
+//#define M_NODEBUG 0
+//#define M_PARTDEBUG 1
 #define M_FULLDEBUG 2
 
 #ifndef MIN
@@ -96,26 +98,30 @@
 #define MAX(a,b) (a > b) ? a : b
 #endif
 
-#define MAXDATALNLEN 2048  /* max no. of chars in input file line */
+#define MAXDATALNLEN 10000 /* max no. of chars in input file line */
 
 #define ENDOFFILE 2L
 #define ENDOFDATA 1L
 #define NOTENDOFDATA 0l
 
-#define MAXENVLEN 256    /* max env file line length */
-#define MAXTOKLEN 128    /* max no of chars in token */
-#define MAXLNLEN 256     /* max file line length */
-#ifndef MAXPATHLEN
-#define MAXPATHLEN 256   /* max no of chars in a path */
-#endif
+// Markstrom 05/24/2010 found some reads that were differnt sizes that the character arrays that
+//                      were being read into. I fixed this by getting rid of all of these other
+//                      string lengths and changing all string lengths to "MAXDATALNLEN" since this
+//                      is the length that we need to read data lines in the data file.
+//#define MAXENVLEN 256    /* max env file line length */
+//#define MAXTOKLEN 128    /* max no of chars in token */
+//#define MAXLNLEN 256     /* max file line length */
+//#ifndef MAXPATHLEN
+//#define MAXPATHLEN 256   /* max no of chars in a path */
+//#endif
 
 #define MAX_NDIMEN 3       /* max no. of dimensions for a var or param */
-#define MAXKEYLEN 50       /* max no. of chars in key string */
-#define MAXDIMLEN 50       /* max no. of chars in dimen string */
+//#define MAXKEYLEN 50       /* max no. of chars in key string */
+//#define MAXDIMLEN 50       /* max no. of chars in dimen string */
 #define MAXSTATVARS 200     /* max no. of statistic variables */
-#define MAXDISPVARS 200    /* max no. of display variables */
-#define MAXINFOLEN 80      /* max no. of chars in run info string */
+//#define MAXDISPVARS 200    /* max no. of display variables */
+//#define MAXINFOLEN 80      /* max no. of chars in run info string */
 
-#define MAX_SAVE_MAP 5
+//#define MAX_SAVE_MAP 5
 
 #endif /* MMS_DEF_H */

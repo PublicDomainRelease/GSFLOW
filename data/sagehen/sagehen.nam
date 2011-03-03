@@ -1,4 +1,4 @@
-LIST 26  ./output/sagehen.out
+LIST 26  ./output/sagehen.mf.list
 BAS6  8  ./input/sagehen.bas
 oc    9  ./input/sagehen.oc
 dis  11  ./input/sagehen.dis
@@ -7,21 +7,12 @@ pcg  13  ./input/sagehen.pcg
 uzf  14  ./input/sagehen.uzf
 sfr  15  ./input/sagehen.sfr
 gage 16  ./input/sagehen.gag
-#wel  17  ./input/sagehen.wel
 data 58  ./output/head_sagehen.out
 data 65  ./output/uz1_sagehen.out
 data 66  ./output/uz2_sagehen.out
 data 67  ./output/uz3_sagehen.out
 data 68  ./output/uz4_sagehen.out
-data 69  ./output/uz5_sagehen.out
-data 71  ./output/uz6_sagehen.out
-data 72  ./output/uz7_sagehen.out
-data 73  ./output/uz8_sagehen.out
-data 74  ./output/uz9_sagehen.out
-data 75  ./output/uz10_sagehen.out
-data 76  ./output/uz11_sagehen.out
 data 80  ./output/sagehen_sfrseg13.out
 data 81  ./output/sagehen_sfrseg15.out
 data 82  ./output/sagehen_sfrseg16.out
 data 83  ./output/sagehen_sfrseg17.out
-data(BINARY) 70  ./output/UZF_mass.out
