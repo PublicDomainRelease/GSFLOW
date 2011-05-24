@@ -51,7 +51,7 @@
       ddhsoldecl = 1
 
       IF ( declmodule(
-     +'$Id: ddsolrad_hru_prms.f 2310 2011-01-04 21:02:11Z rsregan $'
+     +'$Id: ddsolrad_hru_prms.f 3116 2011-05-17 16:20:01Z rsregan $'
      +).NE.0 ) RETURN
 
 ! Declare Parameters

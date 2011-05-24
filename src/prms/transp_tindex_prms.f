@@ -47,7 +47,7 @@
       decl_tindex = 1
 
       IF ( declmodule(
-     +'$Id: transp_tindex_prms.f 2241 2010-12-10 00:37:28Z rsregan $'
+     +'$Id: transp_tindex_prms.f 3116 2011-05-17 16:20:01Z rsregan $'
      +).NE.0 ) RETURN
 
       ALLOCATE (Transp_beg(Nhru))
@@ -149,7 +149,7 @@
 !***********************************************************************
       INTEGER FUNCTION run_tindex()
       USE PRMS_TRANSP_TINDEX
-      USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Nhru
+      USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order
       USE PRMS_CLIMATEVARS, ONLY: Temp_units, Tmaxf, Tmaxc, Transp_on,
      +    Basin_transp_on
       USE PRMS_OBS, ONLY: Nowmonth, Nowday
@@ -160,9 +160,15 @@
 !******Set switch for active transpiration period
 
       IF ( Temp_units==0 ) THEN
-        Tmax_hru = Tmaxf
+        DO j = 1, Active_hrus
+          i = Hru_route_order(j)
+          Tmax_hru(i) = Tmaxf(i)
+        ENDDO
       ELSE
-        Tmax_hru = Tmaxc
+        DO j = 1, Active_hrus
+          i = Hru_route_order(j)
+          Tmax_hru(i) = Tmaxc(i)
+        ENDDO
       ENDIF
 
       Basin_transp_on = 0

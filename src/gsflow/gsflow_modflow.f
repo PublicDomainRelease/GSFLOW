@@ -66,7 +66,7 @@ C
       gsfdecl = 1
 
       Versn =
-     &'$Id: gsflow_modflow.f 2449 2011-02-15 20:04:35Z rsregan $'
+     &'$Id: gsflow_modflow.f 3116 2011-05-17 16:20:01Z rsregan $'
       IF ( declmodule(Versn(:62)).NE.0 ) RETURN
 
 ! Declared Variables
@@ -155,7 +155,7 @@ C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
     3 FORMAT(///, 30X,
      &       'U.S. Geological Survey', /, 11X,
      &       'Coupled Groundwater and Surface-water FLOW model',
-     &       ' (GSFLOW)', /, 29X, 'Version 1.1.3 03/01/2011',
+     &       ' (GSFLOW)', /, 29X, 'Version 1.1.4 06/01/2011',
      &       //, 7X,
      &       'An integration of the Precipitation-Runoff Modeling',
      &       ' System (PRMS)', /, 15X,

@@ -36,7 +36,7 @@ C     ------------------------------------------------------------------
       REAL epsslpe
 C     ------------------------------------------------------------------
       Version_sfr =
-     +'$Id: gwf2sfr7.f 2460 2011-02-18 01:39:56Z rniswon $'
+     +'$Id: gwf2sfr7.f 3116 2011-05-17 16:20:01Z rsregan $'
       iterp = 1
       idum(1) = 0
       ALLOCATE (NSS, NSTRM,TOTSPFLOW)
@@ -1711,7 +1711,7 @@ C     *****************************************************************
 !      USE GWFRCHMODULE,ONLY:RECH  !cjm
       USE GWFSFRMODULE
       USE GLOBAL,       ONLY: NLAY, IOUT, ISSFLG, IBOUND, HNEW, HCOF, 
-     +                        RHS, BOTM
+     +                        RHS, BOTM, LBOTM
       USE GWFBASMODULE, ONLY: DELT, TOTIM, HDRY
       USE GWFLAKMODULE, ONLY: THETA, STGOLD, STGNEW, VOL, LKARR1
       IMPLICIT NONE
@@ -1889,14 +1889,13 @@ C8------CHECK IF LAKE OUTFLOW IS SPECIFIED AT A FIXED RATE.
 C
 C9------SPECIFIED FLOW FROM LAKE IS ZERO AND ICALC IS ZERO.
 !              IF ( icalc.EQ.0 ) THEN
-                flowin = FXLKOT(istsg)
 !              END IF
 C
 C9B-----ESTIMATE LAKE OUTFLOW FOR FIRST ITERATION OF SIMULATION.
-              IF( Kkper.EQ.1 .AND. Kkstp.EQ.1 .AND. Kkiter.EQ.1 ) THEN
-                stgon = (1.0-thet1)*STGOLD(lk) + thet1*STGNEW(lk)
-                dlkstr = stgon - SEG(8, istsg)
-                IF ( FXLKOT(istsg).LE.CLOSEZERO )THEN
+              IF ( SEG(2, istsg).LT.CLOSEZERO ) THEN
+                IF( Kkper.EQ.1 .AND. Kkstp.EQ.1 .AND. Kkiter.EQ.1 ) THEN
+                  stgon = (1.0-thet1)*STGOLD(lk) + thet1*STGNEW(lk)
+                  dlkstr = stgon - SEG(8, istsg)
 C
 C10-----FLOW FROM LAKE COMPUTED USING MANNINGS FORMULA AND ASSUMING A
 C         WIDE RECTANGULAR CHANNEL.
@@ -1908,8 +1907,8 @@ C11-----FLOW FROM LAKE COMPUTED USING MANNINGS FORMULA AND EIGHT POINT
 C         CROSS-SECTIONAL AREA.
                   ELSE IF ( dlkstr.GT.NEARZERO .AND. icalc.EQ.2 ) THEN
                     CALL GWF2SFR7FLW(dlkstr, istsg, roughch, 
-     +                               roughbnk, slope, wetperm, 
-     +                               flowin, width)
+     +                             roughbnk, slope, wetperm, 
+     +                             flowin, width)
 C
 C12-----FLOW FROM LAKE COMPUTED USING FORMULA-- Q=(DEPTH/CDPTH)**1/FDPTH).
                   ELSE IF ( dlkstr.GT.NEARZERO .AND. icalc.EQ.3 ) THEN
@@ -1920,15 +1919,17 @@ C
 C13-----FLOW FROM LAKE COMPUTED USING TABULATED VALUES.
                   ELSE IF ( dlkstr.GT.NEARZERO .AND. icalc.EQ.4 ) THEN
                     CALL GWF2SFR7TBF(flowin, dlkstr, width, 
-     +                             nstrpts, nreach, istsg, 
-     +                             Kkiter, 0)
+     +                           nstrpts, nreach, istsg, 
+     +                           Kkiter, 0)
                   ELSE IF ( dlkstr.LT.NEARZERO .AND. icalc.GT.0 ) THEN
                     flowin = 0.0D0
                   END IF
                   STROUT(istsg)= flowin
+                ELSE
+                  flowin = STROUT(istsg)
                 END IF
-              ELSE IF ( FXLKOT(istsg).LE.CLOSEZERO )THEN
-                flowin = STROUT(istsg)
+              ELSE
+                flowin = FXLKOT(istsg)
               END IF
             END IF
 C
@@ -2095,7 +2096,7 @@ C26a----CHECK IF LAKE INUNDATES STREAM. IF SO THEN SET avhc and cstr = 0.
             IF ( illake.GE.1 ) THEN
               lakid = LKARR1(ic, ir, illake)
               IF ( lakid.GT.0 ) THEN
-                IF ( STGNEW(lakid).GT.BOTM(ic, ir, illake) ) THEN
+                IF ( STGNEW(lakid).GT.BOTM(ic,ir,LBOTM(illake))) THEN
                   cstr = 0.0
                   avhc = 0.0
                 END IF
@@ -3213,9 +3214,9 @@ C     STREAMFLOWS IN MODELED AREA
 C     VERSION  7.1.01: February 15, 2009
 C     *****************************************************************
       USE GWFSFRMODULE
-      USE GWFLAKMODULE, ONLY: VOL, LKARR1, STGNEW
+      USE GWFLAKMODULE, ONLY: VOL, LKARR1, STGNEW, STGOLD
       USE GLOBAL,       ONLY: NCOL, NROW, NLAY, IOUT, ISSFLG, IBOUND,
-     +                        HNEW, BUFF, BOTM
+     +                        HNEW, BUFF, BOTM, LBOTM
       USE GWFBASMODULE, ONLY: MSUM, ICBCFL, IBUDFL, DELT, PERTIM, TOTIM,
      +                        VBVL, VBNM, HDRY
 !      USE GWFRCHMODULE,ONLY:RECH  !cjm
@@ -3252,7 +3253,7 @@ C     ------------------------------------------------------------------
      +                 slope, cdpth, fdpth, hdiff, grad, depth,
      +                 hld, fbcheck, totflwt, totdelstor, totuzstor,
      +                 thetas, epsilon, thr, qa, qb, qc, qd, awdth,
-     +                 bwdth, gwflow, dvrsn, fbot, depthtr
+     +                 bwdth, gwflow, dvrsn, fbot, depthtr, strtop
 C     ------------------------------------------------------------------
 C     LOCAL STATIC VARIABLES
 C     ------------------------------------------------------------------
@@ -3384,6 +3385,7 @@ C6------DETERMINE STREAM SEGMENT AND REACH NUMBER.
           istsg = ISTRM(4, l)
           nreach = ISTRM(5, l)
           icalc = ISEG(1, istsg)
+          strtop = STRM(3, l)
 ! RGN 5/9/09 set slope for all icalc
           slope = STRM(2, l)
 C
@@ -3492,6 +3494,7 @@ C25-----SEARCH FOR UPPER MOST ACTIVE CELL IN STREAM REACH. Revised ERB
               EXIT TOPCELL
             END IF
           END DO TOPCELL
+          IF ( ilay.LE.NLAY ) il = ilay
 C
 C26-----DETERMINE LEAKAGE THROUGH STREAMBED.
           hstr = HSTRM(l,irt)
@@ -3508,19 +3511,6 @@ C26-----DETERMINE LEAKAGE THROUGH STREAMBED.
           icalccheck = 0
           totflwt = 0.0D0
           totdelstor = 0.0D0
-C26a----CHECK IF LAKE INUNDATES STREAM. IF SO THEN SET avhc and cstr = 0.
-          IF ( Iunitlak.GT.0 ) THEN
-            illake = il - 1
-            IF ( illake.GT.1 ) THEN
-              lakid = LKARR1(ic, ir, illake)
-              IF ( lakid.GT.0 ) THEN
-                IF ( STGNEW(lakid).GT.BOTM(ic, ir, illake-1) ) THEN
-                  cstr = 0.0
-                  avhc = 0.0
-                END IF
-              END IF
-            END IF
-          END IF
           IF ( icalc.GE.2 ) wetperm = HWTPRM(l,irt)
           IF ( IUZT.EQ.1 ) THEN
             IF ( icalc.EQ.1 .OR. icalc.EQ.2 ) icalccheck = 1
@@ -3547,13 +3537,25 @@ C26a----CHECK IF LAKE INUNDATES STREAM. IF SO THEN SET avhc and cstr = 0.
               END IF
             END IF
           END IF
+C26a----CHECK IF LAKE INUNDATES STREAM. IF SO THEN SET avhc and cstr = 0.
+          IF ( Iunitlak.GT.0 ) THEN
+            illake = il - 1
+            IF ( illake.GE.1 ) THEN
+              lakid = LKARR1(ic, ir, illake)
+              IF ( lakid.GT.0 ) THEN
+                IF ( STGNEW(lakid).GT.BOTM(ic,ir,LBOTM(illake))) THEN
+                  cstr = 0.0
+                  avhc = 0.0
+                END IF
+              END IF
+            END IF
+          END IF
           IF ( icalc.EQ.1 ) THEN
             qcnst = CONST*width*SQRT(slope)/SEG(16, istsg)
           ELSE IF ( icalc.EQ.3 ) THEN
             awdth = SEG(14, istsg)
             bwdth = SEG(15, istsg)
           END IF
-          IF ( ilay.LE.NLAY ) il = ilay
 C
 C26b-----SET STREAMBED HYDRAULIC CONDUCTIVITY AND STREAM LEAKAGE TO
 C         ZERO WHEN NOT AN ACTIVE CELL.
@@ -4882,7 +4884,7 @@ C
 C2------ONLY READ FIRST 4 VARIABLES TO DETERMINE VALUE OF IUPSEG.
         READ (In, *) n, icalc, noutseg, iupseg
 !       IF ( n.GT.NSS .OR. n.LT.1 ) THEN  !cjm (commented this line out)
-        IF ( n.GT.NSS ) THEN              !cjm
+        IF ( n.GT.NSS .OR. n.EQ.0 ) THEN              !cjm
           WRITE (IOUT, 9001) n
  9001     FORMAT (1X, /1X, 'SEGMENT NUMBER (NSEG) OUT OF RANGE: ', I6)
           IF ( Ichk.NE.0 ) THEN

@@ -1,4 +1,4 @@
-C $Id: gwf2gag7.f 2455 2011-02-17 18:56:13Z rniswon $      
+C $Id: gwf2gag7.f 3116 2011-05-17 16:20:01Z rsregan $      
       MODULE GWFGAGMODULE
         INTEGER,SAVE,POINTER  ::NUMGAGE
         INTEGER,SAVE,  DIMENSION(:,:),  POINTER :: IGGLST

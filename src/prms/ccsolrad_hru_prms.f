@@ -52,7 +52,7 @@
       cchsoldecl = 1
 
       IF ( declmodule(
-     +'$Id: ccsolrad_hru_prms.f 2303 2011-01-03 21:47:53Z rsregan $'
+     +'$Id: ccsolrad_hru_prms.f 3116 2011-05-17 16:20:01Z rsregan $'
      +).NE.0 ) RETURN
 
 ! Declare Parameters

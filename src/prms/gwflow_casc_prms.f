@@ -13,10 +13,9 @@
       REAL, SAVE :: Basin_gw_upslope, Basin_farflow
 !   Declared Variables
       REAL, SAVE :: Basin_gwflow, Basin_gwstor, Basin_gwsink, Basin_gwin
-      REAL, SAVE :: Basin_recharge
       REAL, SAVE, ALLOCATABLE :: Gwres_stor(:), Gwres_flow(:)
       REAL, SAVE, ALLOCATABLE :: Gwres_sink(:), Gw_in_ssr(:)
-      REAL, SAVE, ALLOCATABLE :: Gw_upslope(:), Gwres_in(:), Recharge(:)
+      REAL, SAVE, ALLOCATABLE :: Gw_upslope(:), Gwres_in(:)
       REAL, SAVE, ALLOCATABLE :: Hru_gw_cascadeflow(:), Gw_in_soil(:)
 !   Declared Parameters
       INTEGER, SAVE, ALLOCATABLE :: Ssr_gwres(:)
@@ -60,7 +59,7 @@
       gwcdecl = 1
 
       IF ( declmodule(
-     +'$Id: gwflow_casc_prms.f 2255 2010-12-10 20:26:29Z rsregan $'
+     +'$Id: gwflow_casc_prms.f 3116 2011-05-17 16:20:01Z rsregan $'
      +).NE.0 ) RETURN
 
       IF ( Ncascdgw>0 .AND. Nhru.NE.Nssr .AND. Model/=99 ) THEN
@@ -156,18 +155,6 @@
      +     ' groundwater reservoirs',
      +     'inches',
      +     Basin_gwin).NE.0 ) RETURN
-
-      IF ( declvar('gwflow', 'basin_recharge', 'one', 1,'real',
-     +         'Basin area-weighted sum of soil_to_gw and ssr_to_gw',
-     +         'inches',
-     +         Basin_recharge).NE.0 ) RETURN
-
-      ALLOCATE (Recharge(Nhru))
-      IF ( declvar('gwflow', 'recharge', 'nhru', Nhru, 'real',
-     +         'Sum of soil_to_gw and ssr_to_gw for each HRU',
-     +         'inches',
-     +         Recharge).NE.0 ) RETURN
-
       ALLOCATE (Ssr_gwres(Nssr))
       IF ( Nssr.NE.Ngw .OR. Model==99 ) THEN
         IF ( declparam('gwflow', 'ssr_gwres', 'nssr', 'integer',
@@ -255,12 +242,10 @@
      +       Gwstor_init).NE.0 ) RETURN
         Gwres_stor = Gwstor_init
         DEALLOCATE ( Gwstor_init )
-        Recharge = 0.0
         Basin_gwflow = 0.0
         Basin_gwsink = 0.0
         Basin_gwin = 0.0
         Basin_farflow = 0.0
-        Basin_recharge = 0.0
       ENDIF
 
       Basin_gwstor = 0.0
@@ -341,16 +326,6 @@
         ENDDO
       ENDIF
 
-      IF ( Nhru==Nssr .AND. Nhru==Ngw ) THEN
-        Basin_recharge = 0.0
-        DO ii = 1, Active_hrus
-          i = Hru_route_order(ii)
-          Recharge(i) = Soil_to_gw(i) + Ssr_to_gw(i)
-          Basin_recharge = Recharge(i)*Hru_area(i)
-        ENDDO
-        Basin_recharge = Basin_recharge*Basin_area_inv
-      ENDIF
-
       last_basin_gwstor = Basin_gwstor
       Basin_gwflow = 0.
       Basin_gwstor = 0.
@@ -411,9 +386,7 @@
      +         gwsink, dnflow, Gw_in_soil(i), Gw_in_ssr(i),
      +         gwup, far_gwflow, gwarea
         ENDIF
-        Gw_in_ssr(i) = Gw_in_ssr(i)/gwarea
-        Gw_in_soil(i) = Gw_in_soil(i)/gwarea
-        Gwres_in(i) = gwin/gwarea
+        Gwres_in(i) = gwin
         Gwres_sink(i) = gwsink/gwarea
         Gwres_stor(i) = gwstor/gwarea
       ENDDO

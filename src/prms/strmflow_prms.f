@@ -15,7 +15,7 @@
         strmflow_prms = strmrun()
       ELSEIF ( Process_flag==1 ) THEN
         IF ( declmodule(
-     +'$Id: strmflow_prms.f 2241 2010-12-10 00:37:28Z rsregan $'
+     +'$Id: strmflow_prms.f 3116 2011-05-17 16:20:01Z rsregan $'
      +).NE.0 ) RETURN
       ENDIF
 

@@ -25,7 +25,7 @@
 
       ELSEIF ( Process_flag==1 ) THEN
         IF ( declmodule(
-     +'$Id: potet_hamon_hru_prms.f 2240 2010-12-10 00:28:24Z rsregan $'
+     +'$Id: potet_hamon_hru_prms.f 3116 2011-05-17 16:20:01Z rsregan $'
      +     ).NE.0 ) RETURN
 
         ALLOCATE (Hamon_coef(12))

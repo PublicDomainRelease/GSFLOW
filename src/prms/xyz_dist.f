@@ -99,14 +99,14 @@
       xyzdecl = 1
 
       IF ( declmodule(
-     +'$Id: xyz_dist.f 2439 2011-02-11 20:36:52Z rsregan $'
+     +'$Id: xyz_dist.f 3116 2011-05-17 16:20:01Z rsregan $'
      +).NE.0 ) RETURN
 
       Nlapse = getdim('nlapse')
       IF ( Nlapse.EQ.-1 ) RETURN
       IF ( Nlapse.NE.3 .AND. Model/=99 ) THEN
-        PRINT *, '*** xyz_dist expecting nlapse = 3', Nlapse
-        RETURN
+        PRINT *, 'ERROR, xyz_dist expecting nlapse = 3', Nlapse
+        STOP
       ENDIF
 
       IF ( declvar('xyz_dist', 'is_rain_day', 'one', 1, 'integer',
@@ -548,7 +548,7 @@
       INTEGER FUNCTION xyzrun()
       USE PRMS_XYZ_DIST
       USE PRMS_CLIMATEVARS, ONLY: Adjmix_rain, Adjust_snow, Adjust_rain,
-     +    Tmax_allrain
+     +    Tmax_allrain_f
       USE PRMS_OBS, ONLY: Nowtime, Rain_code
       IMPLICIT NONE
 ! Functions
@@ -565,9 +565,9 @@
      +                  Temp_meanz(im))
 
       CALL xyz_rain_run(Ppt_lapse(1, im), Rain_meanx(im), Rain_meany(im)
-     +                  , Rain_meanz(im), Meanppt(im), Tmax_allrain(im),
-     +                  Adjmix_rain(im), Rain_code(im), Adjust_snow(im),
-     +                  Adjust_rain(im))
+     +                  , Rain_meanz(im), Meanppt(im),
+     +                  Tmax_allrain_f(im), Adjmix_rain(im),
+     +                  Rain_code(im), Adjust_snow(im), Adjust_rain(im))
 
       xyzrun = 0
       END FUNCTION xyzrun
@@ -635,7 +635,7 @@
       DO j = 1, Temp_nsta
         i = Temp_nuse(j)
 
-        IF ( Tmax(i).GT.-55.0 ) THEN
+        IF ( Tmax(i).GT.-99.0 ) THEN
           ntmax = ntmax + 1
 !         sumtmax = sumtmax + ((Tmax(i)+Tmax_add)/Tmax_div)
           sumtmax = sumtmax + Tmax(i)
@@ -644,7 +644,7 @@
           ztmax = ztmax + Tsta_elev(i)
         ENDIF
 
-        IF ( Tmin(i).GT.-55.0 ) THEN
+        IF ( Tmin(i).GT.-99.0 ) THEN
           ntmin = ntmin + 1
 !         sumtmin = sumtmin + ((Tmin(i)+Tmin_add)/Tmin_div)
           sumtmin = sumtmin + Tmin(i)
@@ -748,10 +748,12 @@
         Tmax_rain_sta(i) = (maxlapse1*xrain) +
      +                     (maxlapse2*yrain) +
      +                     (maxlapse3*zrain) + intmax
+        IF ( Temp_units==1 ) Tmax_rain_sta(i) = c_to_f(Tmax_rain_sta(i))
 
         Tmin_rain_sta(i) = (minlapse1*xrain) +
      +                     (minlapse2*yrain) +
      +                     (minlapse3*zrain) + intmin
+        IF ( Temp_units==1 ) Tmin_rain_sta(i) = c_to_f(Tmin_rain_sta(i))
 
         Tmax_rain_sta(i) = (Tmax_rain_sta(i)*Tmax_div) - Tmax_add
         Tmin_rain_sta(i) = (Tmin_rain_sta(i)*Tmin_div) - Tmin_add
@@ -842,7 +844,7 @@
       END SUBROUTINE xyz_temp_run
 
       SUBROUTINE xyz_rain_run(Ppt_lapse, Rain_meanx, Rain_meany,
-     +                        Rain_meanz, Meanppt, Tmax_allrain,
+     +                        Rain_meanz, Meanppt, Tmax_allrain_f,
      +                        Adjmix_rain, Rain_code, Adjust_snow,
      +                        Adjust_rain)
       USE PRMS_XYZ_DIST, ONLY: MRUx, MRUy, Rain_STAx, Rain_STAy,
@@ -853,7 +855,7 @@
      +    Hru_route_order, NEARZERO, Hru_elev
 !dbg  USE PRMS_BASIN, ONLY: Print_debug
       USE PRMS_CLIMATEVARS, ONLY: Tmaxf, Tminf, Newsnow, Pptmix,
-     +    Hru_ppt, Hru_rain, Hru_snow, Basin_rain, Tmax_allsnow,
+     +    Hru_ppt, Hru_rain, Hru_snow, Basin_rain, Tmax_allsnow_f,
      +    Basin_ppt, Prmx, Basin_snow, Psta_elev, Basin_obs_ppt, Nrain
       USE PRMS_OBS, ONLY: Precip, Nowtime, Nform, Form_data, Rain_day
       IMPLICIT NONE
@@ -863,7 +865,7 @@
 !   Declared Parameters
       INTEGER, INTENT(IN) :: Rain_code
       REAL, INTENT(IN) :: Adjust_snow, Adjust_rain, Ppt_lapse(MAXLAPSE)
-      REAL, INTENT(IN) :: Tmax_allrain, Adjmix_rain
+      REAL, INTENT(IN) :: Tmax_allrain_f, Adjmix_rain
 !   Undeclared Static Variables
       REAL, INTENT(IN) :: Rain_meanx, Rain_meany, Rain_meanz, Meanppt
 ! Local Variables
@@ -934,10 +936,10 @@
 
         IF ( Precip_xyz(i).GT.-NEARZERO ) THEN
 
-          IF ( Tmax_rain_sta(i).LE.Tmax_allsnow ) THEN
+          IF ( Tmax_rain_sta(i).LE.Tmax_allsnow_f ) THEN
             err_chk = 1
-          ELSEIF ( Tmin_rain_sta(i).GT.Tmax_allsnow .OR.
-     +             Tmax_rain_sta(i).GE.Tmax_allrain ) THEN
+          ELSEIF ( Tmin_rain_sta(i).GT.Tmax_allsnow_f .OR.
+     +             Tmax_rain_sta(i).GE.Tmax_allrain_f ) THEN
             err_chk = 0
           ELSE
             err_chk = 1
@@ -1041,13 +1043,13 @@
      +                 (pptlapse3*Hru_elev(i)) + intppt
 
           Hru_ppt(i) = Hru_ppt(i)*Ppt_div - Ppt_add
-
-          IF ( Hru_ppt(i)<0.0 ) Hru_ppt(i) = 0.0
         ENDIF
 
 !******Zero precipitation on HRU
-
-        IF ( Hru_ppt(i).LT.NEARZERO ) CYCLE
+        IF ( Hru_ppt(i)<NEARZERO ) THEN
+          Hru_ppt(i) = 0.0
+          CYCLE
+        ENDIF
 
 !******If observed temperature data are not available or if observed
 !******form data are available and rain is explicitly specified then
@@ -1061,7 +1063,7 @@
 !******maximum temperature is below or equal to the base temperature for
 !******snow then precipitation is all snow
 
-        ELSEIF ( iform.EQ.1 .OR. Tmaxf(i).LE.Tmax_allsnow ) THEN
+        ELSEIF ( iform.EQ.1 .OR. Tmaxf(i).LE.Tmax_allsnow_f ) THEN
           Hru_snow(i) = Hru_ppt(i)
           Newsnow(i) = 1
 
@@ -1069,8 +1071,8 @@
 !******maximum temperature is above all_rain temperature then
 !******precipitation is all rain
 
-        ELSEIF ( Tminf(i).GE.Tmax_allsnow .OR.
-     +           Tmaxf(i).GE.Tmax_allrain ) THEN
+        ELSEIF ( Tminf(i).GE.Tmax_allsnow_f .OR.
+     +           Tmaxf(i).GE.Tmax_allrain_f ) THEN
           Hru_rain(i) = Hru_ppt(i)
           Prmx(i) = 1.0
 
@@ -1078,8 +1080,8 @@
 
         ELSE
           tdiff = Tmaxf(i) - Tminf(i)
-          IF ( ABS(tdiff)<NEARZERO ) tdiff = NEARZERO
-          Prmx(i) = ((Tmaxf(i)-Tmax_allsnow)/tdiff)*Adjmix_rain
+          IF ( ABS(tdiff)<NEARZERO ) tdiff = 0.01
+          Prmx(i) = ((Tmaxf(i)-Tmax_allsnow_f)/tdiff)*Adjmix_rain
 
 !******Unless mixture adjustment raises the proportion of rain to
 !******greater than or equal to 1.0 in which case it all rain

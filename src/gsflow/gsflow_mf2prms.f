@@ -11,7 +11,7 @@
 !     Mapping module to convert MODFLOW to PRMS states for use by GSFLOW
 !     ******************************************************************
       INTEGER FUNCTION gsflow_mf2prms()
-      USE GSFMF2PRMS, ONLY: Gw2sm_grav
+      USE GSFMF2PRMS
       USE PRMS_BASIN, ONLY: Timestep
       USE PRMS_MODULE, ONLY: Process_flag
       IMPLICIT NONE
@@ -44,7 +44,7 @@
       mf2prmsdecl = 1
 
       IF ( declmodule(
-     &'$Id: gsflow_mf2prms.f 2150 2010-11-18 18:09:23Z rsregan $')
+     &'$Id: gsflow_mf2prms.f 3116 2011-05-17 16:20:01Z rsregan $')
      &     .NE.0 ) RETURN
 
 ! Declared Variables
@@ -71,7 +71,6 @@
 ! Local Variables
       INTEGER :: i, irow, icol, icell
 !***********************************************************************
-
       DO i = 1, Nhrucell
         IF ( Hrucheck(Gvr_hru_id(i))==1 ) THEN
           icell = Gvr_cell_id(i)

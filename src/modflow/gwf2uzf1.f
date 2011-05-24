@@ -40,7 +40,7 @@ C     ------------------------------------------------------------------
       DATA aname(7)/'    UZ CELL BOTTOM ELEV.'/
 C     ------------------------------------------------------------------
       Version_uzf =
-     +'$Id: gwf2uzf1.f 2456 2011-02-17 18:57:10Z rniswon $'
+     +'$Id: gwf2uzf1.f 3116 2011-05-17 16:20:01Z rsregan $'
       Iseepsupress = 0   ! Iseepsupress =1 means seepout not calculated
       NUMCELLS = NCOL*NROW
       TOTCELLS = NUMCELLS*NLAY
@@ -79,7 +79,7 @@ C2------READ UNSATURATED FLOW FLAGS WHEN IUZFOPT IS GREATER THAN ZERO.
 !      CALL URWORD(line, lloc, istart, istop, 2, RTSOLUTE, r, IOUT, In)
 C
 C3------CHECK FOR ERRORS.
-      IF ( SURFDEP.LT.ZEROD6 ) SURFDEP = 1.0
+      IF ( SURFDEP.LT.ZEROD6 ) SURFDEP = ZEROD6
       IF ( IUZFOPT.GT.2 ) THEN
         WRITE (IOUT, 9002)
  9002   FORMAT (//' VERTICAL FLOW IN VADOSE ZONE IS ', 
@@ -429,7 +429,7 @@ C use LPF SC2, Iunitlpf>0
                     ELSE
 C use BCF SC2, LAYCON>1, use IL+1 in SC2
                       sy = SC2(ncth, nrth, nlth+1)/
-     +                    (DELR(ncth)*DELC(nrth))
+     +                     (DELR(ncth)*DELC(nrth))
                     END IF
                   ELSE IF ( Iunithuf.GT.0 ) THEN 
                     sy = SC2HUF(ncth, nrth)
@@ -1245,8 +1245,7 @@ C     -----------------------------------------------------------------
 C     -----------------------------------------------------------------
 C     LOCAL VARIABLES
 C     -----------------------------------------------------------------
-      REAL epsilon, fks, rootdp, ths, wiltwc, s, x, c, etdp, etgw,
-     +     trhs, thcof, celthick, finfact, finfhold
+      REAL epsilon, fks, rootdp, ths, wiltwc,celthick, finfact, finfhold
       INTEGER ic, il, ill, ir, iset, iss, iwav, l, numwaves,
      +        land, idelt, ik, ll, idr
       INTEGER lakflg, lakid, ibnd, i, ij, nlayp1, lakflginf
@@ -1255,6 +1254,7 @@ C     -----------------------------------------------------------------
      +                 htest2, flength, width, thr, cellarea, fact,
      +                 totfluxtot, totetact, csep, csepmx,seepoutcheck,
      +                 bbot, ttop, dcsep
+      DOUBLE PRECISION s, x, c, etdp, etgw, trhs, thcof 
 C     -----------------------------------------------------------------
 C
 C1------SET POINTERS FOR THE CURRENT GRID.
@@ -4066,7 +4066,7 @@ C     LOCAL VARIABLES
 C     ------------------------------------------------------------------
       DOUBLE PRECISION diff, thetaout, fm, st, fhold, eps_m1
       DOUBLE PRECISION depth2, theta2, flux2, speed2, zero
-      DOUBLE PRECISION thsrinv, epsfksths
+      DOUBLE PRECISION thsrinv, epsfksths, avwat1, avwat
       DIMENSION depth2(Nwv), theta2(Nwv), flux2(Nwv), speed2(Nwv)
       DOUBLE PRECISION feps, ftheta1, ftheta2, depthinc, depthsave
       DOUBLE PRECISION ghdif, fm1, totalwc, totalwc1
@@ -4411,7 +4411,6 @@ C11-----SET ETOUT TO ZERO WHEN ET DEMAND LESS THAN ROUNDOFF ERROR.
         Etout = 0.0D0
       END IF
  ! Calculate ET by grid cell for MT3D
-      IF ( Etout.GT.Closezero ) THEN
       IF ( RTSOLUTE.GT.0 .AND. mtflg.EQ.1) THEN 
         depthsave = 0.0D0
         ghdif = Celtop - H
@@ -4419,69 +4418,77 @@ C11-----SET ETOUT TO ZERO WHEN ET DEMAND LESS THAN ROUNDOFF ERROR.
         totalwc = 0.0
         totalwc1 = 0.0
         DO kknt =land, NLAY
-          kkntm1 = kknt - 1
-          depthinc = BOTM(ic, ir, kkntm1)-
-     +               BOTM(ic, ir, kknt)
-          IF (depthinc.GT.CLOSEZERO ) THEN         
-            IF ( depthsave.LT.ghdif ) THEN
-              depthsave = depthsave + depthinc
-              IF ( depthsave.GT.ghdif ) THEN
-                depthsave = ghdif
-                depthinc = BOTM(ic, ir, kkntm1) - H
-              END IF
- ! Before ET.
-              fm = 0.0D0
-              jj = 1
-              jk = Nwv
-              nwavm1 = jk-1
-              DO WHILE ( jk.GE.iset )
-                IF ( Depth2(jk)-depthsave.LT.-Closezero ) jj = jk
-                  jk = jk - 1
-              END DO
-              IF ( jj.GT.iset ) THEN
-                fm = fm + (Theta2(jj-1)-Thetar)
-     +               *(depthsave-Depth2(jj))
-                DO j = jj, nwavm1
-                  fm = fm + (Theta2(j)-Thetar)
-     +                 *(Depth2(j)-Depth2(j+1))
-                END DO
-                fm = fm + (Theta2(Nwv)-Thetar)
-     +               *Depth2(Nwv)
-              ELSE
-                fm = fm + (Theta2(iset)-Thetar)*depthsave
-              END IF
-              fm = fm - totalwc
-              totalwc = fm
-  ! After ET.
-              fm1 = 0.0D0
-              jj = 1
-              jk = Numwaves
-              nwavm1 = jk-1
-              DO WHILE ( jk.GE.iset )
-                IF ( Depth(jk)-depthsave.LT.-Closezero ) jj = jk
-                  jk = jk - 1
-              END DO
-              IF ( jj.GT.iset ) THEN
-                fm1 = fm1 + (Theta(jj-1)-Thetar)
-     +               *(depthsave-Depth(jj))
-                DO j = jj, nwavm1
-                  fm1 = fm1 + (Theta(j)-Thetar)
-     +                 *(Depth(j)-Depth(j+1))
-                END DO
-                fm1 = fm1 + (Theta(Numwaves)-Thetar)
-     +               *Depth(Numwaves)
-              ELSE
-                fm1 = fm1 + (Theta(iset)-Thetar)*depthsave
-              END IF
-              fm1 = fm1 - totalwc1
-              totalwc1 = fm1
-              GRIDET(ic,ir,kknt) = (fm - fm1)
-              IF ( GRIDET(ic,ir,kknt).LT.Closezero ) 
-     +             GRIDET(ic,ir,kknt) = 0.0D0
+          IF ( Etout.GT.Closezero ) THEN
+            kkntm1 = kknt - 1
+            IF ( kknt==land ) THEN
+              depthinc = celtop -
+     +                   BOTM(ic, ir, kknt)
+            ELSE
+              depthinc = BOTM(ic, ir, kkntm1)-
+     +                   BOTM(ic, ir, kknt)
             END IF
+            IF (depthinc.GT.CLOSEZERO ) THEN         
+              IF ( depthsave.LT.ghdif ) THEN
+                depthsave = depthsave + depthinc
+                IF ( depthsave.GT.ghdif ) THEN
+                  depthsave = ghdif
+                  depthinc = BOTM(ic, ir, kkntm1) - H
+                END IF
+ ! Before ET.
+                fm = 0.0D0
+                jj = 1
+                jk = Nwv
+                nwavm1 = jk-1
+                DO WHILE ( jk.GT.iset-1 )
+                  IF ( Depth2(jk)-depthsave.LT.0.0D0 ) jj = jk
+                    jk = jk - 1
+                END DO
+                IF ( jj.GT.iset ) THEN
+                  fm = fm + (Theta2(jj-1)-Thetar)
+     +                 *(depthsave-Depth2(jj))
+                  DO j = jj, nwavm1
+                    fm = fm + (Theta2(j)-Thetar)
+     +                 *(Depth2(j)-Depth2(j+1))
+                  END DO
+                  fm = fm + (Theta2(Nwv)-Thetar)
+     +                 *Depth2(Nwv)
+                ELSE
+                  fm = fm + (Theta2(iset)-Thetar)*depthsave
+                END IF
+                avwat = fm - totalwc
+                totalwc = fm
+  ! After ET.
+                fm1 = 0.0D0
+                jj = 1
+                jk = Numwaves
+                nwavm1 = jk-1
+                DO WHILE ( jk.GT.iset-1 )
+                  IF ( Depth(jk)-depthsave.LT.0.0D0 ) jj = jk
+                    jk = jk - 1
+                END DO
+                IF ( jj.GT.iset ) THEN
+                  fm1 = fm1 + (Theta(jj-1)-Thetar)
+     +                 *(depthsave-Depth(jj))
+                  DO j = jj, nwavm1
+                    fm1 = fm1 + (Theta(j)-Thetar)
+     +                   *(Depth(j)-Depth(j+1))
+                  END DO
+                  fm1 = fm1 + (Theta(Numwaves)-Thetar)
+     +                 *Depth(Numwaves)
+                ELSE
+                  fm1 = fm1 + (Theta(iset)-Thetar)*depthsave
+                END IF
+                avwat1 = fm1 - totalwc1
+                totalwc1 = fm1
+                GRIDET(ic,ir,kknt) = (avwat - avwat1)
+                IF ( GRIDET(ic,ir,kknt).LT.Closezero ) 
+     +              GRIDET(ic,ir,kknt) = 0.0D0
+              END IF
+            END IF
+          ELSE
+            GRIDET(ic,ir,kknt) = 0.0
           END IF
         END DO
-      END IF
       END IF
 C12-----RETURN.
       RETURN
@@ -4507,7 +4514,7 @@ C     ARGUMENTS
 C     ------------------------------------------------------------------
       INTEGER Il, Nuzc, Nuzr, land, iss
       DOUBLE PRECISION Depth(NWAV), Theta(NWAV)
-      DOUBLE PRECISION Celltheta(NWAV), Cellflux(NWAV),Celldelst(NWAV)
+      DOUBLE PRECISION Celltheta(NWAV),Cellflux(NWAV),Celldelst(NWAV)
       DOUBLE PRECISION Celtop, H, Thr
       REAL Finfact
 C     ------------------------------------------------------------------
@@ -4519,7 +4526,7 @@ C     ------------------------------------------------------------------
 C     ------------------------------------------------------------------
 C
 C65-----TOTAL WATER CONTENT AND FLUX OVER SPECIFIED DEPTH.
-        IF ( il.GT.0 ) THEN
+!        IF ( il.GT.0 ) THEN
           ghdif = celtop - H
           totalwc = 0.0
           iset = 1
@@ -4549,8 +4556,8 @@ C65-----TOTAL WATER CONTENT AND FLUX OVER SPECIFIED DEPTH.
                 jj = 0
                 jk = iset + Nwv - 1
                 nwavm1 = jk - 1
-                DO WHILE ( jk.GE.iset )
-                  IF ( Depth(jk)-depthsave.LT.-Closezero ) jj = jk
+                DO WHILE ( jk.GT.iset-1 )
+                  IF ( Depth(jk)-depthsave.LT.0.0D0 ) jj = jk
                     jk = jk - 1
                 END DO
                 IF ( jj.GT.iset ) THEN
@@ -4597,7 +4604,7 @@ C65-----TOTAL WATER CONTENT AND FLUX OVER SPECIFIED DEPTH.
               Cellflux(kknt+1) = finfact
             END IF
           END DO
-        END IF
+ !       END IF
 C
       END SUBROUTINE CELL_AVERAGE
 !
@@ -4623,6 +4630,9 @@ C     ARGUMENTS
 C     ------------------------------------------------------------------
       INTEGER Igrid
 C     ------------------------------------------------------------------
+      DEALLOCATE (GWFUZFDAT(Igrid)%MORE)
+      DEALLOCATE (GWFUZFDAT(Igrid)%CHECKTIME)
+      DEALLOCATE (GWFUZFDAT(Igrid)%LAYNUM)
       DEALLOCATE (GWFUZFDAT(Igrid)%NUZTOP)
       DEALLOCATE (GWFUZFDAT(Igrid)%IUZFOPT)
       DEALLOCATE (GWFUZFDAT(Igrid)%IRUNFLG)
@@ -4697,6 +4707,9 @@ C     ARGUMENTS
 C     ------------------------------------------------------------------
       INTEGER Igrid
 C     ------------------------------------------------------------------
+      MORE=>GWFUZFDAT(Igrid)%MORE
+      CHECKTIME=>GWFUZFDAT(Igrid)%CHECKTIME
+      LAYNUM=>GWFUZFDAT(Igrid)%LAYNUM
       NUZTOP=>GWFUZFDAT(Igrid)%NUZTOP
       IUZFOPT=>GWFUZFDAT(Igrid)%IUZFOPT
       IRUNFLG=>GWFUZFDAT(Igrid)%IRUNFLG
@@ -4771,6 +4784,9 @@ C     ARGUMENTS
 C     ------------------------------------------------------------------
       INTEGER Igrid
 C     ------------------------------------------------------------------
+      GWFUZFDAT(Igrid)%MORE=>MORE
+      GWFUZFDAT(Igrid)%CHECKTIME=>CHECKTIME
+      GWFUZFDAT(Igrid)%LAYNUM=>LAYNUM
       GWFUZFDAT(Igrid)%NUZTOP=>NUZTOP
       GWFUZFDAT(Igrid)%IUZFOPT=>IUZFOPT
       GWFUZFDAT(Igrid)%IRUNFLG=>IRUNFLG

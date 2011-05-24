@@ -11,17 +11,20 @@
       REAL, PARAMETER :: CFS2CMS_CONV = 0.028316847
       REAL, PARAMETER :: INCH2MM = 25.4, INCH2M = .0254, INCH2CM = 2.54
       REAL, SAVE :: Cfs2inches, Land_area, Water_area
+      INTEGER, SAVE :: Active_hrus, Active_gwrs
+      REAL, SAVE :: Basin_area_inv 
+      REAL, SAVE, ALLOCATABLE :: Hru_percent_impv(:)
+      REAL, SAVE, ALLOCATABLE :: Hru_percent_perv(:)
+      REAL, SAVE, ALLOCATABLE :: Gwres_area(:), Ssres_area(:)
       CHARACTER(LEN=68), SAVE :: Versn_prms
       INTEGER, SAVE, ALLOCATABLE :: Gwr_type(:)
-!   Declared Variables
-      INTEGER, SAVE :: Active_hrus, Active_gwrs
-      REAL, SAVE :: Basin_area_inv, Basin_cfs, Basin_cms, Basin_stflow
-      REAL, SAVE :: Basin_ssflow_cfs, Basin_gwflow_cfs, Basin_sroff_cfs
       INTEGER, SAVE, ALLOCATABLE :: Hru_route_order(:)
       INTEGER, SAVE, ALLOCATABLE :: Gwr_route_order(:)
       REAL, SAVE, ALLOCATABLE :: Hru_perv(:), Hru_imperv(:)
-      REAL, SAVE, ALLOCATABLE :: Hru_percent_perv(:), Gwres_area(:)
-      REAL, SAVE, ALLOCATABLE :: Hru_percent_impv(:), Ssres_area(:)
+!   Declared Variables
+      REAL, SAVE :: Basin_cfs, Basin_cms, Basin_stflow
+      REAL, SAVE :: Basin_ssflow_cfs, Basin_gwflow_cfs
+      REAL, SAVE :: Basin_sroff_cfs
 !   Declared Parameters
       INTEGER, SAVE :: Print_debug !control parameter
 !     INTEGER, SAVE :: Elev_units
@@ -65,7 +68,7 @@
       basdecl = 1
 
       Versn_prms =
-     +'$Id: basin_prms.f 2447 2011-02-15 20:03:52Z rsregan $'
+     +'$Id: basin_prms.f 3116 2011-05-17 16:20:01Z rsregan $'
       IF ( declmodule(Versn_prms(:62)).NE.0 ) RETURN
 
       Nhru = getdim('nhru')
@@ -125,82 +128,15 @@
      +     'cfs',
      +     Basin_gwflow_cfs).NE.0 ) RETURN
 
-      ALLOCATE (Ssres_area(Nssr))
-      IF ( declvar('basin', 'ssres_area', 'nssr', Nssr, 'real',
-     +     'Area of each subsurface reservoir; computed by'//
-     +     ' summing areas of HRUs that contribute to it',
-     +     'acres',
-     +     Ssres_area).NE.0 ) RETURN
-
-      ALLOCATE (Gwres_area(Ngw))
-      IF ( declvar('basin', 'gwres_area', 'ngw', Ngw, 'real',
-     +     'Area of each groundwater reservoir.  Computed by'//
-     +     ' summing areas of HRUs that contribute to it',
-     +     'acres',
-     +     Gwres_area).NE.0 ) RETURN
-
-      ALLOCATE (Hru_perv(Nhru))
-      IF ( declvar('basin', 'hru_perv', 'nhru', Nhru, 'real',
-     +     'Pervious area of each HRU',
-     +     'acres',
-     +     Hru_perv).NE.0 ) RETURN
-
-      ALLOCATE (Hru_imperv(Nhru))
-      IF ( declvar('basin', 'hru_imperv', 'nhru', Nhru, 'real',
-     +     'Impervious area of each HRU',
-     +     'acres',
-     +     Hru_imperv).NE.0 ) RETURN
-
-      ALLOCATE (Hru_percent_perv(Nhru))
-      IF ( declvar('basin', 'hru_percent_perv', 'nhru', Nhru, 'real',
-     +     'Proportion of each HRU area that is pervious',
-     +     'decimal fraction',
-     +     Hru_percent_perv).NE.0 ) RETURN
-
-      ALLOCATE (Hru_percent_impv(Nhru))
-      IF ( declvar('basin', 'hru_percent_impv', 'nhru', Nhru, 'real',
-     +     'Proportion of each HRU area that is impervious',
-     +     'decimal fraction',
-     +     Hru_percent_impv).NE.0 ) RETURN
-
-      IF ( declvar('basin', 'basin_area_inv', 'one', 1, 'real',
-     +     'Inverse of total basin area as sum of HRU areas',
-     +     '1/acres',
-     +     Basin_area_inv).NE.0 ) RETURN
-
-! Declare variables used by modules that include cascade routing
-      ALLOCATE (Hru_route_order(Nhru))
-      IF ( declvar('basin', 'hru_route_order', 'nhru', Nhru,
-     +     'integer',
-     +     'Routing order for HRUs',
-     +     'none',
-     +     Hru_route_order).NE.0 ) RETURN
-
-      ALLOCATE (Gwr_route_order(Ngw))
-      IF ( declvar('basin', 'gwr_route_order', 'ngw', Ngw, 'integer',
-     +     'Routing order for ground-water reservoirs',
-     +     'none',
-     +     Gwr_route_order).NE.0 ) RETURN
-
-      IF ( declvar('basin', 'active_hrus', 'one', 1, 'integer',
-     +     'Number of active HRUs',
-     +     'none',
-     +     Active_hrus).NE.0 ) RETURN
-
-      IF ( declvar('basin', 'active_gwrs', 'one', 1, 'integer',
-     +     'Number of active GWRs',
-     +     'none',
-     +     Active_gwrs).NE.0 ) RETURN
-
 ! Declared Parameters
       IF ( declparam('basin', 'basin_area', 'one', 'real',
-     +     '0.0', '0.0', '1e+09',
+     +     '0.0', '0.0', '1.0E+09',
      +     'Basin area', 'Total basin area',
      +     'acres').NE.0 ) RETURN
 
       ALLOCATE (Hru_area(Nhru))
       IF ( declparam('basin', 'hru_area', 'nhru', 'real',
-     +     '1.0', '0.01', '1e+09',
+     +     '1.0', '0.01', '1.0E+09',
      +     'HRU area', 'Area of each HRU',
      +     'acres').NE.0 ) RETURN
 
@@ -251,6 +187,12 @@
      +       'none').NE.0 ) RETURN
       ENDIF
 
+      ALLOCATE (Ssres_area(Nssr), Gwres_area(Ngw))
+      ALLOCATE (Hru_perv(Nhru), Hru_imperv(Nhru))
+      ALLOCATE (Hru_percent_perv(Nhru), Hru_percent_impv(Nhru))
+! Variables used by modules that include cascade routing
+      ALLOCATE (Hru_route_order(Nhru), Gwr_route_order(Ngw))
+
       basdecl = 0
       END FUNCTION basdecl
 
@@ -265,12 +207,11 @@
       INTEGER, EXTERNAL :: getparam, getstep, control_integer
       EXTERNAL dattim
       INTRINSIC ABS
-      EXTERNAL check_imperv
 ! Local Variables
-      CHARACTER(LEN=64) :: buffer
-      INTEGER :: i, j, k
-!     INTEGER :: ierr
+      CHARACTER(LEN=68) :: buffer
+      INTEGER :: i, j, k, ierr
       REAL :: totarea, active_area, diff, harea
+      REAL :: basin_imperv, basin_perv
 !**********************************************************************
       basinit = 1
 
@@ -286,11 +227,28 @@
       IF ( getparam('basin', 'hru_elev', Nhru, 'real', Hru_elev)
      +     .NE.0 ) RETURN
 
+      IF ( getparam('basin', 'hru_type', Nhru, 'integer', Hru_type)
+     +     .NE.0 ) RETURN
+      Gwr_type = 1
+
 !     IF ( get param('basin', 'elev_units', 1, 'integer', Elev_units)
 !    +     .NE.0 ) RETURN
 
       IF ( getparam('basin', 'hru_percent_imperv', Nhru, 'real',
      +     Hru_percent_imperv).NE.0 ) RETURN
+      DO i = 1, Nhru
+        Hru_percent_impv(i) = Hru_percent_imperv(i)
+        IF ( Hru_type(i)==1 .OR. Hru_type(i)==3 ) THEN
+          IF ( Hru_percent_impv(i)>0.99 ) THEN
+            PRINT *, 'Warning, hru_percent_imperv > 0.99',
+     +               ' hru_percent_imperv has been set to 0.99',
+     +               ' Percent impervious:', Hru_percent_imperv(i),
+     +               ' HRU:', i
+            Hru_percent_impv(i) = 0.99
+          ENDIF
+        ENDIF
+      ENDDO
+      DEALLOCATE ( Hru_percent_imperv )
 
       Timestep = getstep()
       IF ( Timestep==0 ) THEN
@@ -305,60 +263,50 @@
       ! debug print flag:
       ! 0=none; 1=water balances; 2=basin; 3=obs;
       ! 4=basin_sum; 5=soltab; 6=potet; 7=soil zone;
-      ! 8=xyz; 9=snow; 10=grnampt; 11=krout; 12=GSF timing;
-      ! 14=subbasin tree
+      ! 8=xyz; 9=snow; 13=cascade; 14=subbasin tree
       IF ( control_integer(Print_debug, 'print_debug').NE.0 ) RETURN
-
-      IF ( getparam('basin', 'hru_type', Nhru, 'integer', Hru_type)
-     +     .NE.0 ) RETURN
-      Gwr_type = 1
 
       totarea = 0.0
       Land_area = 0.0
       Water_area = 0.0
+      basin_perv = 0.0
+      basin_imperv = 0.0
 
       Numlakes = 0
-!      ierr = 0
+      ierr = 0
       j = 0
       Hru_route_order = 0
       DO i = 1, Nhru
         Hru_imperv(i) = 0.0
         Hru_perv(i) = 0.0
         Hru_percent_perv(i) = 0.0
-        Hru_percent_impv(i) = 0.0
 
         harea = Hru_area(i)
         IF ( Hru_type(i).NE.0 ) THEN
           j = j + 1
           Hru_route_order(j) = i
+          IF ( harea<NEARZERO ) THEN
+            ierr = 1
+            PRINT *, 'ERROR: area for HRU:', i, 'specified as 0.0'
+            CYCLE
+          ENDIF
           IF ( Hru_type(i).EQ.2 ) THEN
             Water_area = Water_area + harea
             Numlakes = Numlakes + 1
-          ELSE
-            CALL check_imperv(i, Hru_percent_imperv(i))
-            Hru_imperv(i) = Hru_percent_imperv(i)*harea
+          ELSEIF ( Hru_type(i)/=0 ) THEN
+            Hru_imperv(i) = Hru_percent_impv(i)*harea
+            IF ( Hru_imperv(i)<NEARZERO ) Hru_imperv(i) = 0.0
+            basin_imperv = basin_imperv + Hru_imperv(i)
             Hru_perv(i) = harea - Hru_imperv(i)
-            Hru_percent_impv(i) = Hru_percent_imperv(i)
             Land_area = Land_area + harea
-            Hru_percent_perv(i) = 1.0 - Hru_percent_imperv(i)
+            Hru_percent_impv(i) = Hru_imperv(i)/harea
+            Hru_percent_perv(i) = 1.0 - Hru_percent_impv(i)
           ENDIF
         ENDIF
         totarea = totarea + harea
       ENDDO
+      IF ( ierr==1 ) STOP
 
-!      IF ( Lake_flag==1 ) THEN
-!        IF ( Numlakes>0 .AND. Nsfres==0 ) THEN
-!          PRINT *,'Error, specified that lakes are present but nsfres=0'
-!          ierr = 1
-!        ENDIF
-!        IF ( Numlakes/=Nsfres ) THEN
-!          PRINT *, 'Error, number of lakes specified in hru_type'
-!          PRINT *, ' does not equal nsfres:', Nsfres, ' numlakes:',
-!     +             Numlakes
-!          ierr = 1
-!        ENDIF
-!      ENDIF
-!      IF ( ierr==1 ) RETURN
       diff = (totarea - Basin_area)/Basin_area
       IF ( Basin_area>0.0 .AND. ABS(diff)>0.01 )
      +     PRINT 9005, Basin_area, totarea, diff*100.0
@@ -366,8 +314,8 @@
       active_area = Land_area + Water_area
 
       IF ( Nssr.EQ.Nhru ) THEN
-        Ssres_area = Hru_area
         DO i = 1, Nhru
+          Ssres_area(i) = Hru_area(i)
           Hru_ssres(i) = i
         ENDDO
       ELSE
@@ -384,10 +332,10 @@
       ENDIF
 
       IF ( Ngw.EQ.Nhru ) THEN
-        Gwres_area = Hru_area
         Active_gwrs = Active_hrus
         Gwr_route_order = Hru_route_order
         DO i = 1, Nhru
+          Gwres_area(i) = Hru_area(i)
           Hru_gwres(i) = i
         ENDDO
       ELSE
@@ -405,16 +353,18 @@
         ENDDO      
       ENDIF
 !     Basin_area_inv = 1.0/totarea
+      IF ( active_area<NEARZERO )STOP 'ERROR: no active area specified'
       Basin_area_inv = 1.0/active_area
       Cfs2inches = Basin_area_inv*12.0*86400.0/43560.0
 
       IF ( Print_debug.EQ.2 ) THEN
         PRINT *, ' HRU     Area'
         PRINT 9001, (i, Hru_area(i), i=1, Nhru)
-        PRINT 9004, 'Sum of HRU areas = ', totarea,
-     +              'Active basin area = ', Active_area,
-     +              'Sum of impervious area in basin = ', Hru_imperv,
-     +              'Sum of pervious area in basin = ', Hru_perv
+        PRINT 9004, 'Sum of HRU areas      = ', totarea,
+     +              'Active basin area     = ', active_area,
+     +              'Impervious basin area = ', basin_imperv,
+     +              'Pervious basin area   = ', basin_perv
+        PRINT *, ' '
       ENDIF
 
 !     print out start and end times
@@ -425,8 +375,12 @@
       WRITE (buffer, 9002) ' End time:   ', Endtime
       CALL opstr(buffer(:32))
       WRITE (buffer, 9003) ' Sum of HRU areas:', totarea,
-     +                     '  Active basin area:', Active_area
+     +                     ' Active basin area:', active_area
+      CALL opstr(buffer(:61))
+      WRITE (buffer, 9003) ' Impervious basin area:', basin_imperv,
+     +                     ' Pervious basin area:', basin_perv
       CALL opstr(buffer)
+      CALL opstr(' ')
 
       basinit = 0
 
@@ -440,23 +394,6 @@
 
       END FUNCTION basinit
 
-!**********************************************************************
-!     check impervious percent for validity
-!**********************************************************************
-      SUBROUTINE check_imperv(Ihru, Hru_percent_imperv)
-      IMPLICIT NONE
-! Arguments
-      INTEGER, INTENT(IN) :: Ihru
-      REAL, INTENT(INOUT) :: Hru_percent_imperv
-!**********************************************************************
-      IF ( Hru_percent_imperv>0.99 ) THEN
-        PRINT *, 'Warning, hru_percent_imperv > .99 for HRU:', Ihru,
-     +           ' reset to .99, was:', Hru_percent_imperv
-        Hru_percent_imperv = 0.99
-      ENDIF
-
-      END SUBROUTINE check_imperv
-
 !***********************************************************************
 ! Declares and initializes climate parameters and variables
 !***********************************************************************
@@ -464,6 +401,7 @@
       IMPLICIT NONE
 !   Local Variables
       INTEGER, SAVE :: Ntemp, Nrain, Nsol
+      REAL, SAVE :: Tmax_allrain_f(12), Tmax_allsnow_f
 !   Declared Variables - Precip
       INTEGER, SAVE, ALLOCATABLE :: Newsnow(:), Pptmix(:)
       REAL, SAVE :: Basin_ppt, Basin_obs_ppt, Basin_rain, Basin_snow
@@ -532,7 +470,7 @@
       climatevarsdecl = 1
 
       IF ( declmodule(
-     +'$Id: basin_prms.f 2447 2011-02-15 20:03:52Z rsregan $'
+     +'$Id: basin_prms.f 3116 2011-05-17 16:20:01Z rsregan $'
      +).NE.0 ) RETURN
 
       Ntemp = getdim('ntemp')
@@ -582,29 +520,29 @@
 
       IF ( declvar('temp', 'basin_tmax', 'one', 1, 'real',
      +     'Basin area-weighted daily maximum temperature',
-     +     'degrees',
+     +     'temp_units',
      +     Basin_tmax).NE.0 ) RETURN
 
       IF ( declvar('temp', 'basin_tmin', 'one', 1, 'real',
      +     'Basin area-weighted daily minimum temperature',
-     +     'degrees',
+     +     'temp_units',
      +     Basin_tmin).NE.0 ) RETURN
 
       IF ( declvar('temp', 'basin_temp', 'one', 1, 'real',
      +     'Basin area-weighted average air temperature',
-     +     'degrees',
+     +     'temp_units',
      +     Basin_temp).NE.0 ) RETURN
 
       IF ( declvar('temp', 'solrad_tmax', 'one', 1, 'real',
      +     'Basin daily maximum temperature for use with solrad'//
      +     ' radiation',
-     +     'degrees',
+     +     'temp_units',
      +     Solrad_tmax).NE.0 ) RETURN
 
       IF ( declvar('temp', 'solrad_tmin', 'one', 1, 'real',
      +     'Basin daily minimum temperature for use with solrad'//
      +     ' radiation',
-     +     'degrees',
+     +     'temp_units',
      +     Solrad_tmin).NE.0 ) RETURN
 
       ALLOCATE (Tsta_elev(Ntemp))
@@ -629,7 +567,7 @@
      +       'none').NE.0 ) RETURN
       ENDIF
 
-      IF ( Temp_flag<4 .OR. Model==99 ) THEN
+      IF ( Temp_flag<3 .OR. Model==99 ) THEN
         ALLOCATE (Hru_tsta(Nhru))
         IF ( declparam('temp', 'hru_tsta', 'nhru', 'integer',
      +       '1', 'bounded', 'ntemp',
@@ -639,14 +577,14 @@
      +       'none').NE.0 ) RETURN
       ENDIF
 
-      IF ( Temp_flag/=4 .OR. Model==99 ) THEN
+      IF ( Temp_flag/=3 .OR. Model==99 ) THEN
         ALLOCATE (Tmax_adj(Nhru))
         IF ( declparam('temp', 'tmax_adj', 'nhru', 'real',
      +       '0.0', '-10.', '10.0',
      +       'HRU maximum temperature adjustment',
      +       'Adjustment to maximum temperature for each HRU,'//
      +       ' estimated based on slope and aspect',
-     +       'degrees').NE.0 ) RETURN
+     +       'temp_units').NE.0 ) RETURN
 
         ALLOCATE (Tmin_adj(Nhru))
         IF ( declparam('temp', 'tmin_adj', 'nhru', 'real',
@@ -654,7 +592,7 @@
      +       'HRU minimum temperature adjustment',
      +       'Adjustment to minimum temperature for each HRU,'//
      +       ' estimated based on slope and aspect',
-     +       'degrees').NE.0 ) RETURN
+     +       'temp_units').NE.0 ) RETURN
       ENDIF
 
 ! PRECIP VARIABLES AND PARAMETERS
@@ -729,7 +667,7 @@
      +     ' to this value (for each month, January to December),'//
      +     ' precipitation is assumed to be rain,'//
      +     ' in deg C or F, depending on units of data',
-     +     'degrees').NE.0 ) RETURN
+     +     'temp_units').NE.0 ) RETURN
 
       IF ( declparam('precip', 'tmax_allsnow', 'one', 'real',
      +     '32.', '-10.', '40.',
@@ -737,7 +675,7 @@
      +     'If HRU maximum temperature is less than or equal to this'//
      +     ' value, precipitation is assumed to be snow,'//
      +     ' in deg C or F, depending on units of data',
-     +     'degrees').NE.0 ) RETURN
+     +     'temp_units').NE.0 ) RETURN
 
       ALLOCATE (Adjmix_rain(12))
       IF ( declparam('precip', 'adjmix_rain', 'nmonths', 'real',
@@ -763,13 +701,11 @@
      +       'decimal fraction').NE.0 ) RETURN
       ENDIF
 
-      IF ( Precip_flag<5 .OR. Precip_flag==6 .OR. Model==99 ) THEN
-        IF ( declparam('precip', 'precip_units', 'one', 'integer',
-     +       '0', '0', '1',
-     +       'Units for measured precipitation',
-     +       'Units for measured precipitation (0=inches; 1=mm)',
-     +       'none').NE.0 ) RETURN
-      ENDIF
+      IF ( declparam('precip', 'precip_units', 'one', 'integer',
+     +     '0', '0', '1',
+     +     'Units for measured precipitation',
+     +     'Units for measured precipitation (0=inches; 1=mm)',
+     +     'none').NE.0 ) RETURN
 
       IF ( Precip_flag==2 .OR. Precip_flag==6 .OR. Model==99 ) THEN
         ALLOCATE ( Psta_elev(Nrain) )
@@ -893,14 +829,15 @@
       USE PRMS_BASIN, ONLY: Timestep, Nhru
       IMPLICIT NONE
       INTEGER, EXTERNAL :: getparam
-      INTEGER :: j
+      REAL, EXTERNAL :: c_to_f
+      INTEGER :: i, j
 !***********************************************************************
       climatevarsinit = 1
 
       IF ( getparam('temp', 'tsta_elev', Ntemp, 'real', Tsta_elev)
      +     .NE.0 ) RETURN
 
-      IF ( Temp_flag/=4 ) THEN
+      IF ( Temp_flag/=3 ) THEN
         IF ( getparam('temp', 'tmax_adj', Nhru, 'real', Tmax_adj)
      +       .NE.0 ) RETURN
 
@@ -917,18 +854,18 @@
         IF ( Basin_tsta.LT.1 ) Basin_tsta = 1
         IF ( Basin_tsta>Ntemp ) THEN
           PRINT *, 'ERROR, basin_tsta>ntemp'
-          RETURN
+          STOP
         ENDIF
       ENDIF
 
-      IF ( Temp_flag<4 ) THEN
+      IF ( Temp_flag<3 ) THEN
         IF ( getparam('temp', 'hru_tsta', Nhru, 'integer', Hru_tsta)
      +       .NE.0 ) RETURN
         DO j = 1, Nhru
           IF ( Hru_tsta(j)<1 ) Hru_tsta(j) = 1
           IF ( Hru_tsta(j)>Ntemp ) THEN
             PRINT *, 'ERROR, hru_tsta>ntemp, HRU:', j
-            RETURN
+            STOP
           ENDIF
         ENDDO
       ENDIF
@@ -942,6 +879,16 @@
       IF ( getparam('precip', 'adjmix_rain', 12, 'real', Adjmix_rain)
      +     .NE.0 ) RETURN
 
+      IF ( Temp_units.EQ.0 ) THEN
+        Tmax_allrain_f = Tmax_allrain
+        Tmax_allsnow_f = Tmax_allsnow
+      ELSE
+        DO i = 1, 12
+          Tmax_allrain_f(i) = c_to_f(Tmax_allrain(i))
+        ENDDO
+        Tmax_allsnow_f = c_to_f(Tmax_allsnow)
+      ENDIF
+
       IF ( Precip_flag==6 ) THEN
         IF ( getparam('precip', 'adjust_rain', 12, 'real', Adjust_rain)
      +       .NE.0 ) RETURN
@@ -950,10 +897,8 @@
      +       .NE.0 ) RETURN
       ENDIF
 
-      IF ( Precip_flag<5 .OR. Precip_flag==6 ) THEN
-        IF ( getparam('precip', 'precip_units', 1, 'integer',
-     +       Precip_units).NE.0 ) RETURN
-      ENDIF
+      IF ( getparam('precip', 'precip_units', 1, 'integer',
+     +     Precip_units).NE.0 ) RETURN
 
       IF ( Precip_flag==2 .OR. Precip_flag==6 ) THEN
         IF ( getparam('precip', 'psta_elev', Nrain, 'real', Psta_elev)
@@ -973,6 +918,10 @@
 
         IF ( getparam('solrad', 'hru_solsta', Nhru, 'integer',
      +       Hru_solsta).NE.0 ) RETURN
+        DO j = 1, Nhru
+          IF ( Hru_solsta(j)<0 ) Hru_solsta(j) = 0
+          IF ( Hru_solsta(j)>Nsol ) Hru_solsta(j) = Nsol
+        ENDDO
       ENDIF
 
       IF ( getparam('solrad', 'radmax', 1, 'real', Radmax)
@@ -1047,7 +996,6 @@
 !***********************************************************************
       MODULE PRMS_FLOWVARS
       IMPLICIT NONE
-      INTEGER, PARAMETER :: DBGUNT = 295
 !   Declared Variables
       ! soilzone
       REAL, SAVE :: Basin_ssflow
@@ -1103,7 +1051,7 @@
       flwvarsdecl = 1
 
       IF ( declmodule(
-     +'$Id: basin_prms.f 2447 2011-02-15 20:03:52Z rsregan $'
+     +'$Id: basin_prms.f 3116 2011-05-17 16:20:01Z rsregan $'
      +).NE.0 ) RETURN
 
 ! Declare Variables
@@ -1249,7 +1197,7 @@
 ! Declare Parameters
       ALLOCATE (Soil_moist_max(Nhru))
       IF ( declparam('soilzone', 'soil_moist_max', 'nhru', 'real',
-     +     '6.', '0.', '20.',
+     +     '6.', '0.01', '20.',
      +     'Maximum value of water for soil zone',
      +     'Maximum available water holding capacity of soil profile.'//
      +     ' Soil profile is surface to bottom of rooting zone',
@@ -1257,7 +1205,7 @@
 
       ALLOCATE (Soil_rechr_max(Nhru))
       IF ( declparam('soilzone', 'soil_rechr_max', 'nhru', 'real',
-     +     '2.', '0.', '10.',
+     +     '2.', '0.001', '10.',
      +     'Maximum value for soil recharge zone',
      +     'Maximum value for soil recharge zone (upper portion'//
      +     ' of soil_moist where losses occur as both evaporation'//
@@ -1297,7 +1245,8 @@
       INTEGER FUNCTION flwvarsinit()
       USE PRMS_FLOWVARS
       USE PRMS_MODULE, ONLY: Ncascade, Ncascdgw
-      USE PRMS_BASIN, ONLY: Print_debug, Hru_ssres, Timestep, Nhru, Nssr
+      USE PRMS_BASIN, ONLY: Print_debug, Hru_type, Timestep, Nhru, Nssr,
+     +    Hru_ssres
       IMPLICIT NONE
       INTEGER, EXTERNAL :: getparam
 !   Local Variables
@@ -1305,7 +1254,6 @@
 !***********************************************************************
       flwvarsinit = 1
 
-      IF ( Print_debug==7 ) OPEN (DBGUNT, FILE='soilzone_prms.dbg')
 
       IF ( getparam('soilzone', 'soil_moist_max', Nhru, 'real',
      +     Soil_moist_max).NE.0 ) RETURN
@@ -1315,22 +1263,18 @@
 
       ! Sanity checks for parameters
       DO i = 1, Nhru
-        IF ( Soil_moist_max(i)<0.0 ) THEN
-          IF ( Print_debug==7 ) WRITE (DBGUNT, *)
-     +         'HRU:', i, ' soil_moist_max specified < 0, set to 0',
-     +         Soil_moist_max(i)
-          Soil_moist_max(i) = 0.0
+        IF ( Hru_type(i)==0 .OR. Hru_type(i)==2 ) CYCLE
+        IF ( Soil_moist_max(i)<0.01 ) THEN
+          PRINT *, 'HRU:', i,
+     +             ' soil_moist_max specified < 0.01, set to 0.01',
+     +             Soil_moist_max(i)
+          Soil_moist_max(i) = 0.01
         ENDIF
-        IF ( Soil_rechr_max(i)<0.0 ) THEN
-          IF ( Print_debug==7 ) WRITE (DBGUNT, *)
-     +         'HRU:', i, ' soil_rechr_max specified < 0, set to 0',
-     +         Soil_rechr_max(i)
-          Soil_rechr_max(i) = 0.0
-        ENDIF
-        IF ( Soil_rechr_max(i).GT.Soil_moist_max(i) ) THEN
-          IF ( Print_debug==7 ) WRITE (DBGUNT, 9002)
-     +         i, Soil_rechr_max(i), Soil_moist_max(i)
-          Soil_rechr_max(i) = Soil_moist_max(i)
+        IF ( Soil_rechr_max(i)<0.01 ) THEN
+          PRINT *, 'HRU:', i,
+     +             ' soil_rechr_max specified < 0.001, set to 0.001',
+     +             Soil_rechr_max(i)
+          Soil_rechr_max(i) = 0.001
         ENDIF
       ENDDO
 
@@ -1378,9 +1322,6 @@
 
       flwvarsinit = 0
 
- 9002 FORMAT ('HRU:', I5, F10.4, F8.4,
-     +        '  soil_rechr_max > soil_moist_max,', /, 29X,
-     +        'soil_rechr_max set to soil_moist_max')
 
       END FUNCTION flwvarsinit
 

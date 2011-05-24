@@ -97,7 +97,7 @@
       gsfsumdecl = 1
 
       IF ( declmodule(
-     &'$Id: gsflow_sum.f 2306 2011-01-03 22:43:48Z rsregan $')
+     &'$Id: gsflow_sum.f 3116 2011-05-17 16:20:01Z rsregan $')
      &     .NE.0 ) RETURN
 
       IF ( declvar('gsflow_sum', 'basinsrofffarflow', 'one', 1, 'real',
@@ -531,6 +531,7 @@
       Basinfarfieldflow = 0.0
       Basinszfarflow = 0.0
       Basinsoiltogw = 0.0
+      Basinactet = 0.0
       Basinsrofffarflow = 0.0
       Strm_farfield = 0.0
 ! Added lake variables
@@ -739,7 +740,7 @@
       Streambed_loss = SFRRATIN
       Sfruz_change_stor = SFRUZBD(5)
       Gwflow2strms = SFRRATOUT
-      sfruz_tot_stor = SFRUZBD(10)
+      Sfruz_tot_stor = SFRUZBD(10)
 
       nstep = getstep()
       IF ( nstep.GT.1 ) THEN
@@ -805,18 +806,20 @@
         szout = Basin_sz2gw + Basin_ssflow + Basin_lakeinsz +
      &          Basin_dunnian + Basin_perv_et + Basin_szfarflow
      &          + Basin_soil_to_gw + Basin_swale_et
-        IF ( ABS(szin-szout+szdstor)/Basin_soil_moist>ERRCHK ) THEN
-          WRITE (BALUNT, 9002) year, mo, day
-          WRITE (BALUNT, *) 'SZ flow', szin-szout+szdstor, szin, szout,
-     &                      szdstor
-          WRITE (BALUNT, *) 'SZ flow', Basin_infil, Basin_gw2sm,
-     &                      Basin_szreject, Last_basin_soil_moist,
-     &                      Last_basin_ssstor, Basin_soil_moist,
-     &                      Basin_ssstor, Basin_sz2gw, Basin_ssflow,
-     &                      Basin_lakeinsz, Basin_dunnian,
-     &                      Basin_perv_et, Basin_szfarflow,
-     &                      Basin_soil_to_gw, Strm_farfield,
-     &                      Basin_sroff_farflow, Basin_swale_et
+        IF ( Basin_soil_moist>0.0D0 ) THEN
+          IF ( ABS(szin-szout+szdstor)/Basin_soil_moist>ERRCHK ) THEN
+            WRITE (BALUNT, 9002) year, mo, day
+            WRITE (BALUNT, *) 'SZ flow', szin-szout+szdstor, szin,
+     &                        szout, szdstor
+            WRITE (BALUNT, *) 'SZ flow', Basin_infil, Basin_gw2sm,
+     &                        Basin_szreject, Last_basin_soil_moist,
+     &                        Last_basin_ssstor, Basin_soil_moist,
+     &                        Basin_ssstor, Basin_sz2gw, Basin_ssflow,
+     &                        Basin_lakeinsz, Basin_dunnian,
+     &                        Basin_perv_et, Basin_szfarflow,
+     &                        Basin_soil_to_gw, Strm_farfield,
+     &                        Basin_sroff_farflow, Basin_swale_et
+          ENDIF
         ENDIF
         Last_basin_soil_moist = Basin_soil_moist
         Last_basin_ssstor = Basin_ssstor
@@ -827,7 +830,7 @@
      &           Basingravstor - Last_basingravstor - Basingw2sz -
      &           Basinszreject + Basinsz2gw + Basinsoiltogw +
      &           Basinszfarflow + Basinswaleet
-        IF ( Basinsoilmoist/=0.0 ) THEN
+        IF ( Basinsoilmoist>0.0 ) THEN
           IF ( ABS(sz_bal/Basinsoilmoist).GT.ERRCHK )
      &         WRITE (BALUNT, *) 'Possible water balance problem'
           WRITE (BALUNT, 9002) year, mo, day, sz_bal, Basinlakeinsz,

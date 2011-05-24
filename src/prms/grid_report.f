@@ -70,7 +70,7 @@
       prmsgrid_reportdecl = 1
 
       IF ( declmodule(
-     +'$Id: grid_report.f 2535 2011-03-02 17:31:06Z rsregan $')
+     +'$Id: grid_report.f 3116 2011-05-17 16:20:01Z rsregan $')
      +     .NE.0 ) RETURN
 
       Num_vars = 1  ! make general later
@@ -119,23 +119,23 @@
         IF ( Nhrucell==-1 ) RETURN
 
         ALLOCATE (Gvr_cell_id(Nhrucell))
-        IF ( declparam('gsfconv', 'gvr_cell_id', 'nhrucell', 'integer',
+        IF ( declparam('grid_report','gvr_cell_id','nhrucell','integer',
      +       '0', 'bounded', 'ngwcell',
-     +     'Corresponding MODFLOW cell id of each GVR',
-     +     'Index of the MODFLOW cell associated with each gravity'//
+     +     'Corresponding grid cell id associated with each GVR',
+     +     'Index of the grid cell associated with each gravity'//
      +     ' reservoir',
      +     'none').NE.0 ) RETURN
 
         ALLOCATE (Gvr_cell_pct(Nhrucell))
-        IF ( declparam('gsfconv', 'gvr_cell_pct', 'nhrucell', 'real',
+        IF ( declparam('grid_report', 'gvr_cell_pct', 'nhrucell','real',
      +       '0.0', '0.0', '1.0',
-     +       'Proportion of the MODFLOW cell associated with each GVR',
-     +       'Proportion of the MODFLOW cell area associated with'//
+     +       'Proportion of the grid cell associated with each GVR',
+     +       'Proportion of the grid cell area associated with'//
      +       ' each gravity reservoir',
      +       'decimal fraction').NE.0 ) RETURN 
 
         ALLOCATE (Gvr_hru_id(Nhrucell))
-        IF ( declparam('prms2mf', 'gvr_hru_id', 'nhrucell', 'integer',
+        IF ( declparam('grid_report', 'gvr_hru_id','nhrucell','integer',
      +       '1', 'bounded', 'nhru',
      +       'Corresponding HRU id of each GVR',
      +       'Index of the HRU assocated with each gravity reservoir',
@@ -213,6 +213,7 @@
         DEALLOCATE (temp_pct, cell_pct, newpct)
       ELSE
         Nrow = Nhru/Ncol
+        IF ( Nrow/=Nhru*Ncol ) Nrow = Nrow + 1
       ENDIF
 
       ALLOCATE ( Hruarea(Nhru) )
@@ -234,7 +235,7 @@
         DO jj = 1, Num_vars
           Monunit(jj) = 383 + 1
           OPEN (Monunit(jj), FILE=Grid_var_name(jj)(:Nc_vars(jj))
-     +                            //'.monthy')
+     +                            //'.monthly')
         ENDDO
       ENDIF
 
@@ -293,7 +294,7 @@
       IF ( Begyr>Endyr ) THEN
         PRINT *, 'ERROR, invalid prms_warmup value'
         PRINT *, '   warmup period longer than simulation time period'
-        RETURN
+        STOP
       ENDIF
       Endmo = Endtime(2)
       Endday = Endtime(3)

@@ -7,7 +7,6 @@
       MODULE PRMS_TEMP_LAPS
       IMPLICIT NONE
 !   Local Variables
-      INTEGER, SAVE, ALLOCATABLE :: Itempflg(:)
       REAL, SAVE, ALLOCATABLE :: Elfac(:)
 !   Declared Parameters
       INTEGER, SAVE, ALLOCATABLE :: Hru_tlaps(:)
@@ -31,7 +30,7 @@
 
       ELSEIF ( Process_flag==1 ) THEN
         IF ( declmodule(
-     +'$Id: temp_laps_prms.f 2439 2011-02-11 20:36:52Z rsregan $'
+     +'$Id: temp_laps_prms.f 3116 2011-05-17 16:20:01Z rsregan $'
      +     ).NE.0 ) RETURN
 
         ALLOCATE (Hru_tlaps(Nhru))
@@ -69,7 +68,7 @@
       IF ( getparam('temp', 'hru_tlaps', Nhru, 'integer', Hru_tlaps)
      +     .NE.0 ) RETURN
 
-      ALLOCATE ( Itempflg(Ntemp), Elfac(Nhru) )
+      ALLOCATE ( Elfac(Nhru) )
 
       DO j = 1, Nhru
         IF ( Hru_tlaps(j).LT.1 ) Hru_tlaps(j) = 1
@@ -80,9 +79,9 @@
         k = Hru_tsta(j)
         l = Hru_tlaps(j)
         tdiff = Tsta_elev(l) - Tsta_elev(k)
-        IF ( ABS(tdiff)<NEARZERO ) tdiff = NEARZERO
+        IF ( ABS(tdiff)<NEARZERO ) tdiff = 1.0
         Elfac(j) = (Hru_elev(j)-Tsta_elev(k))/tdiff
-       ENDDO
+      ENDDO
 
       tlapsinit = 0
       END FUNCTION tlapsinit
@@ -105,32 +104,21 @@
 ! Local Variables
       INTEGER :: j, k, l, jj
       REAL :: tmx, tmn, tcrx, tcrn, tmxsta, tmnsta
-      REAL :: tmxtsta, tmntsta, tmxlaps, tmnlaps
+      REAL :: tmxtsta, tmntsta
 !***********************************************************************
       Basin_tmax = 0.
       Basin_tmin = 0.
       Basin_temp = 0.
 
-      Itempflg = 0
       DO jj = 1, Active_hrus
         j = Hru_route_order(jj)
         k = Hru_tsta(j)
         l = Hru_tlaps(j)
-        tmxlaps = Tmax(l)
         tmxtsta = Tmax(k)
-        tmnlaps = Tmin(l)
         tmntsta = Tmin(k)
 
-        IF ( Itempflg(l).EQ.0 ) THEN
-          IF ( tmxlaps.LT.-50.0 .OR. tmxlaps.GT.150.0 )
-     +         PRINT 9001, 'tmax', tmxlaps, k, Nowtime
-          IF ( tmnlaps.LT.-50.0 .OR. tmnlaps.GT.150.0 )
-     +         PRINT 9001, 'tmax', tmnlaps, k, Nowtime
-          Itempflg(l) = 1
-        ENDIF
-
-        tmxsta = tmxlaps - tmxtsta
-        tmnsta = tmnlaps - tmntsta
+        tmxsta = Tmax(l) - tmxtsta
+        tmnsta = Tmin(l) - tmntsta
 
         tcrx = tmxsta*Elfac(j) + Tmax_adj(j)
         tcrn = tmnsta*Elfac(j) + Tmin_adj(j)
@@ -165,10 +153,6 @@
 
       Solrad_tmax = Tmax(Basin_tsta)
       Solrad_tmin = Tmin(Basin_tsta)
-
- 9001 FORMAT ('Warning, bad temperature, ', A, ':', F10.3,
-     +        '; temperature station:', I3, ' Time:', I5, 2('/', I2.2),
-     +        I3, 2(':', I2.2), I5)
 
       tlapsrun = 0
       END FUNCTION tlapsrun

@@ -70,12 +70,13 @@
       t2dist2decl = 1
 
       IF ( declmodule(
-     +'$Id: temp_dist2_prms.f 2438 2011-02-11 20:35:45Z rsregan $'
+     +'$Id: temp_dist2_prms.f 3116 2011-05-17 16:20:01Z rsregan $'
      +).NE.0 ) RETURN
 
       IF ( Ntemp.LT.2 .AND. Model/=99 ) THEN
-        PRINT *, 'temp_dist2 requires at least 2 temperature stations'
-        RETURN
+        PRINT *, 'ERROR, temp_dist2 requires at least 2 temperature',
+     +           ' stations'
+        STOP
       ENDIF
 
 ! added by Mastin 5/8/98
@@ -91,10 +92,10 @@
      +     Basin_lapse_min).NE.0 ) RETURN
 
       IF ( declparam('temp', 'dist_max', 'one', 'real',
-     +     '1e+09', '0.0', '1e+09',
+     +     '1E+09', '0.0', '1E+09',
      +     'Maximum distance from HRU to include a climate station',
      +     'Maximum distance from HRU to include a climate station',
-     +     'elev_units').NE.0 ) RETURN
+     +     'feet').NE.0 ) RETURN
 
       IF ( declparam('temp', 'max_tsta', 'one', 'integer',
      +     '50', '2', '50',
@@ -140,7 +141,7 @@
      +     'Lapse rate, in deg F or C depending on units of'//
      +     ' data, to constrain highest daily minimum lapse rate'//
      +     ' based on historical daily data for all sites',
-     +   'degrees').NE.0 ) RETURN
+     +     'degrees').NE.0 ) RETURN
 
       ALLOCATE (Lapsemax_min(12))
       IF ( declparam('temp', 'lapsemax_min', 'nmonths', 'real',
@@ -162,28 +163,28 @@
 
       ALLOCATE (Tsta_xlong(Ntemp))
       IF ( declparam('temp', 'tsta_xlong', 'ntemp', 'real',
-     +     '0.', '-1e+09', '1e+09',
+     +     '0.', '-1E+09', '1E+09',
      +     'Temperature station longitude, state plane',
      +     'Longitude of each temperature measurement station',
      +     'feet').NE.0 ) RETURN
 
       ALLOCATE (Tsta_ylat(Ntemp))
       IF ( declparam('temp', 'tsta_ylat', 'ntemp', 'real',
-     +     '0.', '-1e+09', '1e+09',
+     +     '0.', '-1E+09', '1E+09',
      +     'Temperature station latitude, state plane',
      +     'Latitude of each temperature measurement station',
      +     'feet').NE.0 ) RETURN
 
       ALLOCATE (Hru_ylat(Nhru))
       IF ( declparam('temp', 'hru_ylat', 'nhru', 'real',
-     +     '0.', '-1e+09', '1e+09',
+     +     '0.', '-1E+09', '1E+09',
      +     'HRU latitude of centroid, state plane',
      +     'Latitude of each HRU for the centroid',
      +     'feet').NE.0 ) RETURN
 
       ALLOCATE (Hru_xlong(Nhru))
       IF ( declparam('temp', 'hru_xlong', 'nhru', 'real',
-     +     '0.', '-1e+09', '1e+09',
+     +     '0.', '-1E+09', '1E+09',
      +     'HRU longitude of centroid, state plane',
      +     'Longitude of each HRU for the centroid',
      +     'feet').NE.0 ) RETURN
@@ -215,14 +216,14 @@
 !***********************************************************************
       INTEGER FUNCTION t2dist2init()
       USE PRMS_TEMP_DIST2
-      USE PRMS_BASIN, ONLY: Timestep, Nhru, Hru_elev
+      USE PRMS_BASIN, ONLY: Timestep, Nhru, Hru_elev, NEARZERO
       USE PRMS_CLIMATEVARS, ONLY: Tsta_elev, Ntemp
       IMPLICIT NONE
       INTEGER, EXTERNAL :: getparam
       INTRINSIC SQRT
 ! Local Variables
       INTEGER :: i, j, k, n, kk, kkbig
-      REAL :: distx, disty, distance, big_dist, dist2
+      REAL :: distx, disty, distance, big_dist, dist2, diff
       REAL, ALLOCATABLE :: nuse_tsta_dist(:, :)
 !***********************************************************************
       t2dist2init = 1
@@ -285,7 +286,9 @@
       nuse_tsta_dist = 0.0
       DO i = 1, Nhru
         DO k = 1, Ntemp
-          Elfac(i, k) = (Hru_elev(i)-Tsta_elev(k))/1000.
+          diff = Hru_elev(i) - Tsta_elev(k)
+          IF ( ABS(diff)<NEARZERO ) diff = 1.0
+          Elfac(i, k) = diff/1000.0
           distx = (Hru_xlong(i)-Tsta_xlong(k))**2
           disty = (Hru_ylat(i)-Tsta_ylat(k))**2
           distance = SQRT(distx+disty)
@@ -319,6 +322,7 @@
       DO j = 1, Ntemp - 1
         DO k = j + 1, Ntemp
           Delv(j, k) = (Tsta_elev(j)-Tsta_elev(k))/1000.
+          IF ( ABS(Delv(j,k))<NEARZERO ) Delv(j, k) = 1.0
         ENDDO
       ENDDO
 

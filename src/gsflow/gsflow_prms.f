@@ -1,17 +1,22 @@
 !***********************************************************************
-!     GSFLOW module that replaces the PRMS module call_modules.f
+! Defines the computational sequence, valid modules, and dimensions
 !***********************************************************************
       MODULE PRMS_MODULE
       IMPLICIT NONE
-      CHARACTER(LEN=32), SAVE :: Precip_module, Temp_module, Et_module
-      CHARACTER(LEN=32), SAVE :: Srunoff_module, Solrad_module
+      CHARACTER(LEN=24), SAVE :: Precip_module, Temp_module, Et_module
+      CHARACTER(LEN=24), SAVE :: Srunoff_module, Solrad_module
       CHARACTER(LEN=68), SAVE :: Versn_gsfprms
       INTEGER, SAVE :: Kper_mfo, Kkstp_mfo
       INTEGER, SAVE :: Model, Cascade, Process_flag
       INTEGER, SAVE :: Nsub, Ncascade, Ncascdgw, Nsegment
       INTEGER, SAVE :: Sroff_flag, Solrad_flag, Et_flag
-      INTEGER, SAVE :: Temp_flag, Precip_flag, grid_reportON_OFF
-!   Control Parameters
+      INTEGER, SAVE :: Temp_flag, Precip_flag
+! Precip_flag (1=precip_prms; 2=precip_laps_prms; 3=precip_dist2_prms;
+!              6=xyz_dist
+! Temp_flag (1=temp_1sta_prms; 2=temp_laps_prms; 3=temp_dist2_prms;
+!            6=xyz_dist
+! Control parameters
+      INTEGER, SAVE :: grid_reportON_OFF
       CHARACTER(LEN=16), SAVE :: Model_mode
       END MODULE PRMS_MODULE
 
@@ -23,10 +28,9 @@
       IMPLICIT NONE
       INTEGER, EXTERNAL :: declmodule, getdim, control_string
       INTEGER, EXTERNAL :: control_integer
-      DOUBLE PRECISION, EXTERNAL :: deltim
 ! Arguments
       CHARACTER(LEN=*), INTENT(IN) :: Arg
-! Functions (define in calling order)
+! Functions
       INTEGER, EXTERNAL :: basin_prms
       INTEGER, EXTERNAL :: climate_vars_prms
       INTEGER, EXTERNAL :: flow_vars_prms
@@ -65,7 +69,6 @@
       INTEGER, EXTERNAL :: basin_sum_prms
       INTEGER, EXTERNAL :: grid_report
 ! Local Variables
-      DOUBLE PRECISION :: dt
       INTEGER :: i
 !***********************************************************************
       call_modules = 1
@@ -83,7 +86,7 @@
 
       IF ( Process_flag==1 ) THEN
         Versn_gsfprms =
-     +'$Id: gsflow_prms.f 2506 2011-02-25 17:41:17Z rsregan $'
+     +'$Id: gsflow_prms.f 3116 2011-05-17 16:20:01Z rsregan $'
         call_modules = declmodule(Versn_gsfprms)
 
         IF ( control_string(Model_mode, 'model_mode').NE.0 ) RETURN
@@ -193,7 +196,7 @@
           Precip_flag = 2
         ELSEIF ( Precip_module(:17)=='precip_dist2_prms' ) THEN
           Precip_flag = 3
-        ELSE ! xyz_dist
+        ELSEIF ( Precip_module(:8)=='xyz_dist' ) THEN
           Precip_flag = 6
           IF ( Temp_module(:8)/='xyz_dist' ) THEN
             PRINT *,'if xyz_dist is specified for precip module,'
@@ -207,10 +210,10 @@
         IF ( Temp_module(:14)=='temp_1sta_prms' ) THEN
           Temp_flag = 1
         ELSEIF ( Temp_module(:14)=='temp_laps_prms' ) THEN
-          Temp_flag = 3
+          Temp_flag = 2
         ELSEIF ( Temp_module(:15)=='temp_dist2_prms' ) THEN
           Temp_flag = 4
-        ELSE ! xyz_dist
+        ELSEIF ( Temp_module(:8)=='xyz_dist' ) THEN
           Temp_flag = 6
           IF ( Precip_module(:8)/='xyz_dist' ) THEN
             PRINT *,'if xyz_dist is specified for temperature module,'
@@ -233,7 +236,7 @@
           Et_flag = 1
         ELSEIF ( Et_module(:20)=='potet_hamon_hru_prms' ) THEN
           Et_flag = 2
-        ELSE ! pan
+        ELSEIF ( Et_module(:9)=='potet_pan' ) THEN
           Et_flag = 4
         ENDIF
 
@@ -247,7 +250,7 @@
         ENDIF
         IF ( Srunoff_module(:18)=='srunoff_smidx_casc' ) THEN
           Sroff_flag = 1
-        ELSE ! carea
+        ELSE !IF ( Srunoff_module(:13)=='srunoff_carea' ) THEN
           Sroff_flag = 2
         ENDIF
 
@@ -264,25 +267,13 @@
         ENDIF
         IF ( Solrad_module(:17)=='ddsolrad_hru_prms' ) THEN
           Solrad_flag = 1
-        ELSE ! ccsolrad_hru_prms
+        ELSE !IF ( Solrad_module(:8)=='ccsolrad' ) THEN
           Solrad_flag = 2
         ENDIF
       ENDIF
 
-      IF ( Process_flag==0 ) THEN ! run process
-!   Check to see if daily time step
-        dt = deltim()
-        IF ( dt>24.0001D0 ) THEN
-          PRINT *, 'ERROR, timestep > daily, fix Data File', dt
-          RETURN
-        ENDIF
-        IF ( dt.LT.23.999D0 ) THEN
-           PRINT *, 'ERROR, timestep < daily, fix Data File', dt
-           RETURN
-        ENDIF
-
-! All modules must be called during declare for model modes 0 & 1
-      ELSE
+! All modules must be called for declare, initialize, and cleanup
+      IF ( Process_flag/=0 ) THEN
         call_modules = basin_prms()
         IF ( call_modules.NE.0 ) THEN
           PRINT 9001, 'basin_prms', Arg, call_modules
@@ -322,7 +313,7 @@
         RETURN
       ENDIF
 
-      IF ( Temp_flag<4 ) THEN
+      IF ( Temp_flag<3 ) THEN
         call_modules = obs_adjust_prms()
         IF ( call_modules.NE.0 ) THEN
           PRINT 9001, 'obs_adjust_prms', Arg, call_modules
@@ -339,9 +330,9 @@
       ELSE
         IF ( Temp_flag==1 ) THEN
           call_modules = temp_1sta_prms()
-        ELSEIF ( Temp_flag==3 ) THEN
+        ELSEIF ( Temp_flag==2 ) THEN
           call_modules = temp_laps_prms()
-        ELSE ! Temp_flag=4
+        ELSEIF ( Temp_flag==3 ) THEN
           call_modules = temp_dist2_prms()
         ENDIF
         IF ( call_modules.NE.0 ) THEN
@@ -353,7 +344,7 @@
           call_modules = precip_prms()
         ELSEIF ( Precip_flag==2 ) THEN
           call_modules = precip_laps_prms()
-        ELSE
+        ELSEIF ( Precip_flag==3 ) THEN
           call_modules = precip_dist2_prms()
         ENDIF
         IF ( call_modules.NE.0 ) THEN
@@ -364,7 +355,7 @@
 
       IF ( Solrad_flag==1 ) THEN
         call_modules = ddsolrad_hru_prms()
-      ELSE
+      ELSEIF ( Solrad_flag==2 ) THEN
         call_modules = ccsolrad_hru_prms()
       ENDIF
       IF ( call_modules.NE.0 ) THEN
@@ -382,7 +373,7 @@
         call_modules = potet_jh_prms()
       ELSEIF ( Et_flag==2 ) THEN
         call_modules = potet_hamon_hru_prms()
-      ELSE
+      ELSEIF ( Et_flag==4 ) THEN
         call_modules = potet_pan_prms()
       ENDIF
       IF ( call_modules.NE.0 ) THEN
@@ -404,7 +395,7 @@
 
       IF ( Sroff_flag==1 ) THEN
         call_modules = srunoff_smidx_casc()
-      ELSE
+      ELSE !IF ( Sroff_flag==2 ) THEN
         call_modules = srunoff_carea_casc()
       ENDIF
       IF ( call_modules.NE.0 ) THEN
@@ -516,7 +507,7 @@
 
       call_modules = 0
 
- 9001 FORMAT ('Error in ', A, ' module, arg = ', A, /, 'Return val =',
+ 9001 FORMAT ('ERROR in ', A, ' module, arg = ', A, /, 'Return val =',
      +        I4)
  9002 FORMAT ('Error in gsflow_prms: model_mode', A,
      +        ' not implemented', /, A)
@@ -526,7 +517,6 @@
 !***********************************************************************
 !     declare the dimensions
 !***********************************************************************
-
       INTEGER FUNCTION setdims()
       IMPLICIT NONE
       INTEGER, EXTERNAL :: decldim, declfix
@@ -562,8 +552,8 @@
 
       IF ( decldim('nform', 0, MAXDIM,
      +     'Number of form_data input values. This has a max of 1 but'//
-     +     ' is an array to satisy a readvar requirement. Set to 0 if'//
-     +     ' no form_data are included in the input file.')
+     +     ' is an array to satisfy a readvar requirement. Set to 0'//
+     +     ' if no form_data are included in the input file.')
      +     .NE.0 ) RETURN
 
       IF ( decldim('nobs', 0, MAXDIM,

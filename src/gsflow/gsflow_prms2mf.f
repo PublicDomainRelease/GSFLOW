@@ -70,7 +70,7 @@
       prms2mfdecl = 1
 
       IF ( declmodule(
-     &'$Id: gsflow_prms2mf.f 2331 2011-01-06 19:08:59Z rsregan $')
+     &'$Id: gsflow_prms2mf.f 3116 2011-05-17 16:20:01Z rsregan $')
      &     .NE.0 ) RETURN
 
 !      Nreach = getdim('nreach')
@@ -100,7 +100,7 @@
 
 !     ALLOCATE (Reach_id(Nreach, Nsegment))
 !     IF ( decl var('prms2mf', 'reach_id', 'nsegment,nreach',
-!    &     Nsegment*Nreach, 'real',
+!    &     Nsegment*Nreach, 'integer',
 !    &     'Mapping of reach id by segment id', 'none',
 !    &     Reach_id).NE.0 ) RETURN
 
@@ -253,8 +253,8 @@
 !    &     Reach_segment).NE.0 ) RETURN
 
       IF ( Nsegment/=NSS ) THEN
-        PRINT *, 'Error, nsegment must equal NSS', Nsegment, NSS
-        RETURN
+        PRINT *, 'ERROR, nsegment must equal NSS', Nsegment, NSS
+        STOP
       ENDIF
 
 !  DANGER markstro - overriding the parameter Segment_pct_area to test
@@ -263,7 +263,7 @@
       !     segments by number of reaches
 !     DO i = 1, Nreach
 !       iseg = Reach_segment(i)
-!       Segment_pct_area(i) = 1.0 / real(Numreach_segment(iseg))
+!       Segment_pct_area(i) = 1.0 / REAL(Numreach_segment(iseg))
 !     ENDDO
 !      IF ( get param('prms2mf', 'segment_pct_area', Nreach, 'real',
 !     &     Segment_pct_area).NE.0 ) RETURN
@@ -277,7 +277,7 @@
 !     IF ( get param('prms2mf', 'local_reachid', Nreach, 'integer',
 !    &     Local_reachid).NE.0 ) RETURN
 
-      IF ( Have_lakes>0 ) THEN
+      IF ( Have_lakes==1 ) THEN
         ALLOCATE (Lake_hru_id(Nhru))
         IF ( getparam('prms2mf', 'lake_hru_id', Nhru, 'integer',
      &       Lake_hru_id).NE.0 ) RETURN
@@ -323,7 +323,7 @@
 !       ENDDO
 !       IF ( max_seg.NE.Nsegment ) PRINT *,
 !    &       'Problem with number of segments', Nsegment, max_seg
-        
+
 !       DO i = 1, Nsegment
 !         IF ( nseg_rch(i).NE.Numreach_segment(i) ) PRINT *,
 !    &         'Problem with number of reaches in a segment', i,
@@ -522,8 +522,6 @@
           ENDIF
         ENDDO
         DO ilake = 1, NLAKES
-        if(lake_area(ilake)<1.0E-6)
-     + print *, 'area problem',ilake,lake_area(ilake)
           PRCPLK(ilake) = PRCPLK(ilake)/Lake_area(ilake)
           EVAPLK(ilake) = EVAPLK(ilake)/Lake_area(ilake)
         ENDDO
@@ -610,8 +608,8 @@
      &                        Unused_potet(ihru)*Gvr_hru_pct_adjusted(j)
           IF ( Unused_potet(ihru).LT.0.0 ) Unused_potet(ihru) = 0.0
         ENDIF
+        Sm2gw_grav_older(j) = Sm2gw_grav_old(j)
       ENDDO
-      Sm2gw_grav_older = Sm2gw_grav_old
 ! check if current iteration changed insignificantly or was oscillating
       IF ( icheck.EQ.1 ) THEN
         IF ( KKITER==Mxsziter ) THEN
@@ -661,7 +659,7 @@
       IF ( getvar('srunoff', 'strm_seg_in', Nsegment, 'real',
      &     Strm_seg_in).NE.0 ) RETURN
 
-      Basin_reach_latflow = 0.0      
+      Basin_reach_latflow = 0.0
       k = 0
       DO iseg = 1, Nsegment
         latflow = Strm_seg_in(iseg)*Segment_pct_area(iseg)
@@ -696,7 +694,7 @@
       USE GSFPRMS2MF, ONLY: Excess, Cell_drain_rate, Net_sz2gw
       USE GSFCONVERT, ONLY: Cellarea, Gwc_row, Gwc_col, Ngwcell
       USE GWFUZFMODULE, ONLY: FINF, VKS, FBINS, IUZFBND, NUZTOP, SURFDEP
-      USE GLOBAL,       ONLY: HNEW, BOTM
+      USE GLOBAL, ONLY: HNEW, BOTM
       IMPLICIT NONE
       INTRINSIC ABS
 ! Local Variables

@@ -1,11 +1,11 @@
 
 /*
- *  $Id: defs.h 5644 2010-05-25 13:32:09Z markstro $
+ *  $Id: defs.h 3116 2011-05-17 16:20:01Z rsregan $
  */
 
 /*
 **
-**		$Author: markstro $
+**		$Author: rsregan $
 **
 **		$Date: 1997/04/21 22:28:58 $
 **
@@ -55,7 +55,7 @@
 **Initial revision
 **
 **
-**		$Revision: 5644 $
+**		$Revision: 3116 $
 **
 **		$Source: /z/runoff/work4/mms_cvs/mms/src/include/defs.h,v $
 **

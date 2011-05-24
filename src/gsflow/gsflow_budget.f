@@ -53,7 +53,7 @@
       gsfbuddecl = 1
 
       IF ( declmodule(
-     &'$Id: gsflow_budget.f 2483 2011-02-18 23:49:34Z rsregan $')
+     &'$Id: gsflow_budget.f 3116 2011-05-17 16:20:01Z rsregan $')
      &     .NE.0 ) RETURN
 
       Nreach = getdim('nreach')
@@ -189,13 +189,12 @@
 !***********************************************************************
       INTEGER FUNCTION gsfbudrun()
       USE GSFBUDGET
-      USE GSFCONVERT, ONLY: Acre_inches_to_mfl3, Mfq2inch_conv,
+      USE GSFCONVERT, ONLY: Mfq2inch_conv, Nhrucell, Mfl2_to_acre,
      &    Mfvol2inch_conv, Mfl3t_to_cfs, Mfl_to_inch, Gwc_col, Gwc_row,
-     &    Gvr_cell_id, Nhrucell, Mfl2_to_acre
-!Warning, modifies Gw_rejected_grav, Cell_drain_rate, Gw_rejected_grav
+     &    Gvr_cell_id
+!Warning, modifies Gw_rejected_grav, Gw_rejected_grav
       USE GSFPRMS2MF, ONLY: Excess, Gvr_hru_pct_adjusted, Hrucheck,
-     &    Gvr_hru_id, Cell_drain_rate, Gw_rejected_grav, Lake_hru_id,
-     &    Lake_area
+     &    Gvr_hru_id, Gw_rejected_grav, Lake_hru_id, Lake_area
 !Warning, modifies Gw2sm_grav
       USE GSFMF2PRMS, ONLY: Gw2sm_grav
       USE GLOBAL, ONLY: IUNIT
@@ -348,7 +347,7 @@
         !rsr, need to adjust hru_actet for UZF
         Hru_actet(i) = Actet_tot_gwsz(i)
         Basin_actet = Basin_actet + Hru_actet(i)*harea
-        Basin_actetgw = Basin_actetgw + Actet_gw(i)*Hru_area(i)
+        Basin_actetgw = Basin_actetgw + Actet_gw(i)*harea
         Basin_soil_moist = Basin_soil_moist + Soil_moist(i)*Hru_perv(i)
         Basin_gw2sm = Basin_gw2sm + Gw2sm(i)*harea
         Basin_gvr2sm = Basin_gvr2sm + Gvr2sm(i)*harea
@@ -475,8 +474,8 @@
       DO k = 1, NLAY
         lc = LAYCON(k)
         IF ( lc.EQ.3 .OR. lc.EQ.2 ) kt = kt + 1
-        DO j = 1, NCOL
-          DO i = 1, NROW
+        DO i = 1, NROW
+          DO j = 1, NCOL
 
 !6------SKIP NO-FLOW AND CONSTANT-HEAD CELLS.
             IF ( IBOUND(j, i, k).GT.0 ) THEN
@@ -535,8 +534,8 @@
       DO k = 1, NLAY
         lc = LAYTYP(k)
         IF ( lc.NE.0 ) kt = kt + 1
-        DO j = 1, NCOL
-          DO i = 1, NROW
+        DO i = 1, NROW
+          DO j = 1, NCOL
 
 !6------SKIP NO-FLOW AND CONSTANT-HEAD CELLS.
             IF ( IBOUND(j, i, k).GT.0 ) THEN
@@ -617,7 +616,7 @@
       INTEGER :: i
 !***********************************************************************
       DO i = 1, NSTRM
-! Reachcfs is not used to calculate a value. Remove?
+! Reach_cfs and reach_wse are not used except to be available for output
         Reach_cfs(i) = STRM(9, i)*Mfl3t_to_cfs
         Reach_wse(i) = STRM(15, i)
       ENDDO

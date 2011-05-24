@@ -60,6 +60,11 @@ ABSTRACT
 
 
 HISTORY
+      GSFLOW Version 1.1.4 06/01/2011 - This version of GSFLOW is based 
+         on MODFLOW-2005 version 1.8. Several bug fixes and relatively
+         small modifications were made to a few of the PRMS modules 
+         and MODFLOW Packages that are explained in the 'release.txt' file.
+
       GSFLOW Version 1.1.3 03/01/2011 - This version of GSFLOW is based 
          on MODFLOW-2005 version 1.8. This version of GSFLOW includes 
          (1) the new Grid Report Module, (2) enhanced input options for 

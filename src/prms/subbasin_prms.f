@@ -1,5 +1,5 @@
 !***********************************************************************
-! Computes streamflow at internal basin nodes
+! Computes streamflow and other variables in subbasins
 !
 !     version: 3.1 (rsregan, April 2008 ) changed code to assume
 !                  nhru=nssr=ngw
@@ -73,7 +73,7 @@
       subdecl = 1
 
       IF ( declmodule(
-     +'$Id: subbasin_prms.f 2505 2011-02-25 17:40:32Z rsregan $'
+     +'$Id: subbasin_prms.f 3116 2011-05-17 16:20:01Z rsregan $'
      +).NE.0 ) RETURN
 
       ! make sure nhru=nssr=ngw for GSFLOW mode
@@ -237,7 +237,7 @@
       IMPLICIT NONE
       INTEGER, EXTERNAL :: getparam, getvar
 ! Local Variables
-      INTEGER :: i, j, k, kk
+      INTEGER :: i, j, k, kk, ierr
       REAL :: gwstor, soilstor, snowstor, landstor, harea
 !***********************************************************************
       subinit = 1
@@ -342,12 +342,14 @@
           Sub_area(k) = Sub_area(k) + harea
         ENDIF
       ENDDO
+      ierr = 0
       DO i = 1, Nsub
         IF ( Sub_area(i)<NEARZERO ) THEN
-          PRINT *, 'Warning, subbasin:', i, ' does not include any HRUs'
-          Sub_area(i) = 1.0
+          PRINT *, 'ERROR, subbasin:', i, ' does not include any HRUs'
+          ierr = 1
         ENDIF
       ENDDO
+      IF ( ierr==1 ) STOP '**Subbasin parameter specification error**'
 
       !convert first as subbasins don't have to be in order
       Subincstor = Subincstor*Cfs_conv

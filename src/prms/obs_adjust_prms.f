@@ -48,7 +48,7 @@
       obsadjdecl = 1
 
       IF ( declmodule(
-     +'$Id: obs_adjust_prms.f 2182 2010-11-26 19:23:44Z rsregan $'
+     +'$Id: obs_adjust_prms.f 3116 2011-05-17 16:20:01Z rsregan $'
      +)/=0 ) RETURN
 
       ALLOCATE (Tmin_prev(Ntemp), Tmax_prev(Ntemp))

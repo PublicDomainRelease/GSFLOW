@@ -11,7 +11,6 @@
       IMPLICIT NONE
 !   Local Variables
       INTEGER, SAVE, ALLOCATABLE :: Istack(:)
-      REAL, ALLOCATABLE :: Tmax_hru(:), Tmin_hru(:)
 !   Declared Parameters
       INTEGER, SAVE, ALLOCATABLE :: Hru_psta(:)
       REAL, SAVE, ALLOCATABLE :: Rain_adj(:, :), Snow_adj(:, :)
@@ -42,7 +41,7 @@
 !     pptdecl - set up parameters for precipitation computations
 !   Declared Parameters
 !     tmax_allrain, tmax_allsnow, hru_psta, adjmix_rain
-!     rain_adj, snow_adj, precip_units, hru_area, temp_units
+!     rain_adj, snow_adj, precip_units, hru_area
 !***********************************************************************
       INTEGER FUNCTION pptdecl()
       USE PRMS_PRECIP
@@ -53,7 +52,7 @@
       pptdecl = 1
 
       IF ( declmodule(
-     +'$Id: precip_prms.f 2439 2011-02-11 20:36:52Z rsregan $'
+     +'$Id: precip_prms.f 3116 2011-05-17 16:20:01Z rsregan $'
      +).NE.0 ) RETURN
 
 ! declare parameters
@@ -99,7 +98,7 @@
 !***********************************************************************
       pptinit = 1
 
-      ALLOCATE ( Istack(Nrain), Tmax_hru(Nhru), Tmin_hru(Nhru) )
+      ALLOCATE ( Istack(Nrain) )
 
       IF ( getparam('precip', 'hru_psta', Nhru, 'integer', Hru_psta)
      +     .NE.0 ) RETURN
@@ -132,10 +131,9 @@
      +    Basin_area_inv, NEARZERO, INCH2MM
 !dbg  USE PRMS_BASIN, ONLY: Print_debug
       USE PRMS_CLIMATEVARS, ONLY: Newsnow, Pptmix, Precip_units,
-     +    Solrad_tmax, Temp_units, Tmaxf, Tminf, Tmaxc, Tminc,
-     +    Tmax_allsnow, Basin_ppt, Basin_rain, Basin_snow, Hru_ppt,
-     +    Hru_rain, Hru_snow, Tmax_allrain, Basin_obs_ppt, Prmx,
-     +    Adjmix_rain, Nrain
+     +    Solrad_tmax, Tmaxf, Tminf, Tmax_allsnow_f, Basin_ppt,
+     +    Basin_rain, Basin_snow, Hru_ppt, Hru_rain, Hru_snow,
+     +    Tmax_allrain_f, Basin_obs_ppt, Prmx, Adjmix_rain, Nrain
       USE PRMS_OBS, ONLY: Form_data, Precip, Nform, Nowtime, Nowmonth
       IMPLICIT NONE
       INTRINSIC ABS
@@ -156,14 +154,6 @@
       IF ( Solrad_tmax.LT.-50.00 ) PRINT *,
      +     'Bad temperature data, using previous time step values',
      +     Solrad_tmax, Nowtime
-! load Tmax and Tmin with appropriate measured values
-      IF ( Temp_units.EQ.0 ) THEN
-        Tmax_hru = Tmaxf
-        Tmin_hru = Tminf
-      ELSE
-        Tmax_hru = Tmaxc
-        Tmin_hru = Tminc
-      ENDIF
 
       Basin_ppt = 0.0
       Basin_rain = 0.0
@@ -194,6 +184,7 @@
           CYCLE
         ENDIF
 
+        ! ignore very small amounts of precipitation
         IF ( ppt.LT.NEARZERO ) CYCLE
 
         sum_obs = sum_obs + ppt*Hru_area(i)
@@ -216,7 +207,7 @@
 !******maximum temperature is below or equal to the base temperature for
 !******snow then precipitation is all snow
 
-        ELSEIF ( iform.EQ.1 .OR. Tmax_hru(i).LE.Tmax_allsnow ) THEN
+        ELSEIF ( iform.EQ.1 .OR. Tmaxf(i).LE.Tmax_allsnow_f ) THEN
           pcor = Snow_adj(i, Nowmonth)
           Hru_ppt(i) = ppt*pcor
           Hru_snow(i) = Hru_ppt(i)
@@ -226,8 +217,8 @@
 !******maximum temperature is above all_rain temperature then
 !******precipitation is all rain
 
-        ELSEIF ( Tmin_hru(i).GT.Tmax_allsnow .OR.
-     +           Tmax_hru(i).GE.Tmax_allrain(Nowmonth) ) THEN
+        ELSEIF ( Tminf(i).GT.Tmax_allsnow_f .OR.
+     +           Tmaxf(i).GE.Tmax_allrain_f(Nowmonth) ) THEN
           pcor = Rain_adj(i, Nowmonth)
           Hru_ppt(i) = ppt*pcor
           Hru_rain(i) = Hru_ppt(i)
@@ -236,9 +227,9 @@
 !******Otherwise precipitation is a mixture of rain and snow
 
         ELSE
-          tdiff = Tmax_hru(i) - Tmin_hru(i)
-          IF ( ABS(tdiff)<NEARZERO ) tdiff = NEARZERO
-          Prmx(i) = ((Tmax_hru(i)-Tmax_allsnow)
+          tdiff = Tmaxf(i) - Tminf(i)
+          IF ( ABS(tdiff)<NEARZERO ) tdiff = 0.01
+          Prmx(i) = ((Tmaxf(i)-Tmax_allsnow_f)
      +              /tdiff)*Adjmix_rain(Nowmonth)
 
 !******Unless mixture adjustment raises the proportion of rain to

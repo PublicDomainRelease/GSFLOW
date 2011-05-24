@@ -48,7 +48,7 @@
       petdecl_pan = 1
 
       IF ( declmodule(
-     +'$Id: potet_pan_prms.f 2240 2010-12-10 00:28:24Z rsregan $'
+     +'$Id: potet_pan_prms.f 3116 2011-05-17 16:20:01Z rsregan $'
      +).NE.0 ) RETURN
 
       IF ( Nevap==0 .AND. Model/=99 ) THEN

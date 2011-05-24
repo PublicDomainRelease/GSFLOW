@@ -49,7 +49,7 @@
       t1decl = 1
 
       IF ( declmodule(
-     +'$Id: temp_1sta_prms.f 2254 2010-12-10 18:45:19Z rsregan $'
+     +'$Id: temp_1sta_prms.f 3116 2011-05-17 16:20:01Z rsregan $'
      +).NE.0 ) RETURN
 
       ALLOCATE (Tmax_lapse(12))

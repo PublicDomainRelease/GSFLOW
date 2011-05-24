@@ -94,7 +94,7 @@
       sumbdecl = 1
 
       IF ( declmodule(
-     +'$Id: basin_sum_prms.f 2182 2010-11-26 19:23:44Z rsregan $'
+     +'$Id: basin_sum_prms.f 3116 2011-05-17 16:20:01Z rsregan $'
      +).NE.0 ) RETURN
 
       IF ( declpri('sumb_last_basin_stor', 1, 'real', Last_basin_stor)
@@ -497,7 +497,7 @@
       Endjday = julian('end', 'calendar')
       Endyr = Endtime(1)
 
-      IF ( Print_debug.EQ.4 ) OPEN (BALUNT, FILE='basin_sum_prms.wbal')
+      IF ( Print_debug.EQ.4 ) OPEN (BALUNT, FILE='basin_sum_prms.dbg')
 
       sumbinit = 0
 

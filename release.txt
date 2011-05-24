@@ -12,6 +12,67 @@ NOTE: Any use of trade, product or firm names is for descriptive
 purposes only and does not imply endorsement by the U.S. Government.
 
 
+
+o Version 1.1.4 06/01/2011:
+
+This version of GSFLOW is based on MODFLOW-2005 version 1.8 and PRMS version
+2.3116. Users are encouraged to review the release materials for MODFLOW-2005 
+for a full description of updates made for version 1.8. 
+
+A number of changes and bug fixes were made for this release. The modifications
+are grouped by PRMS modules and MODFLOW Packages.
+
+PRMS modules:
+
+Potential Solar Radiation Module (soltab_hru_prms.f): The area-weighted mean basin
+latitude was computed incorrectly for models having inactive cells. This bug
+affected the computation of potential solar radiation on a horizontal plane for
+the basin latitude and snow computations involving solar radiation. 
+
+Cascading-Flow Module (cascade_prms.f): The default values for hru_down_id and
+gw_down_id were changed from 1 to 0. If an HRU is determined to be a swale, an 
+error message is issued and the simulation stops if the value of hru_type is not
+specifed with the value 3.
+ 
+Ground-Water Reservoir Module (gwflow_casc_prms.f): Units for variables gw_in_ssr,
+gw_in_soil, gwres_in were computed in units of inches. They are now computed in
+units of acre-inches as documented.
+ 
+Surface-Runoff and Infiltration Modules (srunoff_smidx_casc.f and 
+srunoff_carea_casc.f): Evaporation from impervious areas of HRUs is now computed
+at the potential evapotranspiration rate rather than at the rate of unsatisified 
+potential evapotranspiration. Also, a check was added to srunoff_carea_casc.f to
+be sure the computed contributing area used to compute surface runoff does not 
+exceed 1.0. This check is made for each HRU for each timestep.
+
+Lapse-Station Temperature-Distribution Module (temp_laps_prms.f): If the altitude
+of the temperature-measurement stations used to compute lapse rates are equal, the 
+code sets the difference to 1.0 in units based on the value of elev_units. This 
+was done to avoid divide by zero.
+  
+Precipitation-Distribution Modules (precip_prms.f, precip_laps_prms.f, 
+precip_dist2_prms, xyz_dist.f): If the computed maximum and minimum air temperatures
+are equal, the difference is set to 0.01 degrees Fahrenheit. Also, for module
+precip_laps_prms.f, if the altitude of precipation measurement stations used to
+compute lapse rates are equal, the code sets the difference to 1.0 in units based 
+on the value of elev_units. This was done to avoid divide by zero.
+
+MODFLOW Packages:
+
+Lake package (gwf2lak7.f): Corrected two bugs. The first caused the package to
+incorrectly set the uppermost active cell beneath a lake cell to NLAY. The second
+occurred in the calculation of outflow to a stream for specified outflow
+diversions; the lake stage was not being set correctly.
+
+Unsaturated-Flow Package (gwf2uzf1.f and gwfuzfmodule.f): Added deallocate
+statements for the variables CHECKTIME, MORE and LAYNUM. The default value for the
+variable SURFDEP was changed from 1.0 to 1.0x10-6.
+
+Streamflow-Routing Package (gwf2sfr7.f and gwfsfrmodule.f): Modifications were made
+to correct the effects of lakes inundating stream cells. Seepage in inundated stream
+cells was not being set to zero in the budget routine. 
+
+
 o Version 1.1.3 03/01/2011:
 
 This version of GSFLOW is based on MODFLOW-2005 version 1.8. Users are encouraged

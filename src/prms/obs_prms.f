@@ -5,7 +5,7 @@
       IMPLICIT NONE
 !   Local Variables
       INTEGER, SAVE :: Nobs, Nevap, Nform, Modays(12), Yrdays
-      INTEGER, SAVE :: Nowtime(6), Xyz_flg, Jday, Jsol
+      INTEGER, SAVE :: Nowtime(6), Xyz_flg, Jday, Jsol, Julwater
       INTEGER, SAVE :: Nowday, Nowmonth, Nowyear
       REAL, SAVE :: Cfs_conv, Timestep_seconds, Timestep_days
 !   Declared Variables
@@ -57,7 +57,7 @@
       obsdecl = 1
 
       IF ( declmodule(
-     +'$Id: obs_prms.f 2322 2011-01-04 22:12:30Z rsregan $'
+     +'$Id: obs_prms.f 3116 2011-05-17 16:20:01Z rsregan $'
      +).NE.0 ) RETURN
 
       Nobs = getdim('nobs')
@@ -77,26 +77,26 @@
       ALLOCATE (Runoff(n))
       IF ( declvar('obs', 'runoff', 'nobs', n, 'real',
      +     'Measured runoff for each stream gage',
-     +     'cfs',
+     +     'runoff_units',
      +     Runoff).NE.0 ) RETURN
 
       ALLOCATE (Precip(Nrain))
       IF ( declvar('obs', 'precip', 'nrain', Nrain, 'real',
      +     'Measured precipitation at each rain gage',
-     +     'inches',
+     +     'precip_units',
      +     Precip).NE.0 ) RETURN
 
       ALLOCATE (Tmin(Ntemp), Tmax(Ntemp))
       IF ( declvar('obs', 'tmin', 'ntemp', Ntemp, 'real',
      +     'Measured daily minimum temperature at each measurement'//
      +     ' station',
-     +     'degrees',
+     +     'temp_units',
      +     Tmin).NE.0 ) RETURN
 
       IF ( declvar('obs', 'tmax', 'ntemp', Ntemp, 'real',
      +     'Measured daily maximum temperature at each measurement'//
      +     ' station',
-     +     'degrees',
+     +     'temp_units',
      +     Tmax).NE.0 ) RETURN
 
       n = MAX(Nsol, 1)
@@ -198,6 +198,7 @@
       ENDIF
 
       Jsol = julian('start', 'solar')
+      Julwater = julian('start', 'water')
 
       dts = deltim()*3600.0D0
       Timestep_seconds = SNGL(dts)
@@ -234,23 +235,24 @@
 
       Jday = julian('now', 'calendar')
       Jsol = julian('now', 'solar')
+      Julwater = julian('now', 'water')
 
       dthr = deltim() 
       dt = dthr*3600.0D0
 !   Check to see if daily time step
       IF ( dthr>24.0001D0 ) THEN
         PRINT *, 'ERROR, timestep > daily, fix Data File', dthr
-        RETURN
+        STOP
       ENDIF
       IF ( dthr.LT.23.999D0 ) THEN
         PRINT *, 'ERROR, timestep < daily, fix Data File', dthr
-        RETURN
+        STOP
       ENDIF
       Timestep_seconds = SNGL(dt)
       Cfs_conv = SNGL(43560.0D0/12.0D0/dt)
       Timestep_days = SNGL(dthr/24.0D0)
 
-      IF ( isleap(Nowtime(1))==1 ) THEN
+      IF ( isleap(Nowyear)==1 ) THEN
         Yrdays = 366
         Modays(2) = 29
       ELSE

@@ -51,7 +51,7 @@
       gsfconvdecl = 1
 
       IF ( declmodule(
-     &'$Id: gsflow_setconv.f 2365 2011-01-20 16:47:39Z rsregan $'
+     &'$Id: gsflow_setconv.f 3116 2011-05-17 16:20:01Z rsregan $'
      &).NE.0 ) RETURN
 
       Nhrucell = getdim('nhrucell')
@@ -141,14 +141,14 @@
       ELSEIF ( LENUNI.EQ.2 ) THEN
 ! Modflow in meters
         inch_to_mfl = 0.0254
-        Mfl2_to_acre = 3.28084*3.28084
-        Mfl3_to_ft3 = 3.28084**3.0
+        Mfl2_to_acre = 3.280839895*3.280839895
+        Mfl3_to_ft3 = 3.280839895**3.0
 
       ELSEIF ( LENUNI.EQ.3 ) THEN
 ! Modflow in centimeters
         inch_to_mfl = 2.54
-        Mfl2_to_acre = 328.084*328.084
-        Mfl3_to_ft3 = 328.084**3.0
+        Mfl2_to_acre = 328.0839895*328.0839895
+        Mfl3_to_ft3 = 328.0839895**3.0
       ELSE
         STOP '***Error, invalid MF Length unit'
       ENDIF

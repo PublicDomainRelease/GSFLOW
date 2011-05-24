@@ -85,7 +85,7 @@
       cascdecl = 1
 
       IF ( declmodule(
-     +'$Id: cascade_prms.f 2182 2010-11-26 19:23:44Z rsregan $'
+     +'$Id: cascade_prms.f 3116 2011-05-17 16:20:01Z rsregan $'
      +).NE.0 ) RETURN
 
       Nhrup1 = Nhru + 1
@@ -122,7 +122,7 @@
 
         ALLOCATE (Hru_down_id(Ncascade))
         IF ( declparam('cascade', 'hru_down_id', 'ncascade', 'integer',
-     +       '1', 'bounded', 'nhru',
+     +       '0', 'bounded', 'nhru',
      +       'HRU index of down slope HRU.',
      +       'HRU index number of the down slope HRU to which the HRU'//
      +       ' subarea contributes flow. If 0, that cascade is leaves'//
@@ -177,7 +177,7 @@
 
         ALLOCATE (Gw_down_id(Ncascdgw))
         IF ( declparam('cascade', 'gw_down_id', 'ncascdgw', 'integer',
-     +       '1', 'bounded', 'ngw',
+     +       '0', 'bounded', 'ngw',
      +       'GWR index of down slope GWR.',
      +       'GWR index number of the down slope GWR to which the GWR'//
      +       ' subarea contributes flow.',
@@ -302,7 +302,7 @@
 ! Arguments
       INTEGER, INTENT(OUT) :: Iret
 ! Local Variables
-      INTEGER :: i, j, k, ii, kk, dnhru, kup, jdn, istrm
+      INTEGER :: i, j, k, ii, kk, dnhru, kup, jdn, istrm, ierr
       REAL, ALLOCATABLE :: hru_pct(:)
       REAL :: pctchk, carea, pct
 !***********************************************************************
@@ -325,9 +325,24 @@
 
       Ncascade_hru = 0
       Ndown = 1
+      ierr = 0
       DO i = 1, Ncascade
         k = Hru_up_id(i)
         IF ( k.GT.0 ) THEN
+          IF ( k>Nhru ) THEN
+            PRINT *, '***ERROR***'
+            PRINT *, 'hru_up_id > nhru for cascade:', i, ' up_id:', k
+            ierr = 1
+            CYCLE
+          ENDIF
+          jdn = Hru_down_id(i)
+          IF ( jdn>Nhru ) THEN
+            PRINT *, '***ERROR***'
+            PRINT *, 'hru_down_id > nhru for cascade:', i, ' down_id:',
+     +               jdn
+            ierr = 1
+            CYCLE
+          ENDIF
           Ncascade_hru(k) = Ncascade_hru(k) + 1
           IF ( Ncascade_hru(k).GT.Ndown ) Ndown = Ncascade_hru(k)
         ENDIF
@@ -344,11 +359,26 @@
         DO i = 1, Ncascdgw
           k = Gw_up_id(i)
           IF ( k.GT.0 ) THEN
+            IF ( k>Ngw ) THEN
+              PRINT *, '***ERROR***'
+              PRINT *, 'gw_up_id > ngw for cascade:', i, ' up_id:', k
+              ierr = 1
+              CYCLE
+            ENDIF
+            jdn = Gw_down_id(i)
+            IF ( jdn>Ngw ) THEN
+              PRINT *, '***ERROR***'
+              PRINT *, 'gw_down_id > ngw for cascade:', i, ' down_id:',
+     +                 jdn
+              ierr = 1
+              CYCLE
+            ENDIF
             Ncascade_gwr(k) = Ncascade_gwr(k) + 1
             IF ( Ncascade_gwr(k).GT.Ndown ) Ndown = Ncascade_gwr(k)
           ENDIF
         ENDDO
       ENDIF
+      IF ( ierr==1 ) STOP
 
       IF ( Ndown>15 .AND. Print_debug==13 )
      +     WRITE (MSGUNT, *) 'possible ndown issue', Ndown
@@ -374,17 +404,7 @@
           PRINT *, 'Cascade ignored as hru_up_id<1, cascade:', i, kup
           CYCLE
         ENDIF
-        IF ( kup>Nhru ) THEN
-          PRINT *, '***ERROR***'
-          PRINT *, 'hru_up_id > nhru for cascade:', i, ' up_id:', kup
-          STOP
-        ENDIF
         jdn = Hru_down_id(i)
-        IF ( jdn>Nhru ) THEN
-          PRINT *, '***ERROR***'
-          PRINT *, 'hru_down_id > nhru for cascade:', i, ' down_id:',jdn
-          STOP
-        ENDIF
         pct = Hru_pct_up(i)
         IF ( pct>0.9998 ) pct = 1.0
         istrm = Hru_strmseg_down_id(i)
@@ -530,6 +550,7 @@
      +               ' add up to > 1.0, thus percentage reduced.'
                     WRITE (MSGUNT, *) 'Up HRU:', i, ' Down HRU:', dnhru
                   ENDIF
+                  pctchk = pctchk + 1.0 - Hru_down_pct(kk, i)
                   Hru_down_pct(kk, i) = 1.0
                 ENDIF
                 j = j - 1
@@ -604,7 +625,7 @@
       INTEGER, ALLOCATABLE :: roots(:), path(:), hrus_up_list(:, :)
       INTEGER, ALLOCATABLE :: is_hru_on_list(:), dn_id_count(:)
       INTEGER, ALLOCATABLE :: up_id_count(:), up_id_cnt(:)
-      INTEGER :: i, j, k, ii, nroots, circle_flg, ihru, npath
+      INTEGER :: i, j, k, ii, nroots, circle_flg, ihru, npath, ierr
       INTEGER :: goes_on_list, up_hru_id, added, dnhru, max_up_id_count
 !-----------------------------------------------------------------------
 !     up_id_count equals number of upslope HRUs an HRU has
@@ -641,6 +662,7 @@
       ALLOCATE (up_id_cnt(Nhru))
       nroots = 0
       up_id_cnt = up_id_count
+      ierr = 0
       DO ii = 1, Active_hrus
         i = Hru_route_order(ii)
         IF ( dn_id_count(i)==0 ) THEN
@@ -652,7 +674,8 @@
           IF ( Hru_type(i)==1 .AND. Ncascade_hru(i)==0 ) THEN
             IF ( Print_debug==13 ) WRITE (MSGUNT, 9008) i
             PRINT 9008, i
-            Hru_type(i) = 3
+!            Hru_type(i) = 3
+            ierr = 1
             CYCLE
           ENDIF
         ENDIF
@@ -660,7 +683,9 @@
           !HRU does not cascade flow - swale
           IF ( Print_debug==13 ) WRITE (MSGUNT, 9009) i
           PRINT 9009, i
-          Hru_type(i) = 3
+!          Hru_type(i) = 3
+          ierr = 1
+          CYCLE
         ELSE
           DO k = 1, Ncascade_hru(i)
             dnhru = Hru_down(k, i)
@@ -672,6 +697,7 @@
         ENDIF
       ENDDO
       DEALLOCATE (up_id_cnt)
+      IF ( ierr==1 ) STOP '**Cascade parameter specification error**'
 
       Iret = 0
 ! check for circles when circle_switch = 1
@@ -778,12 +804,12 @@
  9005 FORMAT (/, 'Error, circular HRU path found', /)
  9006 FORMAT (I6, ' missing')
  9007 FORMAT (I6, ' inactive')
- 9008 FORMAT ('Warning, HRU', I7, ' does not cascade or receive flow',
+ 9008 FORMAT ('ERROR, HRU', I7, ' does not cascade or receive flow',
      +        ' and was specified as hru_type 1,', //, 9X,
-     +        'thus hru_type was reset to 3 (swale HRU)')
- 9009 FORMAT ('Warning, HRU', I7, ' receives flow but does not cascade',
+     +        'hru_type or cascade parameters need to be modified')
+ 9009 FORMAT ('ERROR, HRU', I7, ' receives flow but does not cascade',
      +        ' and was specified as hru_type 1,', //, 9X,
-     +        'thus hru_type was reset to 3 (swale HRU)')
+     +        'hru_type or cascade parameters need to be modified')
 
       END SUBROUTINE order_hrus
 
@@ -863,12 +889,11 @@
         ELSEIF ( istrm==0 .AND. jdn==0 ) THEN
           IF ( Print_debug==13 ) THEN
             WRITE (MSGUNT, 9004)
-     +            'ERROR down GWR & segment ids = 0, GWRs must cascade',
+     +            'Cascade ignored as down GWR & segment ids = 0',
      +            i, kup, jdn, pct, istrm
             PRINT *,
-     +            'ERROR down GWR & segment ids = 0, GWRs must cascade',
+     +            'Cascade ignored as down GWR & segment ids = 0',
      +            i, kup, jdn, pct, istrm
-            Iret = 1
           ENDIF
         ELSEIF ( Gwr_type(kup)==3 ) THEN
           Gwr_type(kup) = 1
@@ -957,7 +982,6 @@
           ENDIF
         ENDIF
       ENDDO
-      IF ( Iret==1 ) RETURN
 
       DO ii = 1, Active_gwrs
         i = Gwr_route_order(ii)
@@ -979,6 +1003,7 @@
      +           'Combining GWR cascade links makes contributing area'//
      +            ' add up to > 1.0, thus percentage reduced',
      +            i, kup, jdn, Gwr_down_pct(kk, i), istrm
+                  pctchk = pctchk + 1.0 - Gwr_down_pct(kk, i)
                   Gwr_down_pct(kk, i) = 1.0
                 ENDIF
                 j = j - 1

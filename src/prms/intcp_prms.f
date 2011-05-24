@@ -62,7 +62,7 @@
       intdecl = 1
 
       IF ( declmodule(
-     +'$Id: intcp_prms.f 2461 2011-02-18 16:12:16Z rsregan $'
+     +'$Id: intcp_prms.f 3116 2011-05-17 16:20:01Z rsregan $'
      +).NE.0 ) RETURN
 
       ALLOCATE (Net_rain(Nhru))
@@ -218,6 +218,7 @@
       INTEGER FUNCTION intinit()
       USE PRMS_INTCP
       USE PRMS_BASIN, ONLY: Print_debug, Hru_type, Nhru, Timestep
+      USE PRMS_BASIN, ONLY: NEARZERO
       USE PRMS_CLIMATEVARS, ONLY: Transp_on
       IMPLICIT NONE
       INTEGER, EXTERNAL :: getparam
@@ -246,6 +247,13 @@
 
       IF ( getparam('intcp', 'epan_coef', 12, 'real', Epan_coef)
      +     .NE.0 ) RETURN
+      DO i = 1, 12
+        IF ( Epan_coef(i)<NEARZERO ) THEN
+          PRINT *, 'Warning, epan_coef specified as 0 for month:', i
+          PRINT *, '         value changed to 1.0'
+          Epan_coef(i) = 1.0
+        ENDIF
+      ENDDO
 
       IF ( getparam('intcp', 'potet_sublim', 1, 'real', Potet_sublim)
      +     .NE.0 ) RETURN
@@ -318,15 +326,16 @@
 ! Newsnow and Pptmix can be modfied, WARNING!!!
       USE PRMS_CLIMATEVARS, ONLY: Newsnow, Pptmix, Hru_rain, Hru_ppt,
      +    Hru_snow, Basin_ppt, Transp_on, Potet
-      USE PRMS_OBS, ONLY: Pan_evap, Nowtime, Nevap
+      USE PRMS_OBS, ONLY: Pan_evap, Nowtime, Nevap, Nowmonth, Nowday,
+     +    Nowyear
       IMPLICIT NONE
       INTEGER, EXTERNAL :: getvar
       EXTERNAL intercept
       INTRINSIC ABS
 ! Local Variables
-      INTEGER :: i, j, mo, day
+      INTEGER :: i, j
       REAL :: stor, cov, evrn, evsn, z, d, intcpevap, harea
-      REAL :: diff, avail_et, last
+      REAL :: diff, avail_et, last, evap
       REAL :: hrubal, delta_stor, delstor, pptbal, intcpstor
       REAL :: basin_last_stor, stor_last, changeover
 !***********************************************************************
@@ -334,9 +343,6 @@
 
       IF ( getvar('snow', 'pkwater_equiv', Nhru, 'real', Pkwater_equiv)
      +     .NE.0 ) RETURN
-
-      mo = Nowtime(2)
-      day = Nowtime(3)
 
       Basin_changeover = 0.0
       basin_last_stor = Basin_intcp_stor
@@ -367,6 +373,7 @@
         ELSE
           cov = Covden_win(i)
         ENDIF
+        IF ( cov<NEARZERO ) cov = 0.0
         Intcp_form(i) = 0
 
         intcpstor = Intcp_stor(i)
@@ -383,7 +390,7 @@
             ! assume canopy storage change falls as throughfall
             diff = Covden_sum(i) - cov
             changeover = intcpstor*diff
-            IF ( cov>DNEARZERO ) THEN
+            IF ( cov>0.0 ) THEN
               stor_last = stor_last - changeover
             ELSE
               PRINT *, 'covden_win=0 at winter changeover and has',
@@ -402,11 +409,11 @@
           Intcp_transp_on(i) = 1
           IF ( intcpstor>0.0 ) THEN
             diff = Covden_win(i) - cov
-            IF ( -intcpstor*diff>DNEARZERO ) THEN
-              IF ( cov>DNEARZERO ) THEN
+            IF ( -intcpstor*diff>NEARZERO ) THEN
+              IF ( cov>0.0 ) THEN
                 intcpstor = intcpstor*Covden_win(i)/cov
               ELSE
-                PRINT *, 'intcp problem', i, intcpstor, covden_win(i)
+                PRINT *, 'intcp problem', i, intcpstor, Covden_win(i)
               ENDIF
             ENDIF
           ENDIF
@@ -420,7 +427,7 @@
         ELSE
           stor = Wrain_intcp(i)
         ENDIF
-        IF ( Hru_rain(i).GT.0. .AND. cov.GT.DNEARZERO ) THEN
+        IF ( Hru_rain(i).GT.0. .AND. cov>0.0 ) THEN
 
           IF ( Cov_type(i).GT.1 ) THEN
             CALL intercept(Hru_rain(i), stor, cov, Intcp_on(i),
@@ -445,13 +452,15 @@
 
 !******Determine amount of interception from snow
 
-        IF ( Hru_snow(i).GT.0. .AND. cov.GT.DNEARZERO ) THEN
+        IF ( Hru_snow(i).GT.0. .AND. cov>0.0 ) THEN
           Intcp_form(i) = 1
           IF ( Cov_type(i).GT.1 ) THEN
             stor = Snow_intcp(i)
             CALL intercept(Hru_snow(i), stor, cov,
      +                     Intcp_on(i), intcpstor, Net_snow(i))
             IF ( Net_snow(i).LT.NEARZERO ) THEN   !rsr, added 3/9/2006
+              Net_rain(i) = Net_rain(i) + Net_snow(i)
+              Net_snow(i) = 0.0
               Newsnow(i) = 0
               Pptmix(i) = 0   ! reset to be sure it is zero
             ENDIF
@@ -466,11 +475,12 @@
         IF ( Hru_ppt(i).LT.NEARZERO ) THEN
           IF ( Intcp_on(i).EQ.1 ) THEN
 
-            evrn = avail_et/Epan_coef(mo)
+            evrn = avail_et/Epan_coef(Nowmonth)
             evsn = Potet_sublim*avail_et
 
             IF ( Nevap.GT.0 ) THEN
               IF ( Pan_evap(1).GT.-NEARZERO ) evrn = Pan_evap(1)
+              IF ( evrn<0.0 ) evrn = 0.0
             ENDIF
 
 !******Compute snow interception loss
@@ -505,18 +515,19 @@
 
         ENDIF
 
+        evap = intcpevap*cov
+        IF ( evap>avail_et ) THEN
+          evap = avail_et
+          last = intcpevap
+          IF ( cov>0.0 ) THEN
+            intcpevap = avail_et/cov
+          ELSE
+            intcpevap = 0.0
+          ENDIF
+          intcpstor = intcpstor + last - intcpevap
+        ENDIF
         Intcp_evap(i) = intcpevap
         Hru_intcpevap(i) = intcpevap*cov
-        IF ( Hru_intcpevap(i)>Potet(i) ) THEN
-          Hru_intcpevap(i) = Potet(i)
-          last = intcpevap
-          IF ( cov>DNEARZERO ) THEN
-            Intcp_evap(i) = Potet(i)/cov
-          ELSE
-            Intcp_evap(i) = 0.0
-          ENDIF
-          intcpstor = intcpstor + last - Intcp_evap(i)
-        ENDIF
         Intcp_stor(i) = intcpstor
         Hru_intcpstor(i) = intcpstor*cov
 
@@ -561,9 +572,9 @@
         ELSEIF ( ABS(pptbal).GT.1.0E-5 ) THEN
           WRITE (BALUNT, *) 'Interception basin rounding issue', pptbal
         ENDIF
-        WRITE (BALUNT, 9001) Nowtime(1), mo, day, pptbal, Basin_ppt,
-     +        Basin_net_ppt, Basin_intcp_evap, Basin_intcp_stor,
-     +        basin_last_stor, Basin_changeover
+        WRITE (BALUNT, 9001) Nowyear, Nowmonth, Nowday, pptbal,
+     +        Basin_ppt, Basin_net_ppt, Basin_intcp_evap,
+     +        Basin_intcp_stor, basin_last_stor, Basin_changeover
       ENDIF
 
       intrun = 0
@@ -599,12 +610,6 @@
       ELSE
         Intcp_stor = Intcp_stor + Precip
         Net_precip = Precip*(1.0-Cov)
-      ENDIF
-
-!*** allow intcp_stor to exceed stor_max with small amounts of precip
-      IF ( Net_precip.LT.0.000001 ) THEN
-        Intcp_stor = Intcp_stor + Net_precip/Cov
-        Net_precip = 0.0
       ENDIF
 
       END SUBROUTINE intercept

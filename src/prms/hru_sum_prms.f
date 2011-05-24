@@ -57,7 +57,7 @@
       hsumbdecl = 1
 
       IF ( declmodule(
-     +'$Id: hru_sum_prms.f 2242 2010-12-10 00:41:16Z rsregan $'
+     +'$Id: hru_sum_prms.f 3116 2011-05-17 16:20:01Z rsregan $'
      +).NE.0 ) RETURN
 
       ALLOCATE (Hru_ppt_yr(Nhru), Hru_net_ppt_yr(Nhru))
