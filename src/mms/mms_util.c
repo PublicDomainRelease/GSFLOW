@@ -11,9 +11,9 @@
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
- *  $Revision: 3116 $
+ *  $Revision: 4065 $
  *       $Log: alloc_space.c,v $
  *       Revision 1.19  1996/04/29 16:22:56  markstro
  *       Unknown
@@ -181,8 +181,8 @@ void alloc_space (void) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
-   $Revision: 3116 $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+   $Revision: 4065 $
         $Log: batch_run.c,v $
         Revision 1.10  2000/02/18 18:27:03  markstro
         Made previous Julian time a global.  It is set to -1.0 before the run
@@ -337,9 +337,9 @@ int BATCH_run (void) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: single_run.c,v $
         Revision 1.47  2006/11/27 14:30:50  rsregan
 	changed GIS file to animation (ani) file
@@ -1104,9 +1104,9 @@ char *single_run_post_cleanup () {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: build_lists.c,v $
         Revision 1.4  1996/04/09 21:04:02  markstro
         (1) Work on control files
@@ -1238,9 +1238,9 @@ void ADD_to_list (LIST *list, void *itm) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         Revision 1.12  2006/11/27  rsregan
 	change gis to ani
 
@@ -1353,11 +1353,11 @@ char * CHECK_disp_vars (void) {
 		(void)sprintf (buf2, "dispVar_element%d", i);
 
 		for (j = 0; j < *(control_lvar (buf0)); j++) {
-			dv_name = *(control_sarray (buf1, j));
+			dv_name = *((char **)(control_sarray (buf1, j)));
 			(void)strcpy (buf, dv_name);
 			if ( (ptr = strchr (buf, '.')) )
 				*ptr = '\0';
-			dv_index = *control_sarray (buf2, j);
+			dv_index = *((char **)(control_sarray (buf2, j)));
 			if ((CheckIndices (buf, dv_index, M_VARIABLE))) {
 				(void)fprintf (stderr, "ERROR - CHECK_disp_vars: %s[%s] from graph %d is not a valid display variable.\n", buf, dv_index, i+1);
 				(void)sprintf (err_message, "Set display variables: %s[%s] from graph %d is not a valid display variable.\n", buf, dv_index, i+1);
@@ -1407,6 +1407,39 @@ char *CHECK_ani_vars (void) {
         return (NULL);
 }
 
+/*--------------------------------------------------------------------*\
+ | FUNCTION     : CHECK_map_vars
+ | COMMENT      : Makes sure that the selected map variables
+ |                  are valid.
+ | PARAMETERS   :
+ | RETURN VALUE :
+ | RESTRICTIONS :
+\*--------------------------------------------------------------------*/
+char *CHECK_map_vars (void) {
+    int     i, status = 0;
+    char    **names, buf[80], *ptr;
+    PUBVAR  *vaddr;
+    static char err_message[256];
+
+    names = (char **) control_var ("mapOutVar_names");
+
+    for (i = 0; i < *((long *)control_var ("nmapOutVars")); i++) {
+        (void)strcpy (buf, names[i]);
+        ptr = strchr (buf, '.');
+        if (ptr) *ptr = '\0';
+
+        if (!(vaddr = var_addr (buf))) {
+           fprintf (stderr, "ERROR - CHECK_map_vars: %s is not a valid map output variable.\n", names[i]);
+           sprintf (err_message, "Set map variables: %s is not a valid stat variable.\n", names[i]);
+           status = 1;
+        }
+    }
+
+    if (status)
+        return (err_message);
+    else
+        return (NULL);
+}
 /**7****************** LOCAL FUNCTION DEFINITIONS *********************/
 
 /**8************************** TEST DRIVER ****************************/
@@ -1426,9 +1459,9 @@ char *CHECK_ani_vars (void) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: control_addr.c,v $
         Revision 1.5  1996/04/09 21:04:03  markstro
         (1) Work on control files
@@ -1493,9 +1526,9 @@ CONTROL *control_addr (char *key) {
  * control_darray - returns double *
  * control_sarray - returns char ** - string
 
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: control_array.c,v $
         Revision 1.7  1996/02/19 19:59:35  markstro
         Now lints pretty clean
@@ -1567,7 +1600,7 @@ char *control_array (char *key, long ind) {
 			return (char *) ((long *)(control->start_ptr) + ind * sizeof(long));
 
 		case M_STRING:
-			printf ("control_array: key = %s ind = %d val = %s\n", key, ind, *((char **)control->start_ptr + ind));
+			printf ("control_array: key = %s ind = %ld val = %s\n", key, ind, *((char **)control->start_ptr + ind));
 //			return (char *) (((char **)(control->start_ptr)) + (ind * sizeof(char *)));
 			return *((char **)control->start_ptr + ind);
 	}
@@ -1627,9 +1660,9 @@ char *control_sarray (char *key, long ind) {
  * control_dvar - returns double *
  * control_svar - returns char ** - string
 
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: control_var.c,v $
         Revision 1.6  1996/02/19 19:59:36  markstro
         Now lints pretty clean
@@ -1740,6 +1773,30 @@ long control_string_ (char *retval, char *tag, ftnlen len, ftnlen tlen) {
 	return 0;
 }
 
+
+
+/*--------------------------------------------------------------------*\
+ | FUNCTION     : control_string_array_
+ | COMMENT		: called from fortran
+ | PARAMETERS   :
+ | RETURN VALUE : 
+ | RESTRICTIONS :
+\*--------------------------------------------------------------------*/
+long control_string_array_ (char *retval, char *tag, int *index, ftnlen len, ftnlen tlen) {
+	char *foo;
+    char **strings;
+    int i;
+
+	foo = (char *) umalloc(tlen + 1);
+	strncpy(foo, tag, tlen);
+	foo[tlen] = '\0';
+
+    strings = (char **) control_var(foo);
+    i = *index - 1;
+	strncpy (retval, *(strings+i), len);
+	return 0;
+}
+
 /*--------------------------------------------------------------------*\
  | FUNCTION     : control_integer_
  | COMMENT		: returns a long variable value
@@ -1770,9 +1827,9 @@ long control_integer_ (int *retval, char *key, ftnlen len) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: create_vstats.c,v $
         Revision 1.10  1996/06/28 19:32:22  markstro
         (1) Fixed 3d control window.
@@ -1908,9 +1965,9 @@ void create_vstats (void) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: decl_control.c,v $
         Revision 1.12  1996/04/09 21:04:05  markstro
         (1) Work on control files
@@ -2161,9 +2218,9 @@ void decl_control_ (char *ckey, ftnint *ctype, ftnint *csize, void *value, ftnle
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: decldim.c,v $
         Revision 1.13  1996/09/10 16:25:21  markstro
         Unknown
@@ -2450,9 +2507,9 @@ long declmodule_ (char *id, ftnlen idlen) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: declparam.c,v $
         Revision 1.21  2001/05/04 20:58:22  markstro
         Added the xml print file
@@ -2542,7 +2599,7 @@ static int CHECK_param_in_db (char *, char *, char *, int,
 static int VAR_type (char *);
 
 /**5*********************** LOCAL VARIABLES ***************************/
-static char *types[] = {"long (or integer)", "real (or float)", "double"};
+static char *types[] = {"long (or integer)", "real (or float)", "double", "string"};
 
 /**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
 
@@ -2616,7 +2673,7 @@ long declparam_u_ (char *mname, char *pname, char *pdimen, char *ptype,
 	retval = declparam_u(module, name, dimen, type, value,
 	    minimum, maximum, descr, help, units, var, update);
 
-	return(0);
+	return(retval);
 }
 
 /*--------------------------------------------------------------------*\
@@ -3152,15 +3209,21 @@ static int CHECK_param_in_db (char *pkey, char *module, char *dimen, int var_typ
  | RESTRICTIONS :
 \*--------------------------------------------------------------------*/
 static int VAR_type (char *type) {
-	if (!strcmp (type, "integer") || !strcmp (type, "long"))
+	if (!strcmp (type, "integer") || !strcmp (type, "long")) {
 		return (M_LONG);
-	else
-		if (!strcmp (type, "real") || !strcmp (type, "float"))
-			return (M_FLOAT);
-		else
-			if (!strcmp (type, "double precision") || !strcmp (type, "double"))
-				return (M_DOUBLE);
+	}
 
+	if (!strcmp (type, "real") || !strcmp (type, "float")) {
+	   return (M_FLOAT);
+    }
+
+	if (!strcmp (type, "double precision") || !strcmp (type, "double")) {
+	   return (M_DOUBLE);
+    }
+
+	if (!strcmp (type, "string")) {
+	   return (M_STRING);
+    }
 	(void)fprintf(stderr, "ERROR - declparam - type '%s' is illegal.\n", type);
 		return (0);
 }
@@ -3175,9 +3238,9 @@ static int VAR_type (char *type) {
  *
  * Returns 0 if successful, 1 otherwise.
 
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: declvar.c,v $
         Revision 1.17  1999/10/22 17:14:35  markstro
         Added private variables
@@ -3662,9 +3725,9 @@ long declpri (char *name, long size, char *type, char *value) {
  * returns a pointer to a DIMEN struct which contains the given name
  * returns NULL if name not found
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: dim_addr.c,v $
         Revision 1.7  1996/04/29 16:23:00  markstro
         Unknown
@@ -3754,9 +3817,9 @@ char *dim_notes (char *ch_ptr) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: dprint.c,v $
         Revision 1.5  1996/02/19 19:59:54  markstro
         Now lints pretty clean
@@ -4050,9 +4113,9 @@ void dpdble (char *string, double *array, long n, long dlevel) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: free_vstats.c,v $
         Revision 1.7  1996/06/28 19:32:23  markstro
         (1) Fixed 3d control window.
@@ -4136,9 +4199,9 @@ void free_vstats (void) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: get_elem_add.c,v $
         Revision 1.12  1996/02/19 20:00:01  markstro
         Now lints pretty clean
@@ -4508,9 +4571,9 @@ char *GetElemAddress (char *key, char *elemString, int type) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: get_times.c,v $
         Revision 1.5  1996/02/19 20:00:02  markstro
         Now lints pretty clean
@@ -4589,9 +4652,9 @@ void get_times (void) {
  * There are 2 functions: getdim() to be called from C
  *                        getdim_() to be called from Fortran
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: getdim.c,v $
         Revision 1.5  1996/02/19 20:00:03  markstro
         Now lints pretty clean
@@ -4694,9 +4757,9 @@ long getdim (char *name) {
  *
  * Returns 0 if successful, 1 otherwise.
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: getparam.c,v $
         Revision 1.10  1997/03/26 17:04:14  markstro
         Added function getdataname
@@ -4852,23 +4915,25 @@ long getparam (char *module, char *name, int maxsize, char *type, double *pval) 
    * convert fortran types to C types
    */
   var_type = M_LONG;
-  if (!strcmp(type, "real") || !strcmp(type, "float"))
+  if (!strcmp(type, "real") || !strcmp(type, "float")) {
     var_type = M_FLOAT;
-  else if (!strcmp(type, "double precision") || !strcmp(type, "double"))
+  } else if (!strcmp(type, "double precision") || !strcmp(type, "double")) {
     var_type = M_DOUBLE;
+  } else if (!strcmp (type, "string")) {
+    var_type = M_STRING;
+  }
 
   /*
    * check that type is possible
    */
 
-  if((var_type != M_LONG) && (var_type != M_FLOAT) && (var_type != M_DOUBLE))
-	{
+  if((var_type != M_LONG) && (var_type != M_FLOAT) && (var_type != M_DOUBLE) && (var_type != M_STRING)) {
     (void)fprintf(stderr,
 	    "ERROR - getparam - type %s is illegal.\n", type);
     (void)fprintf(stderr, "Key is '%s'.\n", pkey);
     (void)fprintf(stderr, "Type is '%s'.\n", type);
     return(1);
-  	}
+  }
 
   /*
    * get pointer to parameter with key
@@ -4910,7 +4975,7 @@ long getparam (char *module, char *name, int maxsize, char *type, double *pval) 
 	    "ERROR - getparam - incorrect data type requested.\n");
     (void)fprintf(stderr, "Key:   '%s'\n", pkey);
     (void)fprintf(stderr, "Requested type: %s\n", type);
-    (void)fprintf(stderr, "Actual type in data base: %s\n", Mtypes[param->type]);
+    (void)fprintf(stderr, "Actual declared type: %s\n", Mtypes[param->type]);
     return(1);
   }
 */
@@ -4947,6 +5012,10 @@ static long paramcopy (PARAM *param, double *pval, int maxsize) {
 
 			case M_DOUBLE:
 				memcpy ((char *)pval, (char *)param->value, param->size * sizeof(double));
+				break;
+
+			case M_STRING:
+				memcpy ((char *)pval, (char *)param->value, param->size * sizeof(char *));
 				break;
 		}
 	} else {
@@ -4998,6 +5067,11 @@ static long paramcopy (PARAM *param, double *pval, int maxsize) {
  				ptr +=  nrow * sizeof(double);
  				break;
 
+ 			case M_STRING:
+ 				memcpy (ptr, (char *) (param->value + i * val1*sizeof(char *)), val1*sizeof(char *));
+ 				ptr +=  nrow * sizeof(char *);
+ 				break;
+
  		  }
  	  }
 	}
@@ -5046,7 +5120,7 @@ long getoutname_ (char *dinfo, char *ext, ftnlen len, ftnlen elen) {
 
 	ret = getoutname (dinfo, foo);
 
-    if (strlen (dinfo) >= len) {
+    if (strlen (dinfo) >= (size_t)len) {
 		printf ("getoutname:  path name is too long for your buffer!\n");
         ret = 1;
 	}
@@ -5061,7 +5135,7 @@ long getoutname_ (char *dinfo, char *ext, ftnlen len, ftnlen elen) {
  | RESTRICTIONS :
 \*--------------------------------------------------------------------*/
 long getoutname (char *dinfo, char *ext) {
-	sprintf(dinfo, "%s\%s", *control_svar("model_output_file"), ext);
+	sprintf(dinfo, "%s\\%s", *control_svar("model_output_file"), ext);
 	return(0);
 }
 
@@ -5183,6 +5257,69 @@ long getparamfile_ (char *dinfo, ftnlen len) {
 	return(retval);
 }
 
+/*--------------------------------------------------------------------*\
+ | FUNCTION     : getparamstring_
+ | COMMENT		: called from Fortran
+ | PARAMETERS   :
+ | RETURN VALUE :
+ | RESTRICTIONS :
+\*--------------------------------------------------------------------*/
+
+long getparamstring_ (char *mname, char *pname, ftnint *pmaxsize, char *ptype, ftnint *pindex, char *pstring,
+	       ftnlen mnamelen, ftnlen pnamelen, ftnlen ptypelen) {
+
+  char *module, *name, *type;
+  int maxsize;
+  PARAM *param;
+
+  /*
+   * copy maxsize to local long int
+   */
+
+  maxsize = *pmaxsize;
+
+  /*
+   * copy args to new strings, and terminate
+   */
+
+  module = (char *) umalloc(mnamelen + 1);
+  strncpy(module, mname, mnamelen);
+  module[mnamelen] = '\0';
+
+  name = (char *) umalloc(pnamelen + 1);
+  strncpy(name, pname, pnamelen);
+  name[pnamelen] = '\0';
+
+  type = (char *) umalloc(ptypelen + 1);
+  strncpy(type, ptype, ptypelen);
+  type[ptypelen] = '\0';
+
+
+
+
+  param = param_addr(name);
+
+  if (param == NULL) {
+    (void)fprintf(stderr,
+	    "ERROR - getparamstring - parameter not found.\n");
+    (void)fprintf(stderr, "Key:   '%s'\n", name);
+    return(1);
+  }
+
+  /*
+  **  Check to see if the parameter values were set in the parameter file
+  */
+  if (param->read_in == 0) {
+    (void)fprintf(stderr,
+	    "getparamstring - parameter %s is used but values are not set in the parameter file.  Module default values are being used.\n", name);
+  }
+
+//   strncpy (pstring, (char *)(param->value)[*pindex], 80);
+   strncpy (pstring, *((char **)param->value + *pindex), 80);
+
+   return(0);
+
+}
 /*+
  * United States Geological Survey
  *
@@ -5204,9 +5341,9 @@ long getparamfile_ (char *dinfo, ftnlen len) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: getvar.c,v $
         Revision 1.8  1996/04/09 21:04:06  markstro
         (1) Work on control files
@@ -5363,7 +5500,7 @@ long getvar (char *module, char *name, long maxsize, char *type, double *value) 
 				"ERROR - getvar - incorrect data type requested.\n");
 		(void)fprintf(stderr, "Key:   '%s'\n", vkey);
 		(void)fprintf(stderr, "Requested type: %s\n", type);
-		(void)fprintf(stderr, "Actual type in data base: %s\n",
+		(void)fprintf(stderr, "Actual declared type: %s\n",
 							Mtypes[var->type]);
 		return(1);
 	}
@@ -5430,6 +5567,30 @@ long getvar (char *module, char *name, long maxsize, char *type, double *value) 
 	return (0);
 }
 
+/*--------------------------------------------------------------------*\
+ | FUNCTION		: getvartype_
+ | COMMENT		: called from Fortran, sorts out args and returns the type()
+ | PARAMETERS   :
+ | RETURN VALUE : 
+ | RESTRICTIONS :
+\*--------------------------------------------------------------------*/
+long getvartype_ (char *vname, ftnlen vnamelen) {
+	char vkey[128];
+	PUBVAR *var;
+  
+    strncpy (vkey, vname, 128);
+/*
+* get pointer to variable with key
+*/
+	if (!(var = var_addr (vkey))) {
+		(void)fprintf(stderr, "ERROR - getvartype - variable not found.\n");
+		(void)fprintf(stderr, "Key:   '%s'\n", vkey);
+		return(-1);
+	}
+
+	return (var->type);
+}
+
 /**8************************** TEST DRIVER ****************************/
 
 /**7****************** LOCAL FUNCTION DEFINITIONS *********************/
@@ -5447,7 +5608,7 @@ long getvar (char *module, char *name, long maxsize, char *type, double *value) 
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
  */
 
@@ -5627,9 +5788,9 @@ int closeRuntimeGraphs (void) {
  * The Julian day starts at noon of the Gregorian day and extends
  * to noon the next Gregorian day.
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
 		$Log: julconvert.c,v $
 		Revision 1.6  2001/04/03 18:18:06  markstro
 		Unknown
@@ -5755,7 +5916,7 @@ int isleap (int year) {
  *
  * Mike Dixon CADSWES CU July 1990
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
  **********************************************************************/
 #define JULDAY_C
@@ -5828,9 +5989,9 @@ int julday (DATETIME *datetime) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: load_param.c,v $
         Revision 1.5  1996/02/19 20:00:15  markstro
         Now lints pretty clean
@@ -5873,6 +6034,7 @@ long load_param (PARAM *param) {
 	double *dval, *dmin, *dmax, *ddef;
 	float *fval, *fmin, *fmax, *fdef;
 	long *lval, *lmin, *lmax, *ldef;
+	char *sval, *sdef;
 
 	if (param->type == M_DOUBLE) {
 		param->value = (char *)umalloc (param->size * sizeof (double));
@@ -5889,6 +6051,11 @@ long load_param (PARAM *param) {
 		param->def = (char *)umalloc (param->size * sizeof (long));
 		param->min = (char *)umalloc (param->size * sizeof (long));
 		param->max = (char *)umalloc (param->size * sizeof (long));
+	} else if (param->type == M_STRING) {
+		param->value = (char *)umalloc (param->size * sizeof (char *));
+		param->def = (char *)umalloc (param->size * sizeof (char *));
+		param->min = (char *)umalloc (param->size * sizeof (char *));
+		param->max = (char *)umalloc (param->size * sizeof (char *));
 	}
 
 /*
@@ -5956,6 +6123,13 @@ long load_param (PARAM *param) {
 			ldef = (long *)param->def;
 			for (i = 0; i < param->size; i++)
 				*lval++ = *ldef++;
+			break;
+
+		case M_STRING:
+			sval = (char *)param->value;
+			sdef = (char *)param->def;
+			for (i = 0; i < param->size; i++)
+				*sval++ = *sdef++;
 			break;
 	}
 
@@ -6078,6 +6252,11 @@ long load_param (PARAM *param) {
 			}
 		}
 		break;
+
+	case M_STRING:
+// Nothing to check
+		break;
+
 	}
 	return(0);
 }
@@ -6100,9 +6279,9 @@ long load_param (PARAM *param) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: oprint.c,v $
         Revision 1.4  1996/02/19 20:00:29  markstro
         Now lints pretty clean
@@ -6412,7 +6591,7 @@ void opdble (char *string, double *array, long n) {
  * returns a pointer to a PARAM struct which contains the given key
  * returns NULL if key not found
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: param_addr.c,v $
         Revision 1.4  1996/02/19 20:00:33  markstro
         Now lints pretty clean
@@ -6423,7 +6602,7 @@ void opdble (char *string, double *array, long n) {
  * Revision 1.2  1994/01/31  20:17:02  markstro
  * Make sure that all source files have CVS log.
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
  **************************************************************************/
 #define PARAM_ADDR_C
@@ -6475,9 +6654,9 @@ PARAM * param_addr (char *key) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: parse_args.c,v $
         Revision 1.15  1999/10/22 17:14:36  markstro
         Added private variables
@@ -6624,7 +6803,7 @@ void parse_args (int argc, char **argv, int *set_count, char **set_name, char **
 /**8************************** TEST DRIVER ****************************/
 
 /*
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  */
 #define PRINT_MODEL_INFO_C
 #include <string.h>
@@ -6699,9 +6878,9 @@ int print_model_info (void) {
 /**************************************************************************
  * print_params.c: prints the param data base to a file
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: print_params.c,v $
         Revision 1.15  2001/11/27 16:00:10  markstro
         Unknown
@@ -7014,9 +7193,9 @@ void print_param (FILE *param_file, PARAM *param, long l, long nl, long k,
 /**************************************************************************
  * print_vars.c: prints the var data base to a file
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: print_vars.c,v $
         Revision 1.10  1999/10/22 17:14:37  markstro
         Added private variables
@@ -7287,9 +7466,9 @@ void print_var (FILE *var_file, PUBVAR *var, long l, long nl, long k, long nk,
  *
  * Returns 0 if successful, 1 otherwise.
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: putvar.c,v $
         Revision 1.7  1996/02/19 20:00:38  markstro
         Now lints pretty clean
@@ -7559,9 +7738,9 @@ long putvar (char *module, char *name, long maxsize, char *type, double *value) 
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: read_control.c,v $
         Revision 1.21  1996/08/28 15:24:10  markstro
         Unknown
@@ -7643,7 +7822,6 @@ static char *rc (char *control_name) {
    double   *dptr;
    float   *fptr;
    long   *lptr;
-   char   **cptr;
    char   line[MAXDATALNLEN], *key;
    static char      buf[256];
 
@@ -7856,9 +8034,9 @@ char *fgets_rc (char *str, int num, FILE *stream) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: read_datainfo.c,v $
         Revision 1.15  2000/03/07 20:35:18  markstro
         Added comments to data file header
@@ -8099,9 +8277,9 @@ char *read_datainfo (FILE_DATA *fd) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: read_line.c,v $
         Revision 1.35  2001/01/22 22:26:41  markstro
         unknown
@@ -8995,9 +9173,9 @@ static void INSERT_time (char *line, DATETIME *ptr) {
  * read_params.c: reads the params data base from a file
  * File name is passed in as an argument
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: read_params.c,v $
         Revision 1.30  1998/10/20 15:53:02  markstro
         Fixed "blank" format.
@@ -9612,17 +9790,17 @@ static char *READ_param_head (PARAM **param_ptr, FILE **param_file, char *param_
 * get number of dimensions
 */
     if(fgets(line, MAXDATALNLEN, *param_file) == NULL) {
-      (void)sprintf (buf,
-		     "read_params: reading param ndimen, Early end-of-file: %s",
+      (void)printf ("ERROR, getparam: reading param ndimen, Early end-of-file: %s",
 		     param_file_name);
-      return (buf);
+      exit(1);
     }
 
    if (isdigit(*line)) {
       if ((*param_ptr)->ndimen != atol(line)) {
-         (void)sprintf (buf,
-            "read_params: number of dimensions for %s in parameter file doesn't match parameter declaration in module.\n", key);
-         return (buf);
+         (void)printf (
+            "\nERROR, getparam: number of dimensions for parameter %s\ndoesn't match parameter declaration.\nParameter File: %s\n",
+			key, param_file_name);
+         exit(1);
       }
 
       if((*param_ptr)->ndimen == 0) {
@@ -9646,10 +9824,10 @@ static char *READ_param_head (PARAM **param_ptr, FILE **param_file, char *param_
         dimen[strlen(dimen) - 1] = '\0';
 
         if (strcmp(dimen, (*param_ptr)->dimen[i]->name)) {
-           (void)sprintf (buf,
-                 "read_params: expecting dimension: %s\nread dimension: %s\nkey is: %s\nfile: %s",
-                 dimen, (*param_ptr)->dimen[i]->name, key, param_file_name);
-           return (buf);
+			(void)fprintf (stderr,
+                 "ERROR, getparam: expecting dimension: %s\nread dimension: %s\nparameter: %s\nfile: %s\n",
+                 (*param_ptr)->dimen[i]->name, dimen, key, param_file_name);
+			exit(1);
         }
      } /* i */
 
@@ -9669,9 +9847,9 @@ static char *READ_param_head (PARAM **param_ptr, FILE **param_file, char *param_
      }
 
       if(param_size != (*param_ptr)->size) {
-	(void)sprintf (buf, "read_params: size incorrect, key:%s\nfile: %s",
-		       key, param_file_name);
-	return (buf);
+		  (void)printf ("ERROR, getparam: size incorrect, \nexpected: %ld, specified: %d\nkey: %s\nfile: %s",
+		       (*param_ptr)->size, param_size, key, param_file_name);
+		exit(1);
       }
     } else {
       (*param_ptr)->ndimen = 1;
@@ -9696,14 +9874,13 @@ static char *READ_param_head (PARAM **param_ptr, FILE **param_file, char *param_
       return (buf);
     }
     if((type = atol(line)) == 0) {
-      (void)sprintf (buf, "read_params: decoding type from:%s\nkey: %s\nfile: %s",
+      (void)printf ("\nERROR, getparam: decoding type from:%s\nkey: %s\nfile: %s\n",
 		     line, key, param_file_name);
-      return (buf);
+      exit(1);
     }
     if(type != (*param_ptr)->type) {
-      (void)sprintf (buf, "read_params: type incorrect, key:%s\nfile: %s",
-		     key, param_file_name);
-      return (buf);
+		(void)fprintf (stderr, "ERROR, getparam: incorrect or missing type: \nparameter: %s\nfile: %s\n", key, param_file_name);
+		exit(1);
     }
   
 
@@ -9728,7 +9905,7 @@ static char *READ_param_values (PARAM *param, FILE *param_file, char line[]) {
 	int l1, l2, done;
 	int	desc_count = 0;
 	int repeat_count;
-	char delims[] = " ";
+	char delims[] = ",";
 	char *result = NULL;
 	char *comp_ptr = NULL;
 	static char crap[MAXDATALNLEN], crap2[MAXDATALNLEN];
@@ -9811,6 +9988,23 @@ static char *READ_param_values (PARAM *param, FILE *param_file, char line[]) {
 				for (j = 0; j < repeat_count && !done; j++) {
 					if (i < param->size) {
 						switch (param->type) {
+
+							case M_STRING:
+                                comp_ptr[strlen(comp_ptr)-1] = '\0';
+                                *((char **)param->value + i) = strdup (comp_ptr);
+                                i++;
+
+								//if (comp_ptr != endp && *endp == '\n') {
+
+								//} else {
+								//	sprintf (buf, "There is a parameter format error. Parameter name: %s Index = %d\n   The data type should be a character string or there could be white spaces after the values on the line.", param->name, (i+1));
+									//printf ("%s", buf);
+								//	return (buf);
+								//}
+
+								//((double *)(param->value))[i++] = atof(comp_ptr);
+								break;
+
 							case M_DOUBLE:
 								d = strtod(comp_ptr, &endp);
 								if (comp_ptr != endp && *endp == '\n') {
@@ -9875,10 +10069,8 @@ static char *READ_param_values (PARAM *param, FILE *param_file, char line[]) {
 	}
 
 	if (i < param->size) {
-		sprintf (buf, "READ_param_values: too FEW values read. param = %s read_count = %d size = %ld\n", param->name, i, param->size);
-		printf ("%s", buf);
-		return (buf);
-		//printf ("READ_param_values: too few values read. param = %s read_count = %d size = %ld\n", param->name, i, param->size);
+		printf ("ERROR, getparam: too few values read. \nparameter %s\nread_count = %d size = %ld\n", param->name, i, param->size);
+		exit(1);
 	} else if (i > param->size) {
 		sprintf (buf, "READ_param_values: too MANY values read. param = %s read_count = %d size = %ld\n", param->name, i, param->size);
 		printf ("%s", buf);
@@ -9887,7 +10079,7 @@ static char *READ_param_values (PARAM *param, FILE *param_file, char line[]) {
 
 	return (NULL);
 }
-/**8************************** TEST DRIVER ****************************/
+/***************************** TEST DRIVER ****************************/
 /*+
  * United States Geological Survey
  *
@@ -9902,9 +10094,9 @@ static char *READ_param_values (PARAM *param, FILE *param_file, char line[]) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: read_vars.c,v $
         Revision 1.12  2000/02/18 18:27:06  markstro
         Made previous Julian time a global.  It is set to -1.0 before the run
@@ -10325,9 +10517,9 @@ static int read_var_line (char *key, char *line, FILE *var_file, char *var_file_
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: readvar.c,v $
         Revision 1.8  1996/04/09 21:04:14  markstro
         (1) Work on control files
@@ -10528,9 +10720,9 @@ long readvar (char *module, char *name) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: reset_dim.c,v $
         Revision 1.15  1999/10/22 17:14:37  markstro
         Added private variables
@@ -10924,9 +11116,9 @@ static void resize_param (PARAM *param, long dimen_num, long nold, long nnew, lo
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: save_vars.c,v $
         Revision 1.14  2000/02/18 18:27:07  markstro
         Made previous Julian time a global.  It is set to -1.0 before the run
@@ -11122,7 +11314,7 @@ int save_vars (char *var_file_name) {
  * REF      :
  * REVIEW   :
  * PR NRS   :
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: save_params.c,v $
         Revision 1.17  1998/03/04 17:20:20  markstro
         Added seperate runcontrol functions for each run type.
@@ -11420,9 +11612,9 @@ static void write_parameters (FILE *param_file, int writeAllParams) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: setup_cont.c,v $
         Revision 1.31  1999/08/24 16:34:16  markstro
         Version 1.1.1
@@ -11546,6 +11738,7 @@ static void write_parameters (FILE *param_file, int writeAllParams) {
 extern void decl_control_string (char *key, char *valstr);
 extern void decl_control_int_array (char *key, long size, long *valstr);
 extern void decl_control_float_array (char *key, long size, float *valstr);
+//extern void decl_control_string_array (char *valstr, char *key, long size);
 
 /**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
 /*--------------------------------------------------------------------*\
@@ -11558,6 +11751,7 @@ extern void decl_control_float_array (char *key, long size, float *valstr);
 void setup_cont (void) {
         long *lval;
         float *fval;
+//        char *cval;
 //      char **cp;
 //      int i;
 
@@ -11569,23 +11763,27 @@ void setup_cont (void) {
 */
         decl_control_string ("model_mode", "PRMS");
         decl_control_string ("modflow_name", "modflow.nam");
-        decl_control_string ("precip_module", "precip_prms");
-        decl_control_string ("temp_module", "temp_1sta_prms");
-        decl_control_string ("et_module", "potet_jh_prms");
-        decl_control_string ("srunoff_module", "srunoff_smidx_casc");
-        decl_control_string ("solrad_module", "ddsolrad_hru_prms");
-        decl_control_string ("soltab_module", "soltab_hru_prms");
-        decl_control_string ("capillary_module", "soilzone_prms");
-        decl_control_string ("gravity_module", "soilzone_prms");
+        decl_control_string ("precip_module", "precip_1sta");
+        decl_control_string ("temp_module", "temp_1sta");
+        decl_control_string ("et_module", "potet_jh");
+        decl_control_string ("srunoff_module", "srunoff_smidx");
+        decl_control_string ("solrad_module", "ddsolrad_hru");
+        decl_control_string ("soltab_module", "soltab");
+        decl_control_string ("soilzone_module", "soilzone");
         decl_control_string ("stats_module", "null");
         decl_control_string ("filename_divert", "null");
         decl_control_string ("filename_return", "null");
         decl_control_string ("filename_apply", "null");
-		decl_control_string ("strmflow_module", "strmflow_prms");
-        decl_control_string ("transp_module", "transp_tindex_prms");
+		decl_control_string ("strmflow_module", "strmflow");
+        decl_control_string ("transp_module", "transp_tindex");
         decl_control_string ("gsflow_output_file", "gsflow.out");
         decl_control_string ("gsflow_csv_file", "gsflow.csv");
-        decl_control_string ("gridreport_file", "grid_varnames");
+
+/*
+        cval = (char *)umalloc (sizeof (long));
+        cval[0] = "recharge";
+        decl_control_string_array (cval, "mapOutVar_names", 20);
+*/
 
         lval = (long *)umalloc (sizeof (long));
 		lval[0] = 7;
@@ -11601,9 +11799,25 @@ void setup_cont (void) {
 
         lval = (long *)umalloc (sizeof (long));
 		lval[0] = 0;
+		decl_control_int_array ("nmapVars", 1, lval);
+
+		lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
 		decl_control_int_array ("cfgi_flag", 1, lval);
 
         lval = (long *)umalloc (sizeof (long));
+		lval[0] = 1;
+		decl_control_int_array ("cascade_flag", 1, lval);
+
+		lval = (long *)umalloc (sizeof (long));
+		lval[0] = 1;
+		decl_control_int_array ("cascadegw_flag", 1, lval);
+
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 1;
+		decl_control_int_array ("subbasin_flag", 1, lval);
+
+		lval = (long *)umalloc (sizeof (long));
 		lval[0] = 0;
 		decl_control_int_array ("frozen_flag", 1, lval);
 
@@ -11617,6 +11831,10 @@ void setup_cont (void) {
 
         lval = (long *)umalloc (sizeof (long));
 		lval[0] = 0;
+		decl_control_int_array ("mbInit_flag", 1, lval);
+
+		lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
 		decl_control_int_array ("gwflow_flag", 1, lval);
 
         lval = (long *)umalloc (sizeof (long));
@@ -11625,32 +11843,37 @@ void setup_cont (void) {
 
         lval = (long *)umalloc (sizeof (long));
 		lval[0] = 0;
-		decl_control_int_array ("app_div_flag", 1, lval);
+		decl_control_int_array ("orad_flag", 1, lval);
 
 		lval = (long *)umalloc (sizeof (long));
 		lval[0] = 0;
-		decl_control_int_array ("prms_warmup", 1, lval);
+		decl_control_int_array ("app_div_flag", 1, lval);
 
         lval = (long *)umalloc (sizeof (long));
 		lval[0] = 0;
 		decl_control_int_array ("lake_flag", 1, lval);
 
-        lval = (long *)umalloc (sizeof (long));
+		lval = (long *)umalloc (sizeof (long));
 		lval[0] = 0;
-        decl_control_int_array ("grid_reportON_OFF", 1, lval);
+        decl_control_int_array ("map_resultsON_OFF", 1, lval);
 /*
 **	file names
 */
         decl_control_string ("executable_desc", "MOWS executable");
-        decl_control_string ("executable_model", "prms2010");
+        decl_control_string ("executable_model", "prms-iv");
         decl_control_string ("data_file", "prms.data");
         decl_control_string ("param_file", "prms.params");
         decl_control_string ("var_save_file", "prms_ic.out");
         decl_control_string ("var_init_file", "prms_ic.in");
         //decl_control_string ("stats_output_file", "stats.out");
-        decl_control_string ("stat_var_file", "statvar.dat");
-        decl_control_string ("ani_output_file", "animation.out");
+        decl_control_string ("stat_var_file", "tsv.out");
+        decl_control_string ("ani_output_file", "tsd.out");
         decl_control_string ("model_output_file", "prms.out");
+        decl_control_string ("tmax_day", "tmax.day");
+        decl_control_string ("tmin_day", "tmin.day");
+        decl_control_string ("precip_day", "precip.day");
+        decl_control_string ("swrad_day", "swrad.day");
+        decl_control_string ("potet_day", "potet.day");
 /*
 **	run start and end times
 */
@@ -11705,6 +11928,17 @@ void setup_cont (void) {
         lval = (long *)umalloc (sizeof (long));
 		lval[0] = 0;
         decl_control_int_array ("naniOutVars", 1, lval);
+
+/*
+**	map output
+*/
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+        decl_control_int_array ("mapOutON_OFF", 1, lval);
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+        decl_control_int_array ("nmapOutVars", 1, lval);
+
 /*
 **	graphics display
 */
@@ -11745,9 +11979,9 @@ void setup_cont (void) {
  * sort_dims.c: sorts the dimen array so that the key for each
  * structure is in increasing alphabetical order
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: sort_dims.c,v $
         Revision 1.5  1996/04/29 16:23:25  markstro
         Unknown
@@ -11804,9 +12038,9 @@ void sort_dims (void) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: sort_params.c,v $
         Revision 1.5  1996/02/19 20:01:12  markstro
         Now lints pretty clean
@@ -11883,9 +12117,9 @@ void sort_params (void) {
  * sort_vars.c: sorts the pubvar array so that the key for each
  * structure is in increasing alphabetical order
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: sort_vars.c,v $
         Revision 1.5  1996/02/19 20:01:12  markstro
         Now lints pretty clean
@@ -11968,9 +12202,9 @@ void sort_vars (void) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: stats.c,v $
         Revision 1.13  1998/11/10 15:17:44  markstro
         unknown
@@ -12282,9 +12516,9 @@ int stats (void) {
  * If the total number of entries is less than required, the sequence
  * is repeated.
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: str_to_vals.c,v $
         Revision 1.7  1996/02/19 20:01:17  markstro
         Now lints pretty clean
@@ -12507,9 +12741,9 @@ long str_to_vals (char *encoded_string, long size, long type, char *store_addr) 
  *
  * The routines without the suffix are called from C
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: timing.c,v $
         Revision 1.7  1997/04/18 16:44:15  markstro
         (1)  Commented out errno problem with opening files from fortran.
@@ -13008,7 +13242,7 @@ double delnex (void) {
  *
  * Mike Dixon CADSWES CU July 1990
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
  **********************************************************************/
 #define UMALLOC_ETC_C
@@ -13098,9 +13332,9 @@ void ufree (char *ptr) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: uprint.c,v $
         Revision 1.10  1996/04/29 16:23:26  markstro
         Unknown
@@ -13559,9 +13793,9 @@ void updble (char *dimname, long dimNo, char *string, double *array, long n) {
  * returns a pointer to a PUBVAR struct which contains the given key
  * returns NULL if key not found
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: var_addr.c,v $
         Revision 1.5  1999/10/22 17:14:38  markstro
         Added private variables
@@ -13668,9 +13902,9 @@ PUBVAR *var_addr (char *key) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: write_vstats.c,v $
         Revision 1.4  1996/02/19 20:01:24  markstro
         Now lints pretty clean
@@ -13807,7 +14041,7 @@ int call_setdims()
  * REVIEW   :
  * PR NRS   :
  *
-   $Revision: 3116 $
+   $Revision: 4065 $
         $Log: getdimname.c,v $
         Revision 1.10  1999/08/24 16:34:04  markstro
         Version 1.1.1

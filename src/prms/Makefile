@@ -1,65 +1,137 @@
 # prms libraray makefile
-# $Id: Makefile 3116 2011-05-17 16:20:01Z rsregan $
+# $Id: Makefile 4059 2011-12-13 19:17:38Z rsregan $
 
 include ../makelist
 PRMSLIB = ../../lib/libprms.a
 GSFDIR = ../gsflow
 
 # Define all object files which make up the library
-
+#
 LIBOBJS = \
-        basin_prms.o \
-        obs_prms.o \
-        obs_adjust_prms.o \
-        soltab_hru_prms.o \
-        cascade_prms.o \
-        temp_1sta_prms.o \
-        temp_laps_prms.o \
-        temp_dist2_prms.o \
-        ddsolrad_hru_prms.o \
-        ccsolrad_hru_prms.o \
-        transp_tindex_prms.o \
-        potet_jh_prms.o \
-        potet_hamon_hru_prms.o \
-        potet_pan_prms.o \
-        intcp_prms.o \
-        precip_prms.o \
-        precip_laps_prms.o \
-        precip_dist2_prms.o \
+        basin.o \
+        climateflow.o \
+        obs.o \
+        soltab.o \
+        cascade.o \
+        transp_tindex.o \
+        temp_1sta.o \
+        temp_laps.o \
+        temp_dist2.o \
+        climate_hru.o \
+        ddsolrad.o \
+        ccsolrad.o \
+        potet_jh.o \
+        potet_hamon.o \
+        potet_pan.o \
+        intcp.o \
+        precip_1sta.o \
+        precip_laps.o \
+        precip_dist2.o \
         xyz_dist.o \
-        snowcomp_prms.o \
-        srunoff_smidx_casc.o \
-        srunoff_carea_casc.o \
-        soilzone_prms.o \
-        gwflow_casc_prms.o \
-        strmflow_prms.o \
-        subbasin_prms.o \
-        grid_report.o \
-        basin_sum_prms.o \
-        hru_sum_prms.o
+        snowcomp.o \
+        soilzone.o \
+        srunoff_smidx.o \
+        srunoff_carea.o \
+        gwflow.o \
+        strmflow.o \
+        subbasin.o \
+        basin_sum.o \
+        hru_sum.o \
+        map_results.o \
+        basin_sum.o
 
-all: lib
+all: prms_module.mod lib
 
 install: lib
 
-lib: $(PRMSLIB)
+lib: prms_module.mod $(PRMSLIB)
 
 prms_module.mod: $(GSFDIR)/prms_module.mod
 		$(RM) prms_module.mod
-		$(LN) $(GSFDIR)/prms_module.mod prms_module.mod
+		$(CP) $(GSFDIR)/prms_module.mod prms_module.mod
+
+gsfmodule.mod: $(GSFDIR)/gsfmodule.mod
+		$(RM) gsfmodule.mod
+		$(CP) $(GSFDIR)/gsfmodule.mod gsfmodule.mod
+
+gsfprms2mf.mod: $(GSFTRUNKDIR)/gsfprms2mf.mod
+	$(RM) gsfmprms2mf.mod
+	$(CP) $(GSFTRUNKDIR)/gsfprms2mf.mod gsfprms2mf.mod
+
+prms_climatevars.mod: climateflow.o
 
 $(GSFDIR)/prms_module.mod:
-		$(CD) ../gsflow; make gsflow_prms.o
+	$(RM) prms_module.mod
+	$(CD) ../gsflow; make gsflow_prms.o
 
-basin_prms.o: prms_module.mod
-soilzone_gsflow.o: prms_module.mod
-basin_sum_prms.o: prms_module.mod
-obs_prms.o: prms_module.mod
+cascade.o: cascade.f prms_module.mod
+	$(FC) -c $(FFLAGS) cascade.f
+temp_1sta.o: temp_1sta.f90
+	$(FC) -c $(FFLAGS) temp_1sta.f90
+temp_laps.o: temp_laps.f90
+	$(FC) -c $(FFLAGS) temp_laps.f90
+temp_dist2.o: temp_dist2.f prms_module.mod
+	$(FC) -c $(FFLAGS) temp_dist2.f
+precip_1sta.o: precip_1sta.f90
+	$(FC) -c $(FFLAGS) precip_1sta.f90
+precip_laps.o: precip_laps.f90 prms_module.mod 
+	$(FC) -c $(FFLAGS) precip_laps.f90
+precip_dist2.o: precip_dist2.f prms_module.mod
+	$(FC) -c $(FFLAGS) precip_dist2.f
+xyz_dist.o: xyz_dist.f prms_module.mod
+	$(FC) -c $(FFLAGS) xyz_dist.f
+basin.o: basin.f prms_module.mod
+	$(FC) -c $(FFLAGS) basin.f
+snowcomp.o: snowcomp.f prms_module.mod
+	$(FC) -c $(FFLAGS) snowcomp.f
+srunoff_smidx.o: srunoff_smidx.f prms_module.mod
+	$(FC) -c $(FFLAGS) srunoff_smidx.f
+srunoff_carea.o: srunoff_carea.f prms_module.mod
+	$(FC) -c $(FFLAGS) srunoff_carea.f
+soilzone.o: soilzone.f prms_module.mod
+	$(FC) -c $(FFLAGS) soilzone.f
+subbasin.o: subbasin.f prms_module.mod
+	$(FC) -c $(FFLAGS) subbasin.f
+basin_sum.o: basin_sum.f prms_module.mod
+	$(FC) -c $(FFLAGS) basin_sum.f
+hru_sum.o: hru_sum.f90
+	$(FC) -c $(FFLAGS) hru_sum.f90
+strmflow.o: strmflow.f90
+	$(FC) -c $(FFLAGS) strmflow.f90
+transp_tindex.o: transp_tindex.f90
+	$(FC) -c $(FFLAGS) transp_tindex.f90
+climate_hru.o: climate_hru.f90
+	$(FC) -c $(FFLAGS) climate_hru.f90
+gwflow.o: gwflow.f90 prms_module.mod
+	$(FC) -c $(FFLAGS) gwflow.f90
+obs.o: obs.f prms_module.mod
+	$(FC) -c $(FFLAGS) obs.f
+climateflow.o: climateflow.f prms_module.mod
+	$(FC) -c $(FFLAGS) climateflow.f
+soltab.o: soltab.f90
+	$(FC) -c $(FFLAGS) soltab.f90
+ddsolrad.o: ddsolrad.f prms_module.mod
+	$(FC) -c $(FFLAGS) ddsolrad.f
+ccsolrad.o: ccsolrad.f prms_module.mod
+	$(FC) -c $(FFLAGS) ccsolrad.f
+potet_jh.o: potet_jh.f90
+	$(FC) -c $(FFLAGS) potet_jh.f90
+potet_jh2.o: potet_jh2.f90
+	$(FC) -c $(FFLAGS) potet_jh2.f90
+potet_hamon.o: potet_hamon.f90
+	$(FC) -c $(FFLAGS) potet_hamon.f90
+potet_pan.o: potet_pan.f90 prms_module.mod
+	$(FC) -c $(FFLAGS) potet_pan.f90
+intcp.o: intcp.f90 prms_module.mod
+	$(FC) -c $(FFLAGS) intcp.f90
+map_results.o: map_results.f90 prms_module.mod
+	$(FC) -c $(FFLAGS) map_results.f90
 
-$(PRMSLIB): $(LIBOBJS)
+$(PRMSLIB): $(GSFDIR)/prms_module.mod $(LIBOBJS)
 	$(RM) $(PRMSLIB)
 	$(AR) $(PRMSLIB) $(LIBOBJS)
 	$(RANLIB) $(PRMSLIB)
 
 clean:
 	$(RM) *.o $(PRMSLIB) *.mod *~ svn*.tmp
+

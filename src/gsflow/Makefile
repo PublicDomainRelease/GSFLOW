@@ -1,5 +1,5 @@
 ###################################################
-# $Id: Makefile 3116 2011-05-17 16:20:01Z rsregan $
+# $Id: Makefile 3983 2011-11-23 00:42:21Z rsregan $
 ###################################################
 
 include ../makelist
@@ -75,6 +75,10 @@ gwfsfrmodule.mod: $(MFDIR)/gwfsfrmodule.mod
 	$(RM) gwfsfrmodule.mod
 	$(LN) $(MFDIR)/gwfsfrmodule.mod gwfsfrmodule.mod
 
+gwfnwtmodule.mod: $(MFDIR)/gwfnwtmodule.mod
+	$(RM) gwfnwtmodule.mod
+	$(LN) $(MFDIR)/gwfnwtmodule.mod gwfnwtmodule.mod
+
 gwflpfmodule.mod: $(MFDIR)/gwflpfmodule.mod
 	$(RM) gwflpfmodule.mod
 	$(LN) $(MFDIR)/gwflpfmodule.mod gwflpfmodule.mod
@@ -139,19 +143,23 @@ prms_soilzone.mod: $(PRMSDIR)/prms_soilzone.mod
 	$(RM) prms_soilzone.mod
 	$(LN) $(PRMSDIR)/prms_soilzone.mod prms_soilzone.mod
 
-gwfnrsmodule.mod: $(MFDIR)/gwfnrsmodule.mod
-	$(RM) gwfnrsmodule.mod
-	$(LN) $(MFDIR)/gwfnrsmodule.mod gwfnrsmodule.mod
+pcgn.mod: $(MFDIR)/pcgn.mod
+	$(RM) pcgn.mod
+	$(LN) $(MFDIR)/pcgn.mod pcgn.mod
+
+gwfupwmodule.mod: $(MFDIR)/gwfupwmodule.mod
+	$(RM) gwfupwmodule.mod
+	$(LN) $(MFDIR)/gwfupwmodule.mod gwfupwmodule.mod
 
 gsfprms2mf.mod: gsflow_prms2mf.o
 gsfmf2prms.mod: gsflow_mf2prms.o
 gsfconvert.mod: gsflow_setconv.o
 gsfmodflow.mod: gsflow_modflow.o
 
-gsflow_prms2mf.o: gsflow_prms2mf.f gsfconvert.mod global.mod gwfuzfmodule.mod gwfsfrmodule.mod gwflakmodule.mod prms_obs.mod prms_climatevars.mod prms_flowvars.mod
+gsflow_prms2mf.o: gsflow_prms2mf.f gsfconvert.mod global.mod gwfuzfmodule.mod gwfsfrmodule.mod gwflakmodule.mod prms_obs.mod prms_climatevars.mod prms_flowvars.mod gwfnwtmodule.mod
 	$(FC) -c $(FFLAGS) gsflow_prms2mf.f
 
-gsflow_modflow.o: gsflow_modflow.f $(FINCLUDES) $(MFMODDEPN) $(MFMODULES) gwflakmodule.mod gwfuzfmodule.mod global.mod gwfhufmodule.mod gwfbcfmodule.mod prms_basin.mod prms_soilzone.mod prms_obs.mod
+gsflow_modflow.o: gsflow_modflow.f $(FINCLUDES) $(MFMODDEPN) $(MFMODULES) pcgn.mod gwflakmodule.mod gwfuzfmodule.mod global.mod gwfhufmodule.mod gwfbcfmodule.mod prms_basin.mod prms_soilzone.mod prms_obs.mod gwfnwtmodule.mod
 	$(FC) -c $(FFLAGS) gsflow_modflow.f
 
 gsflow_prms.o: gsflow_prms.f global.mod
@@ -160,7 +168,7 @@ gsflow_prms.o: gsflow_prms.f global.mod
 gsflow_sum.o: gsflow_sum.f global.mod gwfbasmodule.mod gwfuzfmodule.mod gwfsfrmodule.mod gsfconvert.mod gsfprms2mf.mod gsfbudget.mod gsfmodflow.mod prms_cascade.mod prms_snow.mod prms_intcp.mod prms_obs.mod
 	$(FC) -c $(FFLAGS) gsflow_sum.f
 
-gsflow_budget.o: gsflow_budget.f gsfconvert.mod gsfprms2mf.mod global.mod gwfbasmodule.mod gwfuzfmodule.mod gwfbcfmodule.mod gwflpfmodule.mod gwfsfrmodule.mod
+gsflow_budget.o: gsflow_budget.f gsfconvert.mod gsfprms2mf.mod global.mod gwfbasmodule.mod gwfuzfmodule.mod gwfbcfmodule.mod gwflpfmodule.mod gwfsfrmodule.mod gwfupwmodule.mod
 	$(FC) -c $(FFLAGS) gsflow_budget.f
 
 gsflow_setconv.o: gsflow_setconv.f global.mod gwfbasmodule.mod

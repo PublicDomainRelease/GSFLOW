@@ -1,0 +1,341 @@
+release.txt
+
+
+                           GSFLOW Release Notes
+
+
+     This file describes changes introduced into GSFLOW with each
+official release; these changes may substantially affect users.
+
+
+NOTE: Any use of trade, product or firm names is for descriptive
+purposes only and does not imply endorsement by the U.S. Government.
+
+
+
+o Version 1.1.5 01/15/2012:
+
+This version of GSFLOW is based on MODFLOW-2005 version 1.8, MODFLOW-NWT
+version 1.0.3 and PRMS version 3.4179. Several enhancements and bug fixes
+have been done for this release. Important enhancements include addition of
+the Newton Formulation for MODFLOW and the Map Results and Climate by HRU
+Distribution Modules for PRMS. All of the updates are described in the files
+"GSFLOW_v1.1.5_Updates.pdf," "Map_results.pdf," "Climate_hru.pdf,"
+"Appendix1_Tables_v1.1.5.pdf," and "SFR2_for_GSFLOW_v1.1.5.pdf."
+
+
+o Version 1.1.4 06/01/2011:
+
+This version of GSFLOW is based on MODFLOW-2005 version 1.8 and PRMS version
+2.3116. Users are encouraged to review the release materials for MODFLOW-2005 
+for a full description of updates made for version 1.8. 
+
+A number of changes and bug fixes were made for this release. The modifications
+are grouped by PRMS modules and MODFLOW Packages.
+
+PRMS modules:
+
+Potential Solar Radiation Module (soltab_hru_prms.f): The area-weighted mean basin
+latitude was computed incorrectly for models having inactive cells. This bug
+affected the computation of potential solar radiation on a horizontal plane for
+the basin latitude and snow computations involving solar radiation. 
+
+Cascading-Flow Module (cascade_prms.f): The default values for hru_down_id and
+gw_down_id were changed from 1 to 0. If an HRU is determined to be a swale, an 
+error message is issued and the simulation stops if the value of hru_type is not
+specifed with the value 3.
+ 
+Ground-Water Reservoir Module (gwflow_casc_prms.f): Units for variables gw_in_ssr,
+gw_in_soil, gwres_in were computed in units of inches. They are now computed in
+units of acre-inches as documented.
+ 
+Surface-Runoff and Infiltration Modules (srunoff_smidx_casc.f and 
+srunoff_carea_casc.f): Evaporation from impervious areas of HRUs is now computed
+at the potential evapotranspiration rate rather than at the rate of unsatisified 
+potential evapotranspiration. Also, a check was added to srunoff_carea_casc.f to
+be sure the computed contributing area used to compute surface runoff does not 
+exceed 1.0. This check is made for each HRU for each timestep.
+
+Lapse-Station Temperature-Distribution Module (temp_laps_prms.f): If the altitude
+of the temperature-measurement stations used to compute lapse rates are equal, the 
+code sets the difference to 1.0 in units based on the value of elev_units. This 
+was done to avoid divide by zero.
+  
+Precipitation-Distribution Modules (precip_prms.f, precip_laps_prms.f, 
+precip_dist2_prms, xyz_dist.f): If the computed maximum and minimum air temperatures
+are equal, the difference is set to 0.01 degrees Fahrenheit. Also, for module
+precip_laps_prms.f, if the altitude of precipation measurement stations used to
+compute lapse rates are equal, the code sets the difference to 1.0 in units based 
+on the value of elev_units. This was done to avoid divide by zero.
+
+MODFLOW Packages:
+
+Lake package (gwf2lak7.f): Corrected two bugs. The first caused the package to
+incorrectly set the uppermost active cell beneath a lake cell to NLAY. The second
+occurred in the calculation of outflow to a stream for specified outflow
+diversions; the lake stage was not being set correctly.
+
+Unsaturated-Flow Package (gwf2uzf1.f and gwfuzfmodule.f): Added deallocate
+statements for the variables CHECKTIME, MORE and LAYNUM. The default value for the
+variable SURFDEP was changed from 1.0 to 1.0x10-6.
+
+Streamflow-Routing Package (gwf2sfr7.f and gwfsfrmodule.f): Modifications were made
+to correct the effects of lakes inundating stream cells. Seepage in inundated stream
+cells was not being set to zero in the budget routine. 
+
+
+o Version 1.1.3 03/01/2011:
+
+This version of GSFLOW is based on MODFLOW-2005 version 1.8. Users are encouraged
+to review the release materials for MODFLOW-2005 for a full description of updates
+made for version 1.8. This version of GSFLOW includes (1) the new Grid Report
+Module, (2) enhanced input options for the PRMS Parameter File, (3) a new option
+for the SFR2 Package to specify streamflows to simulated stream segments in 
+tabular files that are external to the SFR2 main input file, and (4) several
+other smaller modifications and enhancements. All of the updates are described
+in the file 'GSFLOW_v1.1.3_Updates.pdf' provided in the ./doc/GSFLOW subdirectory.
+Revised input instructions for the SFR2 Package (for use with GSFLOW) are provided
+in file 'SFR2_for_GSFLOW_v1.1.3.pdf' in the same directory. The Appendix 1 tables
+('Appendix1_Tables_v1.1.3.pdf') also have been updated for the new Grid Report
+Module. Users are encouraged to review the updated documents.
+
+o Version 1.1.2 07/23/2010:
+
+This version of GSFLOW is based on MODFLOW-2005 version 1.8. Users are encouraged
+to review the release materials for MODFLOW-2005 for a full description of updates
+made for version 1.8.
+
+Documentation issues:
+1. A new version of PRMSmanual.pdf was added to the 'doc' subdirectory to replace
+the previous, corrupted version.
+2. An updated version of Appendix1_Tables_v1.1.pdf has been added to the 
+'doc/GSFLOW' subdirectory with the following changes:
+a. Table A1-19 (Soil-Zone Module): parameters ssr2gw_exp, ssr2gw_rate, and 
+ssstor_init can only have the dimension nssr. Thus, delete "or nhrucell" from the 
+dimension column. Also, parameter ssrmax_coef is no longer used and should be 
+removed from Parameter Files. (Table A1-18 in the GSFLOW manual, USGS TM6-D1 
+should also be updated.)
+b. Table A1-4: Dimensions one, nmonths, and ndays no longer need to be specified in 
+a GSFLOW Parameter File. (Table A1-4 in USGS TM6-D1 should also be updated.)
+
+Note on dimension parameters nhru, nssr, and ngw:
+The three dimension parameters nhru, nssr, and ngw, which are specified in the
+dimensions section of the PRMS Parameter File, must all be equal when running
+GSFLOW in either PRMS-only or GSFLOW modes. If the three parameters are not
+equal, a message will be written to the user's screen and the three parameters
+will be set equal to one another by the code.
+
+Unsaturated-Zone Flow Package (gwf2uzf1.f):
+1. An enhancement was done to increase the internal check made by UZF of the ratio 
+of ROOTDEPTH to the thickness of the cell from 0.90 to 0.99.
+2. Fixed memory out-of-bounds bug for array BOTM when IUZFBND was specified as 
+less than zero. This problem was fixed by taking the absolute value of IUZFBND 
+when used to access arrays.
+
+Cascade Module (cascade_prms.f):
+Added check to ignore any cascade links that have invalid values specified for 
+parameters hru_up_id or gw_up_id, such as less than 1 or greater than dimension 
+nhru.
+
+Subbasin Computation Module (subbasin_prms.f):
+If the code is executed in GSFLOW mode, subbasin streamflow variables will not be 
+calculated.
+
+Precipitation- and Temperature-Distribution Modules
+(precip_dist2_prms.f and temp_dist2_prms.f):
+Added input-data check to be sure that at least one climate station has a valid 
+value for both precipitation and air temperature for each time step (as specified 
+in the Data File). If all values of precipitation and air temperature are invalid
+for a time step, such as might occur if all values are specified as missing, a
+message is printed to the user's screen and the simulation is terminated.
+
+Soil-Zone Module (soilzone_prms.f):
+1. Added a variable that saves the current version-date of the module. This 
+variable is written to the gsflow.log file.
+2. Enhanced debug option: If print_debug, which is specified in the GSFLOW control 
+File, is set to 7, messages related to inconsistencies in the soil-zone input 
+parameters are written to the new file soilzone_prms.dbg in the user's current 
+directory. Previously, these warning messages were written to the user's screen.
+3. Added check to determine if swale HRUs are generating water storage (ponding on 
+the surface) in excess of three times the specified value of parameter 
+sat_threshold. If this is the case, a message is written to the soilzone_prms.dbg 
+file if print_debug has been specified as 7. It is recommended that users set 
+print_debug to 7 for initial GSFLOW simulations, and that the soilzone_dbg file 
+be examined to identify any parameter inconsistencies or potential problems with
+swale discretization prior to calibrating a model.
+
+GSFLOW Computation-Control Module (gsflow_prms.f):
+Added a variable that saves the current version date of the module. This variable 
+is written to the gsflow.log file.
+
+GSFLOW Conversion Factors Module (gsflow_setconv.f):
+Bug fix: Fixed possible use of incorrect index for arrays Gwc_row and Gwc_col.
+
+GSFLOW Integration Module (gsflow_prms2mf.f):
+1. Added input-data check to be sure that if an HRU is specified as a lake, the 
+associated MODFLOW lake id is specified other than 0 for parameter lake_hru_id. 
+If an error is detected, an error message is printed to the user's screen and model 
+execution is terminated.
+2. Corrected the computation of the number of soilzone computations per time step, 
+which is printed in tabular form to the gsflow.log file.
+3. Fixed a bug that caused the possible override of computed flows in transient 
+GSFLOW simulations with flows specified in MODFLOW input files. Any specified flows 
+in the MODFLOW input files are used in steady-state mode and ignored in transient 
+mode of a GSFLOW simulation.
+
+GSFLOW Summary Module (gsflow_sum.f):
+Fixed the values reported for total basin precipitation and evaporation to include 
+lake precipitation and evaporation.
+
+
+o Version 1.1.1 02/12/2010:
+
+This version of GSFLOW is based on MODFLOW-2005 version 1.8, which
+includes the Multi-Node Well version 2 Package. Additional minor
+changes also were made to version 1.8 that are explained in the 
+MODFLOW-2005 release documents.
+
+Added module transp_tindex_prms: This module is used to determine the 
+active period of plant transpiration. The module is based on code 
+previously located in the potet_jh_prms, potet_hamon_hru_prms, and 
+potet_pan_prms modules. Therefore, those modules were changed as well.
+
+Module snowcomp_prms: 
+1. A new output variable has been added:
+ basin_snowdepth, which is the basin area-weighted average snow depth.
+
+Module soilzone_prms: 
+1. Three new ouput variables have been added:
+ gw_recharge_day, which is the sum of soil_to_gw and ssr_to_gw for each
+   HRU for each daily time step
+ gw_recharge_tot, which is the sum of soil_to_gw and ssr_to_gw for each
+   HRU for the total simulation time period
+ basin_gw_recharge, which is the basin area-weighted sum of soil_to_gw
+   and ssr_to_gw
+
+2. Parameter ssrmax_coef, which is the maximum amount of gravity drainage 
+ to a PRMS groundwater reservoir or MODFLOW finite-difference cell, was
+ set to a value of 1.0, the default value. Previously, the variable could
+ range to a maximum value of 20.0, which was incorrect.
+
+3. Added consistency checks to be sure the following parameters are not
+ specified to a value less than zero: soil_moist_max, soil_moist_init,
+ soil_rechr_max, soil_rechr_init, ssstor_init, and sat_threshold.
+
+Module gsflow_prms2mf: 
+1. Added parameter mnsziter, which is the minimum number of computations per
+time step that are computed by the Soil Zone Module. Computations within the
+Soil Zone Module include Dunnian runoff, interflow, changes in storage within
+the soil-zone reservoirs, components of evapotranspiration, and potential
+gravity drainage. The sequence of these computations is described in Table 9
+of the GSFLOW documentation report (USGS Techniques and Methods 6-D1, p. 51).
+The following provides a more detailed explanation than is found in the GSFLOW
+manual of the conditions under which a GSFLOW time step concludes. 
+
+GSFLOW is based on an iterative-solution method in which convergence for each
+time step is ultimately dependent on whether or not changes in groundwater heads
+and flow rates meet closure criteria specified in the MODFLOW solver packages.
+If the MODFLOW convergence criteria are met, then GSFLOW continues to the next
+time step; if the convergence criteria are not met but the maximum number of
+MODFLOW iterations per time step is exceeded (as specified using variable MXITER 
+or ITMX in the MODFLOW solver packages), then GSFLOW will print a warning message 
+and continue to the next time step. Note that this differs from MODFLOW, in which 
+MODFLOW stops if MXITER or ITMX are exceeded.
+
+Convergence of groundwater heads and flow rates is dependent in part on the 
+amount of gravity drainage that drains from the soil zone to the underlying 
+unsaturated and saturated zones. The amount of gravity drainage is dependent 
+on the potential gravity drainage computed by the Soil Zone Module and the 
+vertical hydraulic conductivity and heads within the MODFLOW finite-difference 
+cells. In many cases, heads and groundwater flow rates may converge faster if 
+the amount of gravity drainage from the soil zone is no longer changing, which 
+means that the MODFLOW computations will no longer be dependent on feedback 
+from the Soil Zone Module. 
+
+Three GSFLOW input parameters are provided to allow the user to stop the 
+soil-zone computations prior to convergence of the groundwater heads and flow 
+rates. These parameters are (1) szconverge, which is the maximum allowed change 
+in gravity drainage from the soil zone for all HRUs between iterations required 
+before the soil-zone computations cease; (2) mnsziter, which is defined above; 
+and (3) mxsziter, which is the maximum number of computations per time step that 
+are computed by the Soil Zone Module. Parameters szconverge and mxsziter have 
+been available since the initial release of GSFLOW (see Table A1-25 in USGS 
+Techniques and Methods 6-D1). Computations within the soil zone cease under three 
+conditions listed in order of precedence: (1) the MODFLOW closure criteria are 
+met or MXITER or ITMX is reached; (2) the maximum number of soil-zone computations 
+is reached, as specified by parameter mxsziter; or (3) the maximum change in 
+gravity drainage from the soil zone for all HRUs between iterations is less than 
+the value specified for parameter szconverge. When conditions 2 or 3 are met, all 
+computations done by the Soil Zone Module are held constant for the remainder of 
+the current time step until MODFLOW-related convergence criteria are met 
+(or MXITER or ITMX is exceeded). In addition, the amount of interflow and 
+surface runoff to streams and lakes are held constant when soil-zone 
+computations cease within a time step.
+
+Previous versions of GSFLOW set the minimum number of soil-zone computations 
+to 4, which is now the default value for mnsziter; mnsziter must be specified 
+to be greater than 2. Specifying too small a value for mxsziter for complex 
+GSFLOW models can stop soil-zone computations within a time step before the 
+MODFLOW solution reaches a stable value; this may cause groundwater discharge 
+from some finite-difference cells in subsequent iterations to be significantly 
+different than that computed at the iteration in which the soil-zone computations 
+ceased. In general, more complex models will require higher values of mnsziter 
+and mxsziter than less complex models. Recent experience with GSFLOW indicates 
+that (1) mnsziter and mxsziter should be set to values that equal the approximate 
+average number and the maximum number of MODFLOW iterations that are expected for 
+any time step, respectively; and (2) that for some simulations, it may be 
+advantageous to not limit the number of soil-zone computations by setting both 
+mnsziter and mxsziter equal to MXITER or ITMX to allow for full feedback between 
+PRMS and MODFLOW for each time step. The GSFLOW user may need to experiment with 
+the values specified for szconverge, mnsziter, and mxsziter to be sure that the 
+GSFLOW calculations have converged to stable values.
+
+For the convenience of the user, the number of MODFLOW iterations and soil-zone 
+computations are printed to the screen for the first day of each month and for 
+each time step in the gsflow.log file. Also, if the number of iterations for a 
+time step exceeds 75, the date and time of this time step is printed to the screen. 
+At the end of a simulation, a summary table is printed to the screen and gsflow.log 
+file giving the total and average number of MODFLOW iterations and soil-zone 
+computations, as well as the total time the simulation took.
+
+
+2. Bug fix: corrected do loop index of arrays used to check whether or not
+ soilzone states are oscillating.
+
+Module gsflow_prms: 
+1. Module subbasin_prms can now be called in both GSFLOW and PRMS-only modes.
+ Previously, it could be called in PRMS-only mode. However, the user 
+ should be aware that some output variables written by the module are not
+ relevant to a GSFLOW simulation, specifically those related to the PRMS
+ groundwater module: sub_inq, sub_cfs, sub_cms, sub_gwflow, and
+ subinc_gwflow. The subbasin_prms module is useful in GSFLOW mode for 
+ computation of several subbasin states and fluxes, such as sub_interflow, 
+ sub_precip, sub_pkweqv, subinc_interflow, sbinc_sroff, subinc_precip,
+ subinc_snowmelt, subinc_pkweqv, subinc_actet, sub_actet, sub_sroff,
+ sub_snowmelt, and subinc_snowcov.
+
+o Version 1.1.00 11/18/2009:
+
+
+This version of GSFLOW is based on MODFLOW-2005 version 1.7. Added 
+ability to specify inactive and swale hydrologic response unit types
+and the ability to calculate streamflow at internal basin nodes (the
+latter for PRMS-only simulations). Several additional bug fixes and minor
+enhancements were made for this release. All of the changes are described
+in the file 'GSFLOW_v1.1_Updates.pdf' located in the /doc/GSFLOW directory.
+Updated input formats for the PRMS and GSFLOW modules, including several
+new input parameters, are provided in the file 'Appendix1_Tables_v1.1.pdf,'
+which is also included in the /doc/GSFLOW directory. Also made changes to 
+the Sagehen sample problem by simplifying the MODFLOW Name File and making 
+the MODFLOW transient stress period consistent with the total number of 
+time steps simulated by GSFLOW; these changes did not affect the results 
+of the sample problem.
+
+
+o Version 1.0.00 03/05/2008:
+
+
+This version is the initial release.
+
+
+

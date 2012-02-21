@@ -1,0 +1,38 @@
+
+
+
+                              U.S. Geological Survey
+            Coupled Groundwater and Surface-water FLOW model (GSFLOW)
+                             Version 1.1.5 01/15/2012
+
+        An integration of the Precipitation-Runoff Modeling System (PRMS)
+        and the Modular Groundwater Model (MODFLOW-NWT and MODFLOW-2005)
+
+                                    MODFLOW-NWT
+     U.S. GEOLOGICAL SURVEY MODULAR FINITE-DIFFERENCE GROUNDWATER FLOW MODEL
+                  Newton Formulation, Version 1.0.03 12/29/2011
+                 Based on MODFLOW-2005 Version 1.8.00 12/18/2009
+
+                              Processes: GWF and OBS
+       Packages: BAS, BCF, CHD, DE4, FHB, GAG, GHB, GMG, HFB, HUF LAK
+                 LPF, MNW1, MNW2, NWT, PCG, PCGN, SFR, SIP, UPW, UZF, WEL
+
+
+ Using NAME file: ../input/modflow/sagehen_linux.mf.nam 
+
+$Id: gsflow_prms.f 4179 2012-02-14 16:49:41Z rsregan $                  
+$Id: gsflow_modflow.f 4164 2012-02-06 20:22:08Z rsregan $           
+$Id: gwf2uzf1_NWT.f 4071 2012-01-05 23:30:24Z rniswon $         
+$Id: gwf2sfr7_NWT.f 4134 2012-01-26 18:12:59Z rniswon $         
+$Id: gwf2lak7_NWT.f 4068 2011-12-23 20:48:53Z rniswon $         
+ Run start date and time (yyyy/mm/dd hh:mm:ss): 2012/02/21 10:53:44
+
+ Solving:  Stress period:     1    Time step:     1    Ground-Water Flow Eqn.
+ Steady state simulation successful, used:         387 iterations
+
+
+
+ Run end date and time (yyyy/mm/dd hh:mm:ss): 2012/02/21 10:53:53
+ Elapsed run time:  9.506 Seconds
+
+  Normal termination of simulation

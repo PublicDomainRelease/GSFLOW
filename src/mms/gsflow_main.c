@@ -10,7 +10,7 @@
  * REF      :
  * REVIEW   :
  * PR NRS   :
- * $Id: gsflow_main.c 3116 2011-05-17 16:20:01Z rsregan $
+ * $Id: gsflow_main.c 4060 2011-12-13 19:30:17Z rsregan $
  *
  -*/
 
@@ -69,7 +69,7 @@ int main (int argc, char *argv[]) {
 	*/
 	module_db = ALLOC_list ("Module Data Base", 0, 100);
 
-   declmodule("$Id: gsflow_main.c 3116 2011-05-17 16:20:01Z rsregan $");
+   declmodule("$Id: gsflow_main.c 4060 2011-12-13 19:30:17Z rsregan $");
 
   /*
   **	parse the command-line arguments

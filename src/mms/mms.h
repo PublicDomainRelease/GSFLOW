@@ -1,5 +1,5 @@
 /*
- *  $Id: mms.h 3116 2011-05-17 16:20:01Z rsregan $
+ *  $Id: mms.h 5090 2009-03-24 18:11:08Z rsregan $
  */
 
 #include "defs.h"

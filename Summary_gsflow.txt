@@ -60,6 +60,16 @@ ABSTRACT
 
 
 HISTORY
+      GSFLOW Version 1.1.5 01/15/2012 - This version of GSFLOW is based on 
+         MODFLOW-2005 version 1.8, MODFLOW-NWT version 1.0.3 and PRMS version 
+         3.4179. Several enhancements and bug fixes have been done for this 
+         release. Important enhancements include addition of the Newton 
+         Formulation for MODFLOW and the Map Results and Climate by HRU 
+         Distribution Modules for PRMS. All of the updates are described in 
+         the files "GSFLOW_v1.1.5_Updates.pdf," "Map_results.pdf," 
+         "Climate_hru.pdf," "Appendix1_Tables_v1.1.5.pdf," and 
+         "SFR2_for_GSFLOW_v1.1.5.pdf."
+
       GSFLOW Version 1.1.4 06/01/2011 - This version of GSFLOW is based 
          on MODFLOW-2005 version 1.8. Several bug fixes and relatively
          small modifications were made to a few of the PRMS modules 
@@ -72,7 +82,7 @@ HISTORY
          Package to specify streamflows to simulated stream segments in
          tabular files that are external to the SFR2 main input file. All 
          of the updates are described in the file 'GSFLOW_v1.1.3_Updates.pdf' 
-         provided in the ./doc/GSFLOW subdirectory. Revised input 
+         provided in the .\doc\GSFLOW subdirectory. Revised input 
          instructions for the SFR2 Package (for use with GSFLOW) are provided
          in file 'SFR2_for_GSFLOW_v1.1.3.pdf' in the same directory.
 
@@ -94,10 +104,10 @@ HISTORY
          PRMS-only simulations). Several additional bug fixes and minor
          enhancements were made for this release. All of the changes are
          described in the file 'GSFLOW_v1.1_Updates.pdf' located in the
-         /doc/GSFLOW directory. Updated input formats for the PRMS and 
+         \doc\GSFLOW directory. Updated input formats for the PRMS and 
          GSFLOW modules, including several new input parameters, are provided 
          in the file 'Appendix1_Tables_v1.1.pdf,' which is also included in 
-         the /doc/GSFLOW directory. Also made changes to the Sagehen sample
+         the \doc\GSFLOW directory. Also made changes to the Sagehen sample
          problem by simplifying the MODFLOW Name File and making the MODFLOW
          transient stress period consistent with the total number of time
          steps simulated by GSFLOW; these changes did not affect the results
@@ -115,52 +125,51 @@ SYSTEM REQUIREMENTS
 
 FUNTIONALITY
      This version of GSFLOW includes the following PRMS and GSFLOW 
-     modules, MODFLOW-2005 packages, and Modular Modeling System
-     routines:
+     modules, MODFLOW-NWT and MODFLOW-2005 packages, and Modular 
+     Modeling System routines:
     
      PRMS modules:
-         basin_prms        -- Basin Module
-         cascade_prms      -- Cascading-Flow Module
-         obs_prms          -- Observed-Data Module
-         obs_adjust_prms   -- Adjusted Observed Data Module
-         soltab_hru_prms   -- Potential Solar-Radiation Module
-         temp_1sta_prms    -- One-Station Temperature-Distribution Module
-         temp_laps_prms    -- Lapse-Station Temperature-Distribution Module
-         temp_dist2_prms   -- Inverse-Distance Temperature-Distribution Module
-         xyz_dist          -- Multiple Linear Regression Precipitation- and 
+         basin         -- Basin Module
+         cascade       -- Cascading-Flow Module
+         obs           -- Observed-Data Module
+         soltab        -- Potential Solar-Radiation Module
+         temp_1sta     -- One-Station Temperature-Distribution Module
+         temp_laps     -- Lapse-Station Temperature-Distribution Module
+         temp_dist2    -- Inverse-Distance Temperature-Distribution Module
+         xyz_dist      -- Multiple Linear Regression Precipitation- and 
                                Temperature-Distribution Module
-         precip_prms       -- One-Station Precipitation-Distribution Module
-         precip_laps_prms  -- Lapse-Station Precipitation-Distribution Module
-         precip_dist2_prms -- Inverse-Distance Precipitation-Distribution 
+         precip_1sta   -- One-Station Precipitation-Distribution Module
+         precip_laps   -- Lapse-Station Precipitation-Distribution Module
+         precip_dist2  -- Inverse-Distance Precipitation-Distribution 
                                Module
-         ddsolrad_hru_prms -- Degree-Day Solar-Radiation Distribution Module
-         ccsolrad_hru_prms -- Cloud-Cover Solar-Radiation Distribution Module
-         potet_jh_prms     -- Jensen-Haise Potential-Evapotranspiration Module
-         potet_hamon_hru_  -- Hamon Potential-Evapotranspiration Module
-           prms            
-         potet_pan_prms    -- Pan-Evaporation Potential-Evapotranspiration
+         ddsolrad      -- Degree-Day Solar-Radiation Distribution Module
+         ccsolrad      -- Cloud-Cover Solar-Radiation Distribution Module
+         potet_jh      -- Jensen-Haise Potential-Evapotranspiration Module
+         potet_hamon   -- Hamon Potential-Evapotranspiration Module       
+         potet_pan     -- Pan-Evaporation Potential-Evapotranspiration
                                Module
-         transp_tindex_    -- Active Transpiration Period Module
-           prms
-         intcp_prms        -- Precipitation-Interception Module
-         snowcomp_prms     -- Snow Module
-         srunoff_smidx_    -- Nonlinear source Area Surface-Runoff and
-           casc                Infiltration Module
-         srunoff_carea_    -- Linear Source Area Surface-Runoff and 
-           casc                Infiltration Module
-         soilzone_prms     -- Soil-Zone Module
-         gwflow_casc_prms  -- Ground-Water Reservoir Module (for PRMS-only 
+         transp_tindex -- Active Transpiration Period Module
+         intcp         -- Precipitation-Interception Module
+         snowcomp      -- Snow Module
+         srunoff_smidx -- Nonlinear Source Area Surface-Runoff and
+                               Infiltration Module
+         srunoff_carea -- Linear Source Area Surface-Runoff and 
+                               Infiltration Module
+         soilzone      -- Soil-Zone Module
+         gwflow        -- Groundwater Reservoir Module (for PRMS-only 
                                simulations)
-         subbasin_prms     -- Subbasin Module (for PRMS-only simulations)
-         strmflow_prms     -- Streamflow Module (for PRMS-only simulations)
-         hru_sum_prms      -- HRUs Flow-Summary Module (for PRMS-only 
+         subbasin      -- Subbasin Module (for PRMS-only simulations)
+         strmflow      -- Streamflow Module (for PRMS-only simulations)
+         hru_sum       -- HRUs Flow-Summary Module (for PRMS-only 
                                simulations)
-         basin_sum_prms    -- Watershed Flow-Summary Module (for PRMS-only                    
+         basin_sum     -- Watershed Flow-Summary Module (for PRMS-only                    
                                simulations)
-         grid_report       -- Grid Report Module (for PRMS-only simulations)
+         map_results   -- Map Results Module (for PRMS-only simulations)
+         climate_hru   -- Climate by HRU Distribution Module
 
 
-     MODFLOW-2005 packages:
+     MODFLOW-NWT and MODFLOW-2005 packages (and OBS Process):
+       
          BAS -- Basic Package
          BCF -- Block-Centered Flow Package
          LPF -- Layer-Property Flow Package
@@ -176,10 +185,14 @@ FUNTIONALITY
          LAK -- Lake Package
          UZF -- Unsaturated-Zone Package
          GAG -- Gage Package
+         NWT -- Newton Solver Package
+         UPW -- Upstream-Weighting Package
          SIP -- Strongly Implicit Procedure Package
          PCG -- Preconditioned Conjugate Gradient Package
          DE4 -- Direct solver
          GMG -- Geometric MultiGrid Solver Package
+         PCGN -- Preconditioned Conjugate Gradient Package with improved 
+                  nonlinear control Package
 
 
      GSFLOW modules:

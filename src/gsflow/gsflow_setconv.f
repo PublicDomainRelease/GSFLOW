@@ -4,16 +4,21 @@
       MODULE GSFCONVERT
       IMPLICIT NONE
 !   Local Variables
-      REAL, PARAMETER :: ACRE_2_SQFT = 43560.0
-      DOUBLE PRECISION, PARAMETER :: PCT_CHK = 0.00000005D0
+      DOUBLE PRECISION, PARAMETER :: ACRE_2_SQFT = 43560.0D0
+      REAL, PARAMETER :: PCT_CHK = 0.000001
       INTEGER, SAVE :: Nhrucell, Ngwcell
       INTEGER, SAVE, ALLOCATABLE :: Gwc_col(:), Gwc_row(:)
 !   Module Variables
-      REAL, SAVE :: Mfl3t_to_cfs, Mfl3_to_ft3, Acre_inches_to_cfs
-      REAL, SAVE :: Acre_inches_to_mfl3, Inch_to_mfl_t, Mfl_to_inch
-      REAL, SAVE :: Cfs2inches, Sfr_conv, Mfl2_to_acre
-      REAL, SAVE, ALLOCATABLE :: Cellarea(:), Gvr2cell_conv(:)
-      REAL, SAVE, ALLOCATABLE :: Mfq2inch_conv(:), Mfvol2inch_conv(:)
+      REAL, SAVE :: Mfl_to_inch, Inch_to_mfl_t
+      DOUBLE PRECISION, SAVE :: Mfl3t_to_cfs, Mfl3_to_ft3
+!      DOUBLE PRECISION, SAVE :: Acre_inches_to_cfs
+      DOUBLE PRECISION, SAVE :: Acre_inches_to_mfl3
+      DOUBLE PRECISION, SAVE :: Mfl2_to_acre, Sfr_conv
+      DOUBLE PRECISION, SAVE :: Cfs2inches
+      REAL, SAVE, ALLOCATABLE :: Cellarea(:)
+      REAL, SAVE, ALLOCATABLE :: Gvr2cell_conv(:)
+      REAL, SAVE, ALLOCATABLE :: Mfq2inch_conv(:)
+      DOUBLE PRECISION, SAVE, ALLOCATABLE :: Mfvol2inch_conv(:)
 !   Declared Parameters
       INTEGER, SAVE, ALLOCATABLE :: Gvr_cell_id(:)
       REAL, SAVE, ALLOCATABLE :: Gvr_cell_pct(:)
@@ -23,16 +28,16 @@
 !     Set conversion variables for PRMS & MODFLOW states in GSFLOW
 !     ******************************************************************
       INTEGER FUNCTION gsflow_setconv()
-      USE PRMS_MODULE, ONLY: Process_flag
+      USE PRMS_MODULE, ONLY: Process
       IMPLICIT NONE
 ! Functions
       INTEGER, EXTERNAL :: gsfconvdecl, gsfconvinit
 !***********************************************************************
       gsflow_setconv = 0
 
-      IF ( Process_flag==1 ) THEN
+      IF ( Process(:4)=='decl' ) THEN
         gsflow_setconv = gsfconvdecl()
-      ELSEIF ( Process_flag==2 ) THEN
+      ELSEIF ( Process(:4)=='init' ) THEN
         gsflow_setconv = gsfconvinit()
       ENDIF
 
@@ -45,43 +50,46 @@
 !***********************************************************************
       INTEGER FUNCTION gsfconvdecl()
       USE GSFCONVERT
+      USE PRMS_MODULE, ONLY: Print_debug
       IMPLICIT NONE
       INTEGER, EXTERNAL :: declmodule, declparam, getdim
+      EXTERNAL read_error
 !***********************************************************************
       gsfconvdecl = 1
 
-      IF ( declmodule(
-     &'$Id: gsflow_setconv.f 3116 2011-05-17 16:20:01Z rsregan $'
-     &).NE.0 ) RETURN
+      IF ( Print_debug>-1 ) THEN
+        IF ( declmodule(
+     &'$Id: gsflow_setconv.f 4085 2012-01-09 20:32:12Z rsregan $'
+     &       )/=0 ) STOP
+      ENDIF
 
       Nhrucell = getdim('nhrucell')
-      IF ( Nhrucell.EQ.-1 ) RETURN
+      IF ( Nhrucell==-1 ) RETURN
 
       Ngwcell = getdim('ngwcell')
-      IF ( Ngwcell.EQ.-1 ) RETURN
+      IF ( Ngwcell==-1 ) RETURN
 
-      ALLOCATE (Gvr_cell_id(Nhrucell))
+      ALLOCATE ( Gvr_cell_id(Nhrucell) )
       IF ( declparam('gsfconv', 'gvr_cell_id', 'nhrucell', 'integer',
      &     '0', 'bounded', 'ngwcell',
      &     'Corresponding MODFLOW cell id of each GVR',
      &     'Index of the MODFLOW cell associated with each gravity'//
      &     ' reservoir',
-     &     'none').NE.0 ) RETURN
+     &     'none')/=0 ) CALL read_error(1, 'gvr_cell_id')
 
-      ALLOCATE (Gvr_cell_pct(Nhrucell))
+      ALLOCATE ( Gvr_cell_pct(Nhrucell) )
       IF ( declparam('gsfconv', 'gvr_cell_pct', 'nhrucell', 'real',
      &     '0.0', '0.0', '1.0',
      &     'Proportion of the MODFLOW cell associated with each GVR',
      &     'Proportion of the MODFLOW cell area associated with each'//
      &     ' gravity reservoir',
-     &     'decimal fraction').NE.0 ) RETURN      
+     &     'decimal fraction')/=0 ) CALL read_error(1, 'gvr_cell_id') 
 
 ! Allocate local module variables
-      ALLOCATE (Gvr2cell_conv(Nhrucell), Cellarea(Ngwcell))
-      ALLOCATE (Mfq2inch_conv(Nhrucell), Mfvol2inch_conv(Nhrucell))
+      ALLOCATE ( Gvr2cell_conv(Nhrucell), Cellarea(Ngwcell) )
+      ALLOCATE ( Mfq2inch_conv(Nhrucell), Mfvol2inch_conv(Nhrucell) )
 
       gsfconvdecl = 0
-
       END FUNCTION gsfconvdecl
 
 !***********************************************************************
@@ -89,25 +97,32 @@
 !***********************************************************************
       INTEGER FUNCTION gsfconvinit()
       USE GSFCONVERT
+      USE PRMS_MODULE, ONLY: Nhru
       IMPLICIT NONE
       INTEGER, EXTERNAL :: getparam
 ! Functions
-      EXTERNAL SETCONVFACTORS, INITCELLS
+      EXTERNAL SETCONVFACTORS, INITCELLS, read_error
+! Local Variables
+      INTEGER :: i
 !***********************************************************************
       gsfconvinit = 1
 
       IF ( getparam('gsfmap', 'gvr_cell_id', Nhrucell, 'integer',
-     &     Gvr_cell_id).NE.0 ) RETURN
-
-      IF ( getparam('gsfmap', 'gvr_cell_pct', Nhrucell, 'real',
-     &     Gvr_cell_pct).NE.0 ) RETURN
+     &     Gvr_cell_id)/=0 ) CALL read_error(2, 'gvr_cell_id')
+      IF ( Nhru==Nhrucell ) THEN
+        DO i = 1, Nhru
+          Gvr_cell_pct(i) = 1.0
+        ENDDO
+      ELSE
+        IF ( getparam('gsfmap', 'gvr_cell_pct', Nhrucell, 'real',
+     &       Gvr_cell_pct)/=0 ) CALL read_error(2, 'gvr_cell_id')
+      ENDIF
 
       CALL SETCONVFACTORS()
 
       CALL INITCELLS()
 
       gsfconvinit = 0
-
       END FUNCTION gsfconvinit
 
 !***********************************************************************
@@ -115,85 +130,81 @@
 !***********************************************************************
       SUBROUTINE SETCONVFACTORS()
       USE GSFCONVERT
-      USE GLOBAL, ONLY:ITMUNI, LENUNI, IOUT, ISSFLG
-      USE GWFBASMODULE, ONLY:DELT
+      USE GLOBAL, ONLY: ITMUNI, LENUNI, IOUT, ISSFLG
+      USE GWFBASMODULE, ONLY: DELT
       USE PRMS_BASIN, ONLY: Basin_area_inv, NEARZERO
       USE PRMS_OBS, ONLY: Timestep_seconds
       IMPLICIT NONE
       INTRINSIC SNGL, ABS
 ! Local Variables
       REAL :: inch_to_mfl, mft_to_sec
-!     REAL :: inch3_to_mfl3
 !***********************************************************************
-      IF ( LENUNI.LT.1 .OR. ITMUNI.LT.1 .OR. LENUNI.GT.3 .OR.
-     &     ITMUNI.GT.6 ) THEN
-        WRITE (IOUT, 9001) LENUNI, ITMUNI
-        PRINT *, LENUNI, ITMUNI
+      IF ( LENUNI<1 .OR. ITMUNI<1 .OR. LENUNI>3 .OR. ITMUNI>6 ) THEN
+        WRITE ( IOUT, 9001 ) LENUNI, ITMUNI
+        PRINT 9001, LENUNI, ITMUNI
         STOP
       ENDIF
 
-      IF ( LENUNI.EQ.1 ) THEN
+      IF ( LENUNI==1 ) THEN
 ! Modflow in feet
         inch_to_mfl = 1.0/12.0
-        Mfl2_to_acre = 1.0
-        Mfl3_to_ft3 = 1.0
+        Mfl2_to_acre = 1.0D0
+        Mfl3_to_ft3 = 1.0D0
 
-      ELSEIF ( LENUNI.EQ.2 ) THEN
+      ELSEIF ( LENUNI==2 ) THEN
 ! Modflow in meters
         inch_to_mfl = 0.0254
-        Mfl2_to_acre = 3.280839895*3.280839895
-        Mfl3_to_ft3 = 3.280839895**3.0
+        Mfl2_to_acre = 3.280839895D0*3.280839895D0
+        Mfl3_to_ft3 = 3.280839895D0**3.0D0
 
-      ELSEIF ( LENUNI.EQ.3 ) THEN
+      ELSEIF ( LENUNI==3 ) THEN
 ! Modflow in centimeters
         inch_to_mfl = 2.54
-        Mfl2_to_acre = 328.0839895*328.0839895
-        Mfl3_to_ft3 = 328.0839895**3.0
+        Mfl2_to_acre = 328.0839895D0*328.0839895D0
+        Mfl3_to_ft3 = 328.0839895D0**3.0D0
       ELSE
-        STOP '***Error, invalid MF Length unit'
+        STOP '***ERROR, invalid MODFLOW Length unit'
       ENDIF
-!     inch3_to_mfl3 = inch_to_mfl**3.0
       Mfl_to_inch = 1.0/inch_to_mfl
-!     mfl3_to_inch3 = 1.0/inch3_to_mfl3
       Mfl2_to_acre = Mfl2_to_acre/ACRE_2_SQFT
       Inch_to_mfl_t = inch_to_mfl/DELT
 
-      IF ( ITMUNI.EQ.1 ) THEN
+      IF ( ITMUNI==1 ) THEN
 ! Modflow in seconds
         mft_to_sec = 1.0
-      ELSEIF ( ITMUNI.EQ.2 ) THEN
+      ELSEIF ( ITMUNI==2 ) THEN
 ! Modflow in minutes
         mft_to_sec = 60.0
-      ELSEIF ( ITMUNI.EQ.3 ) THEN
+      ELSEIF ( ITMUNI==3 ) THEN
 ! Modflow in hours
         mft_to_sec = 3600.0
-      ELSEIF ( ITMUNI.EQ.4 ) THEN
+      ELSEIF ( ITMUNI==4 ) THEN
 ! Modflow in days
         mft_to_sec = 86400.0
-      ELSEIF ( ITMUNI.EQ.5 ) THEN
+      ELSEIF ( ITMUNI==5 ) THEN
 ! Modflow in years
 !DANGER, not all years have 365 days
         mft_to_sec = 86400.0*365.0
       ELSE
-        STOP '***Error, invalid MF Time Unit'
+        STOP '***ERROR, invalid MODFLOW Time Unit'
       ENDIF
       Sfr_conv = mft_to_sec/Mfl3_to_ft3
       Mfl3t_to_cfs = Mfl3_to_ft3/mft_to_sec
 ! inch over basin (acres) conversion to modflow length cubed
-      Acre_inches_to_mfl3 = ACRE_2_SQFT/(Mfl3_to_ft3*12.)
+      Acre_inches_to_mfl3 = ACRE_2_SQFT/(Mfl3_to_ft3*12.0D0)
 
-      IF ( ISSFLG(1).EQ.0 ) THEN
-        IF ( ABS(Timestep_seconds-DELT*mft_to_sec).GT.NEARZERO ) THEN
+      IF ( ISSFLG(1)==0 ) THEN
+        IF ( ABS(Timestep_seconds-DELT*mft_to_sec)>NEARZERO ) THEN
           WRITE (IOUT, 9002) Timestep_seconds, DELT, mft_to_sec
           PRINT 9002, Timestep_seconds, DELT, mft_to_sec
           STOP
         ENDIF
       ENDIF
       ! need to move if < daily time step is used
-      Acre_inches_to_cfs = ACRE_2_SQFT/12.0/Timestep_seconds
+!      Acre_inches_to_cfs = ACRE_2_SQFT/12.0D0/Timestep_seconds
 
 !fix Cfs2inches to compute each time step for variable time steps      
-      Cfs2inches = Timestep_seconds*12.0*Basin_area_inv/ACRE_2_SQFT
+      Cfs2inches = Timestep_seconds*12.0D0*Basin_area_inv/ACRE_2_SQFT
 
  9001 FORMAT (' Units are undefined. LENUNI and ITMUNI must be > 0:',
      &        'Lenuni =', I4, 'Itmuni =', I4)
@@ -208,21 +219,24 @@
       USE GSFCONVERT
       USE GLOBAL, ONLY: DELR, DELC, NROW, NCOL
       USE GWFBASMODULE, ONLY: DELT
+      USE GWFUZFMODULE, ONLY: IUZFBND
       USE GSFMODFLOW, ONLY: Logunt
       USE PRMS_BASIN, ONLY: NEARZERO
       IMPLICIT NONE
 ! Local Variables
-      INTEGER :: i, irow, icol, j, k, l, ic, ii
-      DOUBLE PRECISION :: totalarea, pctdiff
-      DOUBLE PRECISION, ALLOCATABLE, DIMENSION(:) :: cell_pct, newpct
-      DOUBLE PRECISION, ALLOCATABLE, DIMENSION(:) :: temp_pct
+      INTEGER :: i, irow, icol, j, k, l, ic, ii, ierr
+      REAL :: pctdiff
+      REAL, ALLOCATABLE, DIMENSION(:) :: cell_pct, newpct, temp_pct
+      DOUBLE PRECISION :: totalarea
 !***********************************************************************
-      IF ( NROW*NCOL.NE.Ngwcell ) THEN
-        PRINT *, 'Dimension error Ngwcell.ne.NROW*NCOL', Ngwcell,
-     &           NROW, NCOL
-        STOP 'ERROR in gsflow_setconv'
+      IF ( NROW*NCOL/=Ngwcell ) THEN
+        PRINT *, 'ERROR, dimension Ngwcell not equal to NROW*NCOL',
+     &           Ngwcell, NROW, NCOL
+        PRINT *, '       Check for use of correct parameter file'
+        STOP
       ENDIF
-      ALLOCATE (Gwc_row(Ngwcell), Gwc_col(Ngwcell))
+
+      ALLOCATE ( Gwc_row(Ngwcell), Gwc_col(Ngwcell) )
       l = 1
       DO i = 1, Ngwcell, NCOL
         k = i
@@ -234,21 +248,38 @@
         l = l + 1
       ENDDO
 
-      ALLOCATE (cell_pct(Ngwcell), newpct(Ngwcell), temp_pct(Nhrucell))
-      DO i = 1, Ngwcell
-        cell_pct(i) = 0.0D0
-        newpct(i) = 0.0D0
-      ENDDO
+      ALLOCATE ( cell_pct(Ngwcell), newpct(Ngwcell), temp_pct(Nhrucell))
+      cell_pct = 0.0
+      ierr = 0
       DO i = 1, Nhrucell
         ic = Gvr_cell_id(i)
         IF ( ic==0 ) THEN
-          PRINT *, 'gvr_cell_id = 0 for gvr:', i
+          PRINT *, 'ERROR, gvr_cell_id = 0 for gvr:', i
           PRINT *, 'Be sure gvr_cell_id is in the Parameter File'
-          STOP
+          ierr = 1
         ENDIF
-        temp_pct(i) = DBLE(Gvr_cell_pct(i))
-        cell_pct(ic) = cell_pct(ic) + temp_pct(i)
+        temp_pct(i) = Gvr_cell_pct(i)
+        cell_pct(ic) = cell_pct(ic) + Gvr_cell_pct(i)
       ENDDO
+      IF ( ierr==1 ) STOP
+
+      ierr = 0
+      DO i = 1, Ngwcell
+        irow = Gwc_row(i)
+        icol = Gwc_col(i)
+        IF ( IUZFBND(icol, irow)==0 ) CYCLE
+        IF ( cell_pct(i)<0.99 ) THEN
+          WRITE ( Logunt, * ) 'Portion of cell not included in',
+     &                    ' gvr_cell_pct mapping, cell:', i, cell_pct(i)
+          ierr = 1
+        ENDIF
+        IF ( cell_pct(i)>1.00001 ) THEN
+          WRITE ( Logunt, * ) 'Extra portion of cell included in',
+     &                    ' gvr_cell_pct mapping, cell:', i, cell_pct(i)
+          ierr = 1
+        ENDIF
+      ENDDO
+!      IF ( ierr==1 ) STOP 'ERROR, check gsflow.log for messages'
 
 ! way to adjust Gvr_cell_pct, rsr
 !     WRITE (841,*) '####'
@@ -257,11 +288,12 @@
 !     WRITE (841,*) 'nhrucell'
 !     WRITE (841,*) Nhrucell
 !     WRITE (841,*) '2'
+      newpct = 0.0
       DO i = 1, Nhrucell
         ic = Gvr_cell_id(i)
         temp_pct(i) = temp_pct(i) +
-     &                temp_pct(i)*(1.0D0-cell_pct(ic))/cell_pct(ic)
-        Gvr_cell_pct(i) = SNGL(temp_pct(i))
+     &                temp_pct(i)*(1.0-cell_pct(ic))/cell_pct(ic)
+        Gvr_cell_pct(i) = temp_pct(i)
         newpct(ic) = newpct(ic) + temp_pct(i)
 !       WRITE (841,'(f15.13)') temp_pct(i)
       ENDDO
@@ -274,7 +306,7 @@
       DO i = 1, Nhrucell
         ic = Gvr_cell_id(i)
         IF ( Gvr_cell_pct(i)>0.0 ) THEN
-          pctdiff = newpct(ic) - 1.0D0
+          pctdiff = newpct(ic) - 1.0
           IF ( pctdiff>PCT_CHK ) THEN
             PRINT *, 'Will make some water in MF cell:', ic,
      &               newpct(ic), cell_pct(ic)
@@ -288,7 +320,7 @@
         irow = Gwc_row(ic)
         icol = Gwc_col(ic)
         Cellarea(ic) = DELR(icol)*DELC(irow)
-        IF ( Cellarea(ic).LT.NEARZERO ) PRINT *,
+        IF ( Cellarea(ic)<NEARZERO ) PRINT *,
      &       'Cellarea = 0.0, irow, icol', irow, icol
 ! PRMS inches in a gravity-flow reservoir to MF rate
         Gvr2cell_conv(i) = Gvr_cell_pct(i)*Inch_to_mfl_t
@@ -298,9 +330,10 @@
 ! rsr, note DELT cannot change during simulation
         Mfq2inch_conv(i) = Mfvol2inch_conv(i)*DELT
       ENDDO
-      WRITE (Logunt, *) 'Percentage difference between cell mapping:',
-     &                  totalarea/FLOAT(ii)*100.0D0
 
-      DEALLOCATE (cell_pct, newpct)
+      WRITE ( Logunt, * ) 'Percentage difference between cell mapping:',
+     &                    totalarea/FLOAT(ii)*100.0D0
+
+      DEALLOCATE ( cell_pct, newpct, temp_pct, Gvr_cell_pct )
 
       END SUBROUTINE INITCELLS

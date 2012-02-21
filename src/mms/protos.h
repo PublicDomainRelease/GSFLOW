@@ -1,5 +1,5 @@
 /*
- *  $Id: protos.h 3116 2011-05-17 16:20:01Z rsregan $
+ *  $Id: protos.h 6056 2011-10-05 15:18:49Z markstro $
  */
 
 /**1************* SWITCH FOR DEFINITION AND DECLARATION ***************/
@@ -39,6 +39,7 @@ EXTERN void alloc_space (void);
 EXTERN char *CHECK_stat_vars (void);
 EXTERN char *CHECK_disp_vars (void);
 EXTERN char *CHECK_ani_vars (void);
+EXTERN char *CHECK_map_vars (void);
 
 /***  create_vstats.c  **************************************************/
 #undef EXTERN

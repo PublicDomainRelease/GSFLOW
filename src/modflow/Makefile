@@ -1,5 +1,5 @@
 # mf2k5 libraray makefile
-# $Id: Makefile 3116 2011-05-17 16:20:01Z rsregan $
+# $Id: Makefile 4107 2012-01-13 22:41:49Z rsregan $
 
 include ../makelist
 
@@ -14,31 +14,47 @@ LIBOBJS = \
         gmg7.o \
         mhc7.o \
         gwf2bcf7.o \
-        gwf2chd7.o \
-        gwf2ghb7.o \
         gwf2lpf7.o \
         gwf2huf7.o \
-        gwf2hfb7.o \
         hufutl7.o \
-        gwf2wel7.o \
-        gwfsfrmodule.o \
-        gwfuzfmodule.o \
-        gwf2lak7.o \
-        gwf2sfr7.o \
-        gwf2uzf1.o \
+        NWT1_module.o \
+        gwf2upw1.o \
+        gwfuzfmodule_NWT.o \
+        gwfsfrmodule_NWT.o \
+        gwf2lak7_NWT.o \
+        gwf2sfr7_NWT.o \
+        gwf2uzf1_NWT.o \
+        gwf2wel7_NWT.o \
+        gwf2ghb7.o \
+        gwf2fhb7.o \
+        gwf2mnw17_NWT.o \
+        gwf2mnw27_NWT.o \
+        gwf2mnw2i7.o \
+        lmt7_NWT.o \
+	mach_mod.o \
+        NWT1_ilupc_mod.o \
+        NWT1_xmdlib.o \
+        NWT1_xmd.o \
+        NWT1_gmres.o \
+        NWT1_solver.o \
+        gwf2chd7.o \
+        gwf2hfb7_NWT.o \
         gwf2gag7.o \
         parutl7.o \
         mf2kgmg.o \
         r_vector.o \
         solvers.o \
         ccfd.o \
-        gwf2fhb7.o \
-        gwf2mnw17.o \
-        gwf2mnw27.o \
-        gwf2mnw2i7.o \
+	common_types2.o \
+	mat_vec_mult2.o \
+	MiUDU2.o \
+	pcg_solve2.o \
+	pcg_main2.o \
+	pcgn2.o \
 	obs2bas7.o \
 	obs2chd7.o \
 	obs2ghb7.o
+
 
 all: lib
 	echo made $(MF2K5LIB)
@@ -54,6 +70,33 @@ $(MF2K5LIB): $(LIBOBJS)
 	$(RM) $(MF2K5LIB)
 	$(AR) $(MF2K5LIB) $(LIBOBJS)
 	$(RANLIB) $(MF2K5LIB)
+
+pcg_solve2.o: pcg_solve2.f90
+	$(CC) -c $(CFLAGS) pcg_solve2.f90
+
+pcg_main2.o: pcg_main2.f90
+	$(CC) -c $(CFLAGS) pcg_main2.f90
+
+pcgn2.o: pcgn2.f90
+	$(CC) -c $(CFLAGS) pcgn2.f90
+
+MiUDU2.o: MiUDU2.f90
+	$(CC) -c $(CFLAGS) MiUDU2.f90
+
+mat_vec_mult2.o: mat_vec_mult2.f90
+	$(CC) -c $(CFLAGS) mat_vec_mult2.f90
+
+common_types2.o: common_types2.f90
+	$(CC) -c $(CFLAGS) common_types2.f90
+
+mach_mod.o: mach_mod.f90
+	$(CC) -c $(CFLAGS) mach_mod.f90
+
+NWT1_gmres.o: NWT1_gmres.f90
+	$(CC) -c $(CFLAGS) NWT1_gmres.f90
+
+NWT1_ilupc_mod.o: NWT1_ilupc_mod.f90
+	$(CC) -c $(CFLAGS) NWT1_ilupc_mod.f90
 
 ccfd.o: ccfd.c ccfd.h
 	$(CC) -c $(CFLAGS) ccfd.c
@@ -79,7 +122,7 @@ utl7.o: utl7.f openspec.inc
 gwf2bas7.o: gwf2bas7.f openspec.inc
 	$(FC) $(FFLAGS) -c gwf2bas7.f
 
-gwf2hfb7.o: gwf2hfb7.f openspec.inc
-	$(FC) $(FFLAGS) -c gwf2hfb7.f
+gwf2hfb7_NWT.o: gwf2hfb7_NWT.f openspec.inc
+	$(FC) $(FFLAGS) -c gwf2hfb7_NWT.f
 
 #  end
