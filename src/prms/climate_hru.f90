@@ -1,47 +1,49 @@
 !***********************************************************************
 ! Read and makes available climate data (tmin, tmax, precip, potential
-! solar radiation, and/or potential evapotranspieration) by HRU from
-! files pre-processed Data Files available for other PRMS modules
+! solar radiation, potential evapotranspieration) and/or transpiration
+! on, by HRU from files pre-processed Data Files available for other
+! PRMS modules
 !***********************************************************************
       INTEGER FUNCTION climate_hru()
       USE PRMS_MODULE, ONLY: Process, Nhru, Nsub, Precip_flag, &
-          Print_debug, Solrad_flag, Et_flag, Temp_flag, Subbasin_flag, &
-          Version_climateflow, Climate_hru_nc
-      USE PRMS_BASIN, ONLY: Starttime
+          Solrad_flag, Et_flag, Temp_flag, Subbasin_flag, &
+          Version_climate_hru, Climate_hru_nc, Transp_flag, &
+          Tmin_day, Tmax_day, Precip_day, Potet_day, Swrad_day, Transp_day
+      USE PRMS_BASIN, ONLY: Start_year, Start_month, Start_day
       USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_area, &
           Basin_area_inv, NEARZERO, MM2INCH
       USE PRMS_CLIMATEVARS, ONLY: Solrad_tmax, Solrad_tmin, Basin_temp, &
           Basin_tmax, Basin_tmin, Tmaxf, Tminf, Tminc, Tmaxc, Tavgf, &
           Tavgc, Hru_ppt, Hru_rain, Hru_snow, Prmx, Pptmix, Newsnow, &
-          Tmax_adj, Tmin_adj, Tmax_allrain_f, Adjmix_rain, Precip_units, &
+          Precip_units, Tmax_allrain_f, Adjmix_rain, &
           Basin_ppt, Basin_potet, Potet, Basin_snow, Basin_rain, &
           Basin_horad, Orad, Swrad, Basin_potsw, Basin_obs_ppt, Ntemp, &
-          Basin_tsta
-      USE PRMS_OBS, ONLY: Nowyear, Nowmonth, Nowday, Jday, Nowtime, Tmax, Tmin
+          Transp_on, Basin_transp_on
+      !USE PRMS_CLIMATEVARS, ONLY: Basin_tsta
+      USE PRMS_OBS, ONLY: Nowyear, Nowmonth, Nowday, Jday, Tmax, Tmin
       USE PRMS_SOLTAB, ONLY: Soltab_basinpotsw, Hru_cossl, Soltab_potsw
       IMPLICIT NONE
 ! Functions
-      INTRINSIC ABS, INDEX
+      INTRINSIC ABS, INDEX, ISNAN
       INTEGER, EXTERNAL :: declmodule, declparam, control_integer
-      INTEGER, EXTERNAL :: getparam, control_string, get_ftnunit
-      EXTERNAL read_error, precip_form, temp_set
+      INTEGER, EXTERNAL :: getparam, control_string
+      EXTERNAL read_error, precip_form, temp_set, find_header_end, find_current_time
 ! Declared Parameters
       INTEGER, SAVE :: Adj_by_hru, Orad_flag
       INTEGER, SAVE, ALLOCATABLE :: Hru_subbasin(:)
       REAL, SAVE, ALLOCATABLE :: Rain_sub_adj(:, :), Snow_sub_adj(:, :)
-      REAL, SAVE, ALLOCATABLE :: Rain_adj(:, :), Snow_adj(:, :)
+      REAL, SAVE, ALLOCATABLE :: Rain_cbh_adj(:, :), Snow_cbh_adj(:, :)
+      REAL, SAVE, ALLOCATABLE :: Tmax_cbh_adj(:), Tmin_cbh_adj(:)
 ! Local Variables
       INTEGER, SAVE :: precip_unit, tmax_unit, tmin_unit, et_unit
-      INTEGER, SAVE :: swrad_unit
-      INTEGER, SAVE, ALLOCATABLE :: istack(:)
-      INTEGER :: year, month, day, hour, yr, mo, dy, i
-      INTEGER :: hr, mn, sec, jj
+      INTEGER, SAVE :: swrad_unit, transp_unit
+      INTEGER :: yr, mo, dy, i, hr, mn, sec, jj, ierr, istop, missing
+      INTEGER :: tmax_missing, tmin_missing, potet_missing, swrad_missing, ppt_missing, transp_missing
       DOUBLE PRECISION :: sum_obs
       REAL :: rainadj, snowadj, tmax_hru, tmin_hru, ppt
       REAL :: adjmix, allrain
-      CHARACTER(LEN=4) :: dum
-      CHARACTER(LEN=128) :: tmin_day, tmax_day, precip_day
-      CHARACTER(LEN=128) :: potet_day, swrad_day
+      CHARACTER(LEN=11), PARAMETER :: MODNAME = 'climate_hru'
+      CHARACTER(LEN=26), PARAMETER :: PROCNAME = 'Climate Distribuition'
 !***********************************************************************
       climate_hru = 1
 
@@ -71,11 +73,10 @@
           Basin_ppt = 0.0D0
           Basin_rain = 0.0D0
           Basin_snow = 0.0D0
-          istack = 0
           sum_obs = 0.0D0
         ENDIF
 
-        IF ( Et_flag==0 ) THEN
+        IF ( Et_flag==7 ) THEN
           READ ( et_unit, * ) yr, mo, dy, hr, mn, sec, (Potet(i),i=1,Nhru)
           IF ( yr/=Nowyear .OR. mo/=Nowmonth .OR. Nowday/=dy ) THEN
             PRINT 9001, 'Potet', Nowyear, Nowmonth, Nowday, yr, mo, dy
@@ -84,7 +85,7 @@
           Basin_potet = 0.0D0
         ENDIF
 
-        IF ( Solrad_flag==0 ) THEN
+        IF ( Solrad_flag==7 ) THEN
           IF ( Orad_flag==0 ) THEN
             READ ( swrad_unit, * ) yr, mo, dy, hr, mn, sec, (Swrad(i), i=1,Nhru)
           ELSE
@@ -97,25 +98,76 @@
           Basin_potsw = 0.0D0
         ENDIF
 
+        IF ( Transp_flag==3 ) THEN
+          READ ( transp_unit, * ) yr, mo, dy, hr, mn, sec, (Transp_on(i),i=1,Nhru)
+          IF ( yr/=Nowyear .OR. mo/=Nowmonth .OR. Nowday/=dy ) THEN
+            PRINT 9001, 'Transp_on', Nowyear, Nowmonth, Nowday, yr, mo, dy
+            STOP
+          ENDIF
+          Basin_transp_on = 0
+        ENDIF
+
         adjmix = Adjmix_rain(Nowmonth)
         allrain = Tmax_allrain_f(Nowmonth)
+        tmax_missing = 0
+        tmin_missing = 0
+        potet_missing = 0
+        swrad_missing = 0
+        ppt_missing = 0
+        transp_missing = 0
+        missing = 0
         DO jj = 1, Active_hrus
           i = Hru_route_order(jj)
+
           IF ( Temp_flag==7 ) THEN
-            tmax_hru = Tmaxf(i) + Tmax_adj(i)
-            tmin_hru = Tminf(i) + Tmin_adj(i)
-            CALL temp_set(i, tmax_hru, tmin_hru, Tmaxf(i), Tminf(i), &
-                          Tavgf(i), Tmaxc(i), Tminc(i), Tavgc(i), Hru_area(i))
+            IF ( Tmaxf(i)<-100 .OR. ISNAN(Tmaxf(i)) ) THEN
+              tmax_missing = tmax_missing + 1
+              missing = 1
+            ENDIF
+            IF ( Tminf(i)<-100 .OR. ISNAN(Tminf(i)) ) THEN
+              tmin_missing = tmin_missing + 1
+              missing = 1
+            ENDIF
+            IF ( missing==0 ) THEN
+              tmax_hru = Tmaxf(i) + Tmax_cbh_adj(i)
+              tmin_hru = Tminf(i) + Tmin_cbh_adj(i)
+              CALL temp_set(i, tmax_hru, tmin_hru, Tmaxf(i), Tminf(i), &
+                            Tavgf(i), Tmaxc(i), Tminc(i), Tavgc(i), Hru_area(i))
+            ENDIF
           ENDIF
-          IF ( Et_flag==0 ) Basin_potet = Basin_potet + Potet(i)*Hru_area(i)
-          IF ( Solrad_flag==0 ) Basin_potsw = Basin_potsw + Swrad(i)*Hru_area(i)
+
+          IF ( Et_flag==7 ) THEN
+            IF ( Potet(i)<0.0 .OR. ISNAN(Potet(i)) ) THEN
+              potet_missing = potet_missing + 1
+              missing = 1
+            ELSE
+              Basin_potet = Basin_potet + Potet(i)*Hru_area(i)
+            ENDIF
+          ENDIF
+
+          IF ( Solrad_flag==7 ) THEN
+            IF ( Swrad(i)<0.0 .OR. ISNAN(Swrad(i)) ) THEN
+              swrad_missing = swrad_missing + 1
+              missing = 1
+            ELSE
+              Basin_potsw = Basin_potsw + Swrad(i)*Hru_area(i)
+            ENDIF
+          ENDIF
+
+          IF ( Transp_flag==3 ) THEN
+            IF ( Transp_on(i)<0 ) THEN
+              transp_missing = transp_missing + 1
+              missing = 1
+            ELSE
+              IF ( Transp_on(i)==1 ) Basin_transp_on = 1
+            ENDIF
+          ENDIF
 
           IF ( Precip_flag==7 ) THEN
-            IF ( Hru_ppt(i)<0.0 ) THEN
-              IF ( istack(i)==0 ) THEN
-                PRINT 9002, Hru_ppt(i), i, Nowtime
-                istack(i) = 1
-              ENDIF
+            IF ( Hru_ppt(i)<0.0 .OR. ISNAN(Hru_ppt(i)) ) THEN
+              ppt_missing = ppt_missing + 1
+              missing = 1
+              CYCLE
             ENDIF
 
 !******Initialize HRU variables
@@ -135,8 +187,8 @@
               snowadj = Snow_sub_adj(Hru_subbasin(i), mo)
               rainadj = Rain_sub_adj(Hru_subbasin(i), mo)
             ELSE
-              snowadj = Snow_adj(i, mo)
-              rainadj = Rain_adj(i, mo)
+              snowadj = Snow_cbh_adj(i, mo)
+              rainadj = Rain_cbh_adj(i, mo)
             ENDIF
             ppt = Hru_ppt(i)
             CALL precip_form(ppt, Hru_ppt(i), Hru_rain(i), Hru_snow(i), &
@@ -145,17 +197,28 @@
           ENDIF
         ENDDO
 
+        IF ( tmax_missing>0 ) PRINT *, 'ERROR,', tmax_missing, ' negative or NaN tmax CBH value(s) found'
+        IF ( tmin_missing>0 ) PRINT *, 'ERROR,', tmin_missing, ' negative or NaN tmin CBH value(s) found'
+        IF ( potet_missing>0 ) PRINT *, 'ERROR,', potet_missing, ' negative or NaN potet CBH value(s) found'
+        IF ( swrad_missing>0 ) PRINT *, 'ERROR,', swrad_missing, ' negative or NaN swrad CBH value(s) found'
+        IF ( ppt_missing>0 ) PRINT *, 'ERROR,', ppt_missing, ' negative or NaN precip CBH value(s) found'
+        IF ( transp_missing>0 ) PRINT *, 'ERROR,', transp_missing, ' negative or NaN transp CBH value(s) found'
+        IF ( missing==1 ) THEN
+          PRINT '(A,I5,A,I2.2,A,I2.2)', 'Date:', Nowyear, '/', Nowmonth, '/', Nowday
+          STOP
+        ENDIF
+
         IF ( Temp_flag==7 ) THEN
           Basin_tmax = Basin_tmax*Basin_area_inv
           Basin_tmin = Basin_tmin*Basin_area_inv
           Basin_temp = Basin_temp*Basin_area_inv
-          IF ( Ntemp>0 ) THEN
-            Solrad_tmax = Tmax(Basin_tsta)
-            Solrad_tmin = Tmin(Basin_tsta)
-          ELSE
+          !IF ( Ntemp>0 ) THEN
+          !  Solrad_tmax = Tmax(Basin_tsta)
+          !  Solrad_tmin = Tmin(Basin_tsta)
+          !ELSE
             Solrad_tmax = Basin_tmax
             Solrad_tmin = Basin_tmin
-          ENDIF
+          !ENDIF
         ENDIF
 
         IF ( Precip_flag==7 ) THEN
@@ -165,24 +228,39 @@
           Basin_snow = Basin_snow*Basin_area_inv
         ENDIF
 
-        IF ( Et_flag==0 ) Basin_potet = Basin_potet*Basin_area_inv
+        IF ( Et_flag==7 ) Basin_potet = Basin_potet*Basin_area_inv
 
-        IF ( Solrad_flag==0 ) THEN
+        IF ( Solrad_flag==7 ) THEN
           Basin_horad = Soltab_basinpotsw(Jday)
           IF ( Orad_flag==0 ) Orad = (Swrad(1)*Hru_cossl(1)*Basin_horad)/Soltab_potsw(Jday,1)
           Basin_potsw = Basin_potsw*Basin_area_inv
         ENDIF
 
       ELSEIF ( Process(:4)=='decl' ) THEN
-        Version_climateflow = '$Id: climate_hru.f90 4057 2011-12-13 19:14:33Z rsregan $'
-        Climate_hru_nc = INDEX( Version_climateflow, ' $' ) + 1
-        IF ( Print_debug>-1 ) THEN
-          IF ( declmodule(Version_climateflow(:Climate_hru_nc))/=0 )STOP
-        ENDIF
+        Version_climate_hru = '$Id: climate_hru.f90 5024 2012-11-02 22:46:18Z rsregan $'
+        Climate_hru_nc = INDEX( Version_climate_hru, 'Z' )
+        i = INDEX( Version_climate_hru, '.f90' ) + 3
+        IF ( declmodule(Version_climate_hru(6:i), PROCNAME, Version_climate_hru(i+2:Climate_hru_nc))/=0 ) STOP
 
 !   Declared Parameters
+        IF ( Temp_flag==7 ) THEN
+          ALLOCATE ( Tmax_cbh_adj(Nhru) )
+          IF ( declparam(MODNAME, 'tmax_cbh_adj', 'nhru', 'real', &
+             '0.0', '-10.0', '10.0', &
+             'HRU maximum temperature adjustment', &
+             'Adjustment to maximum temperature for each HRU, estimated based on slope and aspect', &
+             'temp_units')/=0 ) CALL read_error(1, 'tmax_cbh_adj')
+
+          ALLOCATE ( Tmin_cbh_adj(Nhru) )
+          IF ( declparam(MODNAME, 'tmin_cbh_adj', 'nhru', 'real', &
+               '0.0', '-10.0', '10.0', &
+               'HRU minimum temperature adjustment', &
+               'Adjustment to minimum temperature for each HRU, estimated based on slope and aspect', &
+               'temp_units')/=0 ) CALL read_error(1, 'tmin_cbh_adj')
+        ENDIF
+
         IF ( Precip_flag==7 ) THEN
-          IF ( declparam('climhru', 'adj_by_hru', 'one', 'integer', &
+          IF ( declparam(MODNAME, 'adj_by_hru', 'one', 'integer', &
                '1', '0', '1', &
                'Adjust precipitation by HRU or subbasin (0=subbasin; 1=HRU)', &
                'Flag to indicate whether to adjust precipitation and'// &
@@ -191,20 +269,20 @@
 
           IF ( Subbasin_flag==1 ) THEN
             ALLOCATE ( Hru_subbasin(Nhru) )
-            IF ( declparam('climhru', 'hru_subbasin', 'nhru', 'integer', &
+            IF ( declparam(MODNAME, 'hru_subbasin', 'nhru', 'integer', &
                  '0', 'bounded', 'nsub', &
                  'Index of subbasin assigned to each HRU', &
                  'Index of subbasin assigned to each HRU', &
                  'none')/=0 ) CALL read_error(1, 'hru_subbasin')
             ALLOCATE ( Rain_sub_adj(Nsub,12) )
-            IF ( declparam('climhru', 'rain_sub_adj', 'nsub,nmonths', 'real', &
+            IF ( declparam(MODNAME, 'rain_sub_adj', 'nsub,nmonths', 'real', &
                  '1.0', '0.0', '4.0', &
                  'Rain adjustment factor for each subbasin and month', &
                  'Monthly (January to December) adjustment factor to'// &
                  ' measured precipitation determined to be rain for each subbasin', &
                  'decimal fraction')/=0 ) CALL read_error(1, 'rain_sub_adj')
             ALLOCATE ( Snow_sub_adj(Nsub,12) )
-            IF ( declparam('climhru', 'snow_sub_adj', 'nsub,nmonths', &
+            IF ( declparam(MODNAME, 'snow_sub_adj', 'nsub,nmonths', &
                  'real', '1.0', '0.0', '4.0', &
                  'Snow adjustment factor for each subbasin and month', &
                  'Monthly (January to December) adjustment factor to'// &
@@ -212,239 +290,129 @@
                  'decimal fraction')/=0 ) CALL read_error(1, 'snow_sub_adj')
           ENDIF
 
-          ALLOCATE ( Rain_adj(Nhru,12) )
-          IF ( declparam('climhru', 'rain_adj', 'nhru,nmonths', 'real', &
+          ALLOCATE ( Rain_cbh_adj(Nhru,12) )
+          IF ( declparam(MODNAME, 'rain_cbh_adj', 'nhru,nmonths', 'real', &
                '1.0', '0.2', '5.0', &
                'Rain adjustment factor, by month for each HRU', &
                'Monthly (January to December) adjustment factor to'// &
                ' measured precipitation determined to be rain on'// &
                ' each HRU to account for differences in elevation, and so forth', &
-               'decimal fraction')/=0 ) CALL read_error(1, 'rain_adj')
-          ALLOCATE ( Snow_adj(Nhru,12) )
-          IF ( declparam('climhru', 'snow_adj', 'nhru,nmonths', 'real', &
+               'decimal fraction')/=0 ) CALL read_error(1, 'rain_cbh_adj')
+          ALLOCATE ( Snow_cbh_adj(Nhru,12) )
+          IF ( declparam(MODNAME, 'snow_cbh_adj', 'nhru,nmonths', 'real', &
                '1.0', '0.2', '5.0', &
                'Snow adjustment factor, by month for each HRU', &
                'Monthly (January to December) adjustment factor to'// &
                ' measured precipitation determined to be snow on'// &
                ' each HRU to account for differences in elevation, and so forth', &
-               'decimal fraction')/=0 ) CALL read_error(1, 'snow_adj')
+               'decimal fraction')/=0 ) CALL read_error(1, 'snow_cbh_adj')
         ENDIF
 
-        IF ( Solrad_flag==0 ) THEN
+        IF ( Solrad_flag==7 ) THEN
           IF ( control_integer(Orad_flag, 'orad_flag')/=0 ) Orad_flag = 0
         ENDIF
 
       ELSEIF ( Process(:4)=='init' ) THEN
-        year = Starttime(1)
-        month = Starttime(2)
-        day = Starttime(3)
-        hour = Starttime(4)
-
+        istop = 0
         IF ( Precip_flag==7 ) THEN
-          ALLOCATE ( istack(Nhru) )
-          IF ( getparam('climhru', 'adj_by_hru', 1, 'integer', Adj_by_hru)/=0 ) CALL read_error(2, 'adj_by_hru')
+          IF ( getparam(MODNAME, 'adj_by_hru', 1, 'integer', Adj_by_hru)/=0 ) CALL read_error(2, 'adj_by_hru')
 
           IF ( Adj_by_hru==0 ) THEN
-            IF ( getparam('climhru', 'hru_subbasin', Nhru, 'integer', Hru_subbasin)/=0 ) CALL read_error(2, 'hru_subbasin')
-            IF ( getparam('climhru', 'rain_sub_adj', Nsub*12, 'real', Rain_sub_adj)/=0 ) CALL read_error(2, 'rain_sub_adj')
-            IF ( getparam('climhru', 'snow_sub_adj', Nsub*12, 'real', Snow_sub_adj)/=0 ) CALL read_error(2, 'snow_sub_adj')
+            IF ( getparam(MODNAME, 'hru_subbasin', Nhru, 'integer', Hru_subbasin)/=0 ) CALL read_error(2, 'hru_subbasin')
+            IF ( getparam(MODNAME, 'rain_sub_adj', Nsub*12, 'real', Rain_sub_adj)/=0 ) CALL read_error(2, 'rain_sub_adj')
+            IF ( getparam(MODNAME, 'snow_sub_adj', Nsub*12, 'real', Snow_sub_adj)/=0 ) CALL read_error(2, 'snow_sub_adj')
           ELSE
-            IF ( getparam('climhru', 'rain_adj', Nhru*12, 'real', Rain_adj)/=0 ) CALL read_error(2, 'rain_adj')
-            IF ( getparam('climhru', 'snow_adj', Nhru*12, 'real', Snow_adj)/=0 ) CALL read_error(2, 'snow_adj')
+            IF ( getparam(MODNAME, 'rain_cbh_adj', Nhru*12, 'real', Rain_cbh_adj)/=0 ) CALL read_error(2, 'rain_cbh_adj')
+            IF ( getparam(MODNAME, 'snow_cbh_adj', Nhru*12, 'real', Snow_cbh_adj)/=0 ) CALL read_error(2, 'snow_cbh_adj')
           ENDIF
-          IF ( control_string(precip_day, 'precip_day')/=0 ) CALL read_error(5, 'precip_day')
-          precip_unit = get_ftnunit(220)
-          OPEN ( precip_unit, FILE=precip_day, STATUS='OLD' )
-! read to line before data starts in each file
-          i = 0
-          DO WHILE ( i==0 )
-            READ ( precip_unit, FMT='(A4)' ) dum
-            IF ( dum=='####' ) i = 1
-          ENDDO
-! find first value for simulation time period
-          i = 0
-          DO WHILE ( i==0 )
-            READ ( precip_unit, * ) yr, mo, dy
-            IF ( yr==year .AND. mo==month .AND. dy==day ) i = 1
-          ENDDO
-          BACKSPACE precip_unit
+          IF ( control_string(Precip_day, 'precip_day')/=0 ) CALL read_error(5, 'precip_day')
+          CALL find_header_end(precip_unit, Precip_day, 'precip_day', ierr)
+          IF ( ierr==1 ) THEN
+            istop = 1
+          ELSE
+            CALL find_current_time(precip_unit, Start_year, Start_month, Start_day, ierr)
+            IF ( ierr==-1 ) THEN
+              PRINT *, 'for first time step, CBH File: ', Precip_day
+              istop = 1
+            ENDIF
+          ENDIF
         ENDIF
 
         IF ( Temp_flag==7 ) THEN
-          IF ( control_string(tmax_day, 'tmax_day')/=0 ) CALL read_error(5, 'tmax_day')
-          IF ( control_string(tmin_day, 'tmin_day')/=0 ) CALL read_error(5, 'tmin_day')
-          tmax_unit = get_ftnunit(221)
-          tmin_unit = get_ftnunit(tmax_unit)
-          OPEN ( tmax_unit, FILE=tmax_day, STATUS='OLD' )
-          OPEN ( tmin_unit, FILE=tmin_day, STATUS='OLD' )
-! read to line before data starts in each file
-          i = 0
-          DO WHILE ( i==0 )
-            READ ( tmax_unit, FMT='(A4)' ) dum
-            IF ( dum=='####' ) i = 1
-          ENDDO
-          i = 0
-          DO WHILE ( i==0 )
-            READ ( tmin_unit, FMT='(A4)' ) dum
-            IF ( dum=='####' ) i = 1
-          ENDDO
-! find first value for simulation time period
-          i = 0
-          DO WHILE ( i==0 )
-            READ ( tmax_unit, * ) yr, mo, dy
-            IF ( yr==year .AND. mo==month .AND. dy==day ) i = 1
-          ENDDO
-          BACKSPACE tmax_unit
-          i = 0
-          DO WHILE ( i==0 )
-            READ ( tmin_unit, * ) yr, mo, dy
-            IF ( yr==year .AND. mo==month .AND. dy==day ) i = 1
-          ENDDO
-          BACKSPACE tmin_unit
+          IF ( getparam(MODNAME, 'tmax_cbh_adj', Nhru, 'real', Tmax_cbh_adj)/=0 ) CALL read_error(2, 'tmax_cbh_adj')
+          IF ( getparam(MODNAME, 'tmin_cbh_adj', Nhru, 'real', Tmin_cbh_adj)/=0 ) CALL read_error(2, 'tmin_cbh_adj')
+          IF ( control_string(Tmax_day, 'tmax_day')/=0 ) CALL read_error(5, 'tmax_day')
+          IF ( control_string(Tmin_day, 'tmin_day')/=0 ) CALL read_error(5, 'tmin_day')
+          CALL find_header_end(tmax_unit, Tmax_day, 'tmax_day', ierr)
+          IF ( ierr==1 ) THEN
+            istop = 1
+          ELSE
+            CALL find_current_time(tmax_unit, Start_year, Start_month, Start_day, ierr)
+            IF ( ierr==-1 ) THEN
+              PRINT *, 'for first time step, CBH File: ', Tmax_day
+              istop = 1
+            ENDIF
+          ENDIF
+          CALL find_header_end(tmin_unit, Tmin_day, 'tmin_day', ierr)
+          IF ( ierr==1 ) THEN
+            istop = 1
+          ELSE
+            CALL find_current_time(tmin_unit, Start_year, Start_month, Start_day, ierr)
+            IF ( ierr==-1 ) THEN
+              PRINT *, 'for first time step, CBH File: ', Tmin_day
+              istop = 1
+            ENDIF
+          ENDIF
         ENDIF
 
-        IF ( Et_flag==0 ) THEN
-          IF ( control_string(potet_day, 'potet_day')/=0 ) CALL read_error(5, 'potet_day')
-          et_unit = get_ftnunit(224)
-          OPEN ( et_unit, FILE=potet_day, STATUS='OLD' )
-          i = 0
-          DO WHILE ( i==0 )
-            READ ( et_unit, FMT='(A4)' ) dum
-            IF ( dum=='####' ) i = 1
-          ENDDO
-          i = 0
-          DO WHILE ( i==0 )
-          READ ( et_unit, * ) yr, mo, dy
-            IF ( yr==year .AND. mo==month .AND. dy==day ) i = 1
-          ENDDO
-          BACKSPACE et_unit
+        IF ( Et_flag==7 ) THEN
+          IF ( control_string(Potet_day, 'potet_day')/=0 ) CALL read_error(5, 'potet_day')
+          CALL find_header_end(et_unit, Potet_day, 'potet_day', ierr)
+          IF ( ierr==1 ) THEN
+            istop = 1
+          ELSE
+            CALL find_current_time(et_unit, Start_year, Start_month, Start_day, ierr)
+            IF ( ierr==-1 ) THEN
+              PRINT *, 'for first time step, CBH File: ', Potet_day
+              istop = 1
+            ENDIF
+          ENDIF
         ENDIF
 
-        IF ( Solrad_flag==0 ) THEN
-          IF ( control_string(swrad_day, 'swrad_day')/=0 ) CALL read_error(5, 'swrad_day')
-          swrad_unit = get_ftnunit(225)
-          OPEN ( swrad_unit, FILE=swrad_day, STATUS='OLD' )
-          i = 0
-          DO WHILE ( i==0 )
-            READ ( swrad_unit, FMT='(A4)' ) dum
-            IF ( dum=='####' ) i = 1
-          ENDDO
-          i = 0
-          DO WHILE ( i==0 )
-            READ ( swrad_unit, * ) yr, mo, dy
-            IF ( yr==year .AND. mo==month .AND. dy==day ) i = 1
-          ENDDO
-          BACKSPACE swrad_unit
+        IF ( Transp_flag==3 ) THEN
+          IF ( control_string(Transp_day, 'transp_day')/=0 ) CALL read_error(5, 'transp_day')
+          CALL find_header_end(transp_unit, Transp_day, 'transp_day', ierr)
+          IF ( ierr==1 ) THEN
+            istop = 1
+          ELSE
+            CALL find_current_time(transp_unit, Start_year, Start_month, Start_day, ierr)
+            IF ( ierr==-1 ) THEN
+              PRINT *, 'for first time step, CBH File: ', Transp_day
+              istop = 1
+            ENDIF
+          ENDIF
         ENDIF
+
+        IF ( Solrad_flag==7 ) THEN
+          IF ( control_string(Swrad_day, 'swrad_day')/=0 ) CALL read_error(5, 'swrad_day')
+          ierr = 2
+          CALL find_header_end(swrad_unit, Swrad_day, 'swrad_day', ierr)
+          IF ( ierr==1 ) THEN
+            istop = 1
+          ELSE
+            CALL find_current_time(swrad_unit, Start_year, Start_month, Start_day, ierr)
+            IF ( ierr==-1 ) THEN
+              PRINT *, 'for first time step, CBH File: ', Swrad_day
+              istop = 1
+            ENDIF
+          ENDIF
+        ENDIF
+
+        IF ( istop==1 ) STOP 'ERROR in climate_hru'
       ENDIF
 
- 9001 FORMAT ( 'ERROR, problem reading daily HRU', A, ' file', /, &
+ 9001 FORMAT ( 'ERROR, problem reading daily HRU: ', A, ' file', /, &
                'Timestep:', I5.4, 2('/',I2.2), /, 'File time:', I5.4, 2('/',I2.2),/ )
- 9002 FORMAT ( 'Warning, bad precipitation value:', F10.3, &
-               '; HRU:', I6, '; Time:', I5, 2('/', I2.2), I3, &
-               2(':', I2.2), '; value set to 0.0' )
 
       climate_hru = 0
       END FUNCTION climate_hru
-
-!***********************************************************************
-! Writes climate data (tmin, tmax, precip, potential solar radiation,
-! and/or potential evapotranspieration) by HRU to files for use by
-! the climate_hru module
-!***********************************************************************
-      INTEGER FUNCTION write_climate_hru()
-      USE PRMS_MODULE, ONLY: Process, Print_debug, Nhru, Temp_flag, Precip_flag, &
-          Solrad_flag, Et_flag, Version_write_climate_hru, Write_climate_hru_nc
-      USE PRMS_OBS, ONLY: Nowyear, Nowmonth, Nowday
-      USE PRMS_CLIMATEVARS, ONLY: Tmaxf, Tminf, Hru_ppt, Potet, Swrad, Orad
-      IMPLICIT NONE
-! Functions
-      INTRINSIC INDEX
-      INTEGER, EXTERNAL :: control_string, get_ftnunit, declmodule
-      EXTERNAL :: read_error
-! Local Variables
-      INTEGER, SAVE :: tmax_unit, tmin_unit, precip_unit, potet_unit, swrad_unit
-      INTEGER :: i
-      CHARACTER(LEN=128) :: tmin_day, tmax_day, precip_day, potet_day, swrad_day
-      CHARACTER(LEN=32), SAVE :: fmt1, fmt2
-!***********************************************************************
-      write_climate_hru = 1
-
-!***Run Procedure***
-      IF ( Process(:3)=='run' ) THEN
-        IF ( Temp_flag/=7 ) THEN
-          WRITE ( tmax_unit, fmt1 ) Nowyear, Nowmonth, Nowday, 0, 0, 0, (Tmaxf(i), i=1,Nhru)
-          WRITE ( tmin_unit, fmt1 ) Nowyear, Nowmonth, Nowday, 0, 0, 0, (Tminf(i), i=1,Nhru)
-        ENDIF
-        IF ( Precip_flag/=7 ) WRITE ( precip_unit, fmt1 ) Nowyear, Nowmonth, Nowday, 0, 0, 0, (Hru_ppt(i), i=1,Nhru)
-        IF ( Et_flag/=0 ) WRITE ( potet_unit, fmt1 ) Nowyear, Nowmonth, Nowday, 0, 0, 0, (Potet(i), i=1,Nhru)
-        IF ( Solrad_flag/=0 ) WRITE ( swrad_unit, fmt2 ) Nowyear, Nowmonth, Nowday, 0, 0, 0, (Swrad(i), i=1,Nhru), Orad
-
-!***Declare Procedure***
-      ELSEIF ( Process(:4)=='decl' ) THEN
-        Version_write_climate_hru = '$Id: climate_hru.f90 4057 2011-12-13 19:14:33Z rsregan $'
-        Write_climate_hru_nc = INDEX( Version_write_climate_hru, ' $' ) + 1
-        IF ( Print_debug>-1 ) THEN
-          IF ( declmodule(Version_write_climate_hru(:Write_climate_hru_nc))/=0 ) STOP
-        ENDIF
-
-!***Initialize Procedure***
-      ELSEIF ( Process(:4)=='init' ) THEN
-        fmt1 = ' '
-        fmt2 = ' '
-        WRITE ( fmt1, 9003 ) Nhru
-        WRITE ( fmt2, 9003 ) Nhru + 1
-        IF ( Temp_flag/=7 ) THEN
-          tmax_unit = get_ftnunit(640)
-          IF ( control_string(tmax_day, 'tmax_day')/=0 ) CALL read_error(5, 'tmax_day')
-          OPEN ( tmax_unit, FILE=tmax_day )
-          WRITE ( tmax_unit, 9001 ) 'tmaxf', Nhru
-
-          tmin_unit = get_ftnunit(tmax_unit)
-          IF ( control_string(tmin_day, 'tmin_day')/=0 ) CALL read_error(5, 'tmin_day')
-          OPEN ( tmin_unit, FILE=tmin_day )
-          WRITE ( tmin_unit, 9001 ) 'tminf', Nhru
-        ENDIF
-
-        IF ( Precip_flag/=7 ) THEN
-          precip_unit = get_ftnunit(643)
-          IF ( control_string(precip_day, 'precip_day')/=0 ) CALL read_error(5, 'precip_day')
-          OPEN ( precip_unit, FILE=precip_day )
-          WRITE ( precip_unit, 9001 ) 'precip', Nhru
-        ENDIF
-
-        IF ( Et_flag/=0 ) THEN
-          potet_unit = get_ftnunit(644)
-          IF ( control_string(potet_day, 'potet_day')/=0 ) CALL read_error(5, 'potet_day')
-          OPEN ( potet_unit, FILE=potet_day )
-          WRITE ( potet_unit, 9001 ) 'potet', Nhru
-        ENDIF
-
-        IF ( Solrad_flag/=0 ) THEN
-          swrad_unit = get_ftnunit(645)
-          IF ( control_string(swrad_day, 'swrad_day')/=0 ) CALL read_error(5, 'swrad_day')
-          OPEN ( swrad_unit, FILE=swrad_day )
-          WRITE ( swrad_unit, 9002 ) 'swrad', Nhru
-          PRINT *, '******'
-          PRINT *, '******WARNING****** BE SURE TO ADD orad_flag = 1 in Control File'
-          PRINT *, '******'
-        ENDIF
-
-!***Clean-up Procedure***
-      ELSEIF ( Process(:5)=='clean' ) THEN
-        IF ( Temp_flag/=7 ) THEN
-          CLOSE ( tmax_unit )
-          CLOSE ( tmin_unit )
-        ENDIF
-        IF ( Precip_flag/=7 ) CLOSE ( precip_unit )
-        IF ( Et_flag/=0 ) CLOSE ( potet_unit )
-        IF ( Solrad_flag/=0 ) CLOSE ( swrad_unit )
-
-      ENDIF
-
- 9001 FORMAT ( 'Generated by write_climate_hru module', /, A, I8, /, 40('#') )
- 9002 FORMAT ( 'Generated by write_climate_hru module', /, A, I8, /, 'orad 1', /, 40('#') )
- 9003 FORMAT ( '(I4,2I3,3I2,',I8,'F10.4)' )
-
-      write_climate_hru = 0
-      END FUNCTION write_climate_hru

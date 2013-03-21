@@ -5,9 +5,9 @@
 ! Needs variable "precip" in the DATA FILE
 ! Needs observed variable tmax read in the temperature module
 !
-! MODIFIED 7/1998 ,JJ VACCARO, INTERPOLATES PRECIP BASED ON DISTANCE
+! MODIFIED 7/1998 ,JJ VACCARO, INTERPOLATES PRECIPITATION BASED ON DISTANCE
 !   SQUARED USING ALL STATIONS IDENTIFIED FOR BASIN, MAY GIVE MORE
-! PRECIP IN LOWLANDS, BUT SMOOTHS OUT DISTRIBUTION, USES MONTHLY MEANS
+! PRECIPITATION IN LOWLANDS, BUT SMOOTHS OUT DISTRIBUTION, USES MONTHLY MEANS
 ! FOR 61-90 NORMAL PERIOD OF HRUS AND STATIONS FOR ADJUSTMENT
 ! RSR, added adjust to rain and snow, rather than using rain adjust to
 !      adjust total precip
@@ -16,7 +16,10 @@
       IMPLICIT NONE
 !   Local Variables
       INTEGER, SAVE, ALLOCATABLE :: N_psta(:), Nuse_psta(:, :)
-      REAL, SAVE, ALLOCATABLE :: Dist2(:, :)
+      DOUBLE PRECISION, SAVE, ALLOCATABLE :: Dist2(:, :)
+      CHARACTER(LEN=12), PARAMETER :: MODNAME = 'precip_dist2'
+      CHARACTER(LEN=26), PARAMETER :: PROCNAME =
+     +                                'Precipitation Distribution'
 !   Declared Parameters
       INTEGER, SAVE :: Max_psta
       REAL, SAVE :: Dist_max, Maxday_prec
@@ -28,7 +31,7 @@
       END MODULE PRMS_DIST2_PRECIP
 
 !***********************************************************************
-!     Main precip routine
+!     Main precipitation routine
 !***********************************************************************
       INTEGER FUNCTION precip_dist2()
       USE PRMS_MODULE, ONLY: Process
@@ -51,29 +54,31 @@
 !***********************************************************************
 !     pptdist2decl - set up parameters for precipitation computations
 !   Declared Parameters
-!     tmax_allrain, tmax_allsnow, adjmix_rain, adjust_rain, adjust_snow
+!     tmax_allrain, tmax_allsnow, adjmix_rain, adjust_snow
 !     rain_mon, snow_mon, precip_units
 !     hru_area, temp_units, maxmon_prec, dist2, psta_xlong, psta_ylong
 !     hru_ylat, hru_xlong, max_psta, dist_max, maxday_prec
 !***********************************************************************
       INTEGER FUNCTION pptdist2decl()
       USE PRMS_DIST2_PRECIP
-      USE PRMS_MODULE, ONLY: Model, Nhru, Print_debug, Precip_dist2_nc,
+      USE PRMS_MODULE, ONLY: Model, Nhru, Precip_dist2_nc,
      +    Version_precip_dist2
       USE PRMS_CLIMATEVARS, ONLY: Nrain
       IMPLICIT NONE
 ! Functions
       INTEGER, EXTERNAL :: declmodule, declparam, declvar
       EXTERNAL read_error
+! Local Variables
+      INTEGER :: n
 !***********************************************************************
       pptdist2decl = 1
 
       Version_precip_dist2 =
-     +'$Id: precip_dist2.f 4166 2012-02-06 20:30:43Z rsregan $'
-      Precip_dist2_nc = INDEX( Version_precip_dist2, ' $' ) + 1
-      IF ( Print_debug>-1 ) THEN
-        IF ( declmodule(Version_precip_dist2(:Precip_dist2_nc))/=0 )STOP
-      ENDIF
+     +'$Id: precip_dist2.f 4501 2012-05-08 19:48:16Z rsregan $'
+      Precip_dist2_nc = INDEX( Version_precip_dist2, 'Z' )
+      n = INDEX( Version_precip_dist2, '.f' ) + 1
+      IF ( declmodule(Version_precip_dist2(6:n), PROCNAME,
+     +     Version_precip_dist2(n+2:Precip_dist2_nc))/=0 ) STOP
 
       IF ( Nrain<2 .AND. Model/=99 ) THEN
         PRINT *, 'ERROR, precip_dist2 requires at least 2 precip',
@@ -82,13 +87,14 @@
       ENDIF
 
 ! declare parameters
-      IF ( declparam('precip', 'dist_max', 'one', 'real',
+      IF ( declparam(MODNAME, 'dist_max', 'one', 'real',
      +     '1.0E9', '0.0', '1.0E9',
      +     'Maximum distance from HRU to include a climate station',
-     +     'Maximum distance from HRU to include a climate station',
+     +     'Maximum distance from an HRU to a measurement station for'//
+     +     ' use in calcuations',
      +     'feet')/=0 ) CALL read_error(1, 'dist_max')
 
-      IF ( declparam('precip', 'max_psta', 'one', 'integer',
+      IF ( declparam(MODNAME, 'max_psta', 'one', 'integer',
      +     '50', '2', '50',
      +     'Maximum number of precipitation stations to distribute to'//
      +     ' an HRU',
@@ -96,15 +102,15 @@
      +     ' an HRU',
      +     'none')/=0 ) CALL read_error(1, 'max_psta')
 
-      IF ( declparam('precip', 'maxday_prec', 'one', 'real',
+      IF ( declparam(MODNAME, 'maxday_prec', 'one', 'real',
      +     '15.0', '0.0', '20.0',
      +     'Maximum daily precipitation for any weather site',
      +     'Maximum measured precipitation value above which'//
      +     ' precipitation is assumed to be in error',
      +     'precip_units')/=0 ) CALL read_error(1, 'maxday_prec')
 
-!      ALLOCATE (Maxmon_prec(12))
-!      IF ( decl param('precip', 'maxmon_prec', 'nmonths', 'real',
+!      ALLOCATE ( Maxmon_prec(12) )
+!      IF ( decl param(MODNAME, 'maxmon_prec', 'nmonths', 'real',
 !     +     '5.0', '0.0', '15.0',
 !     +     'Maximum monthly precipitation for any weather site',
 !     +     'If measured monthly (January to December) precipitation'//
@@ -112,67 +118,72 @@
 !     +     ' precipitation is assumed to be in error',
 !     +     'precip_units')/=0 ) CALL read_error(1, 'maxmon_prec')
 
-      ALLOCATE (Rain_mon(Nhru, 12))
-      IF ( declparam('precip', 'rain_mon', 'nhru,nmonths', 'real',
+      ALLOCATE ( Rain_mon(Nhru, 12) )
+      IF ( declparam(MODNAME, 'rain_mon', 'nhru,nmonths', 'real',
      +     '1.0', '0.0', '50.0',
      +     'Rain adjustment factor, by month for each HRU',
      +     'Monthly (January to December) factor to rain on each HRU'//
      +     ' to adjust precipitation distributed to each HRU to'//
-     +     ' account for differences in elevation, etc.',
+     +     ' account for differences in elevation, and so forth',
      +     'precip_units')/=0 ) CALL read_error(1, 'rain_mon')
 
-      ALLOCATE (Snow_mon(Nhru, 12))
-      IF ( declparam('precip', 'snow_mon', 'nhru,nmonths', 'real',
+      ALLOCATE ( Snow_mon(Nhru, 12) )
+      IF ( declparam(MODNAME, 'snow_mon', 'nhru,nmonths', 'real',
      +     '1.0', '0.0', '50.0',
      +     'Rain adjustment factor, by month for each HRU',
      +     'Monthly (January to December) factor to snow on each HRU'//
      +     ' to adjust precipitation distributed to each HRU to'//
-     +     ' account for differences in elevation, etc.',
+     +     ' account for differences in elevation, and so forth',
      +     'precip_units')/=0 ) CALL read_error(1, 'snow_mon')
 
       ALLOCATE (Psta_mon(Nrain, 12))
-      IF ( declparam('precip', 'psta_mon', 'nrain,nmonths', 'real',
+      IF ( declparam(MODNAME, 'psta_mon', 'nrain,nmonths', 'real',
      +     '1.0', '0.00001', '50.0',
-     +     'Monthly precipitation for each of the nrain precip sites',
+     +     'Monthly precipitation for each of the nrain precipitation'//
+     +     ' stations',
      +     'Monthly (January to December) factor to precipitation'//
      +     ' at each measured station to adjust precipitation'//
      +     ' distributed to each HRU to'//
-     +     ' account for differences in elevation, etc.',
+     +     ' account for differences in elevation, and so forth',
      +     'precip_units')/=0 ) CALL read_error(1, 'psta_mon')
 
-      ALLOCATE (Psta_xlong(Nrain))
-      IF ( declparam('precip', 'psta_xlong', 'nrain', 'real',
+      ALLOCATE ( Psta_xlong(Nrain) )
+      IF ( declparam(MODNAME, 'psta_xlong', 'nrain', 'real',
      +     '0.0', '-1.0E9', '1.0E9',
-     +     'Precipitation station longitude, state plane',
-     +     'Longitude of each precipitation measurement station',
+     +     'Precipitation station longitude, State Plane',
+     +     'Longitude of each precipitation measurement station,'//
+     +     ' State Plane Coordinate System',
      +     'feet')/=0 ) CALL read_error(1, 'psta_xlong')
 
-      ALLOCATE (Psta_ylat(Nrain))
-      IF ( declparam('precip', 'psta_ylat', 'nrain', 'real',
+      ALLOCATE ( Psta_ylat(Nrain) )
+      IF ( declparam(MODNAME, 'psta_ylat', 'nrain', 'real',
      +     '0.0', '-1.0E9', '1.0E9',
-     +     'Precipitation station latitude, state plane',
-     +     'Latitude of each precipitation measurement station',
+     +     'Precipitation station latitude, State Plane',
+     +     'Latitude of each precipitation measurement station, State'//
+     +     ' Plane Coordinate System',
      +     'feet')/=0 ) CALL read_error(1, 'psta_ylat')
 
-      ALLOCATE (Hru_ylat(Nhru))
-      IF ( declparam('precip', 'hru_ylat', 'nhru', 'real',
+      ALLOCATE ( Hru_ylat(Nhru) )
+      IF ( declparam(MODNAME, 'hru_ylat', 'nhru', 'real',
      +     '0.0', '-1.0E9', '1.0E9',
-     +     'HRU latitude of centroid, state plane',
-     +     'Latitude of each HRU for the centroid',
+     +     'HRU latitude of centroid, State Plane',
+     +     'Latitude of each HRU for the centroid, State Plane'//
+     +     ' Coordinate System',
      +     'feet')/=0 ) CALL read_error(1, 'hru_ylat')
 
-      ALLOCATE (Hru_xlong(Nhru))
-      IF ( declparam('precip', 'hru_xlong', 'nhru', 'real',
+      ALLOCATE ( Hru_xlong(Nhru) )
+      IF ( declparam(MODNAME, 'hru_xlong', 'nhru', 'real',
      +     '0.0', '-1.0E9', '1.0E9',
-     +     'HRU longitude of centroid, state plane',
-     +     'Longitude of each HRU for the centroid',
+     +     'HRU longitude of centroid, State Plane',
+     +     'Longitude of each HRU for the centroid, State Plane'//
+     +     ' Coordinate System',
      +     'feet')/=0 ) CALL read_error(1, 'hru_xlong')
 
       pptdist2decl = 0
       END FUNCTION pptdist2decl
 
 !***********************************************************************
-!     pptdist2init - Initialize precip module - get parameter values
+!     pptdist2init - Initialize precipitation module - get parameter values
 !***********************************************************************
       INTEGER FUNCTION pptdist2init()
       USE PRMS_DIST2_PRECIP
@@ -187,43 +198,43 @@
 ! Local Variables
       INTEGER :: i, k, j, n, kk, kkbig, jj
       DOUBLE PRECISION :: distx, disty, distance, big_dist, dist
-      REAL, ALLOCATABLE :: nuse_psta_dist(:, :)
+      DOUBLE PRECISION, ALLOCATABLE :: nuse_psta_dist(:, :)
 !***********************************************************************
       pptdist2init = 1
 
 ! NEW PARAMETERS
-      IF ( getparam('precip', 'maxday_prec', 1, 'real', Maxday_prec)
+      IF ( getparam(MODNAME, 'maxday_prec', 1, 'real', Maxday_prec)
      +     /=0 ) CALL read_error(2, 'maxday_prec')
 
-      IF ( getparam('precip', 'dist_max', 1, 'real', Dist_max)
+      IF ( getparam(MODNAME, 'dist_max', 1, 'real', Dist_max)
      +     /=0 ) CALL read_error(2, 'dist_max')
 
-      IF ( getparam('precip', 'max_psta', 1, 'real', Max_psta)
+      IF ( getparam(MODNAME, 'max_psta', 1, 'real', Max_psta)
      +     /=0 ) CALL read_error(2, 'max_psta')
       IF ( Max_psta==50 ) Max_psta = Nrain
 
-!      IF ( get param('precip', 'maxmon_prec', 12, 'real', Maxmon_prec)
+!      IF ( get param(MODNAME, 'maxmon_prec', 12, 'real', Maxmon_prec)
 !     +     /=0 ) CALL read_error(2, 'maxmon_prec')
 
-      IF ( getparam('precip', 'rain_mon', Nhru*12, 'real', Rain_mon)
+      IF ( getparam(MODNAME, 'rain_mon', Nhru*12, 'real', Rain_mon)
      +     /=0 ) CALL read_error(2, 'rain_mon')
 
-      IF ( getparam('precip', 'snow_mon', Nhru*12, 'real', Snow_mon)
+      IF ( getparam(MODNAME, 'snow_mon', Nhru*12, 'real', Snow_mon)
      +     /=0 ) CALL read_error(2, 'snow_mon')
 
-      IF ( getparam('precip', 'psta_mon', Nrain*12, 'real', Psta_mon)
+      IF ( getparam(MODNAME, 'psta_mon', Nrain*12, 'real', Psta_mon)
      +     /=0 ) CALL read_error(2, 'psta_mon')
 
-      IF ( getparam('precip', 'psta_xlong', Nrain, 'real', Psta_xlong)
+      IF ( getparam(MODNAME, 'psta_xlong', Nrain, 'real', Psta_xlong)
      +     /=0 ) CALL read_error(2, 'psta_xlong')
 
-      IF ( getparam('precip', 'psta_ylat', Nrain, 'real', Psta_ylat)
+      IF ( getparam(MODNAME, 'psta_ylat', Nrain, 'real', Psta_ylat)
      +     /=0 ) CALL read_error(2, 'psta_ylat')
 
-      IF ( getparam('precip', 'hru_xlong', Nhru, 'real', Hru_xlong)
+      IF ( getparam(MODNAME, 'hru_xlong', Nhru, 'real', Hru_xlong)
      +     /=0 ) CALL read_error(2, 'hru_xlong')
 
-      IF ( getparam('precip', 'hru_ylat', Nhru, 'real', Hru_ylat)
+      IF ( getparam(MODNAME, 'hru_ylat', Nhru, 'real', Hru_ylat)
      +     /=0 ) CALL read_error(2, 'hru_ylat')
 
 ! END NEW
@@ -235,7 +246,7 @@
       N_psta = 0
       ALLOCATE (Nuse_psta(Max_psta,Nhru), nuse_psta_dist(Max_psta,Nhru))
       Nuse_psta = 0
-      nuse_psta_dist = 0.0
+      nuse_psta_dist = 0.0D0
 
       DO jj = 1, Active_hrus
         i = Hru_route_order(jj)
@@ -300,7 +311,7 @@
       INTRINSIC ABS
 ! Local Variables
       INTEGER :: i, iform, k, j, kk, allmissing
-      REAL :: tdiff, allrain_mo, pcor, prec, adjmix_mo
+      REAL :: tdiff, allrain_mo, pcor, prec, adjmix_mo, ppt_sngl
       DOUBLE PRECISION :: sum_obs, sumdist, sump, ppt
 !***********************************************************************
       Basin_ppt = 0.0D0
@@ -311,7 +322,6 @@
       adjmix_mo = Adjmix_rain(Nowmonth)
       DO j = 1, Active_hrus
         i = Hru_route_order(j)
-        !rsr, zero precip arrays
         Hru_ppt(i) = 0.0
         Hru_rain(i) = 0.0
         Hru_snow(i) = 0.0
@@ -319,12 +329,12 @@
         Newsnow(i) = 0
         Pptmix(i) = 0
 
-        ! rsr, determine form of precip
+        ! determine form of precip
 
 !******IF maximum temperature is below or equal to the base temperature
 !******for snow then precipitation is all snow
         IF ( Tmaxf(i)<=Tmax_allsnow_f ) THEN
-          !rsr, precip is all snow
+          ! precipitation is all snow
           iform = 1
 
 !******If measured temperature data are not available then
@@ -332,7 +342,7 @@
 !******If minimum temperature is above base temperature for snow or
 !******maximum temperature is above all_rain temperature then
 !******precipitation is all rain
-! MODIFIED BELOW (10/99, JJV SO THAT ASSUMING ALWAYS TEMP DATA FOR A DAY
+! MODIFIED BELOW (10/99, JJV SO THAT ASSUMING ALWAYS TEMPERATURE DATA FOR A DAY
 ! FOR AT LEAST ONE SITE
         ELSEIF ( Tminf(i)>Tmax_allsnow_f .OR. Tmaxf(i)>=allrain_mo )THEN
           iform = 2
@@ -341,7 +351,7 @@
           iform = 0
         ENDIF
 
-! Determine if any precip on HRU=i, if not start next HRU
+! Determine if any precipitation on HRU=i, if not start next HRU
 
         ppt = 0.0D0
         sumdist = 0.0D0
@@ -350,9 +360,9 @@
         DO kk = 1, N_psta(i)
           k = Nuse_psta(kk, i)
 
-!   Make sure stations precip is not negative or missing
+!   Make sure stations precipitation is not negative or missing
 
-!???rsr, pcor should only be used for portion of precip that is rain
+!???rsr, pcor should only be used for portion of precipitation that is rain
           IF ( Precip(k)>=0.0 .AND. Precip(k)<=Maxday_prec ) THEN
 !     +         Precip(k)<Maxmon_prec(Nowmonth) ) THEN
             allmissing = 1
@@ -369,7 +379,7 @@
             sump = sump + prec
             ppt = ppt + prec*Dist2(i, k)
 !          ELSE
-!            PRINT *, 'bad precip value, HRU:', k, Precip(k), Nowtime
+!            PRINT *, 'bad precipitation value, HRU:', k, Precip(k), Nowtime
           ENDIF
         ENDDO
         IF ( allmissing==0 ) THEN
@@ -384,18 +394,19 @@
         IF ( sumdist>0.0D0 ) ppt = ppt/sumdist
 
         IF ( Precip_units==1 ) ppt = ppt/25.4D0
-        Hru_ppt(i) = ppt
+        ppt_sngl = SNGL(ppt)
+        Hru_ppt(i) = ppt_sngl
         sum_obs = sum_obs + ppt*Hru_area(i)
 
         IF ( iform==2 ) THEN
-          Hru_rain(i) = ppt
+          Hru_rain(i) = ppt_sngl
           Prmx(i) = 1.0
 
         ELSEIF ( iform==1 ) THEN
-          Hru_snow(i) = ppt
+          Hru_snow(i) = ppt_sngl
           Newsnow(i) = 1
 
-       !precip is a mixture of rain and snow
+       ! precipitation is a mixture of rain and snow
         ELSE
           tdiff = Tmaxf(i) - Tminf(i)
           IF ( ABS(tdiff)<NEARZERO ) tdiff = 0.01
@@ -406,11 +417,11 @@
 !******If not, it is a rain/snow mixture
           IF ( Prmx(i)<1.0 ) THEN
             Pptmix(i) = 1
-            Hru_rain(i) = Prmx(i)*ppt
-            Hru_snow(i) = ppt - Hru_rain(i)
+            Hru_rain(i) = Prmx(i)*ppt_sngl
+            Hru_snow(i) = ppt_sngl - Hru_rain(i)
             Newsnow(i) = 1
           ELSE
-            Hru_rain(i) = ppt
+            Hru_rain(i) = ppt_sngl
             Prmx(i) = 1.0
           ENDIF
         ENDIF

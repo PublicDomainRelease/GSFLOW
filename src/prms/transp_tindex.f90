@@ -2,25 +2,33 @@
 ! Determines whether current time period is one of active transpiration
 ! based on a temperature index method.
 !***********************************************************************
+      MODULE PRMS_TRANSP_TINDEX
+      IMPLICIT NONE
+!   Declared Parameters
+      INTEGER, SAVE, ALLOCATABLE :: Transp_beg(:), Transp_end(:)
+      END MODULE PRMS_TRANSP_TINDEX
+
       INTEGER FUNCTION transp_tindex()
-      USE PRMS_MODULE, ONLY: Process, Nhru, Print_debug, Version_transp_tindex, Transp_tindex_nc
-      USE PRMS_BASIN, ONLY: Starttime, Active_hrus, Hru_route_order
+      USE PRMS_MODULE, ONLY: Process, Nhru, Version_transp_tindex, Transp_tindex_nc
+      USE PRMS_BASIN, ONLY: Start_month, Start_day, Active_hrus, Hru_route_order
       USE PRMS_CLIMATEVARS, ONLY: Tmaxf, Tmaxc, Temp_units, Transp_on, Basin_transp_on 
       USE PRMS_OBS, ONLY: Nowmonth, Nowday
+      USE PRMS_TRANSP_TINDEX
       IMPLICIT NONE
 ! Functions
       INTRINSIC INDEX
       INTEGER, EXTERNAL :: declmodule, declparam, getparam
       EXTERNAL read_error
 ! Declared Parameters
-      INTEGER, SAVE, ALLOCATABLE :: Transp_beg(:), Transp_end(:)
       REAL, SAVE, ALLOCATABLE :: Transp_tmax(:)
 ! Local Variables
-      INTEGER :: mo, day, i, j, motmp
+      INTEGER :: i, j, motmp
       INTEGER, SAVE, ALLOCATABLE :: span_year(:)
       INTEGER, SAVE, ALLOCATABLE :: transp_check(:), transp_end_12(:)
       REAL, SAVE :: freeze_temp
       REAL, SAVE, ALLOCATABLE :: tmax_sum(:), tmax_hru(:)
+      CHARACTER(LEN=13), PARAMETER :: MODNAME = 'transp_tindex'
+      CHARACTER(LEN=26), PARAMETER :: PROCNAME = 'Transpiration Period'
 !***********************************************************************
       transp_tindex = 1
 
@@ -44,7 +52,7 @@
           i = Hru_route_order(j)
 
 !******If in checking period, then for each day
-!******sum max temp until greater than temperature index parameter,
+!******sum maximum temperature until greater than temperature index parameter,
 !******at which time, turn transpiration switch on, check switch off
           IF ( transp_check(i)==1 ) THEN
             IF ( tmax_hru(i)>freeze_temp ) tmax_sum(i) = tmax_sum(i) + tmax_hru(i)
@@ -74,37 +82,37 @@
         ENDDO
 
       ELSEIF ( Process(:4)=='decl' ) THEN
-        Version_transp_tindex = '$Id: transp_tindex.f90 3830 2011-10-26 18:33:52Z rsregan $'
-        Transp_tindex_nc = INDEX( Version_transp_tindex, ' $' ) + 1
-        IF ( Print_debug>-1 ) THEN
-          IF ( declmodule(Version_transp_tindex(:Transp_tindex_nc))/=0 ) STOP
-        ENDIF
+        Version_transp_tindex = '$Id: transp_tindex.f90 5000 2012-11-02 17:18:36Z rsregan $'
+        Transp_tindex_nc = INDEX( Version_transp_tindex, 'Z' )
+        i = INDEX( Version_transp_tindex, '.f90' ) + 3
+        IF ( declmodule(Version_transp_tindex(6:i), PROCNAME, Version_transp_tindex(i+2:Transp_tindex_nc))/=0 ) STOP
 
         ALLOCATE ( Transp_beg(Nhru) )
-        IF ( declparam('tindex', 'transp_beg', 'nhru', 'integer', &
+        IF ( declparam(MODNAME, 'transp_beg', 'nhru', 'integer', &
              '4', '1', '12', &
              'Month to begin testing for transpiration', &
-             'Month to begin summing tmax for each HRU; when sum is greater than or equal to transp_tmax, transpiration begins', &
+             'Month to begin summing the maximum air temperature for each HRU; when sum is greater than or'// &
+             ' equal to transp_tmax, transpiration begins', &
              'month')/=0 ) CALL read_error(1, 'transp_beg')
         ALLOCATE ( Transp_end(Nhru) )
-        IF ( declparam('tindex', 'transp_end', 'nhru', 'integer', &
+        IF ( declparam(MODNAME, 'transp_end', 'nhru', 'integer', &
              '10', '1', '12', &
              'Month to stop transpiration period', &
              'Month to stop transpiration computations; transpiration is computed thru end of previous month', &
              'month')/=0 ) CALL read_error(1, 'transp_end')
         ALLOCATE ( Transp_tmax(Nhru) )
-        IF ( declparam('tindex', 'transp_tmax', 'nhru', 'real', &
+        IF ( declparam(MODNAME, 'transp_tmax', 'nhru', 'real', &
              '500.0', '0.0', '1000.0', &
              'Tmax index to determine start of transpiration', &
-             'Temperature index to determine the specific date of the start of the transpiration period.'// &
-             ' Subroutine sums tmax for each HRU starting with the first day of month transp_beg.'// &
-             ' When the sum exceeds this index, transpiration begins', &
+             'Temperature index to determine the specific date of the start of the transpiration period;'// &
+             ' the maximum air temperature for each HRU is summed starting with the first day of month transp_beg;'// &
+             ' when the sum exceeds this index, transpiration begins', &
              'degrees')/=0 ) CALL read_error(1, 'transp_tmax')
 
       ELSEIF ( Process(:4)=='init' ) THEN
-        IF ( getparam('tindex', 'transp_beg', Nhru, 'integer', Transp_beg)/=0 ) CALL read_error(2, 'transp_beg')
-        IF ( getparam('tindex', 'transp_end', Nhru, 'integer', Transp_end)/=0 ) CALL read_error(2, 'transp_end')
-        IF ( getparam('tindex', 'transp_tmax', Nhru, 'real', Transp_tmax)/=0 ) CALL read_error(2, 'transp_tmax')
+        IF ( getparam(MODNAME, 'transp_beg', Nhru, 'integer', Transp_beg)/=0 ) CALL read_error(2, 'transp_beg')
+        IF ( getparam(MODNAME, 'transp_end', Nhru, 'integer', Transp_end)/=0 ) CALL read_error(2, 'transp_end')
+        IF ( getparam(MODNAME, 'transp_tmax', Nhru, 'real', Transp_tmax)/=0 ) CALL read_error(2, 'transp_tmax')
 
         ALLOCATE ( tmax_sum(Nhru), tmax_hru(Nhru), transp_check(Nhru) )
         ALLOCATE ( transp_end_12(Nhru), span_year(Nhru) )
@@ -116,23 +124,21 @@
           freeze_temp = 0.0
         ENDIF
 
-        mo = Starttime(2)
-        day = Starttime(3)
-        motmp = mo + 12
+        motmp = Start_month + 12
         DO i = 1, Nhru
           transp_check(i) = 0
-          IF ( mo==Transp_beg(i) ) THEN
-            IF ( day>10 ) THEN
+          IF ( Start_month==Transp_beg(i) ) THEN
+            IF ( Start_day>10 ) THEN
               Transp_on(i) = 1
             ELSE
               transp_check(i) = 1
             ENDIF
           ELSEIF ( (Transp_end(i)-Transp_beg(i))>0 ) THEN
-            IF ( mo>Transp_beg(i) .AND. mo<Transp_end(i) ) Transp_on(i) = 1
+            IF ( Start_month>Transp_beg(i) .AND. Start_month<Transp_end(i) ) Transp_on(i) = 1
           ELSE
             IF ( Transp_end(i)<Transp_beg(i) ) span_year(i) = 1
             transp_end_12(i) = Transp_end(i) + 12
-            IF ( mo>Transp_beg(i) .OR. motmp<transp_end_12(i) ) Transp_on(i) = 1
+            IF ( Start_month>Transp_beg(i) .OR. motmp<transp_end_12(i) ) Transp_on(i) = 1
           ENDIF
           IF ( Transp_on(i)==1 ) Basin_transp_on = 1
         ENDDO

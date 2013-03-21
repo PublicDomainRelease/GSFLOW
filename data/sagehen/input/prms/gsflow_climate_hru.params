@@ -371,7 +371,7 @@ nhru
 2.087899923325
 2.087899923325
 ####
-snow_adj 12
+snow_cbh_adj 12
 2
 nhru
 nmonths
@@ -414,7 +414,7 @@ nhru
 2
 128*500.0
 ####
-rain_adj 4
+rain_cbh_adj 4
 2
 nhru
 nmonths
@@ -570,7 +570,7 @@ one
 2
 0.8000000119209
 ####
-tmin_adj
+tmin_cbh_adj
 1
 nhru
 128
@@ -1165,7 +1165,7 @@ one
 1
 90
 ####
-tmax_adj
+tmax_cbh_adj
 1
 nhru
 128

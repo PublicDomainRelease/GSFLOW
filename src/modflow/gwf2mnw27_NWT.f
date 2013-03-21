@@ -4,6 +4,7 @@
         DOUBLE PRECISION, SAVE,POINTER :: SMALL
         CHARACTER(LEN=20),SAVE, DIMENSION(:),   POINTER     ::WELLID
         CHARACTER(LEN=16),SAVE, DIMENSION(:),   POINTER     ::MNWAUX
+        INTEGER, SAVE,    DIMENSION(:,:),     POINTER ::LIMQ
         DOUBLE PRECISION, SAVE, DIMENSION(:,:), POINTER     ::MNW2
         DOUBLE PRECISION, SAVE, DIMENSION(:,:), POINTER     ::MNWNOD
         DOUBLE PRECISION, SAVE, DIMENSION(:,:), POINTER     ::MNWINT
@@ -14,6 +15,7 @@
         DOUBLE PRECISION, POINTER :: SMALL
         CHARACTER(LEN=20), DIMENSION(:),   POINTER     ::WELLID
         CHARACTER(LEN=16), DIMENSION(:),   POINTER     ::MNWAUX
+        INTEGER,    DIMENSION(:,:),     POINTER ::LIMQ
         DOUBLE PRECISION,  DIMENSION(:,:), POINTER     ::MNW2
         DOUBLE PRECISION,  DIMENSION(:,:), POINTER     ::MNWNOD
         DOUBLE PRECISION,  DIMENSION(:,:), POINTER     ::MNWINT
@@ -26,6 +28,8 @@
       SUBROUTINE GWF2MNW27AR(IN,IGRID)
 C     ******************************************************************
 C     ALLOCATE ARRAY STORAGE FOR MNW2 PACKAGE.
+!rgn------REVISION NUMBER CHANGED TO BE CONSISTENT WITH NWT RELEASE
+!rgn------NEW VERSION NUMBER 1.0.5:  April 5, 2012
 C     ******************************************************************
 C
 C     SPECIFICATIONS:
@@ -33,7 +37,8 @@ C     ------------------------------------------------------------------
       USE GLOBAL,       ONLY:IOUT,NLAY
       USE GWFMNW2MODULE, ONLY:NMNW2,MNWMAX,NMNWVL,IWL2CB,MNWPRNT,
      1                       NODTOT,INTTOT,MNWAUX,MNW2,MNWNOD,MNWINT,
-     2                       CapTable,SMALL,NTOTNOD,WELLID
+C-LFK     2                       CapTable,SMALL,NTOTNOD,WELLID
+     2                       CapTable,SMALL,NTOTNOD,WELLID,LIMQ
 C
       CHARACTER*200 LINE
 C     ------------------------------------------------------------------
@@ -45,21 +50,38 @@ C1------grids to be defined.
 C
 C2------IDENTIFY PACKAGE AND INITIALIZE NMNW2.
       WRITE(IOUT,1)IN
-    1 format(/,1x,'MNW2 -- MULTI-NODE WELL 2 PACKAGE, VERSION 1.9,',
-     +' 10/01/2011.',/,4X,'INPUT READ FROM UNIT ',i3)
+    1 format(/,1x,'MNW2 -- MULTI-NODE WELL 2 PACKAGE, VERSION 1.0.7,',
+     +' 12/20/2012.',/,4X,'INPUT READ FROM UNIT ',i3)
       NMNW2=0
       ntotnod=0
+c-lfk-Dec 2012
+      nodtot=0
 C
 C3------READ MAXIMUM NUMBER OF MNW2 WELLS, UNIT OR FLAG FOR
 C3------CELL-BY-CELL FLOW TERMS, AND PRINT FLAG
       CALL URDCOM(IN,IOUT,LINE)
       LLOC=1
       CALL URWORD(LINE,LLOC,ISTART,ISTOP,2,MNWMAX,R,IOUT,IN)
+c--LFK
+        IF (MNWMAX.LT.0) THEN
+           CALL URWORD(LINE,LLOC,ISTART,ISTOP,2,NODTOT,R,IOUT,IN)
+           MNWMAX=MNWMAX*-1
+        END IF
+c--LFK
       CALL URWORD(LINE,LLOC,ISTART,ISTOP,2,IWL2CB,R,IOUT,IN)
       CALL URWORD(LINE,LLOC,ISTART,ISTOP,2,MNWPRNT,R,IOUT,IN)
 c
-      write(iout,3) MNWMAX
-    3 format(1h ,'MAXIMUM OF',i5,' ACTIVE MULTI-NODE WELLS AT ONE TIME')
+C--LFK: check for best format
+      if (MNWMAX.LT.1000) THEN
+         write(iout,3) MNWMAX
+      ELSE
+         WRITE(IOUT,4) MNWMAX
+      END IF
+    3 format(1h ,'MAXIMUM OF ',i4,' ACTIVE MULTI-NODE WELLS AT ONE TIME'
+     1)
+C--LFK--alternate output format
+    4 format(1h ,'MAXIMUM OF ',i6,' ACTIVE MULTI-NODE WELLS AT ONE TIME'
+     1)
       write(iout,*) 
       if(IWL2CB.gt.0) write(iout,9) IWL2CB
     9 format(1x, 'CELL-BY-CELL FLOWS WILL BE RECORDED ON UNIT', i3)
@@ -104,7 +126,11 @@ C5------FOR EACH NODE, THERE ARE 31 DATA VALUES
 c approximate number of nodes= max mnw wells * number of layers, this works well
 c if all are mostly vertical wells.  add 10*nlay+25 for extra room.  ispmnwn is 
 c passed out to RP routine to check allocation while reading actual # nodes used
-      NODTOT=(MNWMAX*NLAY)+(10*NLAY)+25
+C--LFK  Dec. 2012
+      IF (NODTOT.EQ.0) THEN
+         NODTOT=(MNWMAX*NLAY)+(10*NLAY)+25
+      END IF   
+C-LFK
       ALLOCATE (MNWNOD(34,NODTOT))
 C5------FOR EACH INTERVAL, THERE ARE 11 DATA VALUES
       ALLOCATE (MNWINT(11,NODTOT))
@@ -114,13 +140,18 @@ c  2 is the number of fields in the Capacity Table (CapTable): Lift (1) and Q (2
       ALLOCATE (CapTable(mnwmax,27,2))
 C5------FOR WELLID array, add an extra spot 
       ALLOCATE (WELLID(mnwmax+1))
+C-LFK
+      ALLOCATE(LIMQ(3,MNWMAX))
 C
 C7------SAVE POINTERS TO DATA AND RETURN.
       CALL SGWF2MNW2PSV(IGRID)
       RETURN
       END
       SUBROUTINE GWF2MNW27RP(IN,kper,Iusip, Iude4,Iusor,Iupcg,
-     +                      Iulmg,Iugmg,Iunwt,igwtunit,IGRID)
+     +                      igwtunit,Iunwt,IGRID)    
+ !               IF(IUNIT(50).GT.0) CALL GWF2MNW27RP(MNW2,kper,SIP,
+ !+                       DE4,0,PCG,0,GMG,
+ !+                       GWT,NWT,IGRID)
 C     ******************************************************************
 c     read mnw2 locations, stress rates, conc, well char., and limits
 C     ******************************************************************
@@ -135,8 +166,9 @@ C     ------------------------------------------------------------------
       USE SIPMODULE,ONLY:HCLOSE
       USE DE4MODULE,ONLY:HCLOSEDE4
       USE PCGMODULE,ONLY:HCLOSEPCG
-c      USE GMGMODULE,ONLY:HCLOSEGMG
-       USE GWFNWTMODULE,ONLY:Tol
+      USE GWFNWTMODULE,ONLY:Tol
+!      USE GMGMODULE,ONLY:HCLOSEGMG
+!      USE PCGN,ONLY:HCLOSEPCGN
 C     ------------------------------------------------------------------
       INTEGER Qlimit,QCUT,firstnode,lastnode,
      & PUMPLAY,PUMPROW,PUMPCOL,PUMPLOC,PPFLAG,PUMPCAP
@@ -175,17 +207,22 @@ c     set defaults
       ntotnod=0
       INTTOT=0
 C-------SET SMALL DEPENDING ON CLOSURE CRITERIA OF THE SOLVER
+      SMALL = 0.0D0
       IF ( Iusip.NE.0 ) SMALL = HCLOSE
       IF ( Iude4.NE.0 ) SMALL = HCLOSEDE4
 !     IF ( Iusor.NE.0 ) SMALL = HCLOSESOR
       IF ( Iupcg.NE.0 ) SMALL = HCLOSEPCG
       IF ( Iulmg.NE.0 ) SMALL = 0.0D0  !LMG SETS HCLOSE TO ZERO
-c      IF ( Iugmg.NE.0 ) SMALL = HCLOSEGMG
+      IF ( Iunwt.NE.0 ) SMALL = TOL
+!      IF ( Iugmg.NE.0 ) SMALL = HCLOSEGMG
+!      IF ( Iupcgn.NE.0 ) SMALL = HCLOSEPCGN
 c     initialize
       WELLID=' '
       MNW2=0.0D0
       MNWNOD=0.0D0
       MNWINT=0.0D0
+c--lfk
+      NDALT=0
       write(iout,*) 
       write(iout,*) 'MNW2 Input:'
 c0----read MNW info: wellid, nnodes, losstype, pumploc, Qlimit
@@ -1056,6 +1093,8 @@ c     is still in that node (still NODNUM)
 c     if interval is still in previous node, re-set "last int" for that node
 c     do not increase nodecount, as it is in same node
                 MNWNOD(13,NODNUM)=INTNUM+IINT-1
+C--LFK
+                NDALT=1
 c     if top of this interval is in a new node, create a node in that layer
               ELSE
                 IF(IBOUND(IC,IR,IL).NE.0) THEN
@@ -1092,9 +1131,13 @@ c     until ZDP (and ZPL) are set for the well)
 c
 c     check nodecount here before looping over lower layers, possibility that the
 c     interval defines nothing is then caught
-            IF(nodecount.gt.0) THEN
+C--LFK
+C            IF(nodecount.gt.0) THEN
+            IF(nodecount.gt.0.OR.NDALT.GT.0) THEN
 c     add more nodes if the bottom of the interval penetrates below this layer,
 c     as long as it isn't the last layer
+C--LFK
+              NDALT=0
               K=IL
               DO WHILE(Zbotm.lt.BOTM(IC,IR,LBOTM(K)).and.
      &               ((K+1).LE.NLAY))                  
@@ -1125,10 +1168,9 @@ c     until ZDP (and ZPL) are set for the well
               END DO
 	      END IF
 c
-
     4     CONTINUE
 c         end loop over intervals
-c     reset NUMNODES to -(number of nodes) instead of -(# of intervals)
+c     reset NUMNODES to (number of nodes in interval) instead of -(# of intervals)
             MNW2(2,MNWID)=-1*intnodes
 c
 c     Print interval information
@@ -1161,8 +1203,9 @@ c     LOSSTYPE=GENERAL, read Ztop,Zbotm,IR,IC,{Rw B C P}
 
 c     LOSSTYPE=SPECIFYcwc, read Ztop,Zbotm,IR,IC,{CWC}
               CASE (4)
+C-LFK
             write(iout,'(100A)') ' Interval      Ztop       Zbotm    ',
-     &'  Row  Col      spec.CWC'
+     &'  Row  Col   spec.CWC   '
             END SELECT
 c
 c     get first interval in this well
@@ -1228,11 +1271,11 @@ c     for MNWs defined by intervals
           nod=INODE-firstnode+1
 c  if more than one interval made up this node, write composite 
           if(MNWNOD(12,INODE).ne.MNWNOD(13,INODE)) then
-
-           write(iout,'(1x,I4,1x,I4,1x,I4,1x,I4,2x,9A)')
+C-LFK           write(iout,'(1x,I4,1x,I4,1x,I4,1x,I4,2x,9A)')
+           write(iout,'(1x,I4,1x,I4,1x,I4,1x,I4,2x,10A)')
      &nod,(INT(MNWNOD(i,INODE)),i=1,3),
-     & 'COMPOSITE'
-
+     & ' COMPOSITE'
+c-LFK     & 'COMPOSITE'
           else
            write(iout,'(1x,I4,1x,I4,1x,I4,1x,I4)')
      &nod,(INT(MNWNOD(i,INODE)),i=1,3)       
@@ -1261,7 +1304,8 @@ c     LOSSTYPE=GENERAL, read IL,IR,IC,{Rw B C P}
      &         C          P  '
 c     LOSSTYPE=SPECIFYcwc, read IL,IR,IC,{CWC}
               CASE (4)
-      write(iout,'(100A)') ' Node  Lay  Row  Col    spec.CWC'
+C-LFK
+      write(iout,'(100A)') ' Node  Lay  Row  Col  spec.CWC'
             END SELECT
 c
 c     write data depending on LOSSTYPE
@@ -1323,7 +1367,8 @@ c     LOSSTYPE=GENERAL, read IL,IR,IC,{Rw B C P}
      &         C          P        PP'
 c     LOSSTYPE=SPECIFYcwc, read IL,IR,IC,{CWC}
               CASE (4)
-      write(iout,'(100A)') ' Node  Lay  Row  Col    spec.CWC        PP'
+C-LFK
+      write(iout,'(100A)') ' Node  Lay  Row  Col  spec.CWC      PP'
             END SELECT
 c
 c     write data depending on LOSSTYPE
@@ -1363,7 +1408,9 @@ c     LOSSTYPE=SPECIFYcwc, write IL,IR,IC,{CWC}
               CASE (4)
          do INODE=firstnode,lastnode
           nod=INODE-firstnode+1
-          write(iout,'(1x,I4,1x,I4,1x,I4,1x,I4,2x,1P2G10.4)')
+c-lfk-11/27/2012
+c          write(iout,'(1x,I4,1x,I4,1x,I4,1x,I4,2x,1P2G10.4)')
+          write(iout,'(1x,I4,1x,I4,1x,I4,1x,I4,2x,1PG10.4,2x,0PF5.2)')
      &nod,(INT(MNWNOD(i,INODE)),i=1,3),MNWNOD(11,INODE),
      &MNWNOD(19,INODE)      
          end do
@@ -1432,6 +1479,8 @@ c     end read Data Set 2e
 c
 c     read data set 2f (if Qlimit > 0)
 c
+        Qfrcmn = 0.0  ! This is used below when not set. RGN 10/1912
+        Qfrcmx = 0.0
         IF(Qlimit.GT.0.0) THEN
           READ(in,*) Hlim,QCUT
           BACKSPACE in
@@ -1552,8 +1601,9 @@ c
         write(iout,*) 
         do iread=1,ITMP
 c  read data set 4a
-c  read WELLNAME and then backspace to check for PUMPCAP
-         read(in,*) WELLNAME
+c  read WELLNAME & Qdes and then backspace to check for PUMPCAP
+c-lfk    read(in,*) WELLNAME
+         read(in,*) WELLNAME,qdes
          backspace(in)
          call UPCASE(WELLNAME)
 c  check for existence of well
@@ -1582,17 +1632,29 @@ c   continue reading data set 4a
           if(igwtunit.le.0) then
             read(in,*) WELLNAME,Qdes,(MNW2(30+IAUX,MNWID),IAUX=1,NAUX)
           else
-            read(in,*) WELLNAME,Qdes,Cprime,
+c-lfk:  Only read Cprime for recharge/injection well (Qdes.gt.0.0)
+            if (Qdes.gt.0.0) then
+              read(in,*) WELLNAME,Qdes,Cprime,
      &                 (MNW2(30+IAUX,MNWID),IAUX=1,NAUX)
+            else
+              read(in,*) WELLNAME,Qdes,
+     &                 (MNW2(30+IAUX,MNWID),IAUX=1,NAUX)
+            end if
 	      endif
 	     else
           if(igwtunit.le.0) then
             read(in,*) WELLNAME,Qdes,CapMult,
      &                 (MNW2(30+IAUX,MNWID),IAUX=1,NAUX)
           else
-            read(in,*) WELLNAME,Qdes,CapMult,Cprime,
+c-lfk:  Only read Cprime for recharge/injection well (Qdes.gt.0.0)
+            if (Qdes.gt.0.0) then
+              read(in,*) WELLNAME,Qdes,CapMult,Cprime,
      &                 (MNW2(30+IAUX,MNWID),IAUX=1,NAUX)
-	      endif
+            else
+              read(in,*) WELLNAME,Qdes,CapMult,
+     &                 (MNW2(30+IAUX,MNWID),IAUX=1,NAUX)
+            end if
+	    endif
          end if
 C-LFK   write auxiliary variable info.
          if (naux.gt.0.and.mnwprnt.gt.0) then
@@ -1715,7 +1777,7 @@ c  now that we have Qdes, write Capacity table
 c
       end
 C
-      SUBROUTINE GWF2MNW27AD(kstp,kper,IGRID)
+      SUBROUTINE GWF2MNW27AD(kstp,kper,Iuupw,IGRID)
 C     ******************************************************************
 c     Update Qact for wells that were constrained
 C     ******************************************************************
@@ -1727,9 +1789,10 @@ C     ------------------------------------------------------------------
      2                       STRT,HNEW
       USE GWFMNW2MODULE, ONLY:NMNW2,MNWMAX,NMNWVL,IWL2CB,MNWPRNT,
      1                       NODTOT,INTTOT,MNWAUX,MNW2,MNWNOD,MNWINT,
-     2                       CapTable,SMALL,WELLID
+C-LFK     2                       CapTable,SMALL,WELLID
+     2                       CapTable,SMALL,WELLID,LIMQ
 C     ------------------------------------------------------------------
-      INTEGER firstnode,lastnode,nd
+      INTEGER firstnode,lastnode,nd,Iuupw
       DOUBLE PRECISION qoff,qon,qdes,csum,chsum,qact,Qsmall,
      & hwell,verysmall,hlim,qpot,cond,ratio,hmax,hsim,
      & QCUT,qnet,hhnew
@@ -1747,7 +1810,7 @@ c   because we are not currently iterating on a solution
       ITFLAG=0
 c   sending in kiter=0; this is before iter loop
       kiter=0
-      call SMNW2COND(IGRID,kstp,kper,kiter,ITFLAG)
+      call SMNW2COND(IGRID,kstp,kper,kiter,ITFLAG,Iuupw)
 c
 c
 c   Allow constrained wells a new chance with the next time step
@@ -1770,6 +1833,12 @@ c  default Q used = Qdes (this may be changed if limits kick in below)
             mnw2(18,iw)=mnw2(5,iw)
           end if
 c
+C-LFK Nov.2012
+C   Initialize LIMQ flags
+          LIMQ(1,IW)=0
+          LIMQ(2,IW)=0
+          LIMQ(3,IW)=0
+C        
 c   Retrieve QCUT, Qfrcmn, Qfrcmx
           if(MNW2(6,iw).NE.0) then
             QCUT = MNW2(8,iw)
@@ -1799,8 +1868,11 @@ c   Compute hwell / Qpot for multi-node well (not single-cell wells)
 c   
 c         if NNODES>1, that is, this is a multi-node well
 c      write(*,*) 'MNW2(2,iw)',MNW2(2,iw)
+c-lfk  Nov.2012: end sep. processing of single-node MNW2 wells
           NNODES=abs(MNW2(2,iw))
-          if(NNODES.gt.1) then
+c-lfk
+c          if(NNODES.gt.1) then
+          if(NNODES.gt.0) then
 c      write(*,*) 'MNW2(6,iw)',MNW2(6,iw)
             csum = 0.000D0
             chsum = 0.000D0
@@ -1893,6 +1965,16 @@ C       print warning if found
   850 FORMAT (14x,'Condition found for single-node MNW2 well ',A20,
      & ' at Lay-Row-Col Index = ',3I5/)
               end if
+C--LFK   Check for MNW & no-flow boundary condition in same cell; 
+C       print warning if found
+              if(ibound(ic,ir,il).eq.0) then
+                 write(iout,*) '***WARNING***  No-flow bdy. condition ex
+     &ists in same cell as a multi-node well:'
+                 write(iout,852) wellid(iw),il,ir,ic
+  852 FORMAT (14x,'IBOUND = 0 for single-node MNW2 well ',A20,
+     & ' at Lay-Row-Col Index =',3I5/)
+              end if
+C
           end if
 c
 c  Compute ratio of potential/desired flow rates
@@ -1949,13 +2031,14 @@ C     ------------------------------------------------------------------
       USE GWFBASMODULE, ONLY:HDRY
       USE GWFMNW2MODULE, ONLY:NMNW2,MNWMAX,NMNWVL,IWL2CB,MNWPRNT,
      1                       NODTOT,INTTOT,MNWAUX,MNW2,MNWNOD,MNWINT,
-     2                       CapTable,SMALL,WELLID
+C-LFK     2                       CapTable,SMALL,WELLID
+     2                       CapTable,SMALL,WELLID,LIMQ
 C     ------------------------------------------------------------------
 
       INTEGER PUMPCAP,firstnode,lastnode, Iuupw
       DOUBLE PRECISION verysmall,qdes,hlim,hwell,qact,
      & cond,dhc2w,hmax,hsim,ratio,qactCap,Hlift,
-     & CapMult,lastQ,qtemp,temppct,lastH,htemp,HWtol,hhnew
+     & CapMult,lastQ,qtemp,temppct,lastH,htemp,HWtol,hhnew,qact2
 C
       CALL SGWF2MNW2PNT(IGRID)
 C
@@ -1973,7 +2056,8 @@ c
 c   Send in ITFLAG=1, this means calculate partial penetration effects
 c   because we are currently iterating on a solution
       ITFLAG=1
-      call SMNW2COND(IGRID,kstp,kper,kiter,ITFLAG)
+      qact2 = 0.0
+      call SMNW2COND(IGRID,kstp,kper,kiter,ITFLAG,Iuupw)
 c
 c   Prepare components and limits of a multi-node well
 c   Loop over all wells
@@ -2096,7 +2180,7 @@ c         if NNODES>1, that is, this is a multi-node well
           NNODES=abs(MNW2(2,iw))
 C-LFK          if(NNODES.gt.1) then
           if(NNODES.GE.1) then
-            CALL SMNW2SEEP(IGRID,KPER,KSTP,iw,kiter)
+            CALL SMNW2SEEP(IGRID,KPER,KSTP,iw,kiter,Iuupw) !RGN
 c  for PUMPCAP option, check hwell vs last H
             if(MNW2(25,iw).GT.0.and.kiter.gt.2) then
               hwell = mnw2(17,iw)
@@ -2132,6 +2216,8 @@ c   If Capacity restrictions are set, Qdes here is actually the retricted Qpot
           hwell = mnw2(17,iw)
           firstnode=MNW2(4,iw)
           lastnode=MNW2(4,iw)+ABS(MNW2(2,iw))-1
+c-LFK Nov. 2012
+          if(mnw2(27,iw).ne.0) LIMQ(1,IW)=1
 c   Loop over nodes in well
           do INODE=firstnode,lastnode
             il=MNWNOD(1,INODE)              
@@ -2141,42 +2227,44 @@ c   Loop over nodes in well
               qact = MNWNOD(4,INODE)
               cond = MNWNOD(14,INODE)
 c   Process single-node wells (MNW2(2,iw).eq.1, i.e. NUMNODES)
-              if( abs(MNW2(2,iw)).eq.1.and.cond.gt.verysmall ) then
-                dhc2w = Qact / cond
-                hhnew=hnew(ic,ir,il)
-                hwell = hhnew + dhc2w
-                MNW2(17,iw) = hwell
-                iqslv=0
+c-LFK  Nov.2012  End sep. proc. for single-node MNW2 wells
+c             if( abs(MNW2(2,iw)).eq.1.and.cond.gt.verysmall ) then
+c                dhc2w = Qact / cond
+c                hhnew=hnew(ic,ir,il)
+c                hwell = hhnew + dhc2w
+c                MNW2(17,iw) = hwell
+c                iqslv=0
 c   Test DD constraints, Hlim is assumed to be a Max/Min for Injection/Production wells
 c   Set hwell in mnw2 array
-           if(MNW2(6,iw).NE.0) then
-                  hlim = mnw2(7,iw)                
-                  ipole = 0
-                  if( abs(qdes).gt.verysmall ) ipole = qdes / abs(qdes)
-                  hmax = ipole*( hlim )
-                  hsim = ipole*( hwell )
+c           if(MNW2(6,iw).NE.0) then
+c                  hlim = mnw2(7,iw)                
+c                  ipole = 0
+c                  if( abs(qdes).gt.verysmall ) ipole = qdes / abs(qdes)
+c                  hmax = ipole*( hlim )
+c                  hsim = ipole*( hwell )
 c   Calculate ratio of actual flow to desired flow
-                  ratio = 1.00D0
-                  if( abs(qdes) .gt. verysmall ) ratio =  qact / qdes
-                  if( abs(ratio).gt. 1.00D0 ) qact = qdes
-                  if( ratio .lt. verysmall ) qact = 0.0D0
+c                  ratio = 1.00D0
+c                  if( abs(qdes) .gt. verysmall ) ratio =  qact / qdes
+c                  if( abs(ratio).gt. 1.00D0 ) qact = qdes
+c                  if( ratio .lt. verysmall ) qact = 0.0D0
 c   If iqslv=0, Well will be simulated as a specified rate 
 c   If iqslv=1, Well will be simulated as a GHB 
-                  iqslv = 0
-                  if( hsim.gt.hmax .and. hmax.gt.verysmall ) iqslv = 1
-                  if((qdes-qact)**2 .gt. small               ) iqslv = 1
-                  if(abs(qact).lt.verysmall .and.hsim.gt.hmax) iqslv = 0
-                  if(abs(qact).lt.verysmall .and.hsim.lt.hmax) iqslv = 1
+c                  iqslv = 0
+c                  if( hsim.gt.hmax .and. hmax.gt.verysmall ) iqslv = 1
+c                  if((qdes-qact)**2 .gt. small               ) iqslv = 1
+c                  if(abs(qact).lt.verysmall .and.hsim.gt.hmax) iqslv = 0
+c                  if(abs(qact).lt.verysmall .and.hsim.lt.hmax) iqslv = 1
 C-LFK   Set iqslv=0 if qact=0 or if PUMPCAP overides Hlimit constraint
-                  if(mnw2(27,iw).gt.1) iqslv = 0
-                  if(abs(qact).lt.verysmall) iqslv = 0
-                  if(abs(qdes).lt.verysmall .or. 
-     &             ratio.gt.1.0D0-verysmall ) iqslv =0
-                else
-                  hlim=mnw2(17,iw)
-                end if
+c                  if(mnw2(27,iw).gt.1) iqslv = 0
+c                  if(abs(qact).lt.verysmall) iqslv = 0
+c                  if(abs(qdes).lt.verysmall .or. 
+c     &             ratio.gt.1.0D0-verysmall ) iqslv =0
+c                else
+c                  hlim=mnw2(17,iw)
+c                end if
 c 
-              elseif( cond.lt.verysmall ) then
+c              elseif( cond.lt.verysmall ) then
+              if( cond.lt.verysmall ) then
                 qact = 0.0D0
                 iqslv = 0
               else
@@ -2193,7 +2281,20 @@ C                                      !! or bottom of cell if seepage face cell
               end if
 ! Added the next lines to stop BC switching. RGN 7/20/11
                IF ( Iuupw.GT.0 ) THEN
-                 hlim = MNWNOD(15,INODE)
+                 hwel = MNWNOD(15,INODE)
+                 IF ( MNW2(6,iw).NE.0 )THEN
+                   hlim = MNW2(7,iw)
+                 ELSE
+                   hlim = hwel
+                 END IF
+! Added next line to limit well-bore head to the cell bottom 
+! for unconfined condtions. RGN 3/20/12
+                 IF ( LAYHDT(IL).GT.0 ) THEN
+                   IF ( hlim.LT.BOTM(ic,ir,lbotm(il)) ) 
+     +                  hlim = BOTM(ic,ir,lbotm(il))
+! Always limit hwel for unconfined conditions
+                   IF ( hwel.LT.hlim ) hwel = hlim
+                 END IF
                  iqslv = 1
                END IF
 c
@@ -2203,13 +2304,22 @@ cdebug              if(iqslv.ne.0.and.kiter.gt.1.and.kiter.lt.NoMoIter) then
               if(iqslv.ne.0.and.kiter.gt.1) then
                 hhnew=hnew(ic,ir,il)
                 qact = ( hlim - hhnew) * cond
+!RGN modifications for NWT. 3/21/12
+                IF ( Iuupw.GT.0 ) THEN
+                  qact2 = cond*(hwel-hhnew)
+                  hlim = hwel
+                END IF
                 hcof(ic,ir,il) = hcof(ic,ir,il) - cond
                 rhs(ic,ir,il)  = rhs(ic,ir,il)  - cond * hlim
               else
 c  Specify Q and solve for head;  add Q to RHS accumulator.
                 rhs(ic,ir,il) = rhs(ic,ir,il) - qact
               endif
-              MNWNOD(4,INODE) = qact
+              IF ( Iuupw.EQ.0 ) THEN
+                MNWNOD(4,INODE) = qact
+              ELSE
+                MNWNOD(4,INODE) = qact2
+              END IF
             end if
           end do
         end if
@@ -2218,7 +2328,7 @@ c
       return
       end
 c
-      SUBROUTINE GWF2MNW27BD(kstp,kper,IGRID)
+      SUBROUTINE GWF2MNW27BD(kstp,kper,Iuupw,IGRID)
 C     ******************************************************************
 c     calculate volumetric budget for multi-node wells
 C     ******************************************************************
@@ -2226,22 +2336,38 @@ C
 C     SPECIFICATIONS:
 C     ------------------------------------------------------------------
       USE GLOBAL,       ONLY:IOUT,NCOL,NROW,NLAY,NBOTM,LBOTM,BOTM,
-     1                       IBOUND,HNEW,BUFF
+     1                       IBOUND,HNEW,BUFF,LAYHDT
       USE GWFBASMODULE, ONLY:HDRY,VBVL,VBNM,DELT,PERTIM,TOTIM,
      1                       MSUM,ICBCFL
       USE GWFMNW2MODULE, ONLY:NMNW2,MNWMAX,NMNWVL,IWL2CB,MNWPRNT,
      1                       NODTOT,INTTOT,MNWAUX,MNW2,MNWNOD,
-     2                       SMALL,WELLID,NTOTNOD
+C-LFK     2                       SMALL,WELLID,NTOTNOD
+     2                       SMALL,WELLID,NTOTNOD,LIMQ
 C     ------------------------------------------------------------------
       DOUBLE PRECISION ratin,ratout,hhnew,DryTest,
      & q,qdes,hlim,hwell,s,sNL,sL,qnet,qin,qout,verysmall,hcell
       INTEGER firstnode,lastnode
       CHARACTER*16 text
+c-lfk  10/10/2012
+      CHARACTER*25 ctext1
+      CHARACTER*23 ctext2,ctext3
+      CHARACTER*32 ctext4
+      CHARACTER*15 ctext5
+      CHARACTER*24 ctext6,CTEXT7
 C
       CALL SGWF2MNW2PNT(IGRID)
 c             ----+----1----+-
       text = '            MNW2'
       verysmall = 1.D-25
+c-lfk  10/10/2012
+      ctext1 = ' Qdes updated because of '
+      ctext2 = 'Pump Capacity restraint'
+      ctext3 = ' and/or Hlim constraint'
+      ctext4 = ' and/or Seepage Face calculation'
+      ctext5 = 'Hlim constraint'
+      ctext6 = 'Seepage Face calculation'
+      ctext7 = 'unidentified factors ***'
+c
 c     ------------------------------------------------------------------
 c
 c  clear ratin and ratout accumulators.
@@ -2304,32 +2430,57 @@ c  check to write message that inode was deactivated this time step
                 if(mnwprnt.gt.1.and.mnwnod(14,inode).eq.0.0) then
                   if(hnew(ic,ir,il).lt.botm(ic,ir,lbotm(il))) then
       write(iout,200) ND,WELLID(iw)
-  200 FORMAT ('Node no. ',I3,'  of Multi-Node Well ', A20)
+C-LFK rev. format 11/2012
+c 200 FORMAT ('Node no. ',I3,'  of Multi-Node Well ', A20)
+  200 FORMAT ('MNW2: Node no. ',I3,'  of Multi-Node Well ', A20)
       write(iout,*) '  deactivated this time step because Hnew<bottom el
      &ev. of cell'
                   end if
                 end if
 c
 c    Report all wells with production less than the desired rate......
-            if(ibound(ic,ir,il).ne.0 .or.ABS(DryTest).lt.verysmall) then
+            if(ibound(ic,ir,il).ne.0 .or.ABS(DryTest).lt.verysmall) then  !If it is active or dry? 
               if(MNW2(6,iw).NE.0) then
                 hlim = mnw2(7,iw)
               else
-                hlim = 0.0D0
+                hlim = 0.0D0   !This seems very bad. Why set it to zero?
               end if
 c
               hwell = mnw2(17,iw)
+! RGN changed formulation
+              IF ( Iuupw.GT.0 ) THEN
+              hwell = MNWNOD(15,INODE)
+                 IF ( MNW2(6,iw).NE.0 )THEN
+                   hlim = MNW2(7,iw)
+                 ELSE
+                   hlim = hwell
+                 END IF
+! Added next line to limit well-bore head to the cell bottom 
+! for unconfined condtions. RGN 3/20/12
+                 IF ( LAYHDT(IL).GT.0 ) THEN
+                   IF ( hlim.LT.BOTM(ic,ir,lbotm(il)) ) 
+     +                  hlim = BOTM(ic,ir,lbotm(il))
+                   if ( hwell.LT.hlim ) hwell = hlim
+                 END IF
+              hcell=hnew(ic,ir,il)
+              cond = MNWNOD(14,INODE)
+              q = cond*(hwell-hcell)
+              END IF
 c
 c              ioch = 0
 c              if( IWL2CB.lt.0 .and. icbcfl.ne.0 ) ioch = 1
 c -----print the individual rates if requested(IWL2CB<0).
               if( ioch.eq.1 ) then
-              q=MNWNOD(4,INODE)
-              hcell=hnew(ic,ir,il)
+              IF ( Iuupw.EQ.0 ) THEN
+                q=MNWNOD(4,INODE)   !RGN
+                hcell=hnew(ic,ir,il)
+              END IF
               nd=INODE-firstnode+1
 c   If no seepage face in cell, don't print seepage elev.
               if(MNWNOD(15,INODE).EQ.hwell.or.
-     &           MNWNOD(15,INODE).eq.Hdry.or.MNW2(2,IW).EQ.1) then
+c-lfk 10/29/2012
+c     &           MNWNOD(15,INODE).eq.Hdry.or.MNW2(2,IW).EQ.1) then
+     &           MNWNOD(15,INODE).eq.Hdry.or.abs(MNW2(2,IW)).EQ.1) then
                 write(iout,'(A20,4i6,1x,1P4e14.6)')
      &              WELLID(iw),nd,il,ir,ic,totim,q,hwell,hcell
               else
@@ -2339,7 +2490,7 @@ c   seepage face.
                 write(iout,'(A20,4i6,1x,1P5e14.6)')
      &              WELLID(iw),nd,il,ir,ic,totim,q,hwell,hcell,
      &              MNWNOD(15,INODE)
-              
+c              
               end if
               endif
 c
@@ -2378,6 +2529,13 @@ c
             firstnode=MNW2(4,iw)
             lastnode=MNW2(4,iw)+ABS(MNW2(2,iw))-1
 c   Loop over nodes in well
+c-lfk  10/10/2012
+            iseepflg=0
+            R1=0.0
+            R2=0.0
+c-lfk  10/29/2012
+            numnddel=lastnode-firstnode
+c-lfk
             qnet = 0.000D0
             qin  = 0.000D0
             qout = 0.000D0
@@ -2404,15 +2562,61 @@ C   if qnet<qdes, then Q was constrained
               write(iout,*)
 c-lfk :  add checks if qnet = 0
 c
-             if (mnw2(27,iw).ne.0.and.(qnet-mnw2(29,iw)).lt.small) then
-                  write(iout,*) WELLID(iw),' Qdes has been updated to',
-     & qnet,' because of Pump Capacity restraint'
-                else if (mnw2(6,iw).NE.0) then
-                  write(iout,*) WELLID(iw),' Qdes has been updated to',
-     & qnet,' because of Hlim constraint'
-                else
-                  write(iout,*) WELLID(iw),' Qnet = ',qnet,' < Qdes'
-                end if
+c-lfk  10/10/2012 & 10/29/2012
+               if(MNWNOD(15,INODE).NE.hwell.and.
+c-lfk
+c     &           MNWNOD(15,INODE).ne.Hdry.and.MNW2(2,IW).NE.1) then
+     &           MNWNOD(15,INODE).ne.Hdry.and.numnddel.ne.0) then
+                 iseepflg=1
+               end if
+c--lfk
+c             if (mnw2(27,iw).ne.0.and.(qnet-mnw2(29,iw)).lt.small) then
+c                  write(iout,*) WELLID(iw),' Qdes has been updated to',
+c     & qnet,' because of Pump Capacity restraint'
+c                else if (mnw2(6,iw).NE.0) then
+c                  write(iout,*) WELLID(iw),' Qdes has been updated to',
+c     & qnet,' because of Hlim constraint'
+c                else
+c                  write(iout,*) WELLID(iw),' Qnet = ',qnet,' < Qdes'
+c                end if
+            write(iout,*) ' MNW2 WELL: ',WELLID(iw),' Qnet = ',qnet,' < 
+     &Qdes'
+C--LFK  Nov. 2012 refine printout for cause of reduced Qdes
+            if (mnw2(27,iw).ne.0.and.(qnet-mnw2(29,iw)).lt.small) then
+                  R1=1
+            END IF     
+            if(mnw2(6,iw).NE.0.AND.(abs(qnet)-abs(mnw2(30,iw))).lt.small
+     &        ) then  
+                  R2=1         
+            END IF
+C--LFK
+            R1=LIMQ(1,IW)
+            R2=LIMQ(2,IW)
+            ISEEPFLG=LIMQ(3,IW)
+C
+            if (R1.EQ.1.AND.R2.EQ.0.AND.ISEEPFLG.eq.0) THEN
+                  write(iout,'(A25,A23)') ctext1,ctext2
+            ELSE IF (R1.EQ.1.AND.R2.EQ.1.AND.ISEEPFLG.eq.0) THEN
+                  write(iout,'(A25,A23,A23)') ctext1,ctext2,ctext3
+            ELSE IF (R1.EQ.1.AND.R2.EQ.1.AND.ISEEPFLG.eq.1) THEN
+                  write(iout,'(A25,A23,A23,A32)') ctext1,ctext2,ctext3,
+     &               ctext4
+            ELSE IF (R1.EQ.0.AND.R2.EQ.1.AND.ISEEPFLG.eq.0) THEN
+                  write(iout,'(A25,A15)') ctext1,ctext5
+            ELSE IF (R1.EQ.0.AND.R2.EQ.1.AND.ISEEPFLG.eq.1) THEN
+                  write(iout,'(A25,A15,A32)') ctext1,ctext5,ctext4
+            ELSE IF (R1.EQ.0.AND.R2.EQ.0.AND.ISEEPFLG.eq.1) THEN
+                  write(iout,'(A25,A24)') ctext1,ctext6
+            ELSE IF (R1.EQ.1.AND.R2.EQ.0.AND.ISEEPFLG.eq.1) THEN
+                  write(iout,'(A25,A23,A32)') ctext1,ctext2,ctext4
+            ELSE IF (R1.EQ.0.AND.R2.EQ.0.AND.ISEEPFLG.eq.0) THEN
+                  write(iout,'(A25,A24)') ctext1,ctext7
+            END IF
+c-lfk  10/10/2012
+            iseepflg=0
+            R1=0.0
+            R2=0.0
+c--lfk                     
             end if
 c -----print the summed rates if requested(IWL2CB<0).
             hwell = mnw2(17,iw)
@@ -2433,8 +2637,6 @@ c6------if cell-by-cell flows will be saved call ubudsv to record them
           if( ibd.eq.2 ) then   !!  Write COMPACT budget
 c   Loop over all wells
             do iw=1,MNWMAX
-c   active well check
-c             if(MNW2(1,iw).gt.0) then
 c   Loop over nodes in well
               firstnode=MNW2(4,iw)
               lastnode=MNW2(4,iw)+ABS(MNW2(2,iw))-1
@@ -2443,11 +2645,14 @@ c   Loop over nodes in well
                 ir=MNWNOD(2,INODE)
                 il=MNWNOD(1,INODE)
                 Q = MNWNOD(4,INODE)
+c  lfk  active well check
+                if(MNW2(1,iw).eq.0) Q=0.0
+c
                 call UBDSVB(ioc,ncol,nrow,IC,IR,IL,real(Q),
      +                    real(mnw2(:,iw)),
      +                    NMNWVL,NAUX,31,IBOUND,NLAY)
               end do
-c             endif
+c            endif
             enddo
           else                  !!  Write full 3D array
             call ubudsv(kstp,kper,text,ioc, buff,ncol,nrow,nlay,iout)
@@ -2679,11 +2884,11 @@ C     FIND HORIZONTAL ANISOTROPY, THE RATIO Ky/Kx
          IF (CHANI(IZ).GT.0.0) THEN
           AH = CHANI(IZ)
          ELSE
-          IF(ITRSS.NE.0) THEN 
+C-LFK     IF(ITRSS.NE.0) THEN 
             AH = HANI(IX,IY,IZ)
-          ELSE
-            AH = HANI(1,1,1)
-          END IF
+C-LFK     ELSE
+C-LFK       AH = HANI(1,1,1)
+C-LFK     END IF
          ENDIF
 C
          if (LAYHDT(IZ).EQ.0) then
@@ -2714,7 +2919,15 @@ c   set thickness / conductance to 0 if cell is dry
            IF(LAYVKA(iz).EQ.0) THEN
              Kz=VKA(ix,iy,iz)
            ELSE
+c--LFK 10/4/12 modifications below to prevent zero-divide error if VKA.eq.0
+            if (VKA(ix,iy,iz).gt.0.0) then
              Kz=HK(ix,iy,iz)/VKA(ix,iy,iz)
+            else
+             Kz=0.0
+c--lfk
+c             write (iout,*) ' VKA = 0.0 for wellid,ix,iy,iz = ',
+c     1                      wellid(iw),ix,iy,iz
+            end if
            END IF
          end if
 c-lfk
@@ -2767,7 +2980,8 @@ C     ------------------------------------------------------------------
 C     ------------------------------------------------------------------
       INTEGER firstnode,lastnode
       DOUBLE PRECISION verysmall,dx,dy,top,bot,ah,
-     & Txx,Tyy,upper,TempKX,thick
+C-LFK     & Txx,Tyy,upper,TempKX,thick
+     & Txx,Tyy,upper,TempKX,thick,KY
       REAL Kz
 C
       CALL SGWF2MNW2PNT(IGRID)
@@ -2827,7 +3041,7 @@ c   set thickness / conductance to 0 if cell is dry
            Kz=VKAH(ix,iy,iz)
          end if
 C-LFK         IF(ISS.NE.0) THEN
-         IF(ISS.EQ.0) THEN
+         IF(ISS.EQ.0.and.thick.gt.0.0) THEN
            SS=SC1(IX,IY,IZ)/(thick*dx*dy)
          ELSE
            SS=1e-5
@@ -2908,6 +3122,7 @@ c
           if( upper.gt.top ) upper = top
           TempKX = hkupw(ix,iy,iz)       !!LPF Hydraulic Conductivity array
           thick = upper - bot
+          if ( thick.LT.1.0e-15 ) thick = 1.0e-15
 c   set thickness / conductance to 0 if cell is dry
           if( (hnew(ix,iy,iz)-Hdry )**2 .lt. verysmall ) 
      &          thick = 0.0000000000D0
@@ -2926,8 +3141,12 @@ c   set thickness / conductance to 0 if cell is dry
              Kz=HKUPW(ix,iy,iz)/VKAUPW(ix,iy,iz)
            END IF
          end if
-         IF(ITRSS.NE.0) THEN
-           SS=SC1(IX,IY,IZ)/(thick*dx*dy)
+          IF(ITRSS.NE.0) THEN
+           IF (thick.GT.0.0) THEN
+             SS=SC1(IX,IY,IZ)/(thick*dx*dy)
+           ELSE
+             SS=0.0
+           END IF
          ELSE
            SS=1e-5  
          END IF
@@ -2942,7 +3161,7 @@ c
 c
 c_________________________________________________________________________________
 c
-      SUBROUTINE SMNW2COND(IGRID,kstp,kper,kiter,ITFLAG)
+      SUBROUTINE SMNW2COND(IGRID,kstp,kper,kiter,ITFLAG,Iuupw)
 C     VERSION 20060704 KJH
 c
 c----- MNW1 by K.J. Halford
@@ -2961,9 +3180,10 @@ C     ------------------------------------------------------------------
       USE GWFMNW2MODULE, ONLY:NMNW2,MNWMAX,MNWPRNT,MNWINT,INTTOT,
      1                       NODTOT,MNW2,MNWNOD,SMALL,WELLID
 
-      CHARACTER*9 ctext
+      CHARACTER*10 ctext
+c-lfk      CHARACTER*9 ctext
       INTEGER firstnode,lastnode,firstint,lastint,
-     & kstp,kiter,kper,nd,PPFLAG
+     & kstp,kiter,kper,nd,PPFLAG,Iuupw
       DOUBLE PRECISION verysmall,cond,dx,dy,top,bot,thck,
      & Txx,Tyy,rw,Qact,Rskin,Kskin,B,C,CF,PLoss,cel2wel2,alpha,
      & Kz,totlength,lengthint,ratio,CWC,ztop,zbotm,dhp,SS,Skin,
@@ -2997,8 +3217,8 @@ c   if transient, by kiter=1 , if not, by tstep=1
         write(iout,'(120A)') '                              M O D E L
      &  L A Y E R     W E L L  S C R E E N   Penetration    SKIN     
      &  CALCULATED'
-        write(iout,'(120A)') 'WELLID        Node    CWC*    top elev   
-     &bott.elev     top elev   bott.elev    fraction     COEFF.
+        write(iout,'(120A)') 'WELLID        Node    CWC*    top_elev   
+     & bott.elev    top_elev   bott.elev    fraction     COEFF.
      &          B'
       end if
 c   Compute cell-to-well conductance for each well node
@@ -3013,9 +3233,11 @@ c   Only operate on active wells (MNW2(1,iw)=1)
         lastnode=MNW2(4,iw)+ABS(NNODES)-1
         alpha=1.0
 c   determine well characteristics for nonvertical wells
-        if(MNW2(21,iw).GT.0) then
+c--LFK 11/27/2012
+c        if(MNW2(21,iw).GT.0) then
+        if(MNW2(21,iw).GT.0.and.LOSSTYPE.NE.4) then
           CALL MNW2HORIZ(IGRID,LOSSTYPE,NNODES,firstnode,lastnode,
-     & IW,kstp,kper,ipr,alpha)
+     & IW,kstp,kper,ipr,alpha,Iuupw)
         else
 c   for all other wells, define CWC in node loop   
 c   Loop over nodes in well
@@ -3071,7 +3293,7 @@ c
 c   compute conductance term for node
               cond = cel2wel2(LOSSTYPE,Txx,Tyy,dx,dy,
      &                 rw,Rskin,Kskin,B,Cf,PLoss,thck,Qact,
-     &                 WELLID(iw),Skin)
+     &                 WELLID(iw),Skin,iw,ix,iy,iz,Iuupw) !rgn added iw+
 c   check cond<0, reset to 0 and print warning
               if(cond.lt.0.d0) then
                 write(iout,*) '***WARNING*** CWC<0 reset to CWC=0'
@@ -3138,7 +3360,7 @@ c   use length-weighted ratios for each interval to determine CWC of that interv
 c  calculate cond, weight it by length in cell (*ratio) and sum to get effective CWC
                     cond = cond + ratio*(cel2wel2(LOSSTYPE,Txx,Tyy,dx,
      &                 dy,rw,Rskin,Kskin,B,Cf,PLoss,thck,Qact,
-     &                 WELLID(iw),Skin))
+     &                 WELLID(iw),Skin,iw,ix,iy,iz,Iuupw))  !RGN added iw+
 c   check cond<0, reset to 0 and print warning
               if(cond.lt.0.d0) then
                 write(iout,*) '***WARNING*** CWC<0 reset to CWC=0'
@@ -3234,7 +3456,6 @@ c             if unconfined, assume borehole at bottom of cell
 c             save top and bottom of screen
                   MNWNOD(20,INODE)=topscreen
                   MNWNOD(21,INODE)=bottomscreen
-
                  end if
 c             if topscreen and bottomscreen have been calculated, retrieve them
                 else
@@ -3253,7 +3474,7 @@ c calculate dhp (Delta-H due to Penetration) using analytical solution
 c
                 CALL PPC(dhp,ISOLNFLAG,thck,Kh,Kz,SS,QQ,rw,ZPD,ZPL)
 c          
-c  if analyitcal solution failed, report no partial penetration and set dhp=0.0
+c  if analytical solution failed, report no partial penetration and set dhp=0.0
                 if(ISOLNFLAG.EQ.0.AND.ITFLAG.GT.0.and.QQ.ne.0.D0) then
 c  if alpha <= 0.2, shut well off if PPC did not converge
                   if(alpha.lt.0.2) then
@@ -3293,22 +3514,26 @@ c    calculate dpp (partial penetration effect with specific Q) if Q and dhp "al
 c    eg if removing water (Q<0), dhp should be positive
 c    (dhp>0 signifies drawdown).  Q is either <> 0 so no div 0 problem
               if(ITFLAG.EQ.1.
-     &          .AND.(Qact.lt.0.D0.AND.dhp.gt.0.D0)
-     &          .OR.(Qact.gt.0.D0.AND.dhp.lt.0.D0)) then
+c     &          .AND.(Qact.lt.0.D0.AND.dhp.gt.0.D0)
+c     &          .OR.(Qact.gt.0.D0.AND.dhp.lt.0.D0)) then
+c  LFK 6/2012  change check on dhp to include 0.0 to avoid unneeded warnings
+     &          .AND.(Qact.lt.0.D0.AND.dhp.ge.0.D0)
+     &          .OR.(Qact.gt.0.D0.AND.dhp.le.0.D0)) then
                   dpp=dhp/(Qact*(-1.D0))
                 if(cond.gt.0.0) then
                   ABC=1/cond
                   ABCD=ABC+dpp
                   cond=1/ABCD
                 end if
-              else if (ITFLAG.EQ.1.and.Qact.ne.0.d0) then
+              else if (ITFLAG.EQ.1.and.Qact.ne.0.d0.and.dhp.GT.0.0) then
                 dpp=0.d0
                 write(iout,*) '***WARNING***  Partial penetration term
      & (dpp) set to 0.0 due to misalignment of dhp= ',dhp,' and Q=',Qact
+c LFK 6/2012  add well name to output
+     &, ' WELLNAME = ',wellid(iw)
               end if     
             END IF              
 c           end if PP effect
-
           endif
 c         endif LOSSTYP EQ 4 and NNODES GT 0
 c        Save conductance of each node
@@ -3321,20 +3546,23 @@ c        if irecalc=0, use saved cond
 c        output node info  
 c  if more than one interval made up this node, write composite 
           if(MNWNOD(12,INODE).ne.MNWNOD(13,INODE)) then
-            ctext='COMPOSITE'
+c--LFK
+            ctext=' COMPOSITE'
           else
-            ctext='         '
+            ctext='          '
           end if        
 c only write screen info for cells that have partial penetration
          if(ipr.eq.1) then
            PPFLAG=INT(MNW2(19,iw))
            if(PPFLAG.GT.0.and.alpha.lt.1.0D0) then
             if(LOSSTYPE.eq.2) then
-             write(iout,'(A15,I3,1P7G12.5,1PG12.4,9A)') 
+             write(iout,'(A15,I3,1P7G12.5,1PG12.4,10A)') 
+c-LFK             write(iout,'(A15,I3,1P7G12.5,1PG12.4,9A)') 
      & WELLID(iw),nod,cond,
      & top,bot,topscreen,bottomscreen,alpha,Skin,B,ctext
             else 
-             write(iout,'(A15,I3,1P6G12.5,12A,12A,9A)') 
+             write(iout,'(A15,I3,1P6G12.5,12A,12A,10A)') 
+c-LFK             write(iout,'(A15,I3,1P6G12.5,12A,12A,9A)') 
      & WELLID(iw),nod,cond,
      & top,bot,topscreen,bottomscreen,alpha,'     N/A    ',
      & '     N/A    ',ctext
@@ -3342,11 +3570,13 @@ c only write screen info for cells that have partial penetration
            else
 c for no partial penetration, just repeat top and bot of layer
             if(LOSSTYPE.eq.2) then
-             write(iout,'(A15,I3,1P7G12.5,1PG12.4,9A)') 
+             write(iout,'(A15,I3,1P7G12.5,1PG12.4,10A)') 
+c-lfk             write(iout,'(A15,I3,1P7G12.5,1PG12.4,9A)') 
      & WELLID(iw),nod,cond,
      & top,bot,top,bot,alpha,Skin,B,ctext
             else
-             write(iout,'(A15,I3,1P6G12.5,12A,12A,9A)') 
+             write(iout,'(A15,I3,1P6G12.5,12A,12A,10A)') 
+c-lfk             write(iout,'(A15,I3,1P6G12.5,12A,12A,9A)') 
      & WELLID(iw),nod,cond,
      & top,bot,top,bot,alpha,'     N/A    ',
      & '     N/A    ',ctext
@@ -3377,7 +3607,8 @@ c
 c_________________________________________________________________________________
 c
       DOUBLE PRECISION function cel2wel2(LOSSTYPE,Txx,Tyy,dx,dy,
-     &                 rw,Rskin,Kskin,B,Cf,PLoss,thck,Q,WELLNAME,Skin)
+     &                 rw,Rskin,Kskin,B,Cf,PLoss,thck,Q,WELLNAME,Skin,
+     &                 iw,C1,R1,L1,Iuupw)
 C
 C     VERSION 20030327 KJH        -- Patched Hyd.K term in LPF solution
 C     VERSION 20090405 GZH        -- MNW2
@@ -3391,17 +3622,32 @@ c     ******************************************************************
 C
 C        SPECIFICATIONS:
 C     ------------------------------------------------------------------
-      USE GLOBAL,       ONLY:IOUT
+      USE GLOBAL,       ONLY:IOUT,BOTM,LBOTM,HNEW,LAYHDT
+      USE GWFMNW2MODULE, ONLY:mnw2
       IMPLICIT NONE
+!External functions
+      DOUBLE PRECISION SMOOTH2
+      EXTERNAL SMOOTH2
+!
       CHARACTER*20 WELLNAME
-      INTEGER LOSSTYPE
+      INTEGER LOSSTYPE,iw,C1,R1,L1,Iuupw
+C--LFK
+      INTEGER ISEGFLG
+C
       DOUBLE PRECISION pi,verysmall,rw,Txx,Tyy,yx4,xy4,ro,dx,dy,Tpi2,A,
-     & Ploss,B,Rskin,Kskin,C,Cf,Q,thck,T,Tskin,Skin
+     & Ploss,B,Rskin,Kskin,C,Cf,Q,thck,T,Tskin,Skin,h,dc
 C     ------------------------------------------------------------------
 C
+! RGN added next 3 lines.
+!      h =  (mnw2(17,iw)-BOTM(C1,R1,L1))
+      h =  (HNEW(C1,R1,lbotm(L1))-BOTM(C1,R1,lbotm(L1)))
+      IF( h.LT.0.0 ) h = 0.0
       pi = 3.1415926535897932D0
+!
       verysmall = 1.D-25
-
+C-LFK
+      ISEGFLG=0
+C      
       if( rw.lt.verysmall .or. Txx.lt.verysmall .or. Tyy.lt.verysmall ) 
      &  then
         cel2wel2 = ( Txx * Tyy )** 0.5D0
@@ -3420,6 +3666,13 @@ c       if ro/rw is <1, 'A' term will be negative.  Warn user and cut off flow f
           GOTO 888
         end if
         A = log(ro/rw) / Tpi2
+c--LFK--Dec 2012   IF Vert.Segment, Length & Cond. = 1/2 of calc. value.
+          IF (SKIN.EQ.-999.0) THEN
+            A=A*2.0
+            ISEGFLG=1
+            SKIN=0.0
+          END IF
+c
 c       For the "NONE" option, multiply the Kh by 1000 to equivalate Hnew and hwell
         if(LOSSTYPE.EQ.0) then
           cel2wel2=1.0D3*((Txx*Tyy)**0.5D0)/thck    
@@ -3431,6 +3684,11 @@ c       SKIN (LINEAR) option, calculate B, C=0
 c         average T in aquifer assumed to be sqrt of Txx*Tyy
           T  = (Txx*Tyy)**0.5D0
           Tskin = Kskin*thck
+c--LFK--Dec 2012    Check for segment calculation
+          IF (ISEGFLG.EQ.1) THEN
+            Tskin=Tskin*0.5
+          END IF
+C
           if(Tskin.gt.0.D0.and.rw.gt.0.D0) then
 c         this is from eqs 3 and 5 in orig MNW report
             Skin = ((T/Tskin)-1)*(DLOG(Rskin/rw))
@@ -3446,6 +3704,11 @@ c       GENERAL option, calculate B and C
           else
             C = 0.D0
           end if
+c--LFK--Dec 2012    Check for segment calculation
+          IF (ISEGFLG.EQ.1) THEN
+            C = C*2.0
+          END IF
+C
        else
           B = 0.D0
           C = 0.D0
@@ -3453,10 +3716,35 @@ c       GENERAL option, calculate B and C
         cel2wel2 = A + B + C 
         cel2wel2 = 1.000000D0 / cel2wel2
       endif
+      IF ( LAYHDT(L1).GT.0 .AND. Iuupw.GT.0 ) 
+     +     cel2wel2 = cel2wel2*smooth2(h,dc)
 c
  888  return
       end
 c
+      DOUBLE PRECISION FUNCTION smooth2(h,dc)
+! h is the depth 
+! dC is the derivative of well conductance with respect to well head
+      IMPLICIT NONE
+      DOUBLE PRECISION h, s, aa, ad, b, x, y, dc
+      smooth2 = 0.0D0
+      s = 1.0d-5
+      x = h
+      IF ( x-s.GT.-1.0d-14 ) THEN
+        y = 1.0D0
+        dc = 0.0
+      ELSEIF ( x.LE.0.0 ) THEN
+        y = 0.0D0
+        dc = 0.0
+      ELSE
+        aa = -1.0d0/(s**2.0d0)
+        ad = -2.0D0/(s**2.0d0)
+        b = 2.0d0/s
+        y = aa*x**2.0d0 + b*x
+        dc = (ad*x + b)
+      END IF
+      smooth2 = y
+      END FUNCTION smooth2
 c
 c
 c_________________________________________________________________________________
@@ -3464,7 +3752,7 @@ c
 c
 c_________________________________________________________________________________
 c
-      subroutine SMNW2SEEP(IGRID,KPER,KSTP,iw,kiter)
+      subroutine SMNW2SEEP(IGRID,KPER,KSTP,iw,kiter,Iuupw) !RGN
 c
 c     ******************************************************************
 c     determine q
@@ -3477,17 +3765,18 @@ C     ------------------------------------------------------------------
      1                       IBOUND,LAYCBD,HNEW
       USE GWFBASMODULE, ONLY:HDRY
       USE GWFMNW2MODULE, ONLY:NMNW2,MNWMAX,MNWPRNT,
-     1                       NODTOT,MNW2,MNWNOD,SMALL,WELLID
+     1                       NODTOT,MNW2,MNWNOD,SMALL,WELLID,LIMQ
 
-      INTEGER firstnode,lastnode,nd
+      INTEGER firstnode,lastnode,nd,Iuupw  !RGN
       DOUBLE PRECISION qdes,qact,csum,chsum,Qseep,
      & hwell,hlim,verysmall,hmax,hsim,bottom,qcut,qoff,qon,qsmall,
      & qpot,cond,ratio
 C
       verysmall = 1.D-25
 C-LFK   initialize MNWNOD(15,IW) TO HIGH VALUE
-      INODE = MNW2(4,IW)
-      MNWNOD(15,INODE) = 1.0D31
+c       INODE = MNW2(4,IW)
+      iseepflg=0
+c       MNWNOD(15,INODE) = 1.0D31
       qdes = mnw2(5,iw)
       Qsmall = small*abs(qdes)
          qoff=0.0
@@ -3618,14 +3907,22 @@ C-lfk         if((abs(mnw2(29,iw)).lt.abs(mnw2(18,iw)))) then   [subst.30 below]
          if((abs(mnw2(29,iw)).lt.abs(mnw2(30,iw)))) then
            if(mnw2(27,iw).ne.0) then
              mnw2(18,iw)=mnw2(29,iw)
+c--lfk
+             LIMQ(1,IW)=1
            else
              mnw2(18,iw)=mnw2(30,iw)
+c--lfk
+             LIMQ(2,IW)=1
            end if
         else
            if(mnw2(27,iw).eq.0) then
              mnw2(18,iw)=mnw2(30,iw)
+c--lfk
+             LIMQ(2,IW)=1
            else
              mnw2(18,iw)=mnw2(29,iw)
+c--lfk
+             LIMQ(1,IW)=1
            end if
         end if
 C-LFK
@@ -3637,8 +3934,14 @@ C                   set flag to stop checking Hlim constraint this Time Step
 C                   and use spec. flux bdy. cond.
 c-lfk temp hold                 mnw2(20,iw)=-2
                  mnw2(27,iw)=2
+c--lfk
+             LIMQ(1,IW)=1
+             LIMQ(2,IW)=0
                else
                  mnw2(18,iw)=mnw2(30,iw)
+c--lfk
+             LIMQ(1,IW)=0
+             LIMQ(2,IW)=1
                end if
           end if
         qact = mnw2(18,iw)
@@ -3646,7 +3949,8 @@ c-lfk temp hold                 mnw2(20,iw)=-2
 c
 C-LFK   Skip seepage face calculations for single-node well
           NNODES=abs(MNW2(2,iw))
-      IF (NNODES.EQ.1) GO TO 100
+c--lfk
+c      IF (NNODES.EQ.1) GO TO 100
 c  Make 2 passes to find seepage faces
       do kSeep = 1, 2          
         csum = 0.000D0
@@ -3695,7 +3999,9 @@ c  Sum the seepage (there may be more than one node's worth
 c  write message that inode was deactivated this time step
                 if(kseep.gt.1.and.mnwprnt.gt.0) then
       write(iout,210) ND,WELLID(iw)
-  210 FORMAT ('Node no. ',I3,'  of Multi-Node Well ', A20)
+C-LFK rev. format 11/2012
+c 210 FORMAT ('Node no. ',I3,'  of Multi-Node Well ', A20)
+  210 FORMAT ('MNW2: Node no. ',I3,'  of Multi-Node Well ', A20)
       write(iout,*) '  deactivated this time step because IBOUND=0'
                 end if
             end if
@@ -3719,6 +4025,8 @@ c
           if( hsim .gt. hmax ) then
             hwell = hlim
             qact = hwell*csum - chsum + Qseep
+C--LFK
+            LIMQ(2,IW)=1
 c      Hlim constraints that stop production are not tested until after the 2nd iteration
             if( kiter.gt.2 ) then
               ratio = 1.00D0
@@ -3740,6 +4048,10 @@ c  Loop over nodes in well, assign flow rates and water levels
 c  use qdes to sum q's at end
       qdes=0
       csum=0.0
+c-lfk  10/10/2012
+      iseepchk=0
+      seepchk=0.0
+c-lfk
       do INODE=firstnode,lastnode
         il=MNWNOD(1,INODE)              
         ir=MNWNOD(2,INODE)              
@@ -3753,77 +4065,87 @@ c
           MNWNOD(4,INODE) = qact
           MNWNOD(15,INODE) = hwell
           qdes=qdes+qact
+c-lfk  10/10/2012
+          iseepchk=1
+c--lfk
         endif
+c-lfk  10/10/2012
+        seepchk=seepchk+mnwnod(4,inode)
+c--lfk
       end do           
-C-LFK
+c-lfk  10/10/2012
+        if (abs(seepchk).lt.abs(MNW2(18,IW)).and.qseep.ne.0.0) 
+     &         LIMQ(3,IW)=1
+        if (abs(seepchk).lt.abs(MNW2(18,IW))) iseepflg=1
 C   DEACTIVATE WELL IF ALL NODES ARE INACTIVE (Check based on csum=0.0)
-       IF (CSUM.EQ.0.0) THEN
+       IF (CSUM.EQ.0.0.AND.Iuupw.LE.0) THEN   !RGN this was bad for smoothing conductance
           MNW2(1,IW)=0 
           WRITE (iout,220) WELLID(IW)
-  220 FORMAT (/,'Multi-Node Well ',A20,'DEACTIVATED THIS STRESS PERIOD
+C-LFK rev. format 11/2012
+c 220 FORMAT (/,'Multi-Node Well ',A20,'DEACTIVATED THIS STRESS PERIOD
+  220 FORMAT (/,      'MNW2 Well ',A20,'DEACTIVATED THIS STRESS PERIOD
      * BECAUSE ALL NODES WERE DEACTIVATED'/)
        END IF
-C-LFK
-      GO TO 105
-  100 CONTINUE
+C-LFK--comment out single-node processing section below
+c      GO TO 105
+c  100 CONTINUE
 C-LFK   for single-node wells, update values & check constraints
-            INODE=MNW2(4,IW)
-            il=MNWNOD(1,INODE)              
-            ir=MNWNOD(2,INODE)              
-            ic=MNWNOD(3,INODE)              
-            if(IBOUND(ic,ir,il).ne.0) then
+c            INODE=MNW2(4,IW)
+c            il=MNWNOD(1,INODE)              
+c            ir=MNWNOD(2,INODE)              
+c            ic=MNWNOD(3,INODE)              
+c            if(IBOUND(ic,ir,il).ne.0) then
 c
-              csum  =  MNWNOD(14,INODE)
-              chsum =  MNWNOD(14,INODE)*hnew(ic,ir,il)
-            else
-              MNWNOD(4,INODE) = 0.0D0
-              MNWNOD(14,INODE) = 0.0D0
-              MNWNOD(15,INODE) = hdry
-              csum=0.0
-              chsum=0.0
-            end if
+c              csum  =  MNWNOD(14,INODE)
+c              chsum =  MNWNOD(14,INODE)*hnew(ic,ir,il)
+c            else
+c              MNWNOD(4,INODE) = 0.0D0
+c              MNWNOD(14,INODE) = 0.0D0
+c              MNWNOD(15,INODE) = hdry
+c              csum=0.0
+c              chsum=0.0
+c            end if
 c---div0 ---  CSUM could go to verysmall if the entire well is dry
-        if( csum .gt. verysmall ) then
+c        if( csum .gt. verysmall ) then
 c          hwell = ( qact - Qseep + chsum ) / csum
-          hwell = ( qact + chsum ) / csum
-        else
-          hwell = hnew(ic,ir,il)
-        endif
+c          hwell = ( qact + chsum ) / csum
+c        else
+c          hwell = hnew(ic,ir,il)
+c        endif
 c   Test Hlim constraints, Hlim is assumed to be a Max/Min for Injection/Production wells
 C-LFK        if(MNW2(6,iw).NE.0) then   !also skip if PUMPCAP overrode Hlim constraint
-        if(MNW2(6,iw).NE.0.and.MNW2(20,IW).GT.-2) then
-          hlim = mnw2(7,iw)
-          ipole = 0
-          if( abs(qdes).gt.verysmall ) ipole = qdes / abs(qdes)
-          hmax = ipole*( hlim )
-          hsim = ipole*( hwell )
+c        if(MNW2(6,iw).NE.0.and.MNW2(20,IW).GT.-2) then
+c          hlim = mnw2(7,iw)
+c          ipole = 0
+c          if( abs(qdes).gt.verysmall ) ipole = qdes / abs(qdes)
+c          hmax = ipole*( hlim )
+c          hsim = ipole*( hwell )
 c
-          if( hsim .gt. hmax ) then
-            hwell = hlim
-            qact = hwell*csum - chsum 
+c          if( hsim .gt. hmax ) then
+c            hwell = hlim
+c            qact = hwell*csum - chsum 
 c      Hlim constraints that stop production are not tested until after the 2nd iteration
-            if( kiter.gt.2 ) then
-              ratio = 1.00D0
-              if( abs(qdes) .gt. small ) ratio =  qact / qdes
-              if( ratio .lt. 0.00001D0 ) then
-                qact  = 0.000D0
-                if (csum .gt. 0.0D0) then
+c            if( kiter.gt.2 ) then
+c              ratio = 1.00D0
+c              if( abs(qdes) .gt. small ) ratio =  qact / qdes
+c              if( ratio .lt. 0.00001D0 ) then
+c                qact  = 0.000D0
+c                if (csum .gt. 0.0D0) then
 C                  hwell = ( qact - Qseep + chsum ) / csum
-                  hwell = ( qact + chsum ) / csum
-                else
-                  hwell = hnew(ic,ir,il)
-                endif
-              endif  
-            endif   !! potentially stop all production after Kiter = 2 
-          endif     !! End Hlim exceedence loop
-        endif  !! Qlimit>0
-          MNWNOD(4,INODE) = qact
-          MNWNOD(15,INODE) = hwell
-  105 continue
+c                  hwell = ( qact + chsum ) / csum
+c                else
+c                  hwell = hnew(ic,ir,il)
+c                endif
+c              endif  
+c            endif   !! potentially stop all production after Kiter = 2 
+c          endif     !! End Hlim exceedence loop
+c        endif  !! Qlimit>0
+c          MNWNOD(4,INODE) = qact
+c          MNWNOD(15,INODE) = hwell
+c  105 continue
 c  Set hwell 
       MNW2(17,iw) = hwell
 c                           
-c          
       return      
       end
 c
@@ -3922,7 +4244,7 @@ C
 C     ******************************************************************
 C
       SUBROUTINE MNW2HORIZ(IGRID,LOSSTYPE,NNODES,firstnode,lastnode,
-     & IW,kstp,kper,ipr,alpha)
+     & IW,kstp,kper,ipr,alpha,Iuupw)
 C
 C     ******************************************************************
       USE GLOBAL,       ONLY:IOUT,NCOL,NROW,NLAY,NBOTM,LBOTM,BOTM,
@@ -3936,7 +4258,7 @@ C
       ALLOCATABLE ivert1(:),ivert2(:),zseg1(:),zseg2(:)
       INTEGER Wel1flag,QSUMflag,BYNDflag
       INTEGER L1,R1,C1,L2,R2,C2,L,R,C,
-     & firstnode,lastnode    
+     & firstnode,lastnode,Iuupw   
       REAL 
      & x1face1,x1face2,y1face1,y1face2,z1face1,z1face2,
      & x1face,y1face,z1face,
@@ -3945,6 +4267,8 @@ C
      & m,lxf,lyf,lzf,lbf,
      & zwt,ywt,xwt,
      & zi,yi,xi,zi2,yi2,xi2,t1,b1
+c-LFK
+     & ,za,ya,xa,zb,yb,xb
       DOUBLE PRECISION z1,y1,x1,z2,y2,x2,top1,bot1,top2,bot2,
      & betweennodes,omega_opp,omega,theta_opp,theta_hyp,
      & theta,thck1,thck2,lw,cel2wel2SEG,dx1,dx2,dy1,dy2,
@@ -3969,6 +4293,11 @@ c   Initialize flags
 C-LFK
       ZSEG1=0.0
       ZSEG2=0.0
+      IMFLG=0
+      lxf=0.0
+      lyf=0.0
+      lzf=0.0
+      lbf=0.0
 c   Loop over "segments"
         do INODE=firstnode,lastnode-1
          nod=INODE-firstnode+1
@@ -4031,7 +4360,14 @@ c if confined (THICKNESS IS NOT HEAD-DEPENDENT), don't use hnew=top
           z2 = 0.5D0*(top2+bot2)
 c   save z coords as we don't want z screen elevations to change for WT cases
 c
-         if(kstp.eq.1.and.kper.eq.1) then
+c--LFK Dec 2012
+         if(MNWNOD(26,INODE+1).eq.0.0)THEN
+           IMFLG=1
+         END IF
+         if(kstp.eq.1.and.kper.eq.1.OR.(IMFLG.EQ.1.AND.KSTP.EQ.1)) then
+C         if(kstp.eq.1.and.kper.eq.1) then
+           IMFLG=0
+C
            MNWNOD(26,INODE)=z1
            MNWNOD(26,INODE+1)=z2
          else
@@ -4045,7 +4381,10 @@ c
 c   estimate length of borehole segments
 c
 c   in first node, use vertical section up to top or WT for segment 1 
-      if(INODE.eq.1) then
+c--LFK
+c      if(INODE.eq.1) then
+      if(INODE.eq.firstnode) then
+c
         MNWNOD(23,INODE)=0.D0
         if(z1.lt.top1) MNWNOD(23,INODE)=top1-z1   
         ivert1(INODE)=1
@@ -4191,9 +4530,13 @@ c     other coordinates to give point of intersection
 c   xi=x1 + (x2-x1)*m
 c   xi-x1/(x2-x1)=m  
 c
-          if(x1face.ne.0) then
+c-lfk Dec. 2012
           is_intersection=0
           idone=0
+c
+          if(x1face.ne.0) then
+c          is_intersection=0
+c          idone=0
           m=(x1face-x1)/(x2-x1)
           yi=y1+m*(y2-y1)             
           zi=z1+m*(z2-z1)
@@ -4266,7 +4609,7 @@ c       if exit point is on boundary with second cell, done with both segments
           else
             lzf=0.d0
           end if
-c   if idone still=0, then there are blank spaces inbetween nodes.  Calculate
+c   if idone still=0, then there are blank spaces in between nodes.  Calculate
 c   length of that segment by getting intersection out of last node
           if(idone.eq.0) then
             is_intersection=0
@@ -4320,7 +4663,46 @@ c       if z2face intersection point lies within cell, this is exit point
             end if
 c  now that we have both node exit intersection points, blank distance is betweem
 c  them.  Save in MNWNOD(25) of the first node between them            
-            lbf=SQRT(((xi-xi2)**2)+((yi-yi2)**2)+((zi-zi2)**2))     
+c-LFK Dec 2012: correct calc. of length of blank casing
+c           lbf=SQRT(((xi-xi2)**2)+((yi-yi2)**2)+((zi-zi2)**2))     
+          if (x1.eq.x2) THEN
+            xa=x1
+            xb=x2
+          ELSE 
+            IF (xi.eq.xi2) then
+              xa=x1face2
+              xb=x2face1
+            else
+              xa=xi
+              xb=xi2
+            end if
+          END IF  
+          if (y1.eq.y2) THEN
+            ya=y1
+            yb=y2
+          ELSE 
+            IF (yi.eq.yi2) then
+              ya=y1face2
+              yb=y2face1
+            else
+              ya=yi
+              yb=yi2
+            end if
+          END IF  
+          if (z1.eq.z2) THEN
+            za=z1
+            zb=z2
+          ELSE 
+            IF (zi.eq.zi2) then
+              za=z1face2
+              zb=z2face1
+            else
+              za=zi
+              zb=zi2
+            end if
+          END IF  
+            lbf=SQRT(((xa-xb)**2)+((ya-yb)**2)+((za-zb)**2))     
+c-LFK
             MNWNOD(25,INODE)=lbf 
           end if
 C-LFK   Set vertical elev. limits for nonvertical segments
@@ -4427,17 +4809,29 @@ c
           Cf = MNWNOD(9,INODE)
           PLoss = MNWNOD(10,INODE)
           Qact = MNWNOD(4,INODE)
+          L1=MNWNOD(1,INODE)       !RGN        
+          R1=MNWNOD(2,INODE)       !RGN       
+          C1=MNWNOD(3,INODE)       !RGN       
 c   compute conductance term for segment
           if(ivert1(INODE).eq.0) then
              Kz=MNWNOD(33,INODE)
              cond1 = cel2wel2SEG(lw,theta,omega,LOSSTYPE,
-     &         Txx,Tyy,dx1,dy1,rw,Rskin,Kskin,B,Cf,PLoss,thck1,Qact,
-     &         WELLID(iw),Kz)
+c--LFK
+     &         Txx,Tyy,dx1,dy1,rw,Rskin,Kskin,B,Cf,PLoss,thck1*2,Qact,
+c    &         Txx,Tyy,dx1,dy1,rw,Rskin,Kskin,B,Cf,PLoss,thck1,Qact,
+     &       WELLID(iw),Kz)
 c   if a vertical segment, use original function
           else
-              cond1 = cel2wel2(LOSSTYPE,Txx1,Tyy1,dx1,dy1,
-     &                 rw,Rskin,Kskin,B,Cf,PLoss,thck1,Qact,
-     &                 WELLID(iw),Skin)
+c-LFK
+c-LFK--use 'Skin' as a flag to denote calc. is for a segment
+             Skin=-999.0
+c
+c              cond1 = cel2wel2(LOSSTYPE,Txx1,Tyy1,dx1,dy1,
+c     &                 rw,Rskin,Kskin,B,Cf,PLoss,thck1,Qact,
+              cond1 = cel2wel2(LOSSTYPE,Txx,Tyy,dx1,dy1,
+     &                 rw,Rskin,Kskin,B,Cf,PLoss,thck1*2,Qact,
+     &                 WELLID(iw),Skin,iw,C1,R1,L1,Iuupw)  !RGN
+                           
          end if
       else
          cond1=0.D0 
@@ -4457,17 +4851,28 @@ c calculate CWC of second segment of node
           Cf = MNWNOD(9,INODE)
           PLoss = MNWNOD(10,INODE)
           Qact = MNWNOD(4,INODE)
+          L1=MNWNOD(1,INODE)       !RGN        
+          R1=MNWNOD(2,INODE)       !RGN       
+          C1=MNWNOD(3,INODE)       !RGN      
 c   compute conductance term for segment
           if(ivert2(INODE).eq.0) then
              Kz=MNWNOD(33,INODE)
+c--LFK
              cond2 = cel2wel2SEG(lw,theta,omega,LOSSTYPE,
-     &         Txx,Tyy,dx1,dy1,rw,Rskin,Kskin,B,Cf,PLoss,thck1,Qact,
-     &         WELLID(iw),Kz)
+     &       Txx,Tyy,dx1,dy1,rw,Rskin,Kskin,B,Cf,PLoss,thck1*2,Qact,
+C    &         Txx,Tyy,dx1,dy1,rw,Rskin,Kskin,B,Cf,PLoss,thck1,Qact,
+     &       WELLID(iw),Kz)
 c   if a vertical segment, use original function
           else
-             cond2 = cel2wel2(LOSSTYPE,Txx1,Tyy1,dx1,dy1,
-     &                 rw,Rskin,Kskin,B,Cf,PLoss,thck1,Qact,
-     &                 WELLID(iw),Skin)
+c-LFK
+c-LFK--use 'Skin' as a flag to denote calc. is for a segment
+             Skin=-999.0
+c
+c            cond2 = cel2wel2(LOSSTYPE,Txx1,Tyy1,dx1,dy1,
+c    &                 rw,Rskin,Kskin,B,Cf,PLoss,thck1,Qact,
+             cond2 = cel2wel2(LOSSTYPE,Txx,Tyy,dx1,dy1,
+     &                 rw,Rskin,Kskin,B,Cf,PLoss,thck1*2,Qact,
+     &                 WELLID(iw),Skin,iw,C1,R1,L1,Iuupw)  !RGN
           end if
       else
          cond2=0.D0 
@@ -4503,17 +4908,29 @@ c calculate CWC of first segment in node
           Cf = MNWNOD(9,INODE+1)
           PLoss = MNWNOD(10,INODE+1)
           Qact = MNWNOD(4,INODE+1)
+          L1=MNWNOD(1,INODE)       !RGN        
+          R1=MNWNOD(2,INODE)       !RGN       
+          C1=MNWNOD(3,INODE)       !RGN      
 c   compute conductance term for segment
           if(ivert1(INODE+1).eq.0) then
-             Kz=MNWNOD(33,INODE)
+c--LFK
+             Kz=MNWNOD(33,INODE+1)
+c             Kz=MNWNOD(33,INODE)
              cond1 = cel2wel2SEG(lw,theta,omega,LOSSTYPE,
-     &         Txx,Tyy,dx2,dy2,rw,Rskin,Kskin,B,Cf,PLoss,thck2,Qact,
+c--LFK
+     &         Txx,Tyy,dx2,dy2,rw,Rskin,Kskin,B,Cf,PLoss,thck2*2,Qact,
+C    &         Txx,Tyy,dx2,dy2,rw,Rskin,Kskin,B,Cf,PLoss,thck2,Qact,
      &         WELLID(iw),Kz)
 c   if a vertical segment, use original function
           else
-              cond1 = cel2wel2(LOSSTYPE,Txx1,Tyy1,dx2,dy2,
+c-LFK
+c-LFK--use 'Skin' as a flag to denote calc. is for a segment
+             Skin=-999.0
+c
+c             cond1 = cel2wel2(LOSSTYPE,Txx1,Tyy1,dx2,dy2,
+              cond1 = cel2wel2(LOSSTYPE,Txx,Tyy,dx2,dy2,
      &                 rw,Rskin,Kskin,B,Cf,PLoss,thck2,Qact,
-     &                 WELLID(iw),Skin)
+     &                 WELLID(iw),Skin,iw,C1,R1,L1,Iuupw)  !rgn added iw
          end if
       else
          cond1=0.D0 
@@ -4544,8 +4961,9 @@ c     print segment info
        write(iout,*)
        write(iout,*) 'MNW2 Nonvertical Well:   Segment Information for W
      &ell ',WELLID(IW)
-       write(iout,'(A)')  'Node   L   R   C   Segment   Length   
-     &   DEG.TILT   MAP-ANGLE    CWC-segment'            
+       write(iout,'(A)')  'Node   L   R   C   Segment    Length   
+c-lfk
+     &  DEG.TILT   MAP-ANGLE   CWC-segment'            
        do INODE=firstnode,lastnode
          L=MNWNOD(1,INODE)              
          R=MNWNOD(2,INODE)              
@@ -4588,8 +5006,8 @@ C        (if there are any more MNW wells)
         write(iout,'(120A)') '                              M O D E L
      &  L A Y E R     W E L L  S C R E E N   Penetration    SKIN     
      &  CALCULATED'
-        write(iout,'(120A)') 'WELLID        Node    CWC*    top elev   
-     &bott.elev     top elev   bott.elev    fraction     COEFF.
+        write(iout,'(120A)') 'WELLID        Node    CWC*    top_elev   
+     & bott.elev    top_elev   bott.elev    fraction     COEFF.
      &          B'
        end if
 c
@@ -4958,23 +5376,47 @@ C    NO DRAWDOWN CALCULATIONS ARE MADE FOR OBSERVATION WELLS
 C
 C   CALCULATE AQUIFER PARAMETERS
        AT=HKR*BB
-       XKD=HKZ/HKR
+       IF ( abs(HKR).GT.1.0e-14 )THEN
+         XKD=HKZ/HKR
+       ELSE
+         XKD=0.0
+       END IF
        ASC=SS*BB
        SIGMA=0.0D0
 C12d-CALCULATE PUMPING-WELL DIMENSIONLESS PARAMETERS 
-      RWD=RW/BB
+      IF ( abs(BB).GT.1.0e-14 ) THEN
+        RWD=RW/BB
+      ELSE
+        RWD = 0.0
+      END IF
       BETAW=XKD*(RWD*RWD)
       IF(IPWD.EQ.0)WD=0.0D0
       IF(IPWS.EQ.0)THEN
-       XDD=ZPD/BB
-       XLD=ZPL/BB
+       IF ( abs(BB).GT.1.0e-14 ) THEN
+         XDD=ZPD/BB
+         XLD=ZPL/BB
+       ELSE
+         XDD=0.0
+         XLD=0.0
+       END IF
       ENDIF
 C
 C3--DEFINE SELECTED PROGRAM PARAMETERS
       PI=3.141592653589793D0
-      IF(IFORMAT.GE.1)THEN
-       F1=(SS*RW*RW)/HKR
-       F2=QQ/(4.0D0*PI*HKR*BB)
+      IF(IFORMAT.GE.1 )THEN
+       IF (abs(HKR).GT.1.0e-14)THEN
+         F1=(SS*RW*RW)/HKR
+       ELSE
+         F1 = 0.0
+       END IF
+       IF ( abs(HKR*BB).GT.1.0e-14 ) THEN
+         F2=QQ/(4.0D0*PI*HKR*BB)
+       ELSE
+         F2 = 0.0
+       END IF
+      ELSE
+       F1 = 0.0
+       F2 = 0.0
       ENDIF
 C
 C---EXPMAX IS THE MAXIMUM ALLOWABLE ABSOLUTE VALUE OF EXPONENTIAL ARGUMENTS
@@ -5040,7 +5482,11 @@ C
           GO TO 30
          ENDIF
 C
-         DDTEST=(DABS(DDPP-DDPPOLD))/DABS(DDPP)
+         IF ( abs(DDPP).GT.1.0e-14 ) THEN
+           DDTEST=(DABS(DDPP-DDPPOLD))/DABS(DDPP)
+         ELSE
+           DDTEST=0.0
+         END IF
          IF(DDTEST.LT.EPSILON)THEN
           ISOLNFLAG=1
           GO TO 10
@@ -5189,15 +5635,24 @@ C
 C
       DO 1 I=1,NS
        PP=XLN2*I/TD
-       Q0=DSQRT(PP)
+       IF ( pp.LT.1.0e-14 ) THEN
+         Q0=DSQRT(PP)
+       ELSE
+         Q0=0.0
+       END IF
        Q0RD=Q0*RD
        IF(Q0.GT.EXPMAX) Q0=EXPMAX
        IF(Q0RD.GT.EXPMAX) Q0RD=EXPMAX
        RE0=BESSK0(Q0)
        RE1=BESSK1(Q0)
        RE0X=BESSK0(Q0RD)
-       A0=RE0*(XLD-XDD)/(Q0*RE1)
-       E0=RE0X*(XLD-XDD)/(Q0*RE1)
+       IF ( abs(Q0*RE1).GT.1.0e-14 ) THEN
+         A0=RE0*(XLD-XDD)/(Q0*RE1)
+         E0=RE0X*(XLD-XDD)/(Q0*RE1)
+       ELSE
+         A0= 0.0
+         E0= 0.0
+       END IF
        A=0.D0
        E=0.D0
        IF(IPWS.EQ.1) GOTO 30
@@ -5212,7 +5667,11 @@ C
        SUMTA=SUMA
        SUMTE=SUME
        XNPI=NNN*PI
-       QN=DSQRT(BETAW*XNPI*XNPI+PP)
+       IF ( BETAW*XNPI*XNPI+PP.GT.1.0e-14 ) THEN
+         QN=DSQRT(BETAW*XNPI*XNPI+PP)
+       ELSE
+         QN=0.0
+       END IF
        IF(QN.GT.EXPMAX) QN=EXPMAX
        DB=DSIN(XNPI*(1.0D0-XDD))
        DA=DSIN(XNPI*(1.0D0-XLD))
@@ -5220,21 +5679,35 @@ C
        SINES=DB-DA
        RE0=BESSK0(QN)
        RE1=BESSK1(QN)
-       XNUM=RE0*SINES*SINES/(XNPI*(XLD-XDD))
+       IF ( abs(XNPI*(XLD-XDD)).GT.1.0e-14 ) THEN
+         XNUM=RE0*SINES*SINES/(XNPI*(XLD-XDD))
+       ELSE
+        XNUM=0.0
+       END IF
        XDEN=0.5D0*QN*RE1*XNPI
-       A=XNUM/XDEN
+       IF ( abs(XDEN).GT.1.0e-14 ) THEN
+         A=XNUM/XDEN
+       ELSE
+         A = 0.0
+       END IF
        SUMA=SUMTA+A
 C
        IF(KK.GT.1)THEN
         QNRD=QN*RD
         IF(QNRD.GT.EXPMAX) QNRD=EXPMAX
         RE0X=BESSK0(QNRD)
-        IF(IOWS.EQ.0) 
+        IF ( abs((XNPI*(ZD2-ZD1))).GT.1.0e-14) THEN
+          IF(IOWS.EQ.0) 
      1   XNUM=RE0X*SINES*(DSIN(XNPI*ZD2)
      2   -DSIN(XNPI*ZD1))/(XNPI*(ZD2-ZD1))
+        END IF
         IF(IOWS.EQ.2) 
      1   XNUM=RE0X*SINES*DCOS(XNPI*ZD)
+        IF ( abs(XDEN).GT.1.0e-14 ) THEN
         E=XNUM/XDEN
+        ELSE
+        E=0.0
+        END IF
         SUME=SUMTE+E
        ENDIF
 C
@@ -5254,21 +5727,31 @@ C
 C
        A=SUMA
 30     DENOM=(1.D0+WD*PP*(A0+A+SW))
-       IF(KK.EQ.1) PDL=(A0+A+SW)/(PP*DENOM)
-       IF(KK.GT.1) THEN
-         E=SUME
-         IF(IDPR.EQ.0) PDL=(E0+E)/(PP*DENOM)
-         IF(IDPR.EQ.1) THEN
-            SLUGF=1.D0/(1.D0+WDP*PP)
-            PDL=SLUGF*(E0+E)/(PP*DENOM)
-         ENDIF
+       IF ( abs((PP*DENOM)).GT.1.0e-14 ) THEN
+         IF(KK.EQ.1) PDL=(A0+A+SW)/(PP*DENOM)
+         IF(KK.GT.1) THEN
+           E=SUME
+           IF(IDPR.EQ.0) PDL=(E0+E)/(PP*DENOM)
+           IF(IDPR.EQ.1) THEN
+              SLUGF=1.D0/(1.D0+WDP*PP)
+              PDL=SLUGF*(E0+E)/(PP*DENOM)
+           ENDIF
+          END IF
+       ELSE
+         PDL = 0.0
+         E = 0.0
+         SLUGF= 0.0
        ENDIF
 C
       XP=XP+V(I)*PDL
 C
 1     CONTINUE
 C
-       HD=2.D0*XP*XLN2/(TD*(XLD-XDD))
+       IF ( abs((TD*(XLD-XDD))).GT.1.0e-14 ) THEN
+         HD=2.D0*XP*XLN2/(TD*(XLD-XDD))
+       ELSE
+         HD = 0.0
+       END IF
 C
 C      IF(NNN.GE.NMAX) WRITE(IO,100)
 C
@@ -5436,6 +5919,8 @@ C
         DEALLOCATE(MNWINT)
         DEALLOCATE(CapTable)
 C
+c-lfk
+        DEALLOCATE(LIMQ)
       RETURN
       END
       SUBROUTINE SGWF2MNW2PNT(IGRID)

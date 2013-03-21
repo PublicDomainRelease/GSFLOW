@@ -13,13 +13,12 @@
       USE PRMS_MODULE, ONLY: Process, Print_debug, Nhru,
      +    Version_ccsolrad, Ccsolrad_nc
       USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_area,
-     +    Basin_area_inv, NEARZERO
+     +    Basin_area_inv, NEARZERO, Hemisphere
       USE PRMS_CLIMATEVARS, ONLY: Swrad, Nsol, Solrad_tmin, Solrad_tmax,
      +    Ppt_rad_adj, Rad_conv, Hru_solsta, Basin_horad, Radmax,
      +    Basin_potsw, Basin_solsta, Radj_sppt, Radj_wppt, Orad,
      +    Basin_obs_ppt
-      USE PRMS_SOLTAB, ONLY: Soltab_potsw, Soltab_basinpotsw, Hru_cossl,
-     +    Hemisphere
+      USE PRMS_SOLTAB, ONLY: Soltab_potsw, Soltab_basinpotsw, Hru_cossl
       USE PRMS_OBS, ONLY: Solrad, Nowtime, Jday, Nowmonth
       IMPLICIT NONE
 ! Functions
@@ -33,6 +32,8 @@
       INTEGER, SAVE :: observed_flag
       INTEGER :: j, jj, k
       REAL :: pptadj, ccov, radadj
+      CHARACTER(LEN=8), PARAMETER :: MODNAME = 'ccsolrad'
+      CHARACTER(LEN=26), PARAMETER :: PROCNAME = 'Solar Radiation'
 !***********************************************************************
       ccsolrad = 1
 
@@ -103,35 +104,36 @@
 
       ELSEIF ( Process(:4)=='decl' ) THEN
         Version_ccsolrad =
-     +'$Id: ccsolrad.f 3830 2011-10-26 18:33:52Z rsregan $'
-        Ccsolrad_nc = INDEX( Version_ccsolrad, ' $' ) + 1
-        IF ( Print_debug>-1 ) THEN
-          IF ( declmodule(Version_ccsolrad(:Ccsolrad_nc))/=0 ) STOP
-        ENDIF
+     +'$Id: ccsolrad.f 4999 2012-11-02 17:17:03Z rsregan $'
+        Ccsolrad_nc = INDEX( Version_ccsolrad, 'Z' )
+        k = INDEX( Version_ccsolrad, '.f' ) + 1
+        IF ( declmodule(Version_ccsolrad(6:k), PROCNAME,
+     +       Version_ccsolrad(k+2:Ccsolrad_nc))/=0 ) STOP
+
 
 ! Declare Parameters
         ALLOCATE ( Ccov_slope(12) )
-        IF ( declparam('solrad', 'ccov_slope', 'nmonths', 'real',
+        IF ( declparam(MODNAME, 'ccov_slope', 'nmonths', 'real',
      +       '-0.13', '-0.5', '-0.01',
      +       'Slope in temperature cloud cover relationship',
      +       'Monthly (January to December) coefficient in'//
      +       ' cloud-cover relationship',
      +       'none')/=0 ) CALL read_error(1, 'ccov_slope')
         ALLOCATE ( Ccov_intcp(12) )
-        IF ( declparam('solrad', 'ccov_intcp', 'nmonths', 'real',
+        IF ( declparam(MODNAME, 'ccov_intcp', 'nmonths', 'real',
      +       '1.83', '0.0', '5.0',
      +       'Intercept in temperature cloud cover relationship',
      +       'Monthly (January to December) intercept in'//
      +       ' cloud-cover relationship',
      +       'none')/=0 ) CALL read_error(1, 'ccov_intcp')
-        IF ( declparam('solrad', 'crad_coef', 'one', 'real',
+        IF ( declparam(MODNAME, 'crad_coef', 'one', 'real',
      +       '0.4', '0.1', '0.7',
      +       'Coefficient in cloud cover-solar radiation relationship',
      +       'Coefficient(B) in Thompson(1976) equation,' //
      +       ' Solar radiation = B + (1.0-B)*(1.0-cloudcover)**P' //
      +       ' Varies by region, contour map of values in reference',
      +       'none')/=0 ) CALL read_error(1, 'crad_coef')
-        IF ( declparam('solrad', 'crad_exp', 'one', 'real',
+        IF ( declparam(MODNAME, 'crad_exp', 'one', 'real',
      +       '0.61', '0.2', '0.8',
      +       'Exponent in cloud cover-solar radiation relationship',
      +       'Exponent(P) in Thompson(1976) equation:' //
@@ -140,13 +142,13 @@
 
       ELSEIF ( Process(:4)=='init' ) THEN
 ! Get parameters
-        IF ( getparam('solrad', 'ccov_slope', 12, 'real', Ccov_slope)
+        IF ( getparam(MODNAME, 'ccov_slope', 12, 'real', Ccov_slope)
      +       /=0 ) CALL read_error(2, 'ccov_slope')
-        IF ( getparam('solrad', 'ccov_intcp', 12, 'real', Ccov_intcp)
+        IF ( getparam(MODNAME, 'ccov_intcp', 12, 'real', Ccov_intcp)
      +       /=0 ) CALL read_error(2, 'ccov_intcp')
-        IF ( getparam('solrad', 'crad_coef', 1, 'real', Crad_coef)
+        IF ( getparam(MODNAME, 'crad_coef', 1, 'real', Crad_coef)
      +       /=0 ) CALL read_error(2, 'crad_coef')
-        IF ( getparam('solrad', 'crad_exp', 1, 'real', Crad_exp)
+        IF ( getparam(MODNAME, 'crad_exp', 1, 'real', Crad_exp)
      +       /=0 ) CALL read_error(2, 'crad_exp')
 
         observed_flag = 0

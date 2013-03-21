@@ -13,12 +13,11 @@
       MODULE PRMS_SUBBASIN
       IMPLICIT NONE
 !   Local Variables
-      INTEGER, PARAMETER :: TREEUNIT = 445
-      INTEGER, SAVE :: Num, Ngain
+      CHARACTER(LEN=8), PARAMETER :: MODNAME = 'subbasin'
+      CHARACTER(LEN=26), PARAMETER :: PROCNAME = 'Summary'
       DOUBLE PRECISION, SAVE, ALLOCATABLE :: Qsub(:), Sub_area(:)
       DOUBLE PRECISION, SAVE, ALLOCATABLE :: Subincstor(:), Laststor(:)
       INTEGER, SAVE, ALLOCATABLE :: Tree(:, :)
-      INTEGER, SAVE, ALLOCATABLE :: Gain_set(:)
 !   Declared Variables
       DOUBLE PRECISION, SAVE, ALLOCATABLE :: Sub_inq(:)
       DOUBLE PRECISION, SAVE, ALLOCATABLE :: Sub_cfs(:), Sub_cms(:)
@@ -39,13 +38,9 @@
       DOUBLE PRECISION, SAVE, ALLOCATABLE :: Subinc_tminc(:)
       DOUBLE PRECISION, SAVE, ALLOCATABLE :: Subinc_tavgc(:)
       DOUBLE PRECISION, SAVE, ALLOCATABLE :: Subinc_deltastor(:)
-      DOUBLE PRECISION, SAVE, ALLOCATABLE :: Subflow_diff(:)
-      DOUBLE PRECISION, SAVE, ALLOCATABLE :: Subflow_cumdiff(:)
       DOUBLE PRECISION, SAVE, ALLOCATABLE :: Subinc_wb(:)
 !   Declared Parameters
       INTEGER, SAVE, ALLOCATABLE :: Subbasin_down(:), Hru_subbasin(:)
-      INTEGER, SAVE, ALLOCATABLE :: Gain_type(:), Gain_flowid(:)
-      INTEGER, SAVE, ALLOCATABLE :: Gain_subid(:), Subbasin_obsid(:)
       END MODULE PRMS_SUBBASIN
 
 !***********************************************************************
@@ -70,65 +65,64 @@
       END FUNCTION subbasin
 
 !***********************************************************************
-!     subdecl - set up parameters for streamflow, surface reservoir
-!               flow computations, and subbasin flow
+!     subdecl - set up parameters for streamflow, lake computations,
+!               and subbasin flow
 !   Declared Parameters
 !     hru_area, subbasin_down, hru_subbasin
 !***********************************************************************
       INTEGER FUNCTION subdecl()
       USE PRMS_SUBBASIN
-      USE PRMS_MODULE, ONLY: Model, Nsub, Nhru, Print_debug,
-     +    Version_subbasin, Subbasin_nc
+      USE PRMS_MODULE, ONLY: Model, Nsub, Nhru, Version_subbasin,
+     +    Subbasin_nc
       IMPLICIT NONE
 ! Functions
       INTRINSIC INDEX
-      INTEGER, EXTERNAL :: declmodule, declparam, declvar, getdim
+      INTEGER, EXTERNAL :: declmodule, declparam, declvar
       EXTERNAL read_error
+! Local Variables
+      INTEGER :: n
 !***********************************************************************
       subdecl = 1
 
       Version_subbasin =
-     +'$Id: subbasin.f 3830 2011-10-26 18:33:52Z rsregan $'
-      Subbasin_nc = INDEX( Version_subbasin, ' $' ) + 1
-      IF ( Print_debug>-1 ) THEN
-        IF ( declmodule(Version_subbasin(:Subbasin_nc))/=0 ) STOP
-      ENDIF
+     +'$Id: subbasin.f 5007 2012-11-02 17:58:41Z rsregan $'
+      Subbasin_nc = INDEX( Version_subbasin, 'Z' )
+      n = INDEX( Version_subbasin, '.f' ) + 1
+      IF ( declmodule(Version_subbasin(6:n), PROCNAME,
+     +     Version_subbasin(n+2:Subbasin_nc))/=0 ) STOP
 
       IF ( Model==99 .AND. Nsub==0 ) Nsub = 1
 
-      Ngain = getdim('ngain')
-      IF ( Ngain==-1 ) RETURN
-
 ! Declared Variables
       ALLOCATE ( Sub_interflow(Nsub) )
-      IF ( declvar('subbasin', 'sub_interflow', 'nsub', Nsub, 'double',
+      IF ( declvar(MODNAME, 'sub_interflow', 'nsub', Nsub, 'double',
      +     'Area-weighted average interflow to each subbasin from'//
      +     ' associated HRUs and from upstream subbasins',
      +     'cfs',
      +     Sub_interflow)/=0 ) CALL read_error(3, 'sub_interflow')
  
       ALLOCATE ( Sub_gwflow(Nsub) )
-      IF ( declvar('subbasin', 'sub_gwflow', 'nsub', Nsub, 'double',
+      IF ( declvar(MODNAME, 'sub_gwflow', 'nsub', Nsub, 'double',
      +     'Area-weighted average groundwater discharge from'//
      +     ' associated GWRs to each subbasin and from upstream'//
      +     ' subbasins',
      +     'cfs', Sub_gwflow)/=0 ) CALL read_error(3, 'sub_gwflow')
  
       ALLOCATE ( Sub_sroff(Nsub) )
-      IF ( declvar('subbasin', 'sub_sroff', 'nsub', Nsub, 'double',
+      IF ( declvar(MODNAME, 'sub_sroff', 'nsub', Nsub, 'double',
      +     'Area-weighted average surface runoff from associated HRUs'//
      +     ' to each subbasin and from upstream subbasins',
      +     'cfs', Sub_sroff)/=0 ) CALL read_error(3, 'sub_sroff')
  
       ALLOCATE ( Subinc_snowcov(Nsub) )
-      IF ( declvar('subbasin', 'subinc_snowcov', 'nsub', Nsub, 'double',
+      IF ( declvar(MODNAME, 'subinc_snowcov', 'nsub', Nsub, 'double',
      +     'Area-weighted average snow-covered area for associated'//
      +     ' HRUs for each subbasin',
      +     'decimal fraction',
      +     Subinc_snowcov)/=0 ) CALL read_error(3, 'subinc_snowcov')
  
       ALLOCATE ( Subinc_interflow(Nsub) )
-      IF ( declvar('subbasin', 'subinc_interflow', 'nsub', Nsub,
+      IF ( declvar(MODNAME, 'subinc_interflow', 'nsub', Nsub,
      +     'double',
      +     'Area-weighted average interflow from associated  HRUs to'//
      +     ' each subbasin',
@@ -136,101 +130,88 @@
      +     Subinc_interflow)/=0 ) CALL read_error(3, 'subinc_interflow')
 
       ALLOCATE ( Subinc_gwflow(Nsub) )
-      IF ( declvar('subbasin', 'subinc_gwflow', 'nsub', Nsub, 'double',
+      IF ( declvar(MODNAME, 'subinc_gwflow', 'nsub', Nsub, 'double',
      +     'Area-weighted average groundwater discharge from'//
      +     ' associated  GWRs to each subbasin',
      +     'cfs',
      +     Subinc_gwflow)/=0 ) CALL read_error(3, 'subinc_gwflow')
  
       ALLOCATE ( Subinc_sroff(Nsub) )
-      IF ( declvar('subbasin', 'subinc_sroff', 'nsub', Nsub, 'double',
+      IF ( declvar(MODNAME, 'subinc_sroff', 'nsub', Nsub, 'double',
      +    'Area-weighted average surface runoff from associated HRUs'//
      +    ' to each subbasin',
      +    'cfs', Subinc_sroff)/=0 ) CALL read_error(3, 'subinc_sroff')
  
       ALLOCATE ( Subinc_precip(Nsub) )
-      IF ( declvar('subbasin', 'subinc_precip', 'nsub', Nsub, 'double',
+      IF ( declvar(MODNAME, 'subinc_precip', 'nsub', Nsub, 'double',
      +     'Area-weighted average precipiation from associated HRUs'//
      +     ' to each subbasin',
      +     'inches',
      +     Subinc_precip)/=0 ) CALL read_error(3, 'subinc_precip')
  
       ALLOCATE ( Subinc_actet(Nsub) )
-      IF ( declvar('subbasin', 'subinc_actet', 'nsub', Nsub, 'double',
+      IF ( declvar(MODNAME, 'subinc_actet', 'nsub', Nsub, 'double',
      +     'Area-weighted average actual ET from associated HRUs to'//
      +     ' each subbasin',
      +     'inches',
      +     Subinc_actet)/=0 ) CALL read_error(3, 'subinc_actet')
 
       ALLOCATE ( Subinc_potet(Nsub) )
-      IF ( declvar('subbasin', 'subinc_potet', 'nsub', Nsub, 'double',
+      IF ( declvar(MODNAME, 'subinc_potet', 'nsub', Nsub, 'double',
      +     'Area-weighted average potential ET from associated HRUs'//
      +     ' to each subbasin',
      +     'inches',
      +     Subinc_potet)/=0 ) CALL read_error(3, 'subinc_potet')
 
       ALLOCATE ( Subinc_swrad(Nsub) )
-      IF ( declvar('subbasin', 'subinc_swrad', 'nsub', Nsub, 'double',
+      IF ( declvar(MODNAME, 'subinc_swrad', 'nsub', Nsub, 'double',
      +     'Area-weighted average shortwave radiation distributed'//
      +     ' to associated HRUs of each subbasin',
      +     'Langleys',
      +     Subinc_swrad)/=0 ) CALL read_error(3, 'subinc_swrad')
 
       ALLOCATE ( Subinc_tminc(Nsub) )
-      IF ( declvar('subbasin', 'subinc_tminc', 'nsub', Nsub, 'double',
+      IF ( declvar(MODNAME, 'subinc_tminc', 'nsub', Nsub, 'double',
      +     'Area-weighted average minimum air temperature for'//
      +     ' associated HRUs to each subbasin',
      +     'degrees C',
      +     Subinc_tminc)/=0 ) CALL read_error(3, 'subinc_tminc')
 
       ALLOCATE ( Subinc_tmaxc(Nsub) )
-      IF ( declvar('subbasin', 'subinc_tmaxc', 'nsub', Nsub, 'double',
+      IF ( declvar(MODNAME, 'subinc_tmaxc', 'nsub', Nsub, 'double',
      +     'Area-weighted average maximum air temperature for'//
      +     ' associated HRUs to each subbasin',
      +     'degrees C',
      +     Subinc_tmaxc)/=0 ) CALL read_error(3, 'subinc_tmaxc')
 
       ALLOCATE ( Subinc_tavgc(Nsub) )
-      IF ( declvar('subbasin', 'subinc_tavgc', 'nsub', Nsub, 'double',
+      IF ( declvar(MODNAME, 'subinc_tavgc', 'nsub', Nsub, 'double',
      +     'Area-weighted average air temperature for'//
      +     ' associated HRUs to each subbasin',
      +     'degrees C',
      +     Subinc_tavgc)/=0 ) CALL read_error(3, 'subinc_tavgc')
 
       ALLOCATE ( Subinc_wb(Nsub) )
-      IF ( declvar('subbasin', 'subinc_wb', 'nsub', Nsub, 'double',
+      IF ( declvar(MODNAME, 'subinc_wb', 'nsub', Nsub, 'double',
      +     'Water balance for each subbasin',
      +     'cfs', Subinc_wb)/=0 ) CALL read_error(3, 'subinc_wb')
 
       ALLOCATE ( Subinc_deltastor(Nsub) )
-      IF ( declvar('subbasin', 'subinc_deltastor', 'nsub', Nsub,
+      IF ( declvar(MODNAME, 'subinc_deltastor', 'nsub', Nsub,
      +     'double',
      +     'Change in storage for each subbasin',
      +     'cfs',
      +     Subinc_deltastor)/=0 ) CALL read_error(3, 'subinc_deltastor')
 
-      ALLOCATE ( Subflow_diff(Nsub) )
-      IF ( declvar('subbasin', 'subflow_diff', 'nsub', Nsub, 'double',
-     +     'Difference between computed and measured streamflow from'//
-     +     ' each subbasin',
-     +     'cfs', Subflow_diff)/=0 ) CALL read_error(3, 'subflow_diff')
-
-      ALLOCATE ( Subflow_cumdiff(Nsub) )
-      IF ( declvar('subbasin', 'subflow_cumdiff', 'nsub', Nsub,'double',
-     +     'Cumulative difference between computed and measured'//
-     +     ' streamflow from each subbasin',
-     +     'cfs',
-     +     Subflow_cumdiff)/=0 ) CALL read_error(3, 'subflow_cumdiff')
-
       ALLOCATE ( Subinc_snowmelt(Nsub) )
-      IF ( declvar('subbasin', 'subinc_snowmelt', 'nsub', Nsub,'double',
+      IF ( declvar(MODNAME, 'subinc_snowmelt', 'nsub', Nsub,'double',
      +     'Area-weighted average snowmelt from associated HRUs'//
      +     ' of each subbasin',
      +     'inches',
      +     Subinc_snowmelt)/=0 ) CALL read_error(3, 'subinc_snowmelt')
  
       ALLOCATE ( Subinc_pkweqv(Nsub) )
-      IF ( declvar('subbasin', 'subinc_pkweqv', 'nsub', Nsub, 'double',
+      IF ( declvar(MODNAME, 'subinc_pkweqv', 'nsub', Nsub, 'double',
      +     'Area-weighted average snowpack water equivalent from'//
      +     ' associated HRUs of each subbasin',
      +     'inches',
@@ -238,22 +219,22 @@
  
       ALLOCATE ( Qsub(Nsub), Tree(Nsub, Nsub) )
       ALLOCATE ( Sub_inq(Nsub) )
-      IF ( declvar('subbasin', 'sub_inq', 'nsub', Nsub, 'double',
+      IF ( declvar(MODNAME, 'sub_inq', 'nsub', Nsub, 'double',
      +     'Sum of streamflow from upstream subbasins to each subbasin',
      +     'cfs', Sub_inq)/=0 ) CALL read_error(3, 'sub_inq')
 
       ALLOCATE ( Sub_cfs(Nsub) )
-      IF ( declvar('subbasin', 'sub_cfs', 'nsub', Nsub, 'double',
+      IF ( declvar(MODNAME, 'sub_cfs', 'nsub', Nsub, 'double',
      +     'Total streamflow leaving each subbasin',
      +     'cfs', Sub_cfs)/=0 ) CALL read_error(3, 'sub_cfs')
 
       ALLOCATE ( Sub_cms(Nsub) )
-      IF ( declvar('subbasin', 'sub_cms', 'nsub', Nsub, 'double',
+      IF ( declvar(MODNAME, 'sub_cms', 'nsub', Nsub, 'double',
      +     'Total streamflow leaving each subbasin',
      +     'cms', Sub_cms)/=0 ) CALL read_error(3, 'sub_cms')
 
       ALLOCATE (Subbasin_down(Nsub))
-      IF ( declparam('subbasin', 'subbasin_down', 'nsub', 'integer',
+      IF ( declparam(MODNAME, 'subbasin_down', 'nsub', 'integer',
      +     '0', 'bounded', 'nsub',
      +     'Downstream subbasin for each subbasin',
      +     'Index number for the downstream subbasin whose'//
@@ -261,46 +242,11 @@
      +     'none')/=0 ) CALL read_error(1, 'subbasin_down')
 
       ALLOCATE (Hru_subbasin(Nhru))
-      IF ( declparam('subbasin', 'hru_subbasin', 'nhru', 'integer',
+      IF ( declparam(MODNAME, 'hru_subbasin', 'nhru', 'integer',
      +     '0', 'bounded', 'nsub',
      +     'Index of subbasin assigned to each HRU',
      +     'Index of subbasin assigned to each HRU',
      +     'none')/=0 ) CALL read_error(1, 'hru_subbasin')
-
-      ALLOCATE (Subbasin_obsid(Nsub))
-      IF ( declparam('subbasin', 'subbasin_obsid', 'nsub', 'integer',
-     +       '0', 'bounded', 'nobs',
-     +       'Index of measured streamflow at outlet of each subbasin',
-     +       'Index of measured streamflow at outlet of each subbasin',
-     +       'none')/=0 ) CALL read_error(1, 'subbasin_obsid')
-
-      IF ( Ngain>0 .OR. Model==99 ) THEN
-        ALLOCATE ( Gain_set(Nsub) )
-        ALLOCATE ( Gain_subid(Ngain) )
-        IF ( declparam('subbasin', 'gain_subid', 'ngain', 'integer',
-     +       '0', 'bounded', 'nsub',
-     +       'Index of subbasin where an inflow gain is applied',
-     +       'Index of subbasin where an inflow gain is applied when'//
-     +       ' the value of dimension ngain is specified > 0',
-     +       'none')/=0 ) CALL read_error(1, 'gain_subid')
-
-        ALLOCATE ( Gain_type(Ngain) )
-        IF ( declparam('subbasin', 'gain_type', 'ngain', 'integer',
-     +       '1', '1', '2',
-     +       'Inflow gain type',
-     +       'Inflow gain type when the value of dimension ngain is'//
-     +       ' specified > 0 (1=set inflow to subbasin to flow;'//
-     +       ' 2=internal flow addition)',
-     +       'none')/=0 ) CALL read_error(1, 'gain_type')
-
-        ALLOCATE ( Gain_flowid(Ngain) )
-        IF ( declparam('subbasin', 'gain_flowid', 'ngain', 'integer',
-     +       '1', 'bounded', 'nobs',
-     +       'Index of measured streamflow station',
-     +       'Index of measured streamflow station when the value'//
-     +       ' of dimension ngain is specified > 0',
-     +       'none')/=0 ) CALL read_error(1, 'gain_flowid')
-      ENDIF
 
 ! Allocate arrays for variables
       ALLOCATE ( Sub_area(Nsub), Subincstor(Nsub), Laststor(Nsub) )
@@ -317,50 +263,25 @@
       USE PRMS_MODULE, ONLY: Model, Nsub, Nhru, Print_debug
       USE PRMS_BASIN, ONLY: Hru_area, Active_hrus, Hru_route_order,
      +    Hru_type, Hru_frac_perv, Timestep, DNEARZERO
-      USE PRMS_FLOWVARS, ONLY: Hru_impervstor, Ssres_stor, Soil_moist
+      USE PRMS_FLOWVARS, ONLY: Hru_impervstor, Ssres_stor, Soil_moist,
+     +    Gwres_stor, Pkwater_equiv
       USE PRMS_OBS, ONLY: Cfs_conv
-      USE PRMS_SNOW, ONLY: Pkwater_equiv
       USE PRMS_INTCP, ONLY: Hru_intcpstor
-      USE PRMS_GWFLOW, ONLY: Gwres_stor
       IMPLICIT NONE
       INTEGER, EXTERNAL :: getparam
-      EXTERNAL read_error
+      EXTERNAL read_error, PRMS_open_output_file
 ! Local Variables
-      INTEGER :: i, j, k, kk, ierr
+      INTEGER :: i, j, k, kk, ierr, TREEUNIT, ios
       REAL :: harea
       DOUBLE PRECISION :: gwstor, soilstor, snowstor, landstor
 !***********************************************************************
       subinit = 1
 
-      IF ( getparam('subbasin', 'hru_subbasin', Nhru, 'integer',
+      IF ( getparam(MODNAME, 'hru_subbasin', Nhru, 'integer',
      +     Hru_subbasin)/=0 ) CALL read_error(2, 'hru_subbasin')
 
-      IF ( getparam('subbasin', 'subbasin_down', Nsub, 'integer',
+      IF ( getparam(MODNAME, 'subbasin_down', Nsub, 'integer',
      +     Subbasin_down)/=0 ) CALL read_error(2, 'subbasin_down')
-
-      IF ( getparam('subbasin', 'subbasin_obsid', Nsub, 'integer',
-     +     Subbasin_obsid)/=0 ) CALL read_error(2, 'subbasin_obsid')
-
-      IF ( Ngain>0 ) THEN
-        IF ( getparam('subbasin', 'gain_type', Ngain, 'integer',
-     +       Gain_type)/=0 ) CALL read_error(2, 'gain_type')
-
-        IF ( getparam('subbasin', 'gain_flowid', Ngain, 'integer',
-     +       Gain_flowid)/=0 ) CALL read_error(2, 'gain_flowid')
-
-        IF ( getparam('subbasin', 'gain_subid', Ngain, 'integer',
-     +       Gain_subid)/=0 ) CALL read_error(2, 'gain_subid')
-
-        ! set Gain_set, if inflow to subbasin is a gage, Gain_set=1
-        Gain_set = 0
-        DO kk = 1, Ngain
-          IF ( Gain_subid(kk)==0 ) THEN
-            PRINT *, 'Warning, gain_subid(',kk,')=0, set to 1'
-            Gain_subid(kk) = 1
-          ENDIF
-          IF ( Gain_type(kk)==1 ) Gain_set(Gain_subid(kk)) = 1
-        ENDDO
-      ENDIF
 
 ! Determine the tree structure for the internal nodes
       Tree = 0
@@ -387,12 +308,10 @@
         Subinc_tmaxc = 0.0D0
         Subinc_tavgc = 0.0D0
         Subinc_potet = 0.0D0
-        Subflow_diff = 0.0D0
-        Subflow_cumdiff = 0.0D0
       ENDIF
 
       IF ( Print_debug==14 ) THEN
-        OPEN (TREEUNIT, FILE='tree_structure', STATUS='replace')
+        CALL PRMS_open_output_file(TREEUNIT, 'tree_structure','xxx',ios)
         WRITE (TREEUNIT, 9001) (j, j=1, Nsub)
         DO j = 1, Nsub
           WRITE (TREEUNIT, 9002) j, (Tree(j,k), k=1, Nsub)
@@ -426,7 +345,7 @@
       IF ( Print_debug==14 ) THEN
         WRITE (TREEUNIT, 9003) (j, j=1, Nsub)
         DO j = 1, Nsub
-          WRITE (TREEUNIT,9002) j, (Tree(j,k), k=1, Nsub)
+          WRITE (TREEUNIT, 9002) j, (Tree(j,k), k=1, Nsub)
         ENDDO
         CLOSE (TREEUNIT)
       ENDIF
@@ -490,19 +409,20 @@
 !***********************************************************************
       INTEGER FUNCTION subrun()
       USE PRMS_SUBBASIN
-      USE PRMS_MODULE, ONLY: Model, Nhru, Ngw, Nsub, Cascade_flag,
-     +    Print_debug
+      USE PRMS_MODULE, ONLY: Model, Nhru, Ngw, Nsub, Print_debug
+      USE PRMS_CASCADE, ONLY: Cascade_flag
       USE PRMS_BASIN, ONLY: Hru_area, Active_hrus, Hru_route_order,
      +    Hru_type, CFS2CMS_CONV, Hru_frac_perv
-      USE PRMS_SNOW, ONLY: Snowcov_area, Snowmelt, Pkwater_equiv
+      USE PRMS_SNOW, ONLY: Snowcov_area, Snowmelt
       USE PRMS_OBS, ONLY: Runoff, Cfs_conv
       USE PRMS_CLIMATEVARS, ONLY: Hru_ppt, Swrad, Potet, Tminc, Tmaxc,
      +    Tavgc
       USE PRMS_FLOWVARS, ONLY: Hru_actet, Ssres_flow, Sroff,
-     +    Hru_impervstor, Hortonian_lakes, Ssres_stor, Soil_moist
+     +    Hru_impervstor, Hortonian_lakes, Ssres_stor, Soil_moist,
+     +    Gwres_stor, Pkwater_equiv
       USE PRMS_INTCP, ONLY: Hru_intcpstor
       USE PRMS_SOILZONE, ONLY: Lakein_sz
-      USE PRMS_GWFLOW, ONLY: Gwres_flow, Gwres_stor
+      USE PRMS_GWFLOW, ONLY: Gwres_flow
       IMPLICIT NONE
       EXTERNAL read_error
 ! Local Variables
@@ -548,9 +468,11 @@
         k = Hru_subbasin(j)
         IF ( k/=0 ) THEN
           harea = Hru_area(j)
+          srq = 0.0D0
+          ssq = 0.0D0
+          gwq = 0.0D0
           gwstor = 0.0D0
           soilstor = 0.0D0
-          gwq = 0.0D0
           snowstor = 0.0D0
           landstor = 0.0D0
           IF ( Hru_type(j)/=2 ) THEN
@@ -564,12 +486,10 @@
      +                 + Ssres_stor(j))*harea
             snowstor = Pkwater_equiv(j)*harea
             landstor = (Hru_intcpstor(j)+Hru_impervstor(j))*harea
+          !rsr???, this is probably wrong
           ELSEIF ( Cascade_flag==1 ) THEN
             srq = Hortonian_lakes(j)*harea
             ssq = Lakein_sz(j)*harea
-          ELSE
-            srq = 0.0D0
-            ssq = 0.0D0
           ENDIF
           Qsub(k) = Qsub(k) + srq + ssq + gwq
           Subinc_interflow(k) = Subinc_interflow(k) + ssq
@@ -591,10 +511,9 @@
       ENDDO
 
       !convert first as subbasins don't have to be in order
-      Subflow_diff = 0.0D0
       DO j = 1, Nsub
         subarea = Sub_area(j)
-        IF ( Model/=0 ) Sub_inq(j) = Qsub(j)*Cfs_conv
+        Sub_inq(j) = Qsub(j)*Cfs_conv
         dmy = Subinc_interflow(j)/subarea
         dmy1 = Subinc_gwflow(j)/subarea
         dmy2 = Subinc_sroff(j)/subarea
@@ -631,50 +550,13 @@
         ENDDO
       ENDDO
 
-!     DO k = 1, Nsub
-!       conv = Sub_area(k)*Cfs_conv
-!     ENDDO
-
-      IF ( Model/=0 ) THEN
-        IF ( Ngain==0 ) THEN
-          DO j = 1, Nsub
-            Sub_cfs(j) = Sub_inq(j)
-            DO k = 1, Nsub
-              IF ( Tree(j,k)/=0 )
-     +             Sub_cfs(j) = Sub_cfs(j) + Sub_inq(k)
-            ENDDO
-!            Sub_cfs(j) = Sub_cfs(j) - Subinc_wb(j)
-            Sub_cms(j) = Sub_cfs(j)*CFS2CMS_CONV
-            IF ( Subbasin_obsid(j)>0 ) THEN
-              Subflow_diff(j) = Sub_cfs(j) - Runoff(Subbasin_obsid(j))
-              Subflow_cumdiff(j) = Subflow_cumdiff(j) + Subflow_diff(j)
-            ENDIF
-          ENDDO
-        ELSE
-          DO j = 1, Nsub
-            Sub_cfs(j) = Sub_inq(j)
-            ! add runoff to subbasin HRUs runoff
-            DO jj = 1, Ngain
-              IF ( Gain_subid(jj)==j )
-     +             Sub_cfs(j) = Sub_cfs(j) + Runoff(Gain_flowid(jj))
-
-            ENDDO
-            ! add runoff from upstream subbasin if gain_set = 0
-            DO k = 1, Nsub
-              IF ( Gain_set(k)==0 ) THEN
-                IF ( Tree(j,k)/=0 ) Sub_cfs(j) = Sub_cfs(j)
-     +                                             + Sub_inq(k)
-              ENDIF
-            ENDDO
-!            Sub_cfs(j) = Sub_cfs(j) - Subinc_wb(j)
-            Sub_cms(j) = Sub_cfs(j)*CFS2CMS_CONV
-            IF ( Subbasin_obsid(j)>0 ) THEN
-              Subflow_diff(j) = Sub_cfs(j) - Runoff(Subbasin_obsid(j))
-              Subflow_cumdiff(j) = Subflow_cumdiff(j) + Subflow_diff(j)
-            ENDIF
-          ENDDO
-        ENDIF
-      ENDIF
+      DO j = 1, Nsub
+        Sub_cfs(j) = Sub_inq(j)
+        DO k = 1, Nsub
+          IF ( Tree(j,k)/=0 ) Sub_cfs(j) = Sub_cfs(j) + Sub_inq(k)
+        ENDDO
+        Sub_cms(j) = Sub_cfs(j)*CFS2CMS_CONV
+      ENDDO
 
       subrun = 0
       END FUNCTION subrun

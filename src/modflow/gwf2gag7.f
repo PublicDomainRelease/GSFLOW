@@ -1,4 +1,4 @@
-C $Id: gwf2gag7.f 2455 2011-02-17 18:56:13Z rniswon $      
+C $Id: gwf2gag7.f 5341 2013-02-11 17:52:19Z rniswon $      
       MODULE GWFGAGMODULE
         INTEGER,SAVE,POINTER  ::NUMGAGE
         INTEGER,SAVE,  DIMENSION(:,:),  POINTER :: IGGLST
@@ -160,9 +160,9 @@ C     ******************************************************************
 C     ------------------------------------------------------------------
 C     LOCAL VARIABLES
 C     ------------------------------------------------------------------
-      INTEGER*4 NSOL,IGRID,IUNITLAK,IOG,IG,IG2,IG3,IRCH,II,IUNITGWT
-      INTEGER*4  IUNITUZF,LK,DFLAG,ISOL
-      REAL*4 DUM,DUMMY
+      INTEGER NSOL,IGRID,IUNITLAK,IOG,IG,IG2,IG3,IRCH,II,IUNITGWT
+      INTEGER  IUNITUZF,LK,DFLAG,ISOL
+      REAL DUM,DUMMY
       CHARACTER*1 A
       CHARACTER*2 B
       CHARACTER*7 CONCNAME
@@ -511,7 +511,7 @@ C     following formats modified by LFK, July 2006:
      *          'Precip.',12X,'ET',10X,'Runoff',
      *          '     Concentration"')
  277  FORMAT (2X,'"DATA: Time',9X,'Stage',11X,'Flow',
-     *           10X,'Depth',10X,'Width',6X,'Midpt-Flow',7X
+     *           10X,'Depth',10X,'Width',6X,'Midpt-Flow',7X,
      *           'Precip.',12X,'ET',10X,'Runoff',
      *           '    Concentration ',
      *           'of ',I3,' Solutes "')
@@ -530,7 +530,7 @@ C     following formats modified by LFK, July 2006:
 C285  FORMAT (1X,'" DATA:   Time',8X,'Stage',9X,'Flow',
  285  FORMAT (2X,'"DATA: Time',9X,'Stage',11X,'Flow',
      *           10X,'Depth',10X,'Width',6X,'Midpt-Flow',7X,
-     *           'Precip.',12X,'ET',10X,'Runoff',6X'Conductance',
+     *           'Precip.',12X,'ET',10X,'Runoff',6X,'Conductance',
      *           5X,'HeadDiff',7X,'Hyd.Grad.',
      *           '    Concentration      Load "')
  287  FORMAT (2X,'"DATA: Time',9X,'Stage',11X,'Flow',
@@ -662,8 +662,7 @@ C     ******************************************************************
       USE GWFLAKMODULE, ONLY:NLAKES,RNF,VOL,STGNEW,PRECIP,EVAP,
      1                       SURFIN,SURFOT,WITHDRW,SUMCNN,DELH,TDELH,
      2                       VOLINIT,OVRLNDRNF,TSLAKERR,CMLAKERR,DELVOL,
-     3                       SEEPUZ,SURFA
-     
+     3                       SEEPUZ     
 C     ------------------------------------------------------------------
       DIMENSION CLAKE(NLAKES,NSOL)
 cdep 4/20/2009 dimensioned SEEP array to nlakes
@@ -727,7 +726,7 @@ Cdep   4/20/2009 added lake seepage to unsaturated zone
                    WRITE (IG3,405) GAGETM,STGNEW(LK),VOL(LK),
      *              PP,ET,RUNF,UZFRNF,GWFIN,GWFOT,SEEPUZF,
      +              SRIN,SROT,WDRW,FLXINL(LK),SUMCNN(LK),
-     +              TSLAKERR(LK),SURFA(LK)
+     +              TSLAKERR(LK)
                  END IF
                  CASE (2)
                    WRITE (IG3,402) GAGETM,STGNEW(LK),VOL(LK),
@@ -745,7 +744,7 @@ Cdep   4/20/2009 added lake seepage to unsaturated zone
      *              PP,ET,RUNF,UZFRNF,GWFIN,GWFOT,SEEPUZF,
      *              SRIN,SROT,WDRW,FLXINL(LK),SUMCNN(LK),
      *              DELHTS,DELVOL(LK),DELHCUM,VOL(LK)-VOLINIT(LK),
-     +              CMLAKERR(LK),SURFA(LK)
+     +              CMLAKERR(LK)
                  END IF
 !dep   New option for printing time series of volumetric rates
                  CASE (4)
@@ -758,7 +757,7 @@ Cdep   4/20/2009 added lake seepage to unsaturated zone
                    WRITE (IG3,407) GAGETM,STGNEW(LK),VOL(LK),VOLRATE,
      *              PRECIP(LK),EVAP(LK),RNF(LK),OVRLNDRNF(LK),GWIN(LK),
      *              GWOUT(LK),SEEPUZ(LK),SURFIN(LK),SURFOT(LK),
-     *              WITHDRW(LK),FLUXIN,SUMCNN(LK),TSLAKERR(LK),SURFA(LK)
+     *              WITHDRW(LK),FLUXIN,SUMCNN(LK),TSLAKERR(LK)
                  END IF
                  END SELECT
 C
@@ -830,9 +829,9 @@ Cdep  added one value to each format for printing percent error
  403  FORMAT (4X,1PE14.7,1X,0PF14.7,1X,16(1PE14.7,1X))
 Cdep 4/20/2009 added one term to formats 404 and 405
  404  FORMAT (4X,1PE14.7,1X,0PF14.7,1X,13(1PE14.7,1X))
- 405  FORMAT (4X,1PE14.7,1X,0PF14.7,1X,15(1PE14.7,1X))
- 406  FORMAT (4X,1PE14.7,1X,0PF14.7,1X,19(1PE14.7,1X))
- 407  FORMAT (4X,1PE14.7,1X,0PF14.7,1X,16(1PE14.7,1X))
+ 405  FORMAT (4X,1PE14.7,1X,0PF14.7,1X,14(1PE14.7,1X))
+ 406  FORMAT (4X,1PE14.7,1X,0PF14.7,1X,18(1PE14.7,1X))
+ 407  FORMAT (4X,1PE14.7,1X,0PF14.7,1X,15(1PE14.7,1X))
  425  FORMAT ('(4X,1PE14.7,1X,0PF14.7,1X,1PE14.7,1X,',I3,
      +'(1PE14.7,1X))')
  426  FORMAT ('(4X,1PE14.7,1X,0PF13.7,1X,1PE14.7,1X,',I3,
@@ -1041,7 +1040,7 @@ C-------SUBROUTINE GWF2GAG7DA
       SUBROUTINE GWF2GAG7DA(IGRID)
 C  Deallocate GAG data for a grid.
       USE GWFGAGMODULE
-      INTEGER*4 IGRID
+      INTEGER IGRID
 C
       DEALLOCATE (GWFGAGDAT(IGRID)%NUMGAGE)
       DEALLOCATE (GWFGAGDAT(IGRID)%IGGLST)
@@ -1052,7 +1051,7 @@ C-------SUBROUTINE SGWF2GAG7PNT
       SUBROUTINE SGWF2GAG7PNT(IGRID)
 C  Change GAG data to a different grid.
       USE GWFGAGMODULE
-      INTEGER*4 IGRID
+      INTEGER IGRID
 C
       NUMGAGE=>GWFGAGDAT(IGRID)%NUMGAGE
       IGGLST=>GWFGAGDAT(IGRID)%IGGLST

@@ -1,15 +1,17 @@
 # mf2k5 libraray makefile
-# $Id: Makefile 4107 2012-01-13 22:41:49Z rsregan $
+# $Id: Makefile 5491 2013-03-14 18:27:53Z rsregan $
 
 include ../makelist
 
-MF2K5LIB = ../../lib/libmf2k5.a
+MF2K5LIB = $(LIBDIR)/libmf2k5.a
 
 LIBOBJS = \
         utl7.o \
-        gwf2bas7.o \
-        pcg7.o \
-        sip7.o \
+        gwf2bas7_NWT.o \
+        pcg7_NWT.o \
+        pcgn_solve2.o \
+        pcgn2.o \
+        sip7_NWT.o \
         de47.o \
         gmg7.o \
         mhc7.o \
@@ -25,12 +27,11 @@ LIBOBJS = \
         gwf2sfr7_NWT.o \
         gwf2uzf1_NWT.o \
         gwf2wel7_NWT.o \
-        gwf2ghb7.o \
+        gwf2ghb7_NWT.o \
         gwf2fhb7.o \
         gwf2mnw17_NWT.o \
         gwf2mnw27_NWT.o \
         gwf2mnw2i7.o \
-        lmt7_NWT.o \
 	mach_mod.o \
         NWT1_ilupc_mod.o \
         NWT1_xmdlib.o \
@@ -45,49 +46,24 @@ LIBOBJS = \
         r_vector.o \
         solvers.o \
         ccfd.o \
-	common_types2.o \
-	mat_vec_mult2.o \
-	MiUDU2.o \
-	pcg_solve2.o \
-	pcg_main2.o \
-	pcgn2.o \
 	obs2bas7.o \
 	obs2chd7.o \
 	obs2ghb7.o
 
-
-all: lib
-	echo made $(MF2K5LIB)
-
-install: lib
-
-lib: $(MF2K5LIB)
-
-clean:
-	$(RM) *.o *.mod *~ $(MF2K5LIB)
 
 $(MF2K5LIB): $(LIBOBJS)
 	$(RM) $(MF2K5LIB)
 	$(AR) $(MF2K5LIB) $(LIBOBJS)
 	$(RANLIB) $(MF2K5LIB)
 
-pcg_solve2.o: pcg_solve2.f90
-	$(CC) -c $(CFLAGS) pcg_solve2.f90
+clean:
+	$(RM) *.o *.mod *~ $(MF2K5LIB)
 
-pcg_main2.o: pcg_main2.f90
-	$(CC) -c $(CFLAGS) pcg_main2.f90
+pcgn_solve2.o: pcgn_solve2.f90
+	$(CC) -c $(CFLAGS) pcgn_solve2.f90
 
 pcgn2.o: pcgn2.f90
 	$(CC) -c $(CFLAGS) pcgn2.f90
-
-MiUDU2.o: MiUDU2.f90
-	$(CC) -c $(CFLAGS) MiUDU2.f90
-
-mat_vec_mult2.o: mat_vec_mult2.f90
-	$(CC) -c $(CFLAGS) mat_vec_mult2.f90
-
-common_types2.o: common_types2.f90
-	$(CC) -c $(CFLAGS) common_types2.f90
 
 mach_mod.o: mach_mod.f90
 	$(CC) -c $(CFLAGS) mach_mod.f90
@@ -112,9 +88,6 @@ r_vector.o: r_vector.c r_vector.h
 
 solvers.o: solvers.c solvers.h
 	$(CC) -c $(CFLAGS) solvers.c
-
-mf2007_cfp.o: mf2007_cfp.f openspec.inc
-	$(FC) $(FFLAGS) -c mf2007_cfp.f
 
 utl7.o: utl7.f openspec.inc
 	$(FC) $(FFLAGS) -c utl7.f

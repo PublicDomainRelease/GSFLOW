@@ -3,36 +3,35 @@
 
                               U.S. Geological Survey
             Coupled Groundwater and Surface-water FLOW model (GSFLOW)
-                             Version 1.1.5 01/15/2012
+                             Version 1.1.6 03/20/2013
 
         An integration of the Precipitation-Runoff Modeling System (PRMS)
         and the Modular Groundwater Model (MODFLOW-NWT and MODFLOW-2005)
 
-                                    MODFLOW-NWT
-     U.S. GEOLOGICAL SURVEY MODULAR FINITE-DIFFERENCE GROUNDWATER FLOW MODEL
-                  Newton Formulation, Version 1.0.03 12/29/2011
-                 Based on MODFLOW-2005 Version 1.8.00 12/18/2009
+                                  MODFLOW-NWT
+    U.S. GEOLOGICAL SURVEY MODULAR FINITE-DIFFERENCE GROUNDWATER-FLOW MODEL
+                             WITH NEWTON FORMULATION
+                             Version 1.0.7 01/15/2013 
+                    BASED ON MODFLOW-2005 Version 1.9.01 5/01/2012
 
                               Processes: GWF and OBS
        Packages: BAS, BCF, CHD, DE4, FHB, GAG, GHB, GMG, HFB, HUF LAK
                  LPF, MNW1, MNW2, NWT, PCG, PCGN, SFR, SIP, UPW, UZF, WEL
 
 
- Using NAME file: ../input/modflow/sagehen_linux.mf.nam 
+ Using NAME file: ./sagehen_linux.mf.nam 
 
-$Id: gsflow_prms.f 4179 2012-02-14 16:49:41Z rsregan $                  
-$Id: gsflow_modflow.f 4164 2012-02-06 20:22:08Z rsregan $           
-$Id: gwf2uzf1_NWT.f 4071 2012-01-05 23:30:24Z rniswon $         
-$Id: gwf2sfr7_NWT.f 4134 2012-01-26 18:12:59Z rniswon $         
-$Id: gwf2lak7_NWT.f 4068 2011-12-23 20:48:53Z rniswon $         
- Run start date and time (yyyy/mm/dd hh:mm:ss): 2012/02/21 10:53:44
+$Id: gwf2uzf1_NWT.f 5459 2013-03-08 22:52:10Z rniswon $         
+$Id: gwf2sfr7_NWT.f 5341 2013-02-11 17:52:19Z rniswon $         
+$Id: gwf2lak7_NWT.f 5341 2013-02-11 17:52:19Z rniswon $         
+ Run start date and time (yyyy/mm/dd hh:mm:ss): 2013/03/21 11:01:08
 
  Solving:  Stress period:     1    Time step:     1    Ground-Water Flow Eqn.
- Steady state simulation successful, used:         387 iterations
+ Steady state simulation successful, used:         351 iterations
 
 
 
- Run end date and time (yyyy/mm/dd hh:mm:ss): 2012/02/21 10:53:53
- Elapsed run time:  9.506 Seconds
+ Run end date and time (yyyy/mm/dd hh:mm:ss): 2013/03/21 11:01:18
+ Elapsed run time:  9.949 Seconds
 
   Normal termination of simulation

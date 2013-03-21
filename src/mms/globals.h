@@ -1,9 +1,9 @@
 /*
- *  $Id: globals.h 5648 2010-05-28 18:48:15Z markstro $
+ *  $Id: globals.h 2257 2010-12-10 21:35:26Z rsregan $
  */
 /*
 **
-**		$Author: markstro $
+**		$Author: rsregan $
 **
 **		$Date: 1996/02/19 20:05:09 $
 **
@@ -74,7 +74,7 @@
 **Initial revision
 **
 **
-**		$Revision: 5648 $
+**		$Revision: 2257 $
 **
 **		$Source: /z/runoff/work4/mms_cvs/mms/src/include/globals.h,v $
 **

@@ -4,10 +4,14 @@
 # Top-level makefile for the GSFLOW
 #
 #-------------------------------------------------------------------
-# $Id: Makefile 1880 2010-08-25 16:04:14Z rsregan $
+# $Id: Makefile 4215 2012-02-23 21:57:14Z rsregan $
 #-------------------------------------------------------------------
 
 include ./makelist
+MMF      = ./mms
+PRMS     = ./prms
+GSFLOW   = ./gsflow
+MODFLOW  = ./modflow
 
 #
 # Standard Targets for Users
@@ -16,16 +20,16 @@ include ./makelist
 all: standard
 
 standard:
-	cd mms; $(MAKE);
-	cd modflow; $(MAKE);
-	cd prms; $(MAKE);
-	cd gsflow; $(MAKE)
+	cd $(MMF); $(MAKE);
+	cd $(MODFLOW); $(MAKE);
+	cd $(PRMS); $(MAKE);
+	cd $(GSFLOW); $(MAKE)
 
 clean:
-	cd mms; $(MAKE) clean;
-	cd modflow; $(MAKE) clean;
-	cd prms; $(MAKE) clean;
-	cd gsflow; $(MAKE) clean;
-	cd ../lib; rm -f *.a;
-	cd ../bin; rm -f gsflow
+	cd $(MMF); $(MAKE) clean;
+	cd $(MODFLOW); $(MAKE) clean;
+	cd $(PRMS); $(MAKE) clean;
+	cd $(GSFLOW); $(MAKE) clean;
+	cd $(LIB); rm -f *.a;
+	cd $(BIN); rm -f gsflow
 

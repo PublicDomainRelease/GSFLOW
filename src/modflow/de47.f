@@ -207,11 +207,11 @@ C     ------------------------------------------------------------------
       DIMENSION HNEW(NCOL,NROW,NLAY),AU(ID4DIM,MXUP),AL(MXBW,MXLOW),
      1          IEQPNT(NCOL,NROW,NLAY),IUPPNT(ID4DIM,MXUP),D4B(MXEQ),
      2          CR(NCOL,NROW,NLAY),CC(NCOL,NROW,NLAY),
-     3          CV(NCOL,NROW,NLAY),HCOF(NCOL,NROW,NLAY),
-     4          RHS(NCOL,NROW,NLAY),IBOUND(NCOL,NROW,NLAY),
+     3          CV(NCOL,NROW,NLAY),IBOUND(NCOL,NROW,NLAY),
      5          LRCHDE4(3,ITMX),HDCGDE4(ITMX)
 C
-      DOUBLE PRECISION HNEW,EE,COND,RR,DDH
+      DOUBLE PRECISION HNEW,EE,COND,RR,DDH,HCOF(NCOL,NROW,NLAY),
+     4          RHS(NCOL,NROW,NLAY)
 C
       DIMENSION CND(6),IEQ(6),IDIR(6,6)
 C      SAVE DELTL,NBWL,NUPL,NLOWL,NLOW,NEQ,NUP,NBW
@@ -572,6 +572,7 @@ C3B-----Order equations with even plane numbers.
       IEQPNT(J,I,K)=NEQ
   140 CONTINUE
       NLOW=NEQ-NUP
+      IF ( NLOW.LT.1 ) NLOW = 1  !JDH 20110814
       RETURN
 C
 C4------DIRECTION 2 NROW>NCOL>or=NLAY
@@ -851,7 +852,12 @@ C3B-----MODIFY D4B DUE TO ELIMINATION OF [AL].
   120 CONTINUE
 C
 C4------BACK SUBSTITUTE LOWER PART.
-      D4B(NEQ)=D4B(NEQ)/AL(1,NEQ-NUP)
+!      D4B(NEQ)=D4B(NEQ)/AL(1,NEQ-NUP)
+      IJDH = NEQ-NUP                  !JDH 20110814
+      IF ( IJDH.LT.1 ) THEN           !JDH 20110814
+        IJDH = 1                      !JDH 20110814
+      END IF                          !JDH 20110814
+      D4B(NEQ)=D4B(NEQ)/AL(1,IJDH)    !JDH 20110814
       DO 140 I=1,NLOWM1
       K=NEQ-I
       KL=K-NUP

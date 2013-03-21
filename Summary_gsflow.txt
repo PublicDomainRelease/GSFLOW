@@ -60,6 +60,13 @@ ABSTRACT
 
 
 HISTORY
+
+      GSFLOW Version 1.1.6 03/20/2013 - This version of GSFLOW is based on 
+         MODFLOW-2005 version 1.9.01, MODFLOW-NWT version 1.0.7, and PRMS 
+         version 3.0.5. A number of enhancements and bug fixes have been done 
+         for this release. All of the updates are described in file
+         "GSFLOW_v1.1.6_Updates.pdf." 
+
       GSFLOW Version 1.1.5 01/15/2012 - This version of GSFLOW is based on 
          MODFLOW-2005 version 1.8, MODFLOW-NWT version 1.0.3 and PRMS version 
          3.4179. Several enhancements and bug fixes have been done for this 
@@ -82,7 +89,7 @@ HISTORY
          Package to specify streamflows to simulated stream segments in
          tabular files that are external to the SFR2 main input file. All 
          of the updates are described in the file 'GSFLOW_v1.1.3_Updates.pdf' 
-         provided in the .\doc\GSFLOW subdirectory. Revised input 
+         provided in the ./doc/GSFLOW subdirectory. Revised input 
          instructions for the SFR2 Package (for use with GSFLOW) are provided
          in file 'SFR2_for_GSFLOW_v1.1.3.pdf' in the same directory.
 
@@ -104,10 +111,10 @@ HISTORY
          PRMS-only simulations). Several additional bug fixes and minor
          enhancements were made for this release. All of the changes are
          described in the file 'GSFLOW_v1.1_Updates.pdf' located in the
-         \doc\GSFLOW directory. Updated input formats for the PRMS and 
+         /doc/GSFLOW directory. Updated input formats for the PRMS and 
          GSFLOW modules, including several new input parameters, are provided 
          in the file 'Appendix1_Tables_v1.1.pdf,' which is also included in 
-         the \doc\GSFLOW directory. Also made changes to the Sagehen sample
+         the /doc/GSFLOW directory. Also made changes to the Sagehen sample
          problem by simplifying the MODFLOW Name File and making the MODFLOW
          transient stress period consistent with the total number of time
          steps simulated by GSFLOW; these changes did not affect the results
@@ -160,8 +167,6 @@ FUNTIONALITY
                                simulations)
          subbasin      -- Subbasin Module (for PRMS-only simulations)
          strmflow      -- Streamflow Module (for PRMS-only simulations)
-         hru_sum       -- HRUs Flow-Summary Module (for PRMS-only 
-                               simulations)
          basin_sum     -- Watershed Flow-Summary Module (for PRMS-only                    
                                simulations)
          map_results   -- Map Results Module (for PRMS-only simulations)

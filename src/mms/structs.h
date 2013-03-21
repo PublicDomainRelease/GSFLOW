@@ -1,5 +1,5 @@
 /*
- *  $Id: structs.h 5788 2010-11-18 21:17:58Z markstro $
+ *  $Id: structs.h 2257 2010-12-10 21:35:26Z rsregan $
  */
 
 #ifndef _STRUCTS_H

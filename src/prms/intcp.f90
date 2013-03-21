@@ -5,21 +5,22 @@
 !***********************************************************************
       MODULE PRMS_INTCP
       IMPLICIT NONE
-      INTEGER, PARAMETER :: BALUNT = 198
+      INTEGER, SAVE :: BALUNT
 !   Local Variables
       INTEGER, SAVE, ALLOCATABLE :: Intcp_transp_on(:)
+      INTEGER, SAVE :: Use_pandata
       DOUBLE PRECISION, SAVE :: Basin_changeover
+      CHARACTER(LEN=5), PARAMETER :: MODNAME = 'intcp'
+      CHARACTER(LEN=26), PARAMETER :: PROCNAME = 'Canopy Interception'
 !   Declared Variables
       INTEGER, SAVE, ALLOCATABLE :: Intcp_on(:), Intcp_form(:)
       DOUBLE PRECISION, SAVE :: Basin_net_ppt, Basin_intcp_stor
       DOUBLE PRECISION, SAVE :: Last_intcp_stor, Basin_intcp_evap
       REAL, SAVE, ALLOCATABLE :: Net_rain(:), Net_snow(:), Net_ppt(:)
       REAL, SAVE, ALLOCATABLE :: Intcp_stor(:), Intcp_evap(:)
-      REAL, SAVE, ALLOCATABLE :: Hru_intcpevap(:), Hru_intcpstor(:)
-!   Declared Variables from other modules - snow
-      DOUBLE PRECISION, ALLOCATABLE :: Pkwater_equiv(:)
+      REAL, SAVE, ALLOCATABLE :: Hru_intcpstor(:)
 !   Declared Parameters
-      INTEGER, SAVE, ALLOCATABLE :: Cov_type(:), Hru_pansta(:)
+      INTEGER, SAVE, ALLOCATABLE :: Hru_pansta(:)
       REAL, SAVE :: Potet_sublim
       REAL, SAVE, ALLOCATABLE :: Covden_sum(:), Covden_win(:)
       REAL, SAVE, ALLOCATABLE :: Snow_intcp(:), Srain_intcp(:)
@@ -55,150 +56,138 @@
 !***********************************************************************
       INTEGER FUNCTION intdecl()
       USE PRMS_INTCP
-      USE PRMS_MODULE, ONLY: Nhru, Print_debug, Version_intcp, Intcp_nc
+      USE PRMS_MODULE, ONLY: Nhru, Version_intcp, Intcp_nc, Model, Et_flag
       USE PRMS_OBS, ONLY: Nevap
       IMPLICIT NONE
 ! Functions
       INTRINSIC INDEX
       INTEGER, EXTERNAL :: declmodule, declparam, declvar
       EXTERNAL read_error
+! Local Variables
+      INTEGER :: n
 !***********************************************************************
       intdecl = 1
 
-      Version_intcp = '$Id: intcp.f90 4008 2011-11-30 00:50:56Z rsregan $'
-      Intcp_nc = INDEX( Version_intcp, ' $' ) + 1
-      IF ( Print_debug>-1 ) THEN
-        IF ( declmodule(Version_intcp(:Intcp_nc))/=0 ) STOP
-      ENDIF
+      Version_intcp = '$Id: intcp.f90 5003 2012-11-02 17:28:14Z rsregan $'
+      Intcp_nc = INDEX( Version_intcp, 'Z' )
+      n = INDEX( Version_intcp, '.f90' ) + 3
+      IF ( declmodule(Version_intcp(6:n), PROCNAME, Version_intcp(n+2:Intcp_nc))/=0 ) STOP
 
       ALLOCATE ( Net_rain(Nhru) )
-      IF ( declvar('intcp', 'net_rain', 'nhru', Nhru, 'real', &
+      IF ( declvar(MODNAME, 'net_rain', 'nhru', Nhru, 'real', &
            'Rain that falls through canopy for each HRU', &
            'inches', Net_rain)/=0 ) CALL read_error(3, 'net_rain')
 
       ALLOCATE ( Net_snow(Nhru) )
-      IF ( declvar('intcp', 'net_snow', 'nhru', Nhru, 'real', &
+      IF ( declvar(MODNAME, 'net_snow', 'nhru', Nhru, 'real', &
            'Snow that falls through canopy for each HRU', &
            'inches', Net_snow)/=0 ) CALL read_error(3, 'net_snow')
 
       ALLOCATE ( Net_ppt(Nhru) )
-      IF ( declvar('intcp', 'net_ppt', 'nhru', Nhru, 'real', &
+      IF ( declvar(MODNAME, 'net_ppt', 'nhru', Nhru, 'real', &
            'Precipitation (rain and/or snow) that falls through the canopy for each HRU', &
            'inches', Net_ppt)/=0 ) CALL read_error(3, 'net_ppt')
 
-      IF ( declvar('intcp', 'basin_net_ppt', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'basin_net_ppt', 'one', 1, 'double', &
            'Basin area-weighted average throughfall', &
            'inches', Basin_net_ppt)/=0 ) CALL read_error(3, 'basin_net_ppt')
 
       ALLOCATE ( Intcp_stor(Nhru) )
-      IF ( declvar('intcp', 'intcp_stor', 'nhru', Nhru, 'real', &
-           'Interception storage in canopy for cover density on each HRU', &
+      IF ( declvar(MODNAME, 'intcp_stor', 'nhru', Nhru, 'real', &
+           'Interception storage in canopy for cover density for each HRU', &
            'inches', Intcp_stor)/=0 ) CALL read_error(3, 'intcp_stor')
 
-      IF ( declvar('intcp', 'last_intcp_stor', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'last_intcp_stor', 'one', 1, 'double', &
            'Basin area-weighted average changeover interception storage', &
            'inches', Last_intcp_stor)/=0 ) CALL read_error(3, 'last_intcp_stor')
 
-      IF ( declvar('intcp', 'basin_intcp_stor', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'basin_intcp_stor', 'one', 1, 'double', &
            'Basin area-weighted average interception storage', &
            'inches', Basin_intcp_stor)/=0 ) CALL read_error(3, 'basin_intcp_stor')
 
       ALLOCATE ( Intcp_evap(Nhru) )
-      IF ( declvar('intcp', 'intcp_evap', 'nhru', Nhru, 'real', &
-           'Evaporation from the canopy of each HRU', &
+      IF ( declvar(MODNAME, 'intcp_evap', 'nhru', Nhru, 'real', &
+           'Evaporation from the canopy for each HRU', &
            'inches', Intcp_evap)/=0 ) CALL read_error(3, 'intcp_evap')
 
-      IF ( declvar('intcp', 'basin_intcp_evap', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'basin_intcp_evap', 'one', 1, 'double', &
            'Basin area-weighted evaporation from the canopy', &
            'inches', Basin_intcp_evap)/=0 ) CALL read_error(3, 'basin_intcp_evap')
 
-      ALLOCATE ( Hru_intcpevap(Nhru) )
-      IF ( declvar('intcp', 'hru_intcpevap', 'nhru', Nhru, 'real', &
-           'Evaporation from the canopy from each HRU', &
-           'inches', Hru_intcpevap)/=0 ) CALL read_error(3, 'hru_intcpevap')
-
       ALLOCATE ( Hru_intcpstor(Nhru) )
-      IF ( declvar('intcp', 'hru_intcpstor', 'nhru', Nhru, 'real', &
-           'Interception storage in the canopy on each HRU', &
+      IF ( declvar(MODNAME, 'hru_intcpstor', 'nhru', Nhru, 'real', &
+           'Interception storage in the canopy for each HRU', &
            'inches', Hru_intcpstor)/=0 ) CALL read_error(3, 'hru_intcpstor')
 
       ALLOCATE ( Intcp_form(Nhru) )
-      IF ( declvar('intcp', 'intcp_form', 'nhru', Nhru, 'integer', &
-           'Form (rain or snow) of interception', &
+      IF ( declvar(MODNAME, 'intcp_form', 'nhru', Nhru, 'integer', &
+           'Form (rain or snow) of interception for each HRU', &
            'none', Intcp_form)/=0 ) CALL read_error(3, 'intcp_form')
 
       ALLOCATE ( Intcp_on(Nhru) )
-      IF ( declvar('intcp', 'intcp_on', 'nhru', Nhru, 'integer', &
-           'Flag indicating interception storage on each HRU (0=no; 1=yes)', &
+      IF ( declvar(MODNAME, 'intcp_on', 'nhru', Nhru, 'integer', &
+           'Flag indicating interception storage for each HRU (0=no; 1=yes)', &
            'none', Intcp_on)/=0 ) CALL read_error(3, 'intcp_on')
 
 ! declare parameters
       ALLOCATE ( Epan_coef(12) )
-      IF ( declparam('intcp', 'epan_coef', 'nmonths', 'real', &
+      IF ( declparam(MODNAME, 'epan_coef', 'nmonths', 'real', &
            '1.0', '0.2', '3.0', &
            'Evaporation pan coefficient', &
            'Monthly (January to December ) evaporation pan coefficient', &
            'none')/=0 ) CALL read_error(1, 'epan_coef')
 
       ALLOCATE ( Snow_intcp(Nhru) )
-      IF ( declparam('intcp', 'snow_intcp', 'nhru', 'real', &
+      IF ( declparam(MODNAME, 'snow_intcp', 'nhru', 'real', &
            '0.1', '0.0', '5.0', &
            'Snow interception storage capacity', &
            'Snow interception storage capacity for the major vegetation type in each HRU', &
            'inches')/=0 ) CALL read_error(1, 'snow_intcp')
 
       ALLOCATE ( Srain_intcp(Nhru) )
-      IF ( declparam('intcp', 'srain_intcp', 'nhru', 'real', &
+      IF ( declparam(MODNAME, 'srain_intcp', 'nhru', 'real', &
            '0.1', '0.0', '5.0', &
            'Summer rain interception storage capacity', &
            'Summer rain interception storage capacity for the major vegetation type in each HRU', &
            'inches')/=0 ) CALL read_error(1, 'srain_intcp')
 
       ALLOCATE ( Wrain_intcp(Nhru) )
-      IF ( declparam('intcp', 'wrain_intcp', 'nhru', 'real', &
+      IF ( declparam(MODNAME, 'wrain_intcp', 'nhru', 'real', &
            '0.1', '0.0', '5.0', &
            'Winter rain interception storage capacity', &
-           'Winter rain interception storage capacity for the major vegetation type in the HRU', &
+           'Winter rain interception storage capacity for the major vegetation type in each HRU', &
            'inches')/=0 ) CALL read_error(1, 'wrain_intcp')
 
-      ALLOCATE ( Cov_type(Nhru) )
-      IF ( declparam('intcp', 'cov_type', 'nhru', 'integer', &
-           '3', '0', '3', &
-           'Cover type designation for HRU', &
-           'Vegetation cover type for each HRU (0=bare soil; 1=grasses; 2=shrubs; 3=trees)', &
-           'none')/=0 ) CALL read_error(1, 'cov_type')
-
       ALLOCATE ( Covden_sum(Nhru) )
-      IF ( declparam('intcp', 'covden_sum', 'nhru', 'real', &
+      IF ( declparam(MODNAME, 'covden_sum', 'nhru', 'real', &
            '0.5', '0.0', '1.0', &
            'Summer vegetation cover density for major vegetation type', &
-           'Summer vegetation cover density for the major vegetation type on each HRU', &
+           'Summer vegetation cover density for the major vegetation type in each HRU', &
            'decimal fraction')/=0 ) CALL read_error(1, 'covden_sum')
 
       ALLOCATE ( Covden_win(Nhru) )
-      IF ( declparam('intcp', 'covden_win', 'nhru', 'real', &
+      IF ( declparam(MODNAME, 'covden_win', 'nhru', 'real', &
            '0.5', '0.0', '1.0', &
            'Winter vegetation cover density for major vegetation type', &
-           'Winter vegetation cover density for the major vegetation type on each HRU', &
+           'Winter vegetation cover density for the major vegetation type in each HRU', &
            'decimal fraction')/=0 ) CALL read_error(1, 'covden_win')
 
-      IF ( declparam('intcp', 'potet_sublim', 'one', 'real', &
+      IF ( declparam(MODNAME, 'potet_sublim', 'one', 'real', &
            '0.5', '0.1', '0.75', &
            'Fraction of potential ET that is sublimated from snow surface', &
            'Fraction of potential ET that is sublimated from the snow surface', &
            'decimal fraction')/=0 ) CALL read_error(1, 'potet_sublim')
 
-      IF ( Nevap>0 ) THEN
+      Use_pandata = 0
+      IF ( Nevap>0 .AND. Et_flag==4 .OR. Model==99 ) THEN
+        Use_pandata = 1
         ALLOCATE ( Hru_pansta(Nhru) )
-        IF ( declparam('potet', 'hru_pansta', 'nhru', 'integer', &
+        IF ( declparam(MODNAME, 'hru_pansta', 'nhru', 'integer', &
              '0', 'bounded', 'nevap', &
              'Index of pan evaporation station for each HRU', &
              'Index of pan evaporation station used to compute HRU potential ET', &
              'none')/=0 ) CALL read_error(1, 'hru_pansta')
       ENDIF
-
-! Allocate arrays for variables from other modules
-      ALLOCATE ( Pkwater_equiv(Nhru) )
 
       intdecl = 0
       END FUNCTION intdecl
@@ -210,32 +199,31 @@
       INTEGER FUNCTION intinit()
       USE PRMS_INTCP
       USE PRMS_MODULE, ONLY: Nhru, Print_debug
-      USE PRMS_BASIN, ONLY: Hru_type, Timestep, NEARZERO
+      USE PRMS_BASIN, ONLY: Hru_type, Timestep, NEARZERO, Cov_type
       USE PRMS_CLIMATEVARS, ONLY: Transp_on
       USE PRMS_OBS, ONLY: Nevap
       IMPLICIT NONE
       INTEGER, EXTERNAL :: getparam
-      EXTERNAL read_error
+      EXTERNAL read_error, PRMS_open_output_file
 ! Local Variables
       INTEGER :: i
 !***********************************************************************
       intinit = 1
 
-      IF ( getparam('intcp', 'snow_intcp', Nhru, 'real', Snow_intcp)/=0 ) CALL read_error(2, 'snow_intcp')
-      IF ( getparam('intcp', 'wrain_intcp', Nhru, 'real', Wrain_intcp)/=0 ) CALL read_error(2, 'wrain_intcp')
-      IF ( getparam('intcp', 'srain_intcp', Nhru, 'real', Srain_intcp)/=0 ) CALL read_error(2, 'srain_intcp')
-      IF ( getparam('intcp', 'cov_type', Nhru, 'integer', Cov_type)/=0 ) CALL read_error(2, 'cov_type')
-      IF ( getparam('intcp', 'covden_sum', Nhru, 'real', Covden_sum)/=0 ) CALL read_error(2, 'covden_sum')
-      IF ( getparam('intcp', 'covden_win', Nhru, 'real', Covden_win)/=0 ) CALL read_error(2, 'covden_win')
-      IF ( getparam('intcp', 'epan_coef', 12, 'real', Epan_coef)/=0 ) CALL read_error(2, 'epan_coef')
+      IF ( getparam(MODNAME, 'snow_intcp', Nhru, 'real', Snow_intcp)/=0 ) CALL read_error(2, 'snow_intcp')
+      IF ( getparam(MODNAME, 'wrain_intcp', Nhru, 'real', Wrain_intcp)/=0 ) CALL read_error(2, 'wrain_intcp')
+      IF ( getparam(MODNAME, 'srain_intcp', Nhru, 'real', Srain_intcp)/=0 ) CALL read_error(2, 'srain_intcp')
+      IF ( getparam(MODNAME, 'covden_sum', Nhru, 'real', Covden_sum)/=0 ) CALL read_error(2, 'covden_sum')
+      IF ( getparam(MODNAME, 'covden_win', Nhru, 'real', Covden_win)/=0 ) CALL read_error(2, 'covden_win')
+      IF ( getparam(MODNAME, 'epan_coef', 12, 'real', Epan_coef)/=0 ) CALL read_error(2, 'epan_coef')
       DO i = 1, 12
         IF ( Epan_coef(i)<NEARZERO ) THEN
           PRINT *, 'Warning, epan_coef specified as 0 for month:', i, ' value changed to 1.0'
           Epan_coef(i) = 1.0
         ENDIF
       ENDDO
-      IF ( Nevap>0 ) THEN
-        IF ( getparam('potet', 'hru_pansta', Nhru, 'integer', Hru_pansta)/=0 ) CALL read_error(2, 'hru_pansta')
+      IF ( Use_pandata==1 ) THEN
+        IF ( getparam(MODNAME, 'hru_pansta', Nhru, 'integer', Hru_pansta)/=0 ) CALL read_error(2, 'hru_pansta')
         DO i = 1, Nhru
           IF ( Hru_pansta(i)<1 .OR. Hru_pansta(i)>Nevap ) THEN
             IF ( Print_debug>-1 ) PRINT *, 'Warning, hru_pansta=0 or hru_pansta>nevap, set to 1 for HRU:', i
@@ -244,10 +232,10 @@
         ENDDO
       ENDIF
 
-      IF ( getparam('intcp', 'potet_sublim', 1, 'real', Potet_sublim)/=0 ) CALL read_error(2, 'potet_sublim')
+      IF ( getparam(MODNAME, 'potet_sublim', 1, 'real', Potet_sublim)/=0 ) CALL read_error(2, 'potet_sublim')
 
       IF ( Print_debug==1 ) THEN
-        OPEN (BALUNT, FILE='intcp.wbal')
+        CALL PRMS_open_output_file(BALUNT, 'intcp.wbal', 'xxx', i)
         WRITE (BALUNT, 9001)
       ENDIF
 
@@ -256,13 +244,13 @@
         Intcp_transp_on(i) = Transp_on(i)
         IF ( Covden_win(i)<NEARZERO ) Covden_win(i) = 0.0
         IF ( Covden_sum(i)<NEARZERO ) Covden_sum(i) = 0.0
-        IF ( Covden_win(i)>Covden_sum(i) ) THEN
-          IF ( Print_debug>-1 ) THEN
-            PRINT *, 'Warning, covden_win>covden_sum, HRU:', i, Covden_win(i), Covden_sum(i)
-            PRINT *, ' Set covden_win to covden_sum'
-          ENDIF
-          Covden_win(i) = Covden_sum(i)
-        ENDIF
+  !      IF ( Covden_win(i)>Covden_sum(i) ) THEN
+  !        IF ( Print_debug>-1 ) THEN
+  !          PRINT *, 'Warning, covden_win>covden_sum, HRU:', i, Covden_win(i), Covden_sum(i)
+  !          PRINT *, ' Set covden_win to covden_sum'
+  !        ENDIF
+  !        Covden_win(i) = Covden_sum(i)
+  !      ENDIF
         IF ( Cov_type(i)==0 .AND. (Covden_win(i)>0.0 .OR. Covden_sum(i)>0.0) ) THEN
           Covden_sum(i) = 0.0
           Covden_win(i) = 0.0
@@ -281,7 +269,6 @@
         Intcp_on = 0
         Intcp_form = 0
         Intcp_evap = 0.0
-        Hru_intcpevap = 0.0
         Hru_intcpstor = 0.0
         Net_rain = 0.0
         Net_snow = 0.0
@@ -305,13 +292,13 @@
       USE PRMS_INTCP
       USE PRMS_MODULE, ONLY: Nhru, Print_debug
       USE PRMS_BASIN, ONLY: Basin_area_inv, Active_hrus, Hru_type, &
-          Hru_route_order, Hru_area, NEARZERO, DNEARZERO
+          Hru_route_order, Hru_area, NEARZERO, DNEARZERO, Cov_type
 ! Newsnow and Pptmix can be modfied, WARNING!!!
       USE PRMS_CLIMATEVARS, ONLY: Newsnow, Pptmix, Hru_rain, Hru_ppt, &
           Hru_snow, Basin_ppt, Transp_on, Potet
-      USE PRMS_OBS, ONLY: Pan_evap, Nowtime, Nevap, Nowmonth, Nowday, Nowyear
+      USE PRMS_FLOWVARS, ONLY: Hru_intcpevap, Pkwater_equiv
+      USE PRMS_OBS, ONLY: Pan_evap, Nowtime, Nowmonth, Nowday, Nowyear
       IMPLICIT NONE
-      INTEGER, EXTERNAL :: getvar
       EXTERNAL intercept, read_error
       INTRINSIC ABS
 ! Local Variables
@@ -322,7 +309,7 @@
 !***********************************************************************
       intrun = 1
 
-      IF ( getvar('snow', 'pkwater_equiv', Nhru, 'double', Pkwater_equiv)/=0 ) CALL read_error(4, 'pkwater_equiv')
+      ! pkwater_equiv is from last time step
 
       Basin_changeover = 0.0D0
       basin_last_stor = Basin_intcp_stor
@@ -362,7 +349,6 @@
 !*****Determine the amount of interception from rain
 
 !***** go from summer to winter cover density
-        !rsr, changeovers for whole HRU
         IF ( Transp_on(i)==0 .AND. Intcp_transp_on(i)==1 ) THEN
           Intcp_transp_on(i) = 0
           IF ( intcpstor>0.0 ) THEN
@@ -370,7 +356,13 @@
             diff = Covden_sum(i) - cov
             changeover = intcpstor*diff
             IF ( cov>0.0 ) THEN
-              stor_last = stor_last - changeover
+              IF ( changeover<0.0 ) THEN
+                ! covden_win > covden_sum, adjust intcpstor to same volume, and lower depth
+                intcpstor = intcpstor*Covden_sum(i)/cov
+                changeover = 0.0
+              ELSE
+                stor_last = stor_last - changeover
+              ENDIF
             ELSE
               IF ( Print_debug>-1 ) PRINT *, 'covden_win=0 at winter changeover and has', &
                    ' canopy storage', intcpstor, changeover, i
@@ -452,7 +444,7 @@
             evrn = Potet(i)/Epan_coef(Nowmonth)
             evsn = Potet_sublim*Potet(i)
 
-            IF ( Nevap>0 ) THEN
+            IF ( Use_pandata==1 ) THEN
               IF ( Pan_evap(Hru_pansta(i))>-NEARZERO ) evrn = Pan_evap(Hru_pansta(i))
               IF ( evrn<NEARZERO ) evrn = 0.0
             ENDIF
@@ -586,4 +578,3 @@
       ENDIF
 
       END SUBROUTINE intercept
-

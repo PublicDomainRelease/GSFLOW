@@ -4,7 +4,8 @@
       DOUBLE PRECISION, PARAMETER :: CLOSEZERO = 1.0E-15
       DOUBLE PRECISION,PARAMETER :: BIG = 1.0D20 
       DOUBLE PRECISION,PARAMETER :: SMALL = 1.0D-5     
-      DOUBLE PRECISION, SAVE, DIMENSION(:), POINTER :: Sn, So         
+      DOUBLE PRECISION, SAVE, DIMENSION(:), POINTER :: Sn, So 
+      INTEGER, SAVE,   POINTER :: Iuupw        
 ! Cell property data
         INTEGER, SAVE,   POINTER ::IUPWCB,IWDFLG,IWETIT,IHDWET,IPHDRY
         INTEGER, SAVE,   POINTER ::ISFAC,ICONCV,ITHFLG,NOCVCO,NOVFC
@@ -24,7 +25,8 @@
         REAL,    SAVE,   POINTER, DIMENSION(:,:,:) ::HANI
         REAL,    SAVE,   POINTER, DIMENSION(:,:,:) ::WETDRY
         REAL,    SAVE,   POINTER, DIMENSION(:,:,:) ::HKUPW     
-      TYPE GWFUPWTYPE                                                   
+      TYPE GWFUPWTYPE   
+        INTEGER, POINTER :: Iuupw
 ! Cell property data
         INTEGER, POINTER ::IUPWCB,IWDFLG,IWETIT,IHDWET,IPHDRY
         INTEGER, POINTER ::ISFAC,ICONCV,ITHFLG,NOCVCO,NOVFC
@@ -80,7 +82,7 @@
       INTEGER NPHK,NPVKCB,NPVK,NPVANI,NPSS,NPSY,NPHANI
       INTEGER IANAME,KHANI,N,KK,j,k,NCNVRT,NHANI,NWETD
 !     LOCAL VARIABLES FOR DEFINING CELL PROPERTES (FROM LPF)
-      INTEGER NPUPW
+      INTEGER NPUPW, NOPCHK
       REAL ZERO, R
 !
       CHARACTER*14 LAYPRN(5),AVGNAM(3),TYPNAM(2),VKANAM(2),WETNAM(2),
@@ -105,12 +107,13 @@ C
 !1------IDENTIFY PACKAGE AND INITIALIZE.
       WRITE (Iout, 9001) In
  9001 FORMAT (1X, /' UPW1 -- UPSTREAM WEIGHTING FLOW PACKAGE, ',
-     +       'VERSION 1.0.2, 10/01/2011', /, 9X, 'INPUT READ FROM UNIT',
+     +       'VERSION 1.0.6, 12/05/2012', /, 9X, 'INPUT READ FROM UNIT',
      +        I3,/)
 !  ALLOCATE, READ AND SET DATA FOR CELL PROPERTIES (FROM LPF)
 C1------Allocate scalar data.
-      ALLOCATE(IUPWCB,NOVFC)
-      ALLOCATE(IWDFLG,IWETIT,IHDWET,WETFCT)
+      ALLOCATE(IUPWCB,NOVFC,Iuupw)
+!  STORE UPW UNIT NUMBER IN MODULE VARIABLE
+      Iuupw = In
       ALLOCATE(ISFAC,ICONCV,ITHFLG,NOCVCO,IPHDRY)
       ZERO=0.
 C
@@ -143,6 +146,7 @@ C3B-----GET OPTIONS.
       ITHFLG=0
       NOCVCO=0
       NOVFC=0
+      NOPCHK=0
       STOTXT=ANAME(6)
    20 CALL URWORD(LINE,LLOC,ISTART,ISTOP,1,I,R,IOUT,IN)
       IF(LINE(ISTART:ISTOP).EQ.'STORAGECOEFFICIENT') THEN
@@ -178,6 +182,12 @@ C3B-----GET OPTIONS.
          WRITE(IOUT,29)
    29    FORMAT(1X,'NOVFC OPTION:',/,1X,
      1    'vertical flow correction does not apply in UPW Package')
+      ELSE IF(LINE(ISTART:ISTOP).EQ.'NOPARCHECK') THEN
+         NOPCHK=1
+         WRITE(IOUT,30)
+   30    FORMAT(1X,'NOPARCHECK  OPTION:',/,1X,
+     1    'For data defined by parameters, do not check to see if ',
+     2        'parameters define data at all cells')
       END IF
       IF(LLOC.LT.200) GO TO 20
 C
@@ -306,6 +316,8 @@ C4C-----PRINT WETTING INFORMATION.  RGN commented out because this does not appl
 !         WRITE(IOUT,*) ' WETTING ITERATION INTERVAL=',IWETIT
 !         WRITE(IOUT,*) ' IHDWET=',IHDWET
 !      END IF
+! ALLOCATE THESE BECAUSE THEY ARE LEFT IN THE CODE (DEALLOCATED)
+      ALLOCATE(WETFCT,IWETIT,IHDWET,IWDFLG)
 C
 C5------ALLOCATE MEMORY FOR ARRAYS.
       ALLOCATE(LAYFLG(6,NLAY))
@@ -405,7 +417,8 @@ C7A-----DEFINE HORIZONTAL HYDRAULIC CONDUCTIVITY (HK)
      1   ' WILL BE DEFINED BY PARAMETERS',/1X,'(PRINT FLAG=',I4,')')
          CALL UPARARRSUB1(HKUPW(:,:,KK),NCOL,NROW,KK,'HK',
      1      IOUT,ANAME(1),LAYFLG(1,KK))
-         CALL UPARARRCK(BUFF,IBOUND,IOUT,K,NCOL,NLAY,NROW,'HK  ')
+         IF(NOPCHK.EQ.0) CALL UPARARRCK(BUFF,IBOUND,IOUT,K,NCOL,NLAY,
+     1      NROW,'HK  ')
       END IF
 C
 C7B-----READ HORIZONTAL ANISOTROPY IF CHANI IS NON-ZERO
@@ -417,8 +430,9 @@ C7B-----READ HORIZONTAL ANISOTROPY IF CHANI IS NON-ZERO
            READ(IN,*) LAYFLG(6,K)
            WRITE(IOUT,121) ANAME(2),K,LAYFLG(6,K)
            CALL UPARARRSUB1(HANI(:,:,KHANI),NCOL,NROW,KK,'HANI',
-     &      IOUT,ANAME(2),LAYFLG(6,KK))
-           CALL UPARARRCK(BUFF,IBOUND,IOUT,K,NCOL,NLAY,NROW,'HANI')
+     1      IOUT,ANAME(2),LAYFLG(6,KK))
+           IF(NOPCHK.EQ.0) CALL UPARARRCK(BUFF,IBOUND,IOUT,K,NCOL,
+     1      NLAY,NROW,'HANI')
         END IF
       END IF
 C
@@ -436,8 +450,9 @@ C7C-----ANISOTROPY (VKA).
          READ(IN,*) LAYFLG(2,K)
          WRITE(IOUT,121) ANAME(IANAME),K,LAYFLG(2,K)
          CALL UPARARRSUB1(VKAUPW(:,:,KK),NCOL,NROW,KK,PTYP,IOUT,
-     &                       ANAME(IANAME),LAYFLG(2,KK))
-         CALL UPARARRCK(BUFF,IBOUND,IOUT,K,NCOL,NLAY,NROW,PTYP)
+     1                       ANAME(IANAME),LAYFLG(2,KK))
+         IF(NOPCHK.EQ.0) CALL UPARARRCK(BUFF,IBOUND,IOUT,K,NCOL,NLAY,
+     1                       NROW,PTYP)
       END IF
 C
 C7D-----DEFINE SPECIFIC STORAGE OR STORAGE COEFFICIENT IN ARRAY SC1 IF TRANSIENT.
@@ -449,7 +464,8 @@ C7D-----DEFINE SPECIFIC STORAGE OR STORAGE COEFFICIENT IN ARRAY SC1 IF TRANSIENT
             WRITE(IOUT,121) STOTXT,K,LAYFLG(3,K)
             CALL UPARARRSUB1(SC1(:,:,KK),NCOL,NROW,KK,'SS',
      1           IOUT,STOTXT,LAYFLG(3,KK))
-            CALL UPARARRCK(BUFF,IBOUND,IOUT,K,NCOL,NLAY,NROW,'SS  ')
+            IF(NOPCHK.EQ.0) CALL UPARARRCK(BUFF,IBOUND,IOUT,K,NCOL,
+     1           NLAY,NROW,'SS  ')
          END IF
          IF(ISFAC.EQ.0) THEN
             CALL SGWF2UPWSC(SC1(:,:,KK),KK,1)
@@ -470,7 +486,8 @@ C7E-----IS CONVERTIBLE.
                WRITE(IOUT,121) ANAME(7),K,LAYFLG(4,K)
                CALL UPARARRSUB1(SC2UPW(:,:,LAYTYPUPW(K)),NCOL,
      1         NROW,KK,'SY',IOUT,ANAME(7),LAYFLG(4,KK))
-               CALL UPARARRCK(BUFF,IBOUND,IOUT,K,NCOL,NLAY,NROW,'SY  ')
+               IF(NOPCHK.EQ.0) CALL UPARARRCK(BUFF,IBOUND,IOUT,K,
+     1           NCOL,NLAY,NROW,'SY  ')
             END IF
             CALL SGWF2UPWSC(SC2UPW(:,:,LAYTYPUPW(K)),KK,0)
          END IF
@@ -494,7 +511,8 @@ C7F-----READ CONFINING BED VERTICAL HYDRAULIC CONDUCTIVITY (VKCB)
             WRITE(IOUT,121) ANAME(5),K,LAYFLG(5,K)
             CALL UPARARRSUB1(VKCB(:,:,LAYCBD(K)),NCOL,NROW,KK,
      1         'VKCB',IOUT,ANAME(5),LAYFLG(5,KK))
-            CALL UPARARRCK(BUFF,IBOUND,IOUT,K,NCOL,NLAY,NROW,'VKCB')
+            IF(NOPCHK.EQ.0) CALL UPARARRCK(BUFF,IBOUND,IOUT,K,NCOL,
+     1         NLAY,NROW,'VKCB')
          END IF
       END IF
 C
@@ -622,7 +640,7 @@ C1------DEFINE CONSTANT.
 C
 C2------IF THE STRESS PERIOD IS TRANSIENT, ADD STORAGE TO HCOF AND RHS
       IF(ISS.EQ.0) THEN
-         TLED=ONE/DELT
+         TLED=ONE/DBLE(DELT)
          DO 200 K=1,NLAY
 C3------CHECK OLD AND NEW HEADS TO DETERMINE
 C3------WHEN TO USE PRIMARY AND SECONDARY STORAGE
@@ -631,8 +649,8 @@ C3------WHEN TO USE PRIMARY AND SECONDARY STORAGE
 C
 C4A-----IF THE CELL IS EXTERNAL THEN SKIP IT.
             IF(IBOUND(J,I,K).LE.0) GO TO 180
-            TP=BOTM(J,I,LBOTM(K)-1)
-            BT=BOTM(J,I,LBOTM(K))
+            TP=dble(BOTM(J,I,LBOTM(K)-1))
+            BT=dble(BOTM(J,I,LBOTM(K)))
             THICK = (TP-BT)
             HTMP = HNEW(J,I,K)
             HLD = DBLE(HOLD(J,I,K))
@@ -680,7 +698,7 @@ C     ------------------------------------------------------------------
       USE GWFNWTMODULE,ONLY:ICELL
 C
       CHARACTER*16 TEXT(3)
-      DOUBLE PRECISION HD, ttop, bbot
+      DOUBLE PRECISION HD, ttop, bbot, HDIFF, TMP, TOP
       INTEGER iltyp
 C
       DATA TEXT(1),TEXT(2),TEXT(3)
@@ -744,8 +762,8 @@ C3B-----FOR EACH CELL CALCULATE FLOW THRU RIGHT FACE & STORE IN BUFFER.
       HDIFF=HNEW(J,I,K)-HNEW(J+1,I,K) 
       IF ( HDIFF.GT.0.0 ) THEN
         IF ( iltyp.GT.0 ) THEN
-          TTOP = BOTM(J,I,LBOTM(K)-1)
-          BBOT = BOTM(J,I,LBOTM(K))
+          TTOP = dble(BOTM(J,I,LBOTM(K)-1))
+          BBOT = dble(BOTM(J,I,LBOTM(K)))
           ij = Icell(J,I,K)
           BUFF(J,I,K)=HDIFF*CR(J,I,K)*
      +              (TTOP-BBOT)*Sn(ij)
@@ -754,8 +772,8 @@ C3B-----FOR EACH CELL CALCULATE FLOW THRU RIGHT FACE & STORE IN BUFFER.
         END IF
       ELSE
         IF ( iltyp.GT.0 ) THEN
-          TTOP = BOTM(J+1,I,LBOTM(K)-1)
-          BBOT = BOTM(J+1,I,LBOTM(K))
+          TTOP = dble(BOTM(J+1,I,LBOTM(K)-1))
+          BBOT = dble(BOTM(J+1,I,LBOTM(K)))
           ij = Icell(J+1,I,K)
           BUFF(J,I,K)=HDIFF*CR(J,I,K)*(TTOP-BBOT)*Sn(ij)
         ELSE
@@ -808,8 +826,8 @@ C4B-----FOR EACH CELL CALCULATE FLOW THRU FRONT FACE & STORE IN BUFFER.
       HDIFF=HNEW(J,I,K)-HNEW(J,I+1,K)
       IF ( HDIFF.GT.0.0 ) THEN
         IF ( iltyp.GT.0 ) THEN
-          TTOP = BOTM(J,I,LBOTM(K)-1)
-          BBOT = BOTM(J,I,LBOTM(K))
+          TTOP = dble(BOTM(J,I,LBOTM(K)-1))
+          BBOT = dble(BOTM(J,I,LBOTM(K)))
           ij = Icell(J,I,K)
           BUFF(J,I,K)=HDIFF*CC(J,I,K)*(TTOP-BBOT)*Sn(ij)
          ELSE
@@ -817,8 +835,8 @@ C4B-----FOR EACH CELL CALCULATE FLOW THRU FRONT FACE & STORE IN BUFFER.
          END IF
       ELSE
         IF ( iltyp.GT.0 ) THEN
-          TTOP = BOTM(J,I+1,LBOTM(K)-1)
-          BBOT = BOTM(J,I+1,LBOTM(K))
+          TTOP = dble(BOTM(J,I+1,LBOTM(K)-1))
+          BBOT = dble(BOTM(J,I+1,LBOTM(K)))
           ij = Icell(J,I+1,K)
           BUFF(J,I,K)=HDIFF*CC(J,I,K)*(TTOP-BBOT)*Sn(ij)
         ELSE
@@ -869,10 +887,10 @@ C5B-----FOR EACH CELL CALCULATE FLOW THRU LOWER FACE & STORE IN BUFFER.
       END IF
       HD=HNEW(J,I,K+1)
       TMP=HD
-      TOP=BOTM(J,I,LBOTM(K+1)-1)
+      TOP=dble(BOTM(J,I,LBOTM(K+1)-1))
  !     IF(TMP.LT.TOP) HD=TOP
   580 HDIFF=HNEW(J,I,K)-HD
-      BUFF(J,I,K)=HDIFF*CV(J,I,K)
+      BUFF(J,I,K)=sngl(HDIFF*CV(J,I,K))
   590 CONTINUE
   600 CONTINUE
 C
@@ -898,8 +916,8 @@ C     ------------------------------------------------------------------
       USE GWFNWTMODULE,ONLY: Thickfact,Icell
       CHARACTER*16 TEXT
       DOUBLE PRECISION STOIN,STOUT,SSTRG,ZERO,HSING,THICK
-      REAL STRG
-      DOUBLE PRECISION BT, TP, RHO1, RHO2, HLD, BBT
+      DOUBLE PRECISION STRG, SIN, SOUT
+      DOUBLE PRECISION BT, TP, RHO1, RHO2, HLD, BBT, TLED, ONE
 C
       DATA TEXT /'         STORAGE'/
 C     ------------------------------------------------------------------
@@ -913,8 +931,8 @@ C1------INITIALIZE BUDGET ACCUMULATORS AND 1/DELT.
       STOUT=ZERO
 C2------IF STEADY STATE, STORAGE TERM IS ZERO
       IF(ISS.NE.0) GOTO 400
-      ONE=1.
-      TLED=ONE/DELT
+      ONE=1.0D0
+      TLED=ONE/DBLE(DELT)
 C
 C3------IF CELL-BY-CELL FLOWS WILL BE SAVED, SET FLAG IBD.
       IBD=0
@@ -939,12 +957,12 @@ C6------SKIP NO-FLOW AND CONSTANT-HEAD CELLS.
       HLD = DBLE(HOLD(J,I,K))
 C
 C7A----TWO STORAGE CAPACITIES.
-      TP=BOTM(J,I,LBOTM(K)-1)
-      BT=BOTM(J,I,LBOTM(K))
+      TP=dble(BOTM(J,I,LBOTM(K)-1))
+      BT=dble(BOTM(J,I,LBOTM(K)))
       THICK = (TP-BT)
-      RHO2 = SC2UPW(J,I,K)*TLED 
+      RHO2 = dble(SC2UPW(J,I,K))*TLED 
       ij = Icell(J,I,K)
-      RHO1 = SC1(J,I,K)*TLED
+      RHO1 = dble(SC1(J,I,K))*TLED
       STRG= - THICK*RHO2*(Sn(ij)-So(ij)) - Sn(ij)*THICK*RHO1*(HSING-HLD)
       IF ( LAYTYPUPW(K).GT.0 ) THEN
         IF ( HSING.LE.BT .AND. HLD.LE.BT ) THEN
@@ -961,7 +979,7 @@ C7B----ONE STORAGE CAPACITY.
 
 C
 C8-----STORE CELL-BY-CELL FLOW IN BUFFER AND ADD TO ACCUMULATORS.
-  288 BUFF(J,I,K)=STRG
+  288 BUFF(J,I,K)=SNGL(STRG)
       SSTRG=STRG
       IF(STRG.LT.ZERO) THEN
         STOUT=STOUT-SSTRG
@@ -981,10 +999,10 @@ C10-----ADD TOTAL RATES AND VOLUMES TO VBVL & PUT TITLE IN VBNM.
   400 CONTINUE
       SIN=STOIN
       SOUT=STOUT
-      VBVL(1,MSUM)=VBVL(1,MSUM)+SIN*DELT
-      VBVL(2,MSUM)=VBVL(2,MSUM)+SOUT*DELT
-      VBVL(3,MSUM)=SIN
-      VBVL(4,MSUM)=SOUT
+      VBVL(1,MSUM)=VBVL(1,MSUM)+SNGL(SIN)*DELT
+      VBVL(2,MSUM)=VBVL(2,MSUM)+SNGL(SOUT)*DELT
+      VBVL(3,MSUM)=SNGL(SIN)
+      VBVL(4,MSUM)=SNGL(SOUT)
       VBNM(MSUM)=TEXT
       MSUM=MSUM+1
 C
@@ -1004,11 +1022,13 @@ C     ------------------------------------------------------------------
       USE GWFBASMODULE,ONLY:MSUM,VBVL,VBNM,DELT,PERTIM,TOTIM,ICBCFL,
      1                      ICHFLG
       USE GWFUPWMODULE,ONLY:IUPWCB, Sn, LAYTYPUPW
-      USE GWFNWTMODULE,ONLY:Icell
+      USE GWFNWTMODULE,ONLY:Icell, Closezero
 
       CHARACTER*16 TEXT
       DOUBLE PRECISION HD,CHIN,CHOUT,XX1,XX2,XX3,XX4,XX5,XX6,ZERO
-      DOUBLE PRECISION THICK
+      DOUBLE PRECISION THICK,HDIFF
+      DOUBLE PRECISION X1,X2,X3,X4,X5,X6,CIN,COUT
+      DOUBLE PRECISION CHCH1,CHCH2,CHCH3,CHCH4,CHCH5,CHCH6
 C
       DATA TEXT /'   CONSTANT HEAD'/
       INTEGER iltyp
@@ -1052,6 +1072,7 @@ C4------CONSTANT-HEAD CELL.
       iltyp = LAYTYPUPW(K)
       DO 200 I=1,NROW
       DO 200 J=1,NCOL
+ 
 C
 C5------IF CELL IS NOT CONSTANT HEAD SKIP IT & GO ON TO NEXT CELL.
       IF (IBOUND(J,I,K).GE.0)GO TO 200
@@ -1083,9 +1104,9 @@ C7A-----ADJACENT NO-FLOW CELL, ??OR TO AN ADJACENT CONSTANT-HEAD CELL??.
 C
 C7B-----CALCULATE FLOW THROUGH THIS FACE INTO THE ADJACENT CELL.
       HDIFF=HNEW(J,I,K)-HNEW(J-1,I,K)
-      IF ( HDIFF.GE.0.0 ) THEN
+      IF ( HDIFF.GE.-Closezero ) THEN
         IF ( iltyp.GT.0 ) THEN
-          THICK = BOTM(J,I,LBOTM(K)-1) - BOTM(J,I,LBOTM(K))
+          THICK = dble(BOTM(J,I,LBOTM(K)-1)) - dble(BOTM(J,I,LBOTM(K)))
           ij = Icell(J,I,K)
           CHCH1=HDIFF*CR(J-1,I,K)*THICK*Sn(ij)
         ELSE
@@ -1093,7 +1114,8 @@ C7B-----CALCULATE FLOW THROUGH THIS FACE INTO THE ADJACENT CELL.
         END IF
       ELSE
         IF ( iltyp.GT.0 ) THEN
-          THICK = BOTM(J-1,I,LBOTM(K)-1) - BOTM(J-1,I,LBOTM(K))
+          THICK = dble(BOTM(J-1,I,LBOTM(K)-1)) - 
+     +            dble(BOTM(J-1,I,LBOTM(K)))
           ij = Icell(J-1,I,K)
           CHCH1=HDIFF*CR(J-1,I,K)*THICK*Sn(ij)
         ELSE
@@ -1116,9 +1138,9 @@ C8------CALCULATE FLOW THROUGH THE RIGHT FACE.
       IF(IBOUND(J+1,I,K).EQ.0) GO TO 60
       IF(IBOUND(J+1,I,K).LT.0 .AND. ICHFLG.EQ.0) GO TO 60
       HDIFF=HNEW(J,I,K)-HNEW(J+1,I,K)
-      IF ( HDIFF.GE.0.0 ) THEN
+      IF ( HDIFF.GE.-Closezero ) THEN
         IF ( iltyp.GT.0 ) THEN
-          THICK = BOTM(J,I,LBOTM(K)-1) - BOTM(J,I,LBOTM(K))
+          THICK = dble(BOTM(J,I,LBOTM(K)-1)) - dble(BOTM(J,I,LBOTM(K)))
           ij = Icell(J,I,K)
           CHCH2=HDIFF*CR(J,I,K)*THICK*Sn(ij)
         ELSE 
@@ -1126,7 +1148,8 @@ C8------CALCULATE FLOW THROUGH THE RIGHT FACE.
         END IF
       ELSE
         IF ( iltyp.GT.0 ) THEN
-          THICK = BOTM(J+1,I,LBOTM(K)-1) - BOTM(J+1,I,LBOTM(K))
+          THICK = dble(BOTM(J+1,I,LBOTM(K)-1)) - 
+     +            dble(BOTM(J+1,I,LBOTM(K)))
           ij = Icell(J+1,I,K)
           CHCH2=HDIFF*CR(J,I,K)*THICK*Sn(ij)
         ELSE
@@ -1147,9 +1170,9 @@ C9------CALCULATE FLOW THROUGH THE BACK FACE.
       IF (IBOUND(J,I-1,K).EQ.0) GO TO 90
       IF (IBOUND(J,I-1,K).LT.0 .AND. ICHFLG.EQ.0) GO TO 90
       HDIFF=HNEW(J,I,K)-HNEW(J,I-1,K)
-      IF ( HDIFF.GE.0.0 ) THEN
+      IF ( HDIFF.GE.-Closezero ) THEN
         IF ( iltyp.GT.0 ) THEN
-          THICK = BOTM(J,I,LBOTM(K)-1) - BOTM(J,I,LBOTM(K))
+          THICK = dble(BOTM(J,I,LBOTM(K)-1)) - dble(BOTM(J,I,LBOTM(K)))
           ij =  Icell(J,I,K)
           CHCH3=HDIFF*CC(J,I-1,K)*THICK*Sn(ij)
         ELSE
@@ -1157,7 +1180,8 @@ C9------CALCULATE FLOW THROUGH THE BACK FACE.
         END IF
       ELSE
         IF ( iltyp.GT.0 ) THEN
-          THICK = BOTM(J,I-1,LBOTM(K)-1) - BOTM(J,I-1,LBOTM(K))
+          THICK = dble(BOTM(J,I-1,LBOTM(K)-1)) - 
+     +            dble(BOTM(J,I-1,LBOTM(K)))
           ij =  Icell(J,I-1,K)
           CHCH3=HDIFF*CC(J,I-1,K)*THICK*Sn(ij)
         ELSE
@@ -1178,9 +1202,9 @@ C10-----CALCULATE FLOW THROUGH THE FRONT FACE.
       IF(IBOUND(J,I+1,K).EQ.0) GO TO 120
       IF(IBOUND(J,I+1,K).LT.0 .AND. ICHFLG.EQ.0) GO TO 120
       HDIFF=HNEW(J,I,K)-HNEW(J,I+1,K)
-      IF ( HDIFF.GE.0.0 ) THEN
+      IF ( HDIFF.GE.-Closezero ) THEN
         IF ( iltyp.GT.0 ) THEN
-          THICK = BOTM(J,I,LBOTM(K)-1) - BOTM(J,I,LBOTM(K))
+          THICK = dble(BOTM(J,I,LBOTM(K)-1)) - dble(BOTM(J,I,LBOTM(K)))
           ij = Icell(J,I,K)
           CHCH4=HDIFF*CC(J,I,K)*THICK*Sn(ij)
         ELSE
@@ -1188,7 +1212,8 @@ C10-----CALCULATE FLOW THROUGH THE FRONT FACE.
         END IF
       ELSE
         IF ( iltyp.GT.0 ) THEN
-          THICK = BOTM(J,I+1,LBOTM(K)-1) - BOTM(J,I+1,LBOTM(K))
+          THICK = dble(BOTM(J,I+1,LBOTM(K)-1)) - 
+     +            dble(BOTM(J,I+1,LBOTM(K)))
           ij = Icell(J,I+1,K)
           CHCH4=HDIFF*CC(J,I,K)*THICK*Sn(ij)
         ELSE
@@ -1274,10 +1299,10 @@ C17-----SAVE TOTAL CONSTANT HEAD FLOWS AND VOLUMES IN VBVL TABLE
 C17-----FOR INCLUSION IN BUDGET. PUT LABELS IN VBNM TABLE.
       CIN=CHIN
       COUT=CHOUT
-      VBVL(1,MSUM)=VBVL(1,MSUM)+CIN*DELT
-      VBVL(2,MSUM)=VBVL(2,MSUM)+COUT*DELT
-      VBVL(3,MSUM)=CIN
-      VBVL(4,MSUM)=COUT
+      VBVL(1,MSUM)=VBVL(1,MSUM)+sngl(CIN)*DELT
+      VBVL(2,MSUM)=VBVL(2,MSUM)+sngl(COUT)*DELT
+      VBVL(3,MSUM)=sngl(CIN)
+      VBVL(4,MSUM)=sngl(COUT)
       VBNM(MSUM)=TEXT
       MSUM=MSUM+1
 C

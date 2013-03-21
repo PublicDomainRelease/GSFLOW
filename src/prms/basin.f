@@ -11,34 +11,40 @@
       REAL, PARAMETER :: MM2INCH = 1.0/INCH2MM
       REAL, PARAMETER :: FEET2METERS = 0.3048
       REAL, PARAMETER :: METERS2FEET = 1.0/FEET2METERS
+      CHARACTER(LEN=5), PARAMETER :: MODNAME = 'basin'
+      CHARACTER(LEN=26), PARAMETER :: PROCNAME = 'Basin Definition'
       INTEGER, SAVE :: Numlakes, Timestep, Starttime(6), Endtime(6)
+      INTEGER, SAVE :: Start_year, Start_month, Start_day
+      INTEGER, SAVE :: End_year, End_month, End_day
       INTEGER, SAVE :: Active_hrus, Active_gwrs
+      INTEGER, SAVE :: Hemisphere
       DOUBLE PRECISION, SAVE :: Cfs2inches, Land_area, Water_area
-      DOUBLE PRECISION, SAVE :: Basin_area_inv
+      DOUBLE PRECISION, SAVE :: Basin_area_inv, Basin_lat
       REAL, SAVE, ALLOCATABLE :: Hru_frac_imperv(:)
-      REAL, SAVE, ALLOCATABLE :: Hru_frac_perv(:)
       REAL, SAVE, ALLOCATABLE :: Gwres_area(:), Ssres_area(:)
       REAL, SAVE, ALLOCATABLE :: Hru_elev_feet(:), Hru_elev_meters(:)
       INTEGER, SAVE, ALLOCATABLE :: Gwr_type(:)
       INTEGER, SAVE, ALLOCATABLE :: Hru_route_order(:)
       INTEGER, SAVE, ALLOCATABLE :: Gwr_route_order(:)
       REAL, SAVE, ALLOCATABLE :: Hru_perv(:), Hru_imperv(:)
-      REAL, SAVE, ALLOCATABLE :: Dprst_frac_hru(:)
       REAL, SAVE, ALLOCATABLE :: Dprst_area_open_max(:)
       REAL, SAVE, ALLOCATABLE :: Dprst_area_clos_max(:)
       REAL, SAVE, ALLOCATABLE :: Dprst_area_max(:)
+      DOUBLE PRECISION, SAVE, ALLOCATABLE :: Lake_area(:)
 !   Declared Variables
+      REAL, SAVE, ALLOCATABLE :: Hru_frac_perv(:), Dprst_frac_hru(:)
       DOUBLE PRECISION, SAVE :: Basin_cfs, Basin_cms
       DOUBLE PRECISION, SAVE :: Basin_ssflow_cfs, Basin_gwflow_cfs
-      DOUBLE PRECISION, SAVE :: Basin_sroff_cfs, Basin_stflow
+      DOUBLE PRECISION, SAVE :: Basin_sroff_cfs, Basin_stflow_in
+      DOUBLE PRECISION, SAVE :: Basin_stflow_out
 !   Declared Parameters
       INTEGER, SAVE :: Elev_units
-      INTEGER, SAVE, ALLOCATABLE :: Hru_type(:)
+      INTEGER, SAVE, ALLOCATABLE :: Hru_type(:), Cov_type(:)
       INTEGER, SAVE, ALLOCATABLE :: Hru_ssres(:), Hru_gwres(:)
-      INTEGER, SAVE, ALLOCATABLE :: Sfres_hru(:), Lake_hru_id(:) !not needed if no lakes
+      INTEGER, SAVE, ALLOCATABLE :: Lake_hru(:), Lake_hru_id(:) !not needed if no lakes
       REAL, SAVE :: Basin_area
       REAL, SAVE, ALLOCATABLE :: Hru_area(:), Hru_percent_imperv(:)
-      REAL, SAVE, ALLOCATABLE :: Hru_elev(:)
+      REAL, SAVE, ALLOCATABLE :: Hru_elev(:), Hru_lat(:)
       REAL, SAVE, ALLOCATABLE :: Dprst_frac_open(:)
       REAL, SAVE, ALLOCATABLE :: Dprst_area(:)
       END MODULE PRMS_BASIN
@@ -65,55 +71,75 @@
 !***********************************************************************
 !     basdecl - set up parameters
 !   Declared Parameters
-!     print_debug, hru_area, hru_percent_imperv, hru_type, hru_elev
+!     print_debug, hru_area, hru_percent_imperv, hru_type, hru_elev,
+!     cov_type
 !***********************************************************************
       INTEGER FUNCTION basdecl()
       USE PRMS_BASIN
-      USE PRMS_MODULE, ONLY: Model, Nhru, Ngw, Nssr, Nsfres, Dprst_flag,
-     +    Print_debug, Version_basin, Basin_nc
+      USE PRMS_MODULE, ONLY: Model, Nhru, Ngw, Nssr, Nlake, Dprst_flag,
+     +    Version_basin, Basin_nc
       IMPLICIT NONE
 ! Functions
       INTRINSIC INDEX
       INTEGER, EXTERNAL :: declmodule, declparam, declvar
       EXTERNAL read_error
+! Local Variables
+      INTEGER :: n
 !***********************************************************************
       basdecl = 1
 
       Version_basin =
-     +'$Id: basin.f 4050 2011-12-12 20:45:06Z rsregan $'
-      IF ( Print_debug>-1 ) THEN
-        Basin_nc = INDEX( Version_basin, ' $' ) + 1
-        IF ( declmodule(Version_basin(:Basin_nc))/=0 ) STOP
-      ENDIF
-
+     +'$Id: basin.f 5498 2013-03-14 21:49:27Z rsregan $'
+      Basin_nc = INDEX( Version_basin, 'Z' )
+      n = INDEX( Version_basin, '.f' ) + 1
+      IF ( declmodule(Version_basin(6:n), PROCNAME,
+     +                Version_basin(n+2:Basin_nc))/=0 ) STOP
 ! Declared Variables
-      IF ( declvar('basin', 'basin_cfs', 'one', 1, 'double',
+      ALLOCATE ( Hru_frac_perv(Nhru) )
+      IF ( declvar(MODNAME, 'hru_frac_perv', 'nhru', Nhru, 'real',
+     +     'Fraction of HRU that is pervious',
+     +     'decimal fraction',
+     +     Hru_frac_perv)/=0 ) CALL read_error(3, 'hru_frac_perv')
+
+      ALLOCATE ( Dprst_frac_hru(Nhru) )
+      IF ( declvar(MODNAME, 'dprst_frac_hru', 'nhru', Nhru, 'real',
+     +     'Fraction of HRU that has surface-depression storage',
+     +     'decimal fraction',
+     +     Dprst_frac_hru)/=0 ) CALL read_error(3, 'dprst_frac_hru')
+
+      IF ( declvar(MODNAME, 'basin_cfs', 'one', 1, 'double',
      +     'Streamflow leaving the basin through the stream network',
      +     'cfs',
      +     Basin_cfs)/=0 ) CALL read_error(3, 'basin_cfs')
 
-      IF ( declvar('basin', 'basin_cms', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basin_cms', 'one', 1, 'double',
      +     'Streamflow leaving the basin through the stream network',
      +     'cms',
      +     Basin_cms)/=0 ) CALL read_error(3, 'basin_cms')
 
-      IF ( declvar('basin', 'basin_stflow', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basin_stflow_in', 'one', 1, 'double',
+     +     'Basin area-weighted average lateral flow entering'//
+     +     ' the stream network',
+     +     'inches',
+     +     Basin_stflow_in)/=0 ) CALL read_error(3, 'basin_stflow_in')
+
+      IF ( declvar(MODNAME, 'basin_stflow_out', 'one', 1, 'double',
      +     'Basin area-weighted average streamflow leaving through'//
      +     ' the stream network',
      +     'inches',
-     +     Basin_stflow)/=0 ) CALL read_error(3, 'basin_stflow')
+     +     Basin_stflow_out)/=0 ) CALL read_error(3, 'basin_stflow_out')
 
-      IF ( declvar('basin', 'basin_sroff_cfs', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basin_sroff_cfs', 'one', 1, 'double',
      +    'Surface runoff leaving the basin through the stream network',
      +     'cfs',
      +     Basin_sroff_cfs)/=0 ) CALL read_error(3, 'basin_sroff_cfs')
 
-      IF ( declvar('basin', 'basin_ssflow_cfs', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basin_ssflow_cfs', 'one', 1, 'double',
      +     'Interflow leaving the basin through the stream network',
      +     'cfs',
      +     Basin_ssflow_cfs)/=0 ) CALL read_error(3, 'basin_ssflow')
 
-      IF ( declvar('basin', 'basin_gwflow_cfs', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basin_gwflow_cfs', 'one', 1, 'double',
      +     'Groundwater flow leaving the basin through the'//
      +     ' stream network',
      +     'cfs',
@@ -127,15 +153,15 @@
 
         ALLOCATE ( Dprst_area_max(Nhru) )
         ALLOCATE (Dprst_area_open_max(Nhru), Dprst_area_clos_max(Nhru))
-        ALLOCATE ( Dprst_area(Nhru), Dprst_frac_hru(Nhru) )
-        IF ( declparam('basin', 'dprst_area', 'nhru', 'real',
+        ALLOCATE ( Dprst_area(Nhru) )
+        IF ( declparam(MODNAME, 'dprst_area', 'nhru', 'real',
      +       '0.0', '0.0', '1.0E9',
      +       'Aggregate sum of surface depression areas of each HRU',
      +       'Aggregate sum of surface depression areas of each HRU',
      +       'acres')/=0 ) CALL read_error(1, 'dprst_area')
 
         ALLOCATE ( Dprst_frac_open(Nhru) )
-        IF ( declparam('basin', 'dprst_frac_open', 'nhru', 'real',
+        IF ( declparam(MODNAME, 'dprst_frac_open', 'nhru', 'real',
      +       '0.0', '0.0', '1.0',
      +       'Fraction of open surface depression storage area within'//
      +       ' an HRU that can generate surface runoff as a function'//
@@ -148,18 +174,18 @@
       ENDIF
 
 ! Declared Parameters
-      IF ( declparam('basin', 'basin_area', 'one', 'real',
+      IF ( declparam(MODNAME, 'basin_area', 'one', 'real',
      +     '0.0', '0.0', '1.0E9',
      +     'Area of basin', 'Area of basin',
      +     'acres')/=0 ) CALL read_error(1, 'basin_area')
 
       ALLOCATE ( Hru_area(Nhru) )
-      IF ( declparam('basin', 'hru_area', 'nhru', 'real',
+      IF ( declparam(MODNAME, 'hru_area', 'nhru', 'real',
      +     '1.0', '0.01', '1.0E9',
      +     'HRU area', 'Area of each HRU',
      +     'acres')/=0 ) CALL read_error(1, 'hru_area')
 
-      IF ( declparam('basin', 'elev_units', 'one', 'integer',
+      IF ( declparam(MODNAME, 'elev_units', 'one', 'integer',
      +     '0', '0', '1',
      +     'Elevation units flag',
      +     'Flag to indicate the units of the elevation values'//
@@ -168,13 +194,19 @@
 
       ALLOCATE ( Hru_elev_feet(Nhru), Hru_elev_meters(Nhru) )
       ALLOCATE ( Hru_elev(Nhru) )
-      IF ( declparam('basin', 'hru_elev', 'nhru', 'real',
+      IF ( declparam(MODNAME, 'hru_elev', 'nhru', 'real',
      +     '0.0', '-1000.0', '30000.0',
      +     'HRU mean elevation', 'Mean elevation for each HRU',
      +     'elev_units')/=0 ) CALL read_error(1, 'hru_elev')
 
+      ALLOCATE ( Hru_lat(Nhru) )
+      IF ( declparam(MODNAME, 'hru_lat', 'nhru', 'real',
+     +     '40.0', '-90.0', '90.0',
+     +     'HRU latitude', 'Latitude of each HRU',
+     +     'degrees')/=0 ) CALL read_error(1, 'hru_lat')
+
       ALLOCATE ( Hru_percent_imperv(Nhru) )
-      IF ( declparam('basin', 'hru_percent_imperv', 'nhru', 'real',
+      IF ( declparam(MODNAME, 'hru_percent_imperv', 'nhru', 'real',
      +     '0.0', '0.0', '0.999',
      +     'HRU percent impervious',
      +     'Fraction of each HRU area that is impervious',
@@ -182,25 +214,33 @@
      +     CALL read_error(1, 'Hru_percent_imperv')
 
       ALLOCATE ( Hru_type(Nhru), Gwr_type(Nhru) )
-      IF ( declparam('basin', 'hru_type', 'nhru', 'integer',
+      IF ( declparam(MODNAME, 'hru_type', 'nhru', 'integer',
      +     '1', '0', '3',
      +     'HRU type',
      +     'Type of each HRU (0=inactive; 1=land; 2=lake; 3=swale)',
      +     'none')/=0 ) CALL read_error(1, 'hru_type')
 
+      ALLOCATE ( Cov_type(Nhru) )
+      IF ( declparam(MODNAME, 'cov_type', 'nhru', 'integer',
+     +     '3', '0', '3',
+     +     'Cover type designation for HRU',
+     +     'Vegetation cover type for each HRU (0=bare soil;'//
+     +     ' 1 =grasses; 2=shrubs; 3=trees)',
+     +     'none')/=0 ) CALL read_error(1, 'cov_type')
+
       ALLOCATE ( Hru_ssres(Nhru) )
       IF ( Nhru/=Nssr .OR. Model==99 ) THEN
-        IF ( declparam('basin', 'hru_ssres', 'nhru', 'integer',
+        IF ( declparam(MODNAME, 'hru_ssres', 'nhru', 'integer',
      +       '1', 'bounded', 'nssr',
      +       'Index of subsurface reservoir assigned to HRU',
      +       'Index of subsurface reservoir receiving excess water'//
-     +       ' from HRU capillary reservoir',
+     +       ' from HRU capillary reservoir (deprecated)',
      +       'none')/=0 ) CALL read_error(1, 'hru_ssres')
       ENDIF
 
       ALLOCATE ( Hru_gwres(Nhru) )
       IF ( Nhru/=Ngw .OR. Model==99 ) THEN
-        IF ( declparam('basin', 'hru_gwres', 'nhru', 'integer',
+        IF ( declparam(MODNAME, 'hru_gwres', 'nhru', 'integer',
      +       '1', 'bounded', 'ngw',
      +       'Index of GWR assigned to HRU',
      +       'Index of GWR receiving soil-zone drainage from each'//
@@ -208,9 +248,9 @@
      +       'none')/=0 ) CALL read_error(1, 'hru_gwres')
       ENDIF
 
-      IF ( Nsfres>0 .OR. Model==99 ) THEN
+      IF ( Nlake>0 .OR. Model==99 ) THEN
         ALLOCATE ( Lake_hru_id(Nhru) )
-        IF ( declparam('basin', 'lake_hru_id', 'nhru', 'integer',
+        IF ( declparam(MODNAME, 'lake_hru_id', 'nhru', 'integer',
      +       '0', 'bounded', 'nhru',
      +       'Indentification number of the lake associated with'//
      +       ' an HRU',
@@ -218,17 +258,17 @@
      +       ' an HRU; more than one HRU can be associated with'//
      +       ' each lake',
      +       'none')/=0 ) CALL read_error(1, 'lake_hru_id')
-        ALLOCATE ( Sfres_hru(Nsfres) )
-        IF ( declparam('basin', 'sfres_hru', 'nsfres', 'integer',
+        ALLOCATE ( Lake_hru(Nlake), Lake_area(Nlake) )
+        IF ( declparam(MODNAME, 'lake_hru', 'nlake', 'integer',
      +       '0', 'bounded', 'nhru',
      +       'Index of HRU for each lake HRU',
      +       'Index of HRU for each lake HRU',
-     +       'none')/=0 ) CALL read_error(1, 'sfres_hru')
+     +       'none')/=0 ) CALL read_error(1, 'lake_hru')
       ENDIF
 
       ALLOCATE ( Ssres_area(Nssr), Gwres_area(Ngw) )
       ALLOCATE ( Hru_perv(Nhru), Hru_imperv(Nhru) )
-      ALLOCATE ( Hru_frac_perv(Nhru), Hru_frac_imperv(Nhru) )
+      ALLOCATE ( Hru_frac_imperv(Nhru) )
 ! Variables used by modules that include cascade routing
       ALLOCATE ( Hru_route_order(Nhru), Gwr_route_order(Ngw) )
 
@@ -241,8 +281,8 @@
 !**********************************************************************
       INTEGER FUNCTION basinit()
       USE PRMS_BASIN
-      USE PRMS_MODULE, ONLY: Nhru, Nssr, Ngw, Nsfres, Dprst_flag,
-     +    Strmflow_flag, Print_debug, Version_basin
+      USE PRMS_MODULE, ONLY: Nhru, Nssr, Ngw, Nlake, Dprst_flag,
+     +    Strmflow_flag, Print_debug, Versn_gsfprms
       IMPLICIT NONE
       INTEGER, EXTERNAL :: getparam, getstep
       EXTERNAL dattim, opstr
@@ -257,25 +297,36 @@
       basinit = 1
 
       CALL dattim('start', Starttime)
+      Start_year = Starttime(1)
+      Start_month = Starttime(2)
+      Start_day = Starttime(3)
       CALL dattim('end', Endtime)
+      End_year = Endtime(1)
+      End_month = Endtime(2)
+      End_day = Endtime(3)
 
-      IF ( getparam('basin', 'hru_area', Nhru, 'real', Hru_area)
+      IF ( getparam(MODNAME, 'hru_area', Nhru, 'real', Hru_area)
      +     /=0 ) CALL read_error(2, 'hru_area')
-      IF ( getparam('basin', 'basin_area', 1, 'real', Basin_area)
+      IF ( getparam(MODNAME, 'basin_area', 1, 'real', Basin_area)
      +     /=0 ) CALL read_error(2, 'basin_area')
-      IF ( getparam('basin', 'hru_elev', Nhru, 'real', Hru_elev)
+      IF ( getparam(MODNAME, 'hru_elev', Nhru, 'real', Hru_elev)
      +     /=0 ) CALL read_error(2, 'hru_elev')
-      IF ( getparam('basin', 'hru_type', Nhru, 'integer', Hru_type)
+      IF ( getparam(MODNAME, 'hru_lat', Nhru, 'real', Hru_lat)/=0 )
+     +     CALL read_error(2, 'hru_lat')
+      IF ( getparam(MODNAME, 'hru_type', Nhru, 'integer', Hru_type)
      +     /=0 ) CALL read_error(2, 'hru_type')
       Gwr_type = Hru_type
+      IF ( getparam(MODNAME, 'cov_type', Nhru, 'integer',
+     +     Cov_type)/=0 ) CALL read_error(2, 'cov_type')
 
-      IF ( getparam('basin', 'elev_units', 1, 'integer', Elev_units)
+      IF ( getparam(MODNAME, 'elev_units', 1, 'integer', Elev_units)
      +     /=0 ) CALL read_error(2, 'elev_units')
 
-      IF ( getparam('basin', 'hru_percent_imperv', Nhru, 'real',
+      IF ( getparam(MODNAME, 'hru_percent_imperv', Nhru, 'real',
      +     Hru_percent_imperv)/=0 )
      +     CALL read_error(2, 'hru_percent_imperv')
 
+      Basin_lat = 0.0D0
       DO i = 1, Nhru
         Hru_frac_imperv(i) = Hru_percent_imperv(i)
         IF ( Hru_percent_imperv(i)<NEARZERO ) Hru_frac_imperv(i) = 0.0
@@ -298,6 +349,9 @@
           Hru_elev_meters(i) = Hru_elev(i)
           Hru_elev_feet(i) = Hru_elev_feet(i)*METERS2FEET
         ENDIF
+        IF ( Hru_type(i)/=0 )
+     +       Basin_lat =Basin_lat + Hru_lat(i)*Hru_area(i)
+
       ENDDO
       DEALLOCATE ( Hru_percent_imperv )
 
@@ -305,17 +359,18 @@
       IF ( Timestep==0 ) THEN
         Basin_cfs = 0.0D0
         Basin_cms = 0.0D0
-        Basin_stflow = 0.0D0
+        Basin_stflow_in = 0.0D0
+        Basin_stflow_out = 0.0D0
         Basin_ssflow_cfs = 0.0D0
         Basin_sroff_cfs = 0.0D0
         Basin_gwflow_cfs = 0.0D0
       ENDIF
 
       IF ( Dprst_flag>0 ) THEN
-        IF ( getparam('basin', 'dprst_frac_open', Nhru, 'real',
+        IF ( getparam(MODNAME, 'dprst_frac_open', Nhru, 'real',
      +       Dprst_frac_open)/=0 )
      +       CALL read_error(2, 'dprst_frac_open')
-        IF ( getparam('basin', 'dprst_area', Nhru, 'real',
+        IF ( getparam(MODNAME, 'dprst_area', Nhru, 'real',
      +       Dprst_area)/=0 ) CALL read_error(2, 'dprst_area')
         Dprst_area_open_max = 0.0
         Dprst_area_clos_max = 0.0
@@ -363,6 +418,9 @@
 
 ! added for depression storage calulations:
         IF ( Dprst_flag>0 ) THEN
+          IF ( Dprst_area(i)<0.0 )
+     +         PRINT *, 'Warning, dprst_area specified < 0 for HRU:', i,
+     +                  ' value:', Dprst_area(i), ' set to 0'
           IF ( Dprst_area(i)<NEARZERO ) Dprst_area(i) = 0.0
           Dprst_area_max(i) = Dprst_area(i)
           IF ( Dprst_area_max(i)>NEARZERO ) THEN
@@ -370,14 +428,20 @@
             tmp = Hru_perv(i)/harea
             !rsr, sanity check
             IF ( tmp<0.001) THEN
-              PRINT *, 'ERROR, hru_imperv+dprst_area_max > 0.999',
-     +                 '*hru_area for HRU:', i, ' hru_area:', harea
-              PRINT *, '    hru_imperv:', Hru_imperv(i),
-     +                 ' dprst_area:', Dprst_area_max(i)
-              PRINT *, '   (hru_imperv+dprst_area)/hru_area',
+              PRINT *, 'Warning, hru_imperv+dprst_area_max > 0.999',
+     +                 '*hru_area for HRU:', i
+              PRINT *, '    hru_area:', harea, ' hru_imperv:',
+     +                 Hru_imperv(i), ' dprst_area:', Dprst_area_max(i)
+              PRINT *, '   (hru_imperv+dprst_area)/hru_area =',
      +                     (Hru_imperv(i)+Dprst_area_max(i))/harea
-              ierr = 1
-              CYCLE
+              PRINT *, '   Pervious area of HRU set to 0.001*hru_area;'
+              PRINT*,'   Depression storage area reduced by this amount'
+              Hru_perv(i) = 0.001*harea
+              Dprst_area_max(i) = Dprst_area_max(i) - Hru_perv(i)
+              PRINT *, ' Pervious area:', Hru_perv(i), ' Dprst area:',
+     +                 Dprst_area_max(i)
+!              ierr = 1
+!              CYCLE
             ENDIF
             Dprst_area_open_max(i) =Dprst_area_max(i)*Dprst_frac_open(i)
             IF ( ABS(1.0-Dprst_frac_open(i))<NEARZERO )
@@ -422,51 +486,55 @@
       active_area = Land_area + Water_area
       IF ( Dprst_flag>0 ) DEALLOCATE ( Dprst_frac_open, Dprst_area )
 
-      IF ( Numlakes/=Nsfres ) THEN
+      IF ( Numlakes/=Nlake ) THEN
         PRINT *, 'ERROR, number of lakes specified in hru_type'
-        PRINT *, ' does not equal nsfres:', Nsfres, ' numlakes:',
+        PRINT *, ' does not equal nlake:', Nlake, ' numlakes:',
      +           Numlakes
-        STOP '***Correct or add nsfres to the Parameter File***'
+        STOP '***Correct or add nlake to the Parameter File***'
       ENDIF
       IF ( Strmflow_flag==2 .AND. Numlakes==0 ) THEN
         PRINT *, 'ERROR, simulation uses lake module but does not',
      +           ' have lakes'
         STOP
       ENDIF
-      IF ( Nsfres>0 ) THEN
-        IF ( getparam('basin', 'lake_hru_id', Nhru, 'integer',
+      IF ( Nlake>0 ) THEN
+        IF ( getparam(MODNAME, 'lake_hru_id', Nhru, 'integer',
      +       Lake_hru_id)/=0 ) CALL read_error(1, 'lake_hru_id')
-        IF ( getparam('basin', 'sfres_hru', Nsfres, 'real',
-     +       Sfres_hru)/=0 ) CALL read_error(2, 'sfres_hru')
-        DO i = 1, Nsfres
-          j = Sfres_hru(i)
+        IF ( getparam(MODNAME, 'lake_hru', Nlake, 'real',
+     +       Lake_hru)/=0 ) CALL read_error(2, 'lake_hru')
+        DO i = 1, Nlake
+          j = Lake_hru(i)
           IF ( j>0 ) THEN
             IF ( Lake_hru_id(j)==0 ) THEN
               Lake_hru_id(j) = i
             ELSEIF ( Lake_hru_id(j)/=i ) THEN
-              PRINT *, 'ERROR, parameters sfres_hru and lake_hru_id'//
+              PRINT *, 'ERROR, parameters lake_hru and lake_hru_id'//
      +                 ' in conflict, Lake:', i, ' HRU:', j
               ierr = 1
             ENDIF
           ELSEIF ( Strmflow_flag==2 ) THEN
-            PRINT *, 'ERROR, specified strmflow_lake and sfres_hru=0'
+            PRINT *, 'ERROR, specified strmflow_lake and lake_hru=0'
             PRINT *, '       for Lake:', i
             ierr = 1
           ENDIF
         ENDDO
+        Lake_area = 0.0D0
         DO i = 1, Nhru
-          IF ( Lake_hru_id(i)>Nsfres ) THEN
-            PRINT *, 'ERROR, lake_hru_id>nsfres for HRU:', i,
-     +               ' lake_hru_id:', lake_hru_id(i), ' nsfres:', Nsfres
+          IF ( Lake_hru_id(i)>Nlake ) THEN
+            PRINT *, 'ERROR, lake_hru_id>nlake for HRU:', i,
+     +               ' lake_hru_id:', lake_hru_id(i), ' nlake:', Nlake
             ierr = 1
+          ELSEIF ( Hru_type(i)==2 ) THEN
+            IF ( Lake_hru_id(i)>0 ) Lake_area(Lake_hru_id(i)) =
+     +           Lake_area(Lake_hru_id(i)) + Hru_area(i)
           ENDIF
         ENDDO
       ENDIF
       IF ( Strmflow_flag==2 ) THEN
-        DO i = 1, Nsfres
-          IF ( Hru_type(Sfres_hru(i))/=2 ) THEN
-            PRINT *, 'ERROR, HRU:', Sfres_hru(i),
-     +               ' specifed to be a lake by sfres_hru but',
+        DO i = 1, Nlake
+          IF ( Hru_type(Lake_hru(i))/=2 ) THEN
+            PRINT *, 'ERROR, HRU:', Lake_hru(i),
+     +               ' specifed to be a lake by lake_hru but',
      +               ' hru_type not equal 2'
             ierr = 1
           ENDIF
@@ -476,7 +544,7 @@
 
       IF ( Basin_area>0.0 ) THEN
         diff = (totarea - Basin_area)/Basin_area
-        IF ( Basin_area>0.0 .AND. ABS(diff)>0.01D0 )
+        IF ( Basin_area>0.0 .AND. ABS(diff)>.01D0 .AND. ABS(diff)<.1D0 )
      +       PRINT 9005, Basin_area, totarea, diff*100.0D0
       ENDIF
 
@@ -486,7 +554,7 @@
           Hru_ssres(i) = i
         ENDDO
       ELSE
-        IF ( getparam('basin', 'hru_ssres', Nhru, 'integer', Hru_ssres)
+        IF ( getparam(MODNAME, 'hru_ssres', Nhru, 'integer', Hru_ssres)
      +       /=0 ) CALL read_error(2, 'hru_ssres')
         Ssres_area = 0.0
         DO k = 1, Active_hrus
@@ -511,7 +579,7 @@
           Gwr_route_order(i) = i
         ENDDO
         Active_gwrs = Ngw
-        IF ( getparam('basin', 'hru_gwres', Nhru, 'integer', Hru_gwres)
+        IF ( getparam(MODNAME, 'hru_gwres', Nhru, 'integer', Hru_gwres)
      +       /=0 ) CALL read_error(2, 'hru_gwres')
         DO k = 1, Active_hrus
           i = Hru_route_order(k)
@@ -523,6 +591,13 @@
       IF ( active_area<DNEARZERO )STOP 'ERROR: no active area specified'
       Basin_area_inv = 1.0D0/active_area
       Cfs2inches = Basin_area_inv*12.0D0*86400.0D0/43560.0D0
+      Basin_lat = Basin_lat*Basin_area_inv
+      ! used in solrad modules to winter/summer radiation adjustment
+      IF ( Basin_lat>0.0D0 ) THEN
+        Hemisphere = 0 ! Northern
+      ELSE
+        Hemisphere = 1 ! Southern
+      ENDIF
 
       IF ( Print_debug==2 ) THEN
         PRINT *, ' HRU     Area'
@@ -537,8 +612,8 @@
       ENDIF
 
 !     print out start and end times
-      CALL opstr(' Surface Water and Energy Budgets Simulated by'//
-     +           ' PRMS Version 3.'//Version_basin(14:28))
+      CALL opstr(' Surface Water and Energy Budgets Simulated by:')
+      CALL opstr(' PRMS Version 3.0.5 Tag: '//Versn_gsfprms(20:34))
       WRITE (buffer, 9002) ' Start time: ', Starttime
       CALL opstr(buffer(:32))
       WRITE (buffer, 9002) ' End time:   ', Endtime
@@ -560,159 +635,7 @@
  9003 FORMAT (A, F12.2, A, F12.2)
  9005 FORMAT ('WARNING, basin_area>1% different than sum of HRU areas',
      +        ': basin_area:', F12.3 , ' sum of HRU areas:', F12.3,
-     +        ' percent diff:', F12.8)
+     +        ' percent diff:', F12.4, /)
 
       basinit = 0
       END FUNCTION basinit
-
-!***********************************************************************
-      SUBROUTINE write_real_array(Parm_name, Dimen_name, Dimen, Values)
-!***********************************************************************
-      USE PRMS_MODULE, ONLY: Preprocess_unit
-      IMPLICIT NONE
-! Arguments
-      INTEGER, INTENT(IN) :: Dimen
-      REAL, INTENT(IN) :: Values(Dimen)
-      CHARACTER(LEN=*), INTENT(IN) :: Parm_name, Dimen_name
-! Local Variables
-      INTEGER i
-!***********************************************************************
-      WRITE ( Preprocess_unit, 9001) Parm_name, Dimen_name, Dimen
-      DO i = 1, Dimen
-        WRITE ( Preprocess_unit, '(F10.5)' ) Values(i)
-      ENDDO
-
- 9001 FORMAT ( '####', /, A, /, '1', /, A, /, I6, /, '2' )
-      END SUBROUTINE write_real_array
-
-!***********************************************************************
-      SUBROUTINE write_double_array(Parm_name, Dimen_name, Dimen,Values)
-!***********************************************************************
-      USE PRMS_MODULE, ONLY: Preprocess_unit
-      IMPLICIT NONE
-! Arguments
-      INTEGER, INTENT(IN) :: Dimen
-      DOUBLE PRECISION, INTENT(IN) :: Values(Dimen)
-      CHARACTER(LEN=*), INTENT(IN) :: Parm_name, Dimen_name
-! Local Variables
-      INTEGER i
-!***********************************************************************
-      WRITE ( Preprocess_unit, 9001) Parm_name, Dimen_name, Dimen
-      DO i = 1, Dimen
-        WRITE ( Preprocess_unit, '(F10.5)' ) Values(i)
-      ENDDO
-
- 9001 FORMAT ( '####', /, A, /, '1', /, A, /, I6, /, '3' )
-      END SUBROUTINE write_double_array
-
-!***********************************************************************
-      SUBROUTINE write_integer_array(Parm_name, Dimen_name, Dimen,
-     +                               Values)
-!***********************************************************************
-      USE PRMS_MODULE, ONLY: Preprocess_unit
-      IMPLICIT NONE
-! Arguments
-      INTEGER, INTENT(IN) :: Dimen
-      INTEGER, INTENT(IN) :: Values(Dimen)
-      CHARACTER(LEN=*), INTENT(IN) :: Parm_name, Dimen_name
-! Local Variables
-      INTEGER i
-!***********************************************************************
-      WRITE ( Preprocess_unit, 9001) Parm_name, Dimen_name, Dimen
-      DO i = 1, Dimen
-        WRITE ( Preprocess_unit, '(I10)' ) Values(i)
-      ENDDO
-
- 9001 FORMAT ( '####', /, A, /, '1', /, A, /, I6, /, '1' )
-      END SUBROUTINE write_integer_array
-
-!***********************************************************************
-      SUBROUTINE write_2D_double_array(Parm_name, Dimen_name1, Dimen1,
-     +                                 Dimen_name2, Dimen2, Values)
-!***********************************************************************
-      USE PRMS_MODULE, ONLY: Preprocess_unit
-      IMPLICIT NONE
-! Arguments
-      INTEGER, INTENT(IN) :: Dimen1, Dimen2
-      DOUBLE PRECISION, INTENT(IN) :: Values(Dimen1, Dimen2)
-      CHARACTER(LEN=*), INTENT(IN) :: Parm_name
-      CHARACTER(LEN=*), INTENT(IN) :: Dimen_name1, Dimen_name2
-! Local Variables
-      INTEGER i, j
-!***********************************************************************
-      WRITE ( Preprocess_unit, 9001) Parm_name, Dimen_name1,
-     +                               Dimen_name2, Dimen1*Dimen2
-      DO i = 1, Dimen2
-        DO j = 1, Dimen1
-          WRITE ( Preprocess_unit, '(F10.5)' ) Values(j, i)
-        ENDDO
-      ENDDO
-
- 9001 FORMAT ( '####', /, A, /, '2', /, A, /, A, /, I8, /, '3' )
-      END SUBROUTINE write_2D_double_array
-
-!***********************************************************************
-      SUBROUTINE write_2D_double_array_grid(Parm_name, Dimen_name1,
-     +                              Dimen1, Dimen_name2, Dimen2, Values)
-!***********************************************************************
-      USE PRMS_MODULE, ONLY: Preprocess_unit
-      IMPLICIT NONE
-! Arguments
-      INTEGER, INTENT(IN) :: Dimen1, Dimen2
-      DOUBLE PRECISION, INTENT(IN) :: Values(Dimen1, Dimen2)
-      CHARACTER(LEN=*), INTENT(IN) :: Parm_name
-      CHARACTER(LEN=*), INTENT(IN) :: Dimen_name1, Dimen_name2
-! Local Variables
-      INTEGER i, j
-      CHARACTER(LEN=12) :: fmt
-!***********************************************************************
-      WRITE ( Preprocess_unit, 9001) Parm_name, Dimen_name1,
-     +        Dimen_name2, Dimen1*Dimen2
-      WRITE ( fmt, 9002 ) Dimen2
-      DO i = 1, Dimen2
-        WRITE ( Preprocess_unit, fmt ) (Values(j, i), j=1,Dimen1)
-      ENDDO
-
- 9001 FORMAT ( '####', /, A, /, '2', /, A, /, A, /, I8, /, '3' )
- 9002 FORMAT ( '(', I5, 'F10.5)' )
-      END SUBROUTINE write_2D_double_array_grid
-
-!***********************************************************************
-!     Determine an unopened FORTRAN File Unit
-!***********************************************************************
-      INTEGER FUNCTION get_ftnunit(Iunit)
-! Argument
-      INTEGER, INTENT(IN) :: Iunit
-! Local Variables
-      INTEGER :: unit
-      LOGICAL :: opend
-!***********************************************************************
-      unit = Iunit
-      opend = .TRUE.
-      DO WHILE ( opend )
-        unit = unit + 1
-        INQUIRE (UNIT=unit, OPENED=opend)
-      ENDDO
-      get_ftnunit = unit
-      END FUNCTION get_ftnunit
-
-!***********************************************************************
-! Convert Fahrenheit to Celsius
-!***********************************************************************
-      REAL FUNCTION f_to_c(Temp)
-! Arguments
-      REAL, INTENT(IN) :: Temp
-!***********************************************************************
-      f_to_c = (Temp-32.0)/1.8
-      END FUNCTION f_to_c
-
-!***********************************************************************
-! Convert Celsius to Fahrenheit
-!***********************************************************************
-      REAL FUNCTION c_to_f(Temp)
-! Arguments
-      REAL, INTENT(IN) :: Temp
-!***********************************************************************
-      c_to_f = Temp*1.8 + 32.0
-      END FUNCTION c_to_f
-

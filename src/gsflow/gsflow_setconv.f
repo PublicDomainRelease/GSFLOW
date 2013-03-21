@@ -8,6 +8,8 @@
       REAL, PARAMETER :: PCT_CHK = 0.000001
       INTEGER, SAVE :: Nhrucell, Ngwcell
       INTEGER, SAVE, ALLOCATABLE :: Gwc_col(:), Gwc_row(:)
+      CHARACTER(LEN=14), PARAMETER :: MODNAME = 'gsflow_setconv'
+      CHARACTER(LEN=26), PARAMETER::PROCNAME='GSFLOW Conversion Factors'
 !   Module Variables
       REAL, SAVE :: Mfl_to_inch, Inch_to_mfl_t
       DOUBLE PRECISION, SAVE :: Mfl3t_to_cfs, Mfl3_to_ft3
@@ -16,8 +18,8 @@
       DOUBLE PRECISION, SAVE :: Mfl2_to_acre, Sfr_conv
       DOUBLE PRECISION, SAVE :: Cfs2inches
       REAL, SAVE, ALLOCATABLE :: Cellarea(:)
-      REAL, SAVE, ALLOCATABLE :: Gvr2cell_conv(:)
-      REAL, SAVE, ALLOCATABLE :: Mfq2inch_conv(:)
+      DOUBLE PRECISION, SAVE, ALLOCATABLE :: Gvr2cell_conv(:)
+      DOUBLE PRECISION, SAVE, ALLOCATABLE :: Mfq2inch_conv(:)
       DOUBLE PRECISION, SAVE, ALLOCATABLE :: Mfvol2inch_conv(:)
 !   Declared Parameters
       INTEGER, SAVE, ALLOCATABLE :: Gvr_cell_id(:)
@@ -50,18 +52,21 @@
 !***********************************************************************
       INTEGER FUNCTION gsfconvdecl()
       USE GSFCONVERT
-      USE PRMS_MODULE, ONLY: Print_debug
+      USE PRMS_MODULE, ONLY: Version_gsflow_setconv, Gsflow_setconv_nc
       IMPLICIT NONE
       INTEGER, EXTERNAL :: declmodule, declparam, getdim
       EXTERNAL read_error
+! Local Variables
+      INTEGER :: n
 !***********************************************************************
       gsfconvdecl = 1
 
-      IF ( Print_debug>-1 ) THEN
-        IF ( declmodule(
-     &'$Id: gsflow_setconv.f 4085 2012-01-09 20:32:12Z rsregan $'
-     &       )/=0 ) STOP
-      ENDIF
+      Version_gsflow_setconv =
+     &'$Id: gsflow_setconv.f 4263 2012-03-08 18:29:32Z rsregan $'
+      Gsflow_setconv_nc = INDEX( Version_gsflow_setconv, 'Z' )
+      n = INDEX( Version_gsflow_setconv, '.f' ) + 1
+      IF ( declmodule(Version_gsflow_setconv(6:n), PROCNAME,
+     +     Version_gsflow_setconv(n+2:Gsflow_setconv_nc))/=0 ) STOP
 
       Nhrucell = getdim('nhrucell')
       IF ( Nhrucell==-1 ) RETURN
@@ -70,7 +75,7 @@
       IF ( Ngwcell==-1 ) RETURN
 
       ALLOCATE ( Gvr_cell_id(Nhrucell) )
-      IF ( declparam('gsfconv', 'gvr_cell_id', 'nhrucell', 'integer',
+      IF ( declparam(MODNAME, 'gvr_cell_id', 'nhrucell', 'integer',
      &     '0', 'bounded', 'ngwcell',
      &     'Corresponding MODFLOW cell id of each GVR',
      &     'Index of the MODFLOW cell associated with each gravity'//
@@ -78,7 +83,7 @@
      &     'none')/=0 ) CALL read_error(1, 'gvr_cell_id')
 
       ALLOCATE ( Gvr_cell_pct(Nhrucell) )
-      IF ( declparam('gsfconv', 'gvr_cell_pct', 'nhrucell', 'real',
+      IF ( declparam(MODNAME, 'gvr_cell_pct', 'nhrucell', 'real',
      &     '0.0', '0.0', '1.0',
      &     'Proportion of the MODFLOW cell associated with each GVR',
      &     'Proportion of the MODFLOW cell area associated with each'//
@@ -107,14 +112,14 @@
 !***********************************************************************
       gsfconvinit = 1
 
-      IF ( getparam('gsfmap', 'gvr_cell_id', Nhrucell, 'integer',
+      IF ( getparam(MODNAME, 'gvr_cell_id', Nhrucell, 'integer',
      &     Gvr_cell_id)/=0 ) CALL read_error(2, 'gvr_cell_id')
       IF ( Nhru==Nhrucell ) THEN
         DO i = 1, Nhru
           Gvr_cell_pct(i) = 1.0
         ENDDO
       ELSE
-        IF ( getparam('gsfmap', 'gvr_cell_pct', Nhrucell, 'real',
+        IF ( getparam(MODNAME, 'gvr_cell_pct', Nhrucell, 'real',
      &       Gvr_cell_pct)/=0 ) CALL read_error(2, 'gvr_cell_id')
       ENDIF
 
@@ -137,7 +142,7 @@
       IMPLICIT NONE
       INTRINSIC SNGL, ABS
 ! Local Variables
-      REAL :: inch_to_mfl, mft_to_sec
+      DOUBLE PRECISION :: inch_to_mfl, mft_to_sec
 !***********************************************************************
       IF ( LENUNI<1 .OR. ITMUNI<1 .OR. LENUNI>3 .OR. ITMUNI>6 ) THEN
         WRITE ( IOUT, 9001 ) LENUNI, ITMUNI
@@ -147,44 +152,44 @@
 
       IF ( LENUNI==1 ) THEN
 ! Modflow in feet
-        inch_to_mfl = 1.0/12.0
+        inch_to_mfl = 1.0D0/12.0D0
         Mfl2_to_acre = 1.0D0
         Mfl3_to_ft3 = 1.0D0
 
       ELSEIF ( LENUNI==2 ) THEN
 ! Modflow in meters
-        inch_to_mfl = 0.0254
+        inch_to_mfl = 0.0254D0
         Mfl2_to_acre = 3.280839895D0*3.280839895D0
         Mfl3_to_ft3 = 3.280839895D0**3.0D0
 
       ELSEIF ( LENUNI==3 ) THEN
 ! Modflow in centimeters
-        inch_to_mfl = 2.54
+        inch_to_mfl = 2.54D0
         Mfl2_to_acre = 328.0839895D0*328.0839895D0
         Mfl3_to_ft3 = 328.0839895D0**3.0D0
       ELSE
         STOP '***ERROR, invalid MODFLOW Length unit'
       ENDIF
-      Mfl_to_inch = 1.0/inch_to_mfl
+      Mfl_to_inch = 1.0D0/inch_to_mfl
       Mfl2_to_acre = Mfl2_to_acre/ACRE_2_SQFT
       Inch_to_mfl_t = inch_to_mfl/DELT
 
       IF ( ITMUNI==1 ) THEN
 ! Modflow in seconds
-        mft_to_sec = 1.0
+        mft_to_sec = 1.0D0
       ELSEIF ( ITMUNI==2 ) THEN
 ! Modflow in minutes
-        mft_to_sec = 60.0
+        mft_to_sec = 60.0D0
       ELSEIF ( ITMUNI==3 ) THEN
 ! Modflow in hours
-        mft_to_sec = 3600.0
+        mft_to_sec = 3600.0D0
       ELSEIF ( ITMUNI==4 ) THEN
 ! Modflow in days
-        mft_to_sec = 86400.0
+        mft_to_sec = 86400.0D0
       ELSEIF ( ITMUNI==5 ) THEN
 ! Modflow in years
 !DANGER, not all years have 365 days
-        mft_to_sec = 86400.0*365.0
+        mft_to_sec = 86400.0D0*365.0D0
       ELSE
         STOP '***ERROR, invalid MODFLOW Time Unit'
       ENDIF

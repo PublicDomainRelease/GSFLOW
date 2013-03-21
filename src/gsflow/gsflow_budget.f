@@ -7,6 +7,8 @@
       INTEGER, SAVE :: Vbnm_index(13)
       DOUBLE PRECISION, SAVE :: Gw_bnd_in, Gw_bnd_out, Well_in, Well_out
       DOUBLE PRECISION, SAVE :: Basin_actetgw
+      CHARACTER(LEN=13), PARAMETER :: MODNAME = 'gsflow_budget'
+      CHARACTER(LEN=26), PARAMETER :: PROCNAME = 'GSFLOW budget'
 !   Declared Variables
       DOUBLE PRECISION, SAVE :: Total_pump, Total_pump_cfs
       DOUBLE PRECISION, SAVE :: Stream_leakage, Sat_store
@@ -48,101 +50,105 @@
 !***********************************************************************
       INTEGER FUNCTION gsfbuddecl()
       USE GSFBUDGET
-      USE PRMS_MODULE, ONLY: Nhru, Print_debug, Nsegment
+      USE PRMS_MODULE, ONLY: Nhru, Nsegment, Version_gsflow_budget,
+     &    Gsflow_budget_nc
       IMPLICIT NONE
       INTEGER, EXTERNAL :: declmodule, declvar, getdim
+! Local Variables
+      INTEGER :: n
 !***********************************************************************
       gsfbuddecl = 1
 
-      IF ( Print_debug>-1 ) THEN
-        IF ( declmodule(
-     &'$Id: gsflow_budget.f 4014 2011-12-01 19:17:49Z rsregan $')
-     &     .NE.0 ) RETURN
-      ENDIF
+      Version_gsflow_budget =
+     &'$Id: gsflow_budget.f 5022 2012-11-02 19:18:22Z rsregan $'
+      Gsflow_budget_nc = INDEX( Version_gsflow_budget, 'Z' )
+      n = INDEX( Version_gsflow_budget, '.f' ) + 1
+      IF ( declmodule(Version_gsflow_budget(6:n), PROCNAME,
+     +     Version_gsflow_budget(n+2:Gsflow_budget_nc))/=0 ) STOP
 
       Nreach = getdim('nreach')
-      IF ( Nreach.EQ.-1 ) RETURN
+      IF ( Nreach==-1 ) RETURN
 
 ! Declared Variables
-      IF ( declvar('gsfbud', 'gw_inout', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'gw_inout', 'one', 1, 'double',
      &     'Volumetric flow rate to saturated zone along external'//
      &     ' boundary (negative value is flow out of modeled region)',
      &     'L3',
-     &     Gw_inout).NE.0 ) RETURN
+     &     Gw_inout)/=0 ) RETURN
 
-      IF ( declvar('gsfbud', 'basin_szreject', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basin_szreject', 'one', 1, 'double',
      &     'Basin average recharge from SZ and rejected by UZF',
      &     'inches',
-     &     Basin_szreject).NE.0) RETURN
+     &     Basin_szreject)/=0) RETURN
 
       ALLOCATE (Gw_rejected(Nhru))
-      IF ( declvar('gsfbud', 'gw_rejected', 'nhru', Nhru, 'double',
+      IF ( declvar(MODNAME, 'gw_rejected', 'nhru', Nhru, 'double',
      &     'HRU average recharge rejected by UZF', 'inches',
-     &     Gw_rejected).NE.0 ) RETURN
+     &     Gw_rejected)/=0 ) RETURN
 
-      IF ( declvar('gsfbud', 'stream_leakage', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'stream_leakage', 'one', 1, 'double',
      &     'Volumetric flow rate of stream leakage to the unsaturated'//
      &     ' and saturated zones', 'L3',
-     &     Stream_leakage).NE.0 ) RETURN
+     &     Stream_leakage)/=0 ) RETURN
 
-      IF ( declvar('gsfbud', 'stream_inflow', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'stream_inflow', 'one', 1, 'double',
      &     'Specified volumetric stream inflow rate into model ',
      &     'L3',
-     &     Stream_inflow).NE.0 ) RETURN
+     &     Stream_inflow)/=0 ) RETURN
 
-      IF ( declvar('gsfbud', 'unsat_store', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'unsat_store', 'one', 1, 'double',
      &     'Volume of water in the unsaturated zone', 'L3',
-     &     Unsat_store).NE.0 ) RETURN
+     &     Unsat_store)/=0 ) RETURN
 
-      IF ( declvar('gsfbud', 'sat_store', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'sat_store', 'one', 1, 'double',
      &     'Volume of water in the saturated zone', 'L3',
-     &     Sat_store).NE.0 ) RETURN
+     &     Sat_store)/=0 ) RETURN
 
-      IF ( declvar('gsfbud', 'sat_change_stor', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'sat_change_stor', 'one', 1, 'double',
      &     'Change in saturated-zone storage', 'L3',
-     &     Sat_change_stor).NE.0 ) RETURN
+     &     Sat_change_stor)/=0 ) RETURN
 
-      IF ( declvar('gsfbud', 'total_pump', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'total_pump', 'one', 1, 'double',
      &     'Total pumpage from all cells in MODFLOW units', 'none ',
-     &     Total_pump).NE.0 ) RETURN
+     &     Total_pump)/=0 ) RETURN
 
-      IF ( declvar('gsfbud', 'total_pump_cfs', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'total_pump_cfs', 'one', 1, 'double',
      &     'Total pumpage from all cells', 'cfs ',
-     &     Total_pump_cfs).NE.0 ) RETURN
+     &     Total_pump_cfs)/=0 ) RETURN
 
       ALLOCATE (Reach_cfs(Nreach))
-      IF ( declvar('gsfbud', 'reach_cfs', 'nreach', Nreach, 'double',
+      IF ( declvar(MODNAME, 'reach_cfs', 'nreach', Nreach, 'double',
      &     'Stream flow leaving each stream reach', 'cfs',
-     &     Reach_cfs).NE.0 ) RETURN
+     &     Reach_cfs)/=0 ) RETURN
 
       ALLOCATE (Reach_wse(Nreach))
-      IF ( declvar('gsfbud', 'reach_wse', 'nreach', Nreach, 'double',
+      IF ( declvar(MODNAME, 'reach_wse', 'nreach', Nreach, 'double',
      &     'Water surface elevation in each stream reach', 'length',
-     &     Reach_wse).NE.0 ) RETURN
+     &     Reach_wse)/=0 ) RETURN
 
-      IF ( declvar('gsfbud', 'basin_gw2sm', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basin_gw2sm', 'one', 1, 'double',
      &     'Basin average water exfiltrated from UZF and added to SZ',
      &     'inches',
-     &     Basin_gw2sm).NE.0) RETURN
+     &     Basin_gw2sm)/=0) RETURN
 
       ALLOCATE (Gw2sm(Nhru))
-      IF ( declvar('gsfbud', 'gw2sm', 'nhru', Nhru, 'double',
+      IF ( declvar(MODNAME, 'gw2sm', 'nhru', Nhru, 'double',
      &     'HRU average water exfiltrated from groundwater model'//
      &     ' and added back to SM', 'inches',
-     &     Gw2sm).NE.0 ) RETURN
+     &     Gw2sm)/=0 ) RETURN
 
       ALLOCATE (Actet_gw(Nhru))
-      IF ( declvar('gsfbud', 'actet_gw', 'nhru', Nhru, 'double',
+      IF ( declvar(MODNAME, 'actet_gw', 'nhru', Nhru, 'double',
      &     'Actual ET from each GW cell', 'inches',
-     &     Actet_gw).NE.0 ) RETURN
+     &     Actet_gw)/=0 ) RETURN
 
       ALLOCATE (Actet_tot_gwsz(Nhru))
-      IF ( declvar('gsfbud', 'actet_tot_gwsz', 'nhru', Nhru, 'double',
+      IF ( declvar(MODNAME, 'actet_tot_gwsz', 'nhru', Nhru, 'double',
      &     'Total actual ET from each GW cell and PRMS soil zone',
-     &     'inches', Actet_tot_gwsz).NE.0 ) RETURN
+     &     'inches', Actet_tot_gwsz)/=0 ) RETURN
 
       ALLOCATE (Streamflow_sfr(Nsegment))
-      IF ( declvar('gsfbud', 'streamflow_sfr', 'nsegment', Nhru,
+      IF ( declvar(MODNAME, 'streamflow_sfr', 'nsegment', Nhru,
      &     'double',
      &     'Streamflow as computed by SFR for each segment',
      &     'cfs', Streamflow_sfr)/=0 ) RETURN
@@ -212,8 +218,7 @@
       USE GWFBASMODULE, ONLY: VBVL
       USE GWFUZFMODULE, ONLY: SEEPOUT, UZFETOUT, UZTSRAT, REJ_INF, GWET
       USE GWFLAKMODULE, ONLY: EVAP, SURFA
-!      USE GSFMODFLOW, ONLY: KKITER
-      USE GSFMODFLOW, ONLY: Have_lakes
+      USE GSFMODFLOW, ONLY: Have_lakes, Maxgziter, KKITER
 !Warning, modifies Basin_gwflow_cfs, Basin_cfs, Basin_cms, Basin_stflow,
 !                  Basin_ssflow_cfs, Basin_sroff_cfs
       USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type,
@@ -234,8 +239,8 @@
 !     EXTERNAL getHeads
 ! Local Variables
       INTEGER :: i, ihru, icell, irow, icol, ii, lake
-      REAL :: deficit
-      DOUBLE PRECISION :: modflow_in, modflow_out, flux_change, gwdisch
+      REAL :: deficit, flux_change, gwdisch
+      DOUBLE PRECISION :: modflow_in, modflow_out
       DOUBLE PRECISION :: inches_on_lake, harea, pct, area_fac, temp
 !***********************************************************************
       gsfbudrun = 1
@@ -277,10 +282,11 @@
 
         gwdisch = SEEPOUT(icol, irow)*Mfq2inch_conv(i)
 ! flux equals current minus last GW discharge
-        flux_change = gwdisch - Gw2sm_grav(i)
+        flux_change = 0.0
+        IF ( Maxgziter/=KKITER ) flux_change = gwdisch - Gw2sm_grav(i)
         !sanity check remove later
-!        IF ( gwdisch.LT.0.0 ) print *, 'seepout problem', gwdisch
-!        IF ( ABS(flux_change)<NEARZERO ) flux_change = 0.0
+!        IF ( gwdisch<0.0 ) print *, 'seepout problem', gwdisch
+        IF ( ABS(flux_change)<NEARZERO ) flux_change = 0.0
         Gw2sm_grav(i) = gwdisch
         Gw2sm(ihru) = Gw2sm(ihru) + gwdisch*pct
         Gravity_stor_res(i) = Gravity_stor_res(i) + flux_change
@@ -337,11 +343,11 @@
 ! water probably ET'd out, set gravity_stor_res(i)=0, should be small
 ! if this happens, value is small (<1.0e-4) but still add to actet to
 ! maintain water balance
-!          IF ( deficit.LT.-1.0E-4 ) PRINT *,
+!          IF ( deficit<-1.0E-4 ) PRINT *,
 !     &         'negative GW flux > soil_moist', Soil_moist(ihru),
 !     &         Gravity_stor_res(i), deficit, ihru, i, flux_change,
-!     &         gwdisch, Gw2sm_last_grav(i), Gw_rejected_grav(i), icell
-!     &         , KKITER, Gvr2sm(ihru)
+!     &         gwdisch, Gw_rejected_grav(i), icell, KKITER,
+!     &         Gvr2sm(ihru)
           Hru_actet(i) = Hru_actet(i) - Soil_moist(i)/Hru_frac_perv(i)
 !          if (hru_actet(i)<0.0) print*,'budget hru_actet', hru_actet(i)
           Soil_moist(i) = 0.0
@@ -368,11 +374,11 @@
       Basin_szreject = Basin_szreject*Basin_area_inv
       Basin_lakeevap = Basin_lakeevap*Basin_area_inv
 
-      IF ( IUNIT(1).GT.0 ) CALL MODFLOW_GET_STORAGE_BCF()
-      IF ( IUNIT(23).GT.0 ) CALL MODFLOW_GET_STORAGE_LPF()
-      IF ( IUNIT(62).GT.0 ) CALL MODFLOW_GET_STORAGE_UPW()
+      IF ( IUNIT(1)>0 ) CALL MODFLOW_GET_STORAGE_BCF()
+      IF ( IUNIT(23)>0 ) CALL MODFLOW_GET_STORAGE_LPF()
+      IF ( IUNIT(62)>0 ) CALL MODFLOW_GET_STORAGE_UPW()
 
-      IF ( Vbnm_index(1).EQ.-1 ) CALL MODFLOW_VB_DECODE(Vbnm_index)
+      IF ( Vbnm_index(1)==-1 ) CALL MODFLOW_VB_DECODE(Vbnm_index)
       Sat_change_stor = VBVL(4,Vbnm_index(12)) - VBVL(3,Vbnm_index(12))
 
       Unsat_store = UZTSRAT(6)
@@ -382,27 +388,27 @@
       modflow_in = 0.0D0
       Gw_bnd_in = 0.0D0
       Well_in = 0.0D0
-      IF ( Vbnm_index(1).NE.-1 ) THEN ! constant heads
+      IF ( Vbnm_index(1)/=-1 ) THEN ! constant heads
         modflow_in = modflow_in + VBVL(3, Vbnm_index(1))
         Gw_bnd_in = Gw_bnd_in + VBVL(3, Vbnm_index(1))
       ENDIF
 
-      IF ( Vbnm_index(3).NE.-1 ) THEN ! head dep bounds
+      IF ( Vbnm_index(3)/=-1 ) THEN ! head dep bounds
         modflow_in = modflow_in + VBVL(3, Vbnm_index(3))
         Gw_bnd_in = Gw_bnd_in + VBVL(3, Vbnm_index(3))
       ENDIF
 
-      IF ( Vbnm_index(4).NE.-1 ) THEN ! specified heads
+      IF ( Vbnm_index(4)/=-1 ) THEN ! specified heads
         modflow_in = modflow_in + VBVL(3, Vbnm_index(4))
         Gw_bnd_in = Gw_bnd_in + VBVL(3, Vbnm_index(4))
       ENDIF
 
-      IF ( Vbnm_index(5).NE.-1 ) THEN ! wells
+      IF ( Vbnm_index(5)/=-1 ) THEN ! wells
         modflow_in = modflow_in + VBVL(3, Vbnm_index(5))
         Well_in = Well_in + VBVL(3, Vbnm_index(5))
       ENDIF
 
-      IF ( Vbnm_index(6).NE.-1 ) THEN ! multi node wells
+      IF ( Vbnm_index(6)/=-1 ) THEN ! multi node wells
         modflow_in = modflow_in + VBVL(3, Vbnm_index(6))
         Well_in = Well_in + VBVL(3, Vbnm_index(6))
       ENDIF
@@ -410,32 +416,32 @@
       modflow_out = 0.0D0
       Gw_bnd_out = 0.0D0
       Well_out = 0.0D0
-      IF ( Vbnm_index(1).NE.-1 ) THEN ! constant heads
+      IF ( Vbnm_index(1)/=-1 ) THEN ! constant heads
         modflow_out = modflow_out + VBVL(4, Vbnm_index(1))
         Gw_bnd_out = Gw_bnd_out + VBVL(4, Vbnm_index(1))
       ENDIF
 
-      IF ( Vbnm_index(2).NE.-1 ) THEN ! drains
+      IF ( Vbnm_index(2)/=-1 ) THEN ! drains
         modflow_out = modflow_out + VBVL(4, Vbnm_index(2))
         Gw_bnd_out = Gw_bnd_out + VBVL(4, Vbnm_index(2))
       ENDIF
 
-      IF ( Vbnm_index(3).NE.-1 ) THEN ! head dep bounds
+      IF ( Vbnm_index(3)/=-1 ) THEN ! head dep bounds
         modflow_out = modflow_out + VBVL(4, Vbnm_index(3))
         Gw_bnd_out = Gw_bnd_out + VBVL(4, Vbnm_index(3))
       ENDIF
 
-      IF ( Vbnm_index(4).NE.-1 ) THEN ! specified heads
+      IF ( Vbnm_index(4)/=-1 ) THEN ! specified heads
         modflow_out = modflow_out + VBVL(4, Vbnm_index(4))
         Gw_bnd_out = Gw_bnd_out + VBVL(4, Vbnm_index(4))
       ENDIF
 
-      IF ( Vbnm_index(5).NE.-1 ) THEN ! wells
+      IF ( Vbnm_index(5)/=-1 ) THEN ! wells
         modflow_out = modflow_out + VBVL(4, Vbnm_index(5))
         Well_out = Well_out + VBVL(4, Vbnm_index(5))
       ENDIF
 
-      IF ( Vbnm_index(6).NE.-1 ) THEN ! multi node wells
+      IF ( Vbnm_index(6)/=-1 ) THEN ! multi node wells
         modflow_out = modflow_out + VBVL(4, Vbnm_index(6))
         Well_out = Well_out + VBVL(4, Vbnm_index(6))
       ENDIF
@@ -448,7 +454,7 @@
 
 !     CALL getHeads()
 
-      IF ( IUNIT(2).GT.0 ) CALL getPump()
+      IF ( IUNIT(2)>0 ) CALL getPump()
 
       gsfbudrun = 0
 
@@ -476,21 +482,21 @@
       kt = 0
       DO k = 1, NLAY
         lc = LAYCON(k)
-        IF ( lc.EQ.3 .OR. lc.EQ.2 ) kt = kt + 1
+        IF ( lc==3 .OR. lc==2 ) kt = kt + 1
         DO i = 1, NROW
           DO j = 1, NCOL
 
 !6------SKIP NO-FLOW AND CONSTANT-HEAD CELLS.
-            IF ( IBOUND(j, i, k).GT.0 ) THEN
+            IF ( IBOUND(j, i, k)>0 ) THEN
               head = HNEW(j, i, k)
               top = BOTM(j, i, LBOTM(k)-1)
               bot = BOTM(j, i, LBOTM(k))
 
 !7-----CHECK LAYER TYPE TO SEE IF ONE STORAGE CAPACITY OR TWO.
-              IF ( lc.EQ.3 .OR. lc.EQ.2 ) THEN
+              IF ( lc==3 .OR. lc==2 ) THEN
                 rho = SC2(j, i, kt)
 !7A----TWO STORAGE CAPACITIES.
-!                IF ( head.GT.top ) THEN
+!                IF ( head>top ) THEN
 !                  rho = SC1(j, i, k)
 !                ELSE
 !                  rho = SC2(j, i, kt)
@@ -499,7 +505,7 @@
 !7B----ONE STORAGE CAPACITY.
                 rho = SC1(j, i, k)
               ENDIF
-              IF ( head.GE.top ) THEN
+              IF ( head>=top ) THEN
                 storage = rho*(top-bot)*tled
               ELSE
                 storage = rho*(head-bot)*tled
@@ -535,22 +541,22 @@
       kt = 0
       DO k = 1, NLAY
         lc = LAYTYP(k)
-        IF ( lc.NE.0 ) kt = kt + 1
+        IF ( lc/=0 ) kt = kt + 1
         DO i = 1, NROW
           DO j = 1, NCOL
 
 !6------SKIP NO-FLOW AND CONSTANT-HEAD CELLS.
-            IF ( IBOUND(j, i, k).GT.0 ) THEN
+            IF ( IBOUND(j, i, k)>0 ) THEN
               head = HNEW(j, i, k)
               top = BOTM(j, i, LBOTM(k)-1)
               bot = BOTM(j, i, LBOTM(k))
 
 !7-----CHECK LAYER TYPE TO SEE IF ONE STORAGE CAPACITY OR TWO.
-              IF ( lc.NE.0 ) THEN
+              IF ( lc/=0 ) THEN
 !7A----TWO STORAGE CAPACITIES.
 !  markstro - always use specific yield
                 rho = SC2(j, i, kt)
-!               IF ( head.GT.top ) THEN
+!               IF ( head>top ) THEN
 !                 rho = SC1(j, i, k)
 !               ELSE
 !                 rho = SC2(j, i, kt)
@@ -559,7 +565,7 @@
 !7A----ONE STORAGE CAPACITY.
                 rho = SC1(j, i, k)
               ENDIF
-              IF ( head.GE.top ) THEN
+              IF ( head>=top ) THEN
                 storage = rho*(top-bot)*tled
               ELSE
                 storage = rho*(head-bot)*tled
@@ -597,19 +603,19 @@
       kt = 0
       DO k = 1, NLAY
         lc = LAYTYPUPW(k)
-        IF ( lc.NE.0 ) kt = kt + 1
+        IF ( lc/=0 ) kt = kt + 1
         DO j = 1, NCOL
           DO i = 1, NROW
 
 !6------SKIP NO-FLOW AND CONSTANT-HEAD CELLS.
-            IF ( IBOUND(j, i, k).GT.0 .AND. 
-     +           ABS(HNEW(j, i, k)-HDRY).GT.NEARZERO ) THEN
+            IF ( IBOUND(j, i, k)>0 .AND. 
+     +           ABS(HNEW(j, i, k)-HDRY)>NEARZERO ) THEN
               head = HNEW(j, i, k)
               top = BOTM(j, i, LBOTM(k)-1)
               bot = BOTM(j, i, LBOTM(k))
 
 !7-----CHECK LAYER TYPE TO SEE IF ONE STORAGE CAPACITY OR TWO.
-              IF ( lc.NE.0 ) THEN
+              IF ( lc/=0 ) THEN
 !7A----TWO STORAGE CAPACITIES.
 !  markstro - always use specific yield
                 rho = SC2UPW(j, i, kt)
@@ -617,7 +623,7 @@
 !7A----ONE STORAGE CAPACITY.
                 rho = SC1(j, i, k)
               ENDIF
-              IF ( head.GE.top ) THEN
+              IF ( head>=top ) THEN
                 storage = rho*(top-bot)*tled
               ELSE
                 storage = rho*(head-bot)*tled
@@ -644,19 +650,19 @@
 !***********************************************************************
 !  Stuff from MODFLOW
       DO i = 1, MSUM - 1
-        IF ( VBNM(i).EQ.'   CONSTANT HEAD' ) Vbnm_index(1) = i
-        IF ( VBNM(i).EQ.'          DRAINS' ) Vbnm_index(2) = i
-        IF ( VBNM(i).EQ.' HEAD DEP BOUNDS' ) Vbnm_index(3) = i
-        IF ( VBNM(i).EQ.' SPECIFIED FLOWS' ) Vbnm_index(4) = i
-        IF ( VBNM(i).EQ.'           WELLS' ) Vbnm_index(5) = i
-        IF ( VBNM(i).EQ.'             MNW' ) Vbnm_index(6) = i
-        IF ( VBNM(i).EQ.'    UZF RECHARGE' ) Vbnm_index(7) = i
-        IF ( VBNM(i).EQ.'           GW ET' ) Vbnm_index(8) = i
-        IF ( VBNM(i).EQ.' SURFACE LEAKAGE' ) Vbnm_index(9) = i
-        IF ( VBNM(i).EQ.'  STREAM LEAKAGE' ) Vbnm_index(10) = i
-        IF ( VBNM(i).EQ.'   LAKE  SEEPAGE' ) Vbnm_index(11) = i
-        IF ( VBNM(i).EQ.'         STORAGE' ) Vbnm_index(12) = i
-        IF ( VBNM(i).EQ.'INTERBED STORAGE' ) Vbnm_index(13) = i
+        IF ( VBNM(i)=='   CONSTANT HEAD' ) Vbnm_index(1) = i
+        IF ( VBNM(i)=='          DRAINS' ) Vbnm_index(2) = i
+        IF ( VBNM(i)==' HEAD DEP BOUNDS' ) Vbnm_index(3) = i
+        IF ( VBNM(i)==' SPECIFIED FLOWS' ) Vbnm_index(4) = i
+        IF ( VBNM(i)=='           WELLS' ) Vbnm_index(5) = i
+        IF ( VBNM(i)=='             MNW' ) Vbnm_index(6) = i
+        IF ( VBNM(i)=='    UZF RECHARGE' ) Vbnm_index(7) = i
+        IF ( VBNM(i)=='           GW ET' ) Vbnm_index(8) = i
+        IF ( VBNM(i)==' SURFACE LEAKAGE' ) Vbnm_index(9) = i
+        IF ( VBNM(i)=='  STREAM LEAKAGE' ) Vbnm_index(10) = i
+        IF ( VBNM(i)=='   LAKE  SEEPAGE' ) Vbnm_index(11) = i
+        IF ( VBNM(i)=='         STORAGE' ) Vbnm_index(12) = i
+        IF ( VBNM(i)=='INTERBED STORAGE' ) Vbnm_index(13) = i
       ENDDO
 
       END SUBROUTINE MODFLOW_VB_DECODE
@@ -669,7 +675,7 @@
       USE GSFCONVERT, ONLY: Mfl3t_to_cfs, Cfs2inches
       USE GWFSFRMODULE, ONLY: STRM, IOTSG, NSS, SGOTFLW, SFRRATOUT,
      &    TOTSPFLOW, NSTRM, SFRRATIN
-      USE PRMS_BASIN, ONLY: Basin_cfs, Basin_cms, Basin_stflow,
+      USE PRMS_BASIN, ONLY: Basin_cfs, Basin_cms, Basin_stflow_out,
      &    CFS2CMS_CONV
       IMPLICIT NONE
 ! Local Variables
@@ -686,10 +692,10 @@
       Basin_cfs = 0.0D0
       Stream_inflow = 0.0D0
       DO i = 1, NSS
-        IF ( IOTSG(i).EQ.0 ) Basin_cfs = Basin_cfs + SGOTFLW(i)
+        IF ( IOTSG(i)==0 ) Basin_cfs = Basin_cfs + SGOTFLW(i)
         Streamflow_sfr(i) = SGOTFLW(i)*Mfl3t_to_cfs
       ENDDO 
-      IF ( TOTSPFLOW.LT.0.0 ) THEN
+      IF ( TOTSPFLOW<0.0 ) THEN
         Basin_cfs = Basin_cfs + TOTSPFLOW
       ELSE
 ! RGN added specified inflows and outflows from SFR. 
@@ -699,7 +705,7 @@
       Stream_leakage = SFRRATIN - SFRRATOUT 
       Basin_cfs = Basin_cfs*Mfl3t_to_cfs
       Basin_cms = Basin_cfs*CFS2CMS_CONV
-      Basin_stflow = Basin_cfs*Cfs2inches
+      Basin_stflow_out = Basin_cfs*Cfs2inches
 
       END SUBROUTINE getStreamFlow
 
@@ -716,19 +722,19 @@
       Total_pump = 0.0D0
 
       ! wells
-      IF ( Vbnm_index(5).NE.-1 ) Total_pump = Total_pump -
+      IF ( Vbnm_index(5)/=-1 ) Total_pump = Total_pump -
      &                                        VBVL(4, Vbnm_index(5))
 
       ! multi node wells
-      IF ( Vbnm_index(6).NE.-1 ) Total_pump = Total_pump -
+      IF ( Vbnm_index(6)/=-1 ) Total_pump = Total_pump -
      &                                        VBVL(4, Vbnm_index(6))
 
       ! wells
-      IF ( Vbnm_index(5).NE.-1 ) Total_pump = Total_pump +
+      IF ( Vbnm_index(5)/=-1 ) Total_pump = Total_pump +
      &                                        VBVL(3, Vbnm_index(5))
 
       ! multi node wells
-      IF ( Vbnm_index(6).NE.-1 )Total_pump = Total_pump +
+      IF ( Vbnm_index(6)/=-1 )Total_pump = Total_pump +
      &                                       VBVL(3, Vbnm_index(6))
 
       Total_pump_cfs = Total_pump * Mfl3t_to_cfs

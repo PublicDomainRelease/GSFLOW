@@ -6,8 +6,8 @@
 ! Variables needed from DATA FILE: tmax, tmin
 !***********************************************************************
       INTEGER FUNCTION temp_laps()
-      USE PRMS_MODULE, ONLY: Process, Nhru, Print_debug, Version_temp_laps, Temp_laps_nc
-      USE PRMS_BASIN, ONLY: Hru_elev, Active_hrus, Hru_area, Hru_route_order, Basin_area_inv, NEARZERO, Starttime
+      USE PRMS_MODULE, ONLY: Process, Nhru, Version_temp_laps, Temp_laps_nc
+      USE PRMS_BASIN, ONLY: Hru_elev, Active_hrus, Hru_area, Hru_route_order, Basin_area_inv, NEARZERO, Start_month
       USE PRMS_CLIMATEVARS, ONLY: Ntemp, Tsta_elev, Hru_tsta, Basin_tsta, &
           Solrad_tmax, Solrad_tmin, Basin_temp, Basin_tmax, Basin_tmin, &
           Tmaxf, Tminf, Tminc, Tmaxc, Tavgf, Tavgc, Tmax_adj, Tmin_adj, Tmax_allrain
@@ -26,6 +26,8 @@
       REAL, SAVE, ALLOCATABLE :: elfac(:), tmax_prev(:), tmin_prev(:)
       REAL, SAVE :: solrad_tmax_good, solrad_tmin_good
       INTEGER, SAVE, ALLOCATABLE :: tmax_cnt(:), tmin_cnt(:), nuse_tsta(:)
+      CHARACTER(LEN=9), PARAMETER :: MODNAME = 'temp_laps'
+      CHARACTER(LEN=26), PARAMETER :: PROCNAME = 'Temperature Distribution'
 !***********************************************************************
       temp_laps = 1
 
@@ -35,7 +37,7 @@
         DO i = 1, Ntemp
           k = 0
           IF ( nuse_tsta(i)>0 ) THEN
-            IF ( Tmax(i)<-89.0 .OR. Tmax(i)>150.0 ) THEN
+            IF ( Tmax(i)<-99.0 .OR. Tmax(i)>150.0 ) THEN
               tmax_cnt(i) = tmax_cnt(i) + 1
               IF ( tmax_cnt(i)<Max_missing ) THEN
                 PRINT 9001, 'tmax', Tmax(i), i, Nowyear, Nowmonth, Nowday, tmax_prev(i)
@@ -50,7 +52,7 @@
               tmax_prev(i) = Tmax(i)
               tmax_cnt(i) = 0
             ENDIF
-            IF ( Tmin(i)<-89.0 .OR. Tmin(i)>150.0 ) THEN
+            IF ( Tmin(i)<-99.0 .OR. Tmin(i)>150.0 ) THEN
               tmin_cnt(i) = tmin_cnt(i) + 1
               IF ( tmin_cnt(i)<Max_missing ) THEN
                 PRINT 9001, 'tmin', Tmin(i), i, Nowyear, Nowmonth, Nowday, tmin_prev(i)
@@ -92,14 +94,14 @@
         Basin_temp = Basin_temp*Basin_area_inv
         Solrad_tmax = Tmax(Basin_tsta)
         Solrad_tmin = Tmin(Basin_tsta)
-        IF ( Solrad_tmax<-89.0 .OR. Solrad_tmax>150.0 ) THEN
+        IF ( Solrad_tmax<-99.0 .OR. Solrad_tmax>150.0 ) THEN
           PRINT *, 'Bad temperature data to set solrad_tmax:', Solrad_tmax, ' using last valid value'
           PRINT *, 'Value set to', solrad_tmax_good, ' Date:', Nowyear, Nowmonth, Nowday
           Solrad_tmax = solrad_tmax_good
         ELSE
           solrad_tmax_good = Solrad_tmax
         ENDIF
-        IF ( Solrad_tmin<-89.0 .OR. Solrad_tmin>150.0 ) THEN
+        IF ( Solrad_tmin<-99.0 .OR. Solrad_tmin>150.0 ) THEN
           PRINT *, 'Bad temperature data to set solrad_tmin:', Solrad_tmin, ' using last valid value'
           PRINT *, 'Value set to', solrad_tmin_good, ' Date:', Nowyear, Nowmonth, Nowday
           Solrad_tmin = solrad_tmin_good
@@ -108,19 +110,18 @@
         ENDIF
 
       ELSEIF ( Process(:4)=='decl' ) THEN
-        Version_temp_laps = '$Id: temp_laps.f90 4198 2012-02-21 16:30:29Z rsregan $'
-        Temp_laps_nc = INDEX( Version_temp_laps, ' $' ) + 1
-        IF ( Print_debug>-1 ) THEN
-          IF ( declmodule(Version_temp_laps(:Temp_laps_nc))/=0 ) STOP
-        ENDIF
+        Version_temp_laps = '$Id: temp_laps.f90 5510 2013-03-19 20:05:38Z rsregan $'
+        Temp_laps_nc = INDEX( Version_temp_laps, 'Z' )
+        i = INDEX( Version_temp_laps, '.f90' ) + 3
+        IF ( declmodule(Version_temp_laps(6:i), PROCNAME, Version_temp_laps(i+2:Temp_laps_nc))/=0 ) STOP
 
         ALLOCATE ( Hru_tlaps(Nhru) )
-        IF ( declparam('temp', 'hru_tlaps', 'nhru', 'integer', &
+        IF ( declparam(MODNAME, 'hru_tlaps', 'nhru', 'integer', &
              '1', 'bounded', 'ntemp', &
              'Index of lapse temperature station for HRU', &
              'Index of the lapse temperature station used for lapse rate calculations', &
              'none')/=0 ) CALL read_error(1, 'hru_tlaps')
-        IF ( declparam('temp', 'max_missing', 'one', 'integer', &
+        IF ( declparam(MODNAME, 'max_missing', 'one', 'integer', &
              '3', '0', '10', &
              'Maximum number of consecutive missing values allowed for'// &
              ' any measured air temperature station; 0 = unlimited', &
@@ -130,13 +131,14 @@
 
       ELSEIF ( Process(:4)=='init' ) THEN
 !       Initialize variables, get parameter values, compute elfac
-        IF ( getparam('temp', 'hru_tlaps', Nhru, 'integer', Hru_tlaps)/=0 ) CALL read_error(2, 'hru_tlaps') 
-        IF ( getparam('temp', 'max_missing', 1, 'integer', Max_missing)/=0 ) CALL read_error(2, 'max_missing')
+        IF ( getparam(MODNAME, 'hru_tlaps', Nhru, 'integer', Hru_tlaps)/=0 ) CALL read_error(2, 'hru_tlaps') 
+        IF ( getparam(MODNAME, 'max_missing', 1, 'integer', Max_missing)/=0 ) CALL read_error(2, 'max_missing')
         IF ( Max_missing==0 ) Max_missing = 3
         Max_missing = Max_missing + 1
 
         ALLOCATE ( elfac(Nhru), nuse_tsta(Ntemp) )
         ierr = 0
+        nuse_tsta = 0
         DO j = 1, Nhru
           IF ( Hru_tlaps(j)<1 .OR. Hru_tlaps(j)>Ntemp ) THEN
             PRINT *, 'ERROR, hru_tlaps=0 or hru_tlaps>ntemp, HRU:', j
@@ -156,7 +158,7 @@
         ALLOCATE ( tmin_cnt(Ntemp), tmax_cnt(Ntemp), tmax_prev(Ntemp), tmin_prev(Ntemp) )
         tmax_cnt = 0
         tmin_cnt = 0
-        tmax_prev = Tmax_allrain(Starttime(2))
+        tmax_prev = Tmax_allrain(Start_month)
         tmin_prev = tmax_prev
       ENDIF
 
@@ -168,4 +170,3 @@
 
       temp_laps = 0
       END FUNCTION temp_laps
-

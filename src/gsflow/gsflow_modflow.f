@@ -8,24 +8,26 @@
       INTEGER, SAVE :: IGRID, KKPER, ICNVG, IBDT(8), NSOL, IOUTS
       INTEGER, SAVE :: KSTP, KKSTP, IERR, Max_iters, Nszchanging
       INTEGER, SAVE :: Mfiter_cnt(ITDIM), Iterations
-      INTEGER, SAVE :: Szcheck, Sziters, Logunt, KPER
+      INTEGER, SAVE :: Szcheck, Sziters, Logunt, KPER, NCVGERR
       INTEGER, SAVE :: Have_lakes, Max_sziters, Maxgziter
       INTEGER, SAVE, ALLOCATABLE :: Iter_cnt(:)
       REAL, SAVE :: Delt_save
       DOUBLE PRECISION, SAVE, ALLOCATABLE :: Stress_dates(:)
       CHARACTER(LEN=68), SAVE :: Versn
+      CHARACTER(LEN=14), PARAMETER :: MODNAME = 'gsflow_modflow'
+      CHARACTER(LEN=26), PARAMETER :: PROCNAME = 'GSFLOW Integration'
 !   Declared Variables
       INTEGER, SAVE :: KKITER
 !   Declared Variables from other modules, prms2mf
       INTEGER, SAVE :: Stopcount
-!   Declared Parameters
-      INTEGER, SAVE :: Mxsziter
 !   Control Parameters
       CHARACTER(LEN=256), SAVE :: Modflow_name
       END MODULE GSFMODFLOW
 
 C     ******************************************************************
-C     MAIN CODE FOR U.S. GEOLOGICAL SURVEY MODULAR MODEL -- MODFLOW-2005
+C     MAIN CODE FOR U.S. GEOLOGICAL SURVEY MODULAR MODEL -- MODFLOW-NWT
+!rgn------REVISION NUMBER CHANGED TO BE CONSISTENT WITH NWT RELEASE
+!rgn------NEW VERSION NUMBER 1.0.7:  January 15, 2013
 C     ******************************************************************
 C
       INTEGER FUNCTION gsflow_modflow()
@@ -50,8 +52,6 @@ C
 
 !***********************************************************************
 !     gsfdecl - set up parameters for GSFLOW computations
-!   Declared Parameters
-!     mxsziter
 !***********************************************************************
       INTEGER FUNCTION gsfdecl()
 !     ------------------------------------------------------------------
@@ -59,32 +59,27 @@ C
 !     ------------------------------------------------------------------
       USE GSFMODFLOW
       ! Model (0=integrated; 1=PRMS-only; 2=MODFLOW-only)
-      USE PRMS_MODULE, ONLY: Model, Print_debug
+      USE PRMS_MODULE, ONLY: Version_gsflow_modflow, Gsflow_modflow_nc
       IMPLICIT NONE
-      INTEGER, EXTERNAL :: declmodule, declvar, declparam
+      INTEGER, EXTERNAL :: declmodule, declvar
       EXTERNAL read_error
+! Local Variables
+      INTEGER :: n
 !***********************************************************************
       gsfdecl = 1
 
-      Versn =
-     &'$Id: gsflow_modflow.f 4164 2012-02-06 20:22:08Z rsregan $'
-      IF ( Print_debug>-1 ) THEN
-        IF ( declmodule(Versn(:62)).NE.0 ) RETURN
-      ENDIF
+      Version_gsflow_modflow =
+     &'$Id: gsflow_modflow.f 5498 2013-03-14 21:49:27Z rsregan $'
+      Versn = Version_gsflow_modflow
+      Gsflow_modflow_nc = INDEX( Version_gsflow_modflow, 'Z' )
+      n = INDEX( Version_gsflow_modflow, '.f' ) + 1
+      IF ( declmodule(Version_gsflow_modflow(6:n), PROCNAME,
+     +     Version_gsflow_modflow(n+2:Gsflow_modflow_nc))/=0 ) STOP
 
 ! Declared Variables
-      IF ( declvar('gsflow_modflow', 'KKITER', 'one', 1, 'integer',
+      IF ( declvar(MODNAME, 'KKITER', 'one', 1, 'integer',
      &     'Current iteration in GSFLOW simulation', 'none',
-     &     KKITER).NE.0 ) CALL read_error(3, 'KKITER')
-
-! Declared Parameters
-      IF ( Model.NE.2 ) THEN
-        IF ( declparam('gsflow_modflow', 'mxsziter', 'one', 'integer',
-     &      '0', '0', '5000',
-     &      'Maximum number of iterations soilzone states are computed',
-     &      'Maximum number of iterations soilzone states are computed',
-     &      'none').NE.0 ) CALL read_error(1, 'mxsziter')
-      ENDIF
+     &     KKITER)/=0 ) CALL read_error(3, 'KKITER')
 
       Have_lakes = 0
 
@@ -123,17 +118,19 @@ C1------USE package modules.
 !     INTEGER :: kkper_new
 C
 C-------ASSIGN VERSION NUMBER AND DATE
-      CHARACTER*40 VERSION, VERSION_NWT
+      CHARACTER*40 VERSION,VERSION2
+!gsf  CHARACTER*40 VERSION,VERSION2,VERSION3
       CHARACTER*10 MFVNAM
-      PARAMETER (VERSION='1.8.00 12/18/2009 ')
-      PARAMETER (VERSION_NWT='1.0.03 12/29/2011 ')
-      PARAMETER (MFVNAM='-2005')
+      PARAMETER (VERSION='1.9.01 5/01/2012')
+      PARAMETER (VERSION2='1.0.7 01/15/2013')
+!gsf  PARAMETER (VERSION3='0.56.0 05/18/2012')
+      PARAMETER (MFVNAM='-NWT')
 C
       CHARACTER*80 HEADNG(2)
       CHARACTER*200 FNAME
 C
       CHARACTER*4 CUNIT(NIUNIT)
-      DATA CUNIT/'BCF6', 'WEL ', 'DRN ', 'RIV ', 'EVT ', '    ', 'GHB ',  !  7
+      DATA CUNIT/'BCF6', 'WEL ', 'DRN ', 'RIV ', 'EVT ', 'gfd ', 'GHB ',  !  7
      &           'RCH ', 'SIP ', 'DE4 ', '    ', 'OC  ', 'PCG ', 'lmg ',  ! 14
      &           'gwt ', 'FHB ', 'RES ', 'STR ', 'IBS ', 'CHD ', 'HFB6',  ! 21
      &           'LAK ', 'LPF ', 'DIS ', '    ', 'PVAL', '    ', 'HOB ',  ! 28
@@ -144,8 +141,6 @@ C
      &           'SWT ', 'cfp ', 'PCGN', '    ', '    ', 'UPW ', 'NWT ',  ! 63
      &           87*'    '/
 C     ------------------------------------------------------------------
-      INUNIT = 99
-      MAXUNIT= INUNIT
 !rsr ?? what should IOUTS be
       IOUTS = 432
       IGRID=1
@@ -153,23 +148,25 @@ C     ------------------------------------------------------------------
       gsfinit = 1
 C
 C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
-      IF ( Print_debug>-1 ) THEN
       WRITE (*, 3)
     3 FORMAT(///, 30X,
      &       'U.S. Geological Survey', /, 12X,
      &       'Coupled Groundwater and Surface-water FLOW model',
      &       ' (GSFLOW)', /,
-     &       29X, 'Version 1.1.5 01/15/2012', //, 8X,
+     &       29X, 'Version 1.1.6 03/20/2013', //, 8X,
      &       'An integration of the Precipitation-Runoff Modeling',
      &       ' System (PRMS)', /, 8X,
      &       'and the Modular Groundwater Model (MODFLOW-NWT',
      &       ' and MODFLOW-2005)')
-      WRITE ( *, 1 ) VERSION_NWT(:17), VERSION(:17)
-    1 FORMAT (/, 36X,'MODFLOW-NWT', /, 5X,
-     &        'U.S. GEOLOGICAL SURVEY MODULAR FINITE-DIFFERENCE',
-     &        ' GROUNDWATER FLOW MODEL', /, 18X, 'Newton Formulation,',
-     &        ' Version ', A, /, 17X,'Based on MODFLOW-2005 Version ',
-     &        A, /)
+      WRITE (*,1) MFVNAM(:4), VERSION2(:16), VERSION(:16)
+!gsf  WRITE (*,1) MFVNAM,VERSION2,VERSION3
+    1 FORMAT (/,34X,'MODFLOW',A,/,
+     &4X,'U.S. GEOLOGICAL SURVEY MODULAR FINITE-DIFFERENCE',
+     &' GROUNDWATER-FLOW MODEL',/,29X,'WITH NEWTON FORMULATION',
+     &  /,29X,'Version ',A/,20X,'BASED ON MODFLOW-2005 Version ',A/)
+!gsf &  /,20X,'SWR1 Version ',A/)
+      INUNIT = 99
+      NCVGERR=0
       IF ( Model.NE.1 ) WRITE (*, 8)
       IF ( Model/=2 ) THEN
         WRITE ( *, 5 ) Versn_gsfprms(20:34)
@@ -177,9 +174,7 @@ C2------WRITE BANNER TO SCREEN AND DEFINE CONSTANTS.
       ENDIF
     5 FORMAT (39X, 'PRMS', /, 11X,
      &    'U.S. GEOLOGICAL SURVEY PRECIPITATION-RUNOFF MODELING SYSTEM',
-     &    /, 27X, 'Version 3.', A, /)
-      ENDIF
-
+     &    /, 24X, 'Version 3.0.5 Tag: ', A, /)
       INQUIRE (FILE='modflow.bf',EXIST=exists)
       IF ( exists ) THEN
         OPEN (UNIT=377, FILE='modflow.bf', STATUS='OLD')
@@ -198,6 +193,7 @@ C
 C3------GET THE NAME OF THE NAME FILE
 !gsf  CALL GETNAMFIL(FNAME)
       ENDIF
+      MAXUNIT= INUNIT
 C
 C4------OPEN NAME FILE.
       INQUIRE (FILE=FNAME,EXIST=exists)
@@ -224,9 +220,8 @@ C
 C6------ALLOCATE AND READ (AR) PROCEDURE
       IGRID=1
       NSOL=1
-      CALL GWF2BAS7AR(INUNIT,CUNIT,VERSION,24,31,32,MAXUNIT,IGRID,12,
-     1                HEADNG,26,MFVNAM)
-      IF(IUNIT(59).GT.0) CALL PCGN2AR(IUNIT(59),IFREFM,MXITER,IGRID)
+      CALL GWF2BAS7AR(INUNIT,CUNIT,VERSION,VERSION2,24,31,32,MAXUNIT,
+     1                IGRID,12,HEADNG,26,MFVNAM)
       IF(IUNIT(50).GT.0 .AND. IUNIT(52).GT.0) THEN
         WRITE(IOUT,'(1X,/,1X,A)')
      1  'MNW1 and MNW2 cannot both be active in the same simulation'
@@ -240,13 +235,13 @@ C6------ALLOCATE AND READ (AR) PROCEDURE
 ! Allocate arrays for Newton Solver
       IF(IUNIT(63).GT.0) CALL GWF2NWT1AR(IUNIT(63),MXITER, 
      1                                   IUNIT(22),IGRID)
-      IF(IUNIT(62).GT.0) CALL GWF2UPW1AR(IUNIT(62), IGRID)
+      IF(IUNIT(62).GT.0) CALL GWF2UPW1AR(IUNIT(62),IGRID)
       IF(IUNIT(2).GT.0) CALL GWF2WEL7AR(IUNIT(2),IUNIT(63),IGRID)
 !gsf  IF(IUNIT(3).GT.0) CALL GWF2DRN7AR(IUNIT(3),IGRID)
 !gsf  IF(IUNIT(4).GT.0) CALL GWF2RIV7AR(IUNIT(4),IGRID)
 !gsf  IF(IUNIT(5).GT.0) CALL GWF2EVT7AR(IUNIT(5),IGRID)
       IF(IUNIT(7).GT.0) CALL GWF2GHB7AR(IUNIT(7),IGRID)
-!      IF(IUNIT(8).GT.0) CALL GWF2RCH7AR(IUNIT(8),IGRID)
+!gsf  IF(IUNIT(8).GT.0) CALL GWF2RCH7AR(IUNIT(8),IGRID)
       IF(IUNIT(16).GT.0) CALL GWF2FHB7AR(IUNIT(16),IGRID)
 !gsf  IF(IUNIT(17).GT.0) CALL GWF2RES7AR(IUNIT(17),IGRID)
 !gsf  IF(IUNIT(18).GT.0) CALL GWF2STR7AR(IUNIT(18),IGRID)
@@ -259,7 +254,7 @@ C6------ALLOCATE AND READ (AR) PROCEDURE
       END IF
       IF(IUNIT(44).GT.0) CALL GWF2SFR7AR(IUNIT(44),IUNIT(1),IUNIT(23),
      1                           IUNIT(37),IUNIT(15),NSOL,IOUTS,
-     2                           IUNIT(62),IGRID)
+     2                           IUNIT(62),IUNIT(63),IGRID)
       IF(IUNIT(55).GT.0) CALL GWF2UZF1AR(IUNIT(55),IUNIT(1),
      1                                   IUNIT(23),IUNIT(37),
      2                                   IUNIT(63),IGRID)
@@ -275,11 +270,11 @@ C6------ALLOCATE AND READ (AR) PROCEDURE
       IF(IUNIT(13).GT.0) CALL PCG7AR(IUNIT(13),MXITER,IGRID)
 c      IF(IUNIT(14).GT.0) CALL LMG7AR(IUNIT(14),MXITER,IGRID)
       IF(IUNIT(42).GT.0) CALL GMG7AR(IUNIT(42),MXITER,IGRID)
-      IF(IUNIT(50).GT.0) CALL GWF2MNW27AR(IUNIT(50),IGRID)
       IF(IUNIT(59).GT.0) CALL PCGN2AR(IUNIT(59),IFREFM,MXITER,IGRID)
+      IF(IUNIT(50).GT.0) CALL GWF2MNW27AR(IUNIT(50),IGRID)
       IF(IUNIT(51).GT.0) CALL GWF2MNW2I7AR(IUNIT(51),IUNIT(50),IGRID)
       IF(IUNIT(52).GT.0) CALL GWF2MNW17AR(IUNIT(52),IUNIT(9),
-     1                     IUNIT(10),0,IUNIT(13),
+     1                     IUNIT(10),IUNIT(63),0,IUNIT(13),
      2                     0,IUNIT(42),FNAME,IGRID)
 !gsf  IF(IUNIT(57).GT.0) CALL GWF2SWT7AR(IUNIT(57),IGRID)
 !gsf  IF(IUNIT(43).GT.0) CALL GWF2HYD7BAS7AR(IUNIT(43),IGRID)
@@ -291,6 +286,7 @@ c      IF(IUNIT(14).GT.0) CALL LMG7AR(IUNIT(14),MXITER,IGRID)
 !gsf 1                   CALL GWF2HYD7STR7AR(IUNIT(43),IGRID)
 !gsf  IF(IUNIT(43).GT.0 .AND. IUNIT(44).GT.0)
 !gsf 1                   CALL GWF2HYD7SFR7AR(IUNIT(43),IGRID)
+!gsf  IF(IUNIT(49).GT.0) CALL LMT7BAS7AR(INUNIT,CUNIT,IGRID)
 C
 C  Observation allocate and read
       CALL OBS2BAS7AR(IUNIT(28),IGRID)
@@ -302,7 +298,7 @@ C  Observation allocate and read
       Logunt = GET_FUNIT()
       OPEN ( UNIT=Logunt, FILE='gsflow.log' )
       WRITE (Logunt, 3)
-      WRITE ( Logunt, 1 ) VERSION_NWT(:17), VERSION(:17)
+      WRITE ( Logunt, 1 ) MFVNAM(:4), VERSION2(:17), VERSION(:16)
       IF ( Model/=1 ) WRITE ( Logunt, 8 )
     8 FORMAT (30X, 'Processes: GWF and OBS', /, 7X,
      &        'Packages: BAS, BCF, CHD, DE4, FHB, GAG, GHB,',
@@ -311,7 +307,7 @@ C  Observation allocate and read
     9 FORMAT (7X, 'Modules: ',
      &        'basin, basin_sum, cascade, ccsolrad, climate_hru',
      &        /, 16X,
-     &        'ddsolrad, gwflow, hru_sum, intcp, map_results, obs',
+     &        'ddsolrad, gwflow, intcp, map_results, obs',
      &        /, 16X,
      &        'potet_hamon, potet_jh, potet_pan, precip_1sta',
      &        /, 16X,
@@ -326,28 +322,19 @@ C  Observation allocate and read
         WRITE (Logunt, 9)
       ENDIF
       WRITE (Logunt, 490) ' Using NAME file: ', FNAME(:NC)
-      WRITE (Logunt, 15) Versn_gsfprms(:72), Versn, Version_uzf,
-     +                   Version_sfr, Version_lak
-      WRITE (*, 15) Versn_gsfprms(:72), Versn, Version_uzf,
-     +              Version_sfr, Version_lak
+      WRITE (Logunt, 15) Version_uzf, Version_sfr, Version_lak
+      WRITE (*, 15) Version_uzf, Version_sfr, Version_lak
       IF ( Model/=2 ) THEN
         WRITE ( Logunt, 16 ) Versn_gsfprms(20:34), Version_soilzone
-        WRITE ( *, 16 ) Versn_gsfprms(:72), Version_soilzone(:72)
+        WRITE ( *, 16 ) Version_soilzone(:72)
       ELSE
         PRINT *, ' '
       ENDIF
-   15 FORMAT (/, 4(A,/), A)
+   15 FORMAT (/, 2(A,/), A)
    16 FORMAT (2(A,/))
       WRITE (Logunt, 2) (IBDT(I),I=1,3),(IBDT(I),I=5,7)
 
       IF ( Model.NE.2 ) THEN
-        IF ( getparam('gsflow_modflow', 'mxsziter', 1, 'integer',
-     &       Mxsziter).NE.0 ) CALL read_error(2, 'mxsziter')
-        ! make the default number of soilzone iterations equal to the
-        ! maximum MF iterations, which is a good practice using NWT and cells=nhru
-        IF ( Mxsziter<1 ) Mxsziter = MXITER
-        ALLOCATE (Iter_cnt(Mxsziter))
-        Iter_cnt = 0
         Sziters = 0
         IF ( Timestep==0 ) KPER = 0
         IF ( .NOT.ALLOCATED(Stress_dates)) 
@@ -396,14 +383,6 @@ C7------SIMULATE EACH STRESS PERIOD.
      &                    Endtime
       ENDIF
     4 FORMAT (/, 2(A, I5, 2('/',I2.2), I3.2, 2(':',I2.2)), /)
-      
-! rsr, need to skip stress periods if < start time
-!      kkper_new = GET_KPER()
-!      DO i = 2, kkper_new
-!        KPER = i
-!        KKPER = i
-!        CALL READ_STRESS()
-!      ENDDO
 
       gsfinit = 0
 
@@ -423,16 +402,16 @@ C7------SIMULATE EACH STRESS PERIOD.
 C1------USE package modules.
       USE GLOBAL
       USE GWFBASMODULE
-      USE GWFHUFMODULE, ONLY: IOHUFHDS,IOHUFFLWS
-!gsf  USE GWFEVTMODULE, ONLY: NEVTOP
-!      USE GWFRCHMODULE, ONLY: NRCHOP
-      USE GWFSFRMODULE, ONLY: NUMTAB
+      USE GWFHUFMODULE, ONLY:IOHUFHDS,IOHUFFLWS
+!gsf  USE GWFEVTMODULE, ONLY:NEVTOP
+!gsf  USE GWFRCHMODULE, ONLY:NRCHOP
+      USE GWFSFRMODULE, ONLY:NUMTAB
       USE PCGMODULE
-c     USE LMGMODULE
-      USE PCGN
+c      USE LMGMODULE
       USE SIPMODULE
       USE DE4MODULE
       USE GMGMODULE
+      USE PCGN
       USE GWFNWTMODULE, ONLY:Itreal
       IMPLICIT NONE
       INTEGER I
@@ -445,6 +424,7 @@ c     USE LMGMODULE
 ! Local Variables
       INTEGER :: retval, II, kkper_new, KITER, IBDRET, iss
       INTEGER :: IC1, IC2, IR1, IR2, IL1, IL2, IDIR, day, gsflag
+      REAL :: BUDPERC
 !***********************************************************************
       gsfrun = 1
       
@@ -490,8 +470,8 @@ C7C1----CALCULATE TIME STEP LENGTH. SET HOLD=HNEW.
           IF(IUNIT(16).GT.0) CALL GWF2FHB7AD(IGRID)
           IF(IUNIT(22).GT.0) CALL GWF2LAK7AD(KKPER,KKSTP,IUNIT(15),
      1                                           IGRID)
-          IF( IUNIT(44).GT.0 .AND. NUMTAB.GT.0 ) CALL GWF2SFR7AD(
-     1                                                 IUNIT(22))
+          IF( IUNIT(44).GT.0 .AND. NUMTAB.GT.0 ) 
+     2                             CALL GWF2SFR7AD(IUNIT(22))
           IF(IUNIT(50).GT.0) THEN
             IF (IUNIT(1).GT.0) THEN
               CALL GWF2MNW27BCF(KPER,IGRID)
@@ -510,7 +490,7 @@ C7C1----CALCULATE TIME STEP LENGTH. SET HOLD=HNEW.
      &      ' -- STOP EXECUTION')
               CALL USTOP('MNW2 error-flow package')
             END IF
-            CALL GWF2MNW27AD(KKSTP,KKPER,IGRID)
+            CALL GWF2MNW27AD(KKSTP,KKPER,IUNIT(62),IGRID)
           END IF
           IF(IUNIT(52).GT.0) CALL GWF2MNW17AD(IUNIT(1),IUNIT(23),
      1                                       IUNIT(37),IUNIT(62),IGRID)
@@ -518,9 +498,8 @@ C7C1----CALCULATE TIME STEP LENGTH. SET HOLD=HNEW.
 C
 C---------INDICATE IN PRINTOUT THAT SOLUTION IS FOR HEADS
           CALL UMESPR('SOLVING FOR HEAD',' ',IOUT)
-
             WRITE (Logunt, 25) KPER, KSTP
-          IF ( Print_debug>-1 ) WRITE (*, 25) KPER, KSTP
+          IF ( Print_debug>-1 ) WRITE(*,25)KPER,KSTP
    25     FORMAT(' Solving:  Stress period: ',i5,4x,
      &       'Time step: ',i5,4x,'Ground-Water Flow Eqn.')
           ENDIF
@@ -555,13 +534,13 @@ C7C2A---FORMULATE THE FINITE DIFFERENCE EQUATIONS.
 !gsf 1                                                    1,IGRID)
 !gsf        END IF
             IF(IUNIT(7).GT.0) CALL GWF2GHB7FM(IGRID)
-!           IF(IUNIT(8).GT.0) THEN
-!           IF(IUNIT(22).GT.0.AND.NRCHOP.EQ.3) CALL GWF2LAK7ST(
-!     1                                                    0,IGRID)
-!           CALL GWF2RCH7FM(IGRID)
-!           IF(IUNIT(22).GT.0.AND.NRCHOP.EQ.3) CALL GWF2LAK7ST(
-!     1                                                    1,IGRID)
-!           END IF
+!gsf        IF(IUNIT(8).GT.0) THEN
+!gsf           IF(IUNIT(22).GT.0.AND.NRCHOP.EQ.3) CALL GWF2LAK7ST(
+!gsf  1                                                   0,IGRID)
+!gsf           CALL GWF2RCH7FM(IGRID)
+!gsf           IF(IUNIT(22).GT.0.AND.NRCHOP.EQ.3) CALL GWF2LAK7ST(
+!gsf  1                                                   1,IGRID)
+!gsf        END IF
             IF(IUNIT(16).GT.0) CALL GWF2FHB7FM(IGRID)
 !gsf        IF(IUNIT(17).GT.0) CALL GWF2RES7FM(IGRID)
 !gsf        IF(IUNIT(18).GT.0) CALL GWF2STR7FM(IGRID)
@@ -585,8 +564,8 @@ C7C2A---FORMULATE THE FINITE DIFFERENCE EQUATIONS.
               Maxgziter = KKITER
             ENDIF
             IF(IUNIT(55).GT.0) CALL GWF2UZF1FM(KKPER,KKSTP,KKITER,
-     1                           IUNIT(44),IUNIT(22),IUNIT(58),
-     2                           IUNIT(63),IGRID)
+     1                           IUNIT(44),IUNIT(22),IUNIT(63),0,
+     2                           IGRID)
             IF(IUNIT(44).GT.0) CALL GWF2SFR7FM(KKITER,KKPER,KKSTP,
      1                              IUNIT(22),IUNIT(63),0,IUNIT(55),
      2                              IGRID)
@@ -639,7 +618,8 @@ C7C2B---MAKE ONE CUT AT AN APPROXIMATE SOLUTION.
      2               HCLOSEPCG,RCLOSEPCG,ICNVG,KKSTP,KKPER,IPRPCG,
      3               MXITER,ITER1,NPCOND,NBPOL,NSTP(KKPER),NCOL,NROW,
      4               NLAY,NODES,RELAXPCG,IOUT,MUTPCG,IT1,DAMPPCG,BUFF,
-     5               HCSV,IERR,HPCG,DAMPPCGT,ISSFLG(KKPER),HDRY)
+     5               HCSV,IERR,HPCG,DAMPPCGT,ISSFLG(KKPER),HDRY,
+     6               IHCOFADD)
             END IF
 c            IF (IUNIT(14).GT.0) THEN
 c              CALL LMG7PNT(IGRID)
@@ -759,13 +739,14 @@ C7C4----CALCULATE BUDGET TERMS. SAVE CELL-BY-CELL FLOW TERMS.
 !gsf 1                                                     1,IGRID)
 !gsf      END IF
           IF(IUNIT(7).GT.0) CALL GWF2GHB7BD(KKSTP,KKPER,IGRID)
-!         IF(IUNIT(8).GT.0) THEN
-!           IF(IUNIT(22).GT.0.AND.NRCHOP.EQ.3) CALL GWF2LAK7ST(
-!     1                                                     0,IGRID)
-!           CALL GWF2RCH7BD(KKSTP,KKPER,IUNIT(44),IGRID)
-!           IF(IUNIT(22).GT.0.AND.NRCHOP.EQ.3) CALL GWF2LAK7ST(
-!     1                                                     1,IGRID)
-!         END IF
+!gsf      IF(IUNIT(8).GT.0) THEN
+!gsf        IF(IUNIT(22).GT.0.AND.NRCHOP.EQ.3) CALL GWF2LAK7ST(
+!gsf 1                                                    0,IGRID)
+!gsf        CALL GWF2RCH7BD(KKSTP,KKPER,IUNIT(44),IGRID)
+!gsf        CALL GWF2RCH7BD(KKSTP,KKPER,IGRID)
+!gsf        IF(IUNIT(22).GT.0.AND.NRCHOP.EQ.3) CALL GWF2LAK7ST(
+!gsf 1                                                    1,IGRID)
+!gsf      END IF
           IF(IUNIT(16).GT.0) CALL GWF2FHB7BD(KKSTP,KKPER,IGRID)
 !gsf      IF(IUNIT(17).GT.0) CALL GWF2RES7BD(KKSTP,KKPER,IGRID)
 !gsf      IF(IUNIT(18).GT.0) CALL GWF2STR7BD(KKSTP,KKPER,IGRID)
@@ -779,7 +760,8 @@ C7C4----CALCULATE BUDGET TERMS. SAVE CELL-BY-CELL FLOW TERMS.
      2                        IUNIT(8),IGRID)
           IF(IUNIT(22).GT.0) CALL GWF2LAK7BD(KKSTP,KKPER,IUNIT(15),
      1                       IUNIT(46),IUNIT(44),IUNIT(55),NSOL,IGRID)
-          IF(IUNIT(50).GT.0) CALL GWF2MNW27BD(KKSTP,KKPER,IGRID)
+          IF(IUNIT(50).GT.0) CALL GWF2MNW27BD(KKSTP,KKPER,IUNIT(62),
+     1                      IGRID)
           IF(IUNIT(52).GT.0) CALL GWF2MNW17BD(NSTP(KPER),KKSTP,KKPER,
      1                      IGRID)
 !gsf      IF(IUNIT(54).GT.0) CALL GWF2SUB7BD(KKSTP,KKPER,IGRID)
@@ -788,8 +770,9 @@ CLMT
 CLMT----CALL LINK-MT3DMS SUBROUTINES TO SAVE FLOW-TRANSPORT LINK FILE
 CLMT----FOR USE BY MT3DMS FOR TRANSPORT SIMULATION
 CLMT
-!gsf      INCLUDE 'lmt7.inc'
+!gsf      IF(IUNIT(49).GT.0) CALL LMT7BD(KKSTP,KKPER,IGRID)
 CLMT                              
+C
 C
 !  Set NWT heads to Hdry when head is below bottom.
           IF(IUNIT(63).GT.0) CALL GWF2NWT1BD()
@@ -811,7 +794,7 @@ C  Observation and hydrograph simulated equivalents
 !gsf 1                              CALL GWF2HYD7SFR7SE(1,IGRID)
 C
 C7C5---PRINT AND/OR SAVE DATA.
-          CALL GWF2BAS7OT(KKSTP,KKPER,ICNVG,1,IGRID)
+          CALL GWF2BAS7OT(KKSTP,KKPER,ICNVG,1,IGRID,BUDPERC)
 !gsf      IF(IUNIT(19).GT.0) CALL GWF2IBS7OT(KKSTP,KKPER,IUNIT(19),
 !gsf 1                                       IGRID)
           IF(IUNIT(37).GT.0)THEN
@@ -826,8 +809,17 @@ C7C5---PRINT AND/OR SAVE DATA.
 !gsf      IF(IUNIT(43).GT.0) CALL GWF2HYD7BAS7OT(KKSTP,KKPER,IGRID)
 C
 C7C6---JUMP TO END OF PROGRAM IF CONVERGENCE WAS NOT ACHIEVED.
-!gsf      IF(ICNVG.EQ.0) GO TO 110
-          IF ( ICNVG.EQ.0 ) THEN
+          IF(ICNVG.EQ.0) THEN
+            NCVGERR=NCVGERR+1
+            WRITE(IOUT,87) BUDPERC
+   87       FORMAT(1X,'FAILURE TO MEET SOLVER CONVERGENCE CRITERIA',/
+     1       1X,'BUDGET PERCENT DISCREPANCY IS',F10.4)
+!gsf        IF(ABS(BUDPERC).GT.STOPER) THEN
+!gsf          WRITE(IOUT,*) 'STOPPING SIMULATION'
+!gsf          GO TO 110
+!gsf        ELSE
+!gsf          WRITE(IOUT,*) 'CONTINUING EXECUTION'
+!gsf        END IF
             Convfail_cnt = Convfail_cnt + 1
             IF ( Print_debug>-1 )
      &           PRINT 9004, Nowtime(1), Nowtime(2), day, Convfail_cnt
@@ -840,6 +832,8 @@ C-----END OF TIME STEP (KSTP) AND STRESS PERIOD (KPER) LOOPS
 !gsf100 CONTINUE
 C
 C
+      IF(IUNIT(52).NE.0) CALL GWF2MNW17OT(IGRID)
+
       IF ( gsflag==1 ) THEN
         IF ( Szcheck==-1 .OR. Szcheck==1 ) Nszchanging = Nszchanging + 1
         Iter_cnt(Maxgziter) = Iter_cnt(Maxgziter) + 1
@@ -888,12 +882,9 @@ C
       USE GWFNWTMODULE, ONLY:LINMETH
       IMPLICIT NONE
       INTEGER, EXTERNAL :: getvar
-      LOGICAL lop
-      INTEGER i, istep
+      INTEGER istep
 !***********************************************************************
       gsfclean = 1
-
-      IF(IUNIT(52).NE.0) CALL GWF2MNW17OT(IGRID)
 C
 C8------END OF SIMULATION
 C-------SAVE RESTART RECORDS FOR SUB PACKAGE
@@ -922,7 +913,6 @@ C9------LAST BECAUSE IT DEALLOCATES IUNIT.
       IF(IUNIT(10).GT.0) CALL DE47DA(IGRID)
       IF(IUNIT(13).GT.0) CALL PCG7DA(IGRID)
 c      IF(IUNIT(14).GT.0) CALL LMG7DA(IGRID)
-      IF(IUNIT(59).GT.0) CALL PCGN2DA(IGRID)
       IF(IUNIT(63).GT.0) THEN
         IF(LINMETH.EQ.1) THEN
           CALL GMRES7DA(IGRID)
@@ -947,6 +937,7 @@ c      IF(IUNIT(14).GT.0) CALL LMG7DA(IGRID)
 !gsf  IF(IUNIT(39).GT.0) CALL GWF2ETS7DA(IGRID)
 !gsf  IF(IUNIT(40).GT.0) CALL GWF2DRT7DA(IGRID)
       IF(IUNIT(42).GT.0) CALL GMG7DA(IGRID)
+      IF(IUNIT(59).GT.0) CALL PCGN2DA(IGRID)
       IF(IUNIT(44).GT.0) CALL GWF2SFR7DA(IGRID)
       IF(IUNIT(46).GT.0) CALL GWF2GAG7DA(IGRID)
       IF(IUNIT(50).GT.0) CALL GWF2MNW27DA(IGRID)
@@ -962,6 +953,7 @@ c      IF(IUNIT(14).GT.0) CALL LMG7DA(IGRID)
 !gsf  IF(IUNIT(36).GT.0) CALL OBS2STR7DA(IGRID)
       IF(IUNIT(38).GT.0) CALL OBS2CHD7DA(IGRID)
 !gsf  IF(IUNIT(43).GT.0) CALL GWF2HYD7DA(IGRID)
+!gsf  IF(IUNIT(49).GT.0) CALL LMT7DA(IGRID)
       CALL GWF2BAS7DA(IGRID)
 C
       IF ( Model.NE.2 ) THEN
@@ -988,19 +980,16 @@ C
       ENDIF
 
 C10-----END OF PROGRAM.
-      IF(ICNVG.EQ.0) THEN
-        WRITE(*,*) 'FAILED TO MEET SOLVER CONVERGENCE CRITERIA'
-        WRITE (Logunt, *) ' FAILED TO MEET SOLVER CONVERGENCE CRITERIA'
+      IF(NCVGERR.GT.0) THEN
+        WRITE(*,*) 'FAILED TO MEET SOLVER CONVERGENCE CRITERIA ',
+     1          NCVGERR,' TIME(S)'
+        WRITE (Logunt, *) 'FAILED TO MEET SOLVER CONVERGENCE CRITERIA ',
+     1          NCVGERR,' TIME(S)'
       ELSE
         WRITE(*,*) ' Normal termination of simulation'
         WRITE (Logunt, *) ' Normal termination of simulation'
       END IF
       CLOSE (Logunt)
-
-      DO i = 8, NIUNIT
-        INQUIRE (UNIT=i, OPENED=lop)
-        IF (lop) CLOSE (UNIT=i)
-      ENDDO
 
 !gsf  CALL USTOP(' ')
 C
@@ -1027,11 +1016,14 @@ C     ******************************************************************
 C     GET THE NAME OF THE NAME FILE
 C     ******************************************************************
 C        SPECIFICATIONS:
+      IMPLICIT NONE
 C
 C     ------------------------------------------------------------------
       CHARACTER*(*) FNAME
       CHARACTER*200 COMLIN
       LOGICAL EXISTS
+      INTEGER ICOL, ISTART, ISTOP, N, NC
+      REAL R
 C     ------------------------------------------------------------------
 C
 C Get name file from command line or user interaction.
@@ -1080,8 +1072,13 @@ C     ******************************************************************
       USE PRMS_MODULE, ONLY: Print_debug
 C
 C        SPECIFICATIONS:
+      IMPLICIT NONE
 C     ------------------------------------------------------------------
-      INTEGER IBDT(8), IEDT(8), IDPM(12)
+      INTEGER, INTENT(IN) :: IOUT, IBDT(8), IPRTIM
+      INTEGER IBD, IED, MB, ME, MC, NM, M, NSPD, I, NDAYS, LEAP
+      INTEGER NHOURS, NMINS, NSECS, MSECS, NRSECS
+      INTEGER IEDT(8), IDPM(12)
+      REAL ELSEC, RSECS
       DATA IDPM/31,28,31,30,31,30,31,31,30,31,30,31/ ! Days per month
       DATA NSPD/86400/  ! Seconds per day
 C     ------------------------------------------------------------------
@@ -1213,16 +1210,17 @@ C----------READ USING PACKAGE READ AND PREPARE MODULES.
 !gsf    IF(IUNIT(5).GT.0) CALL GWF2EVT7RP(IUNIT(5),IGRID)
         IF(IUNIT(7).GT.0) CALL GWF2GHB7RP(IUNIT(7),IGRID)
 !        IF(IUNIT(8).GT.0) CALL GWF2RCH7RP(IUNIT(8),IUNIT(44),IGRID)
+!gsf    IF(IUNIT(8).GT.0) CALL GWF2RCH7RP(IUNIT(8),IGRID)
 !gsf    IF(IUNIT(17).GT.0) CALL GWF2RES7RP(IUNIT(17),IGRID)
 !gsf    IF(IUNIT(18).GT.0) CALL GWF2STR7RP(IUNIT(18),IGRID)
 !gsf    IF(IUNIT(43).GT.0 .AND. IUNIT(18).GT.0)
 !gsf 1                     CALL GWF2HYD7STR7RP(IUNIT(43),KKPER,IGRID)
         IF(IUNIT(20).GT.0) CALL GWF2CHD7RP(IUNIT(20),IGRID)
         IF(IUNIT(44).GT.0) CALL GWF2SFR7RP(IUNIT(44),IUNIT(15),
-     1                                     IUNIT(22),KKPER,KKSTP,
-     2                                     NSOL,IOUTS,IUNIT(1),
-     3                                     IUNIT(23),IUNIT(37),
-     4                                     IUNIT(62), IGRID)
+     1                                     IUNIT(22),KKPER,KKSTP,NSOL,
+     2                                     IOUTS,IUNIT(1),IUNIT(23),
+     3                                     IUNIT(37), IUNIT(62),
+     4                                     IUNIT(55), IGRID)
 !gsf    IF(IUNIT(43).GT.0 .AND. IUNIT(44).GT.0)
 !gsf 1                     CALL GWF2HYD7SFR7RP(IUNIT(43),KKPER,IGRID)
         IF(IUNIT(55).GT.0) CALL GWF2UZF1RP(IUNIT(55),KKPER,IUNIT(44),
@@ -1234,9 +1232,9 @@ C----------READ USING PACKAGE READ AND PREPARE MODULES.
      1             IUNIT(22),IUNIT(55),NSOL,IGRID)
 !gsf    IF(IUNIT(39).GT.0) CALL GWF2ETS7RP(IUNIT(39),IGRID)
 !gsf    IF(IUNIT(40).GT.0) CALL GWF2DRT7RP(IUNIT(40),IGRID)
-        IF(IUNIT(50).GT.0) CALL GWF2MNW27RP(IUNIT(50),KKPER,IUNIT(9),
-     1                     IUNIT(10),0,IUNIT(13),0,IUNIT(42),IUNIT(63),
-     2                     IUNIT(15),IGRID)
+        IF(IUNIT(50).GT.0) CALL GWF2MNW27RP(IUNIT(50),kper,IUNIT(9),
+     +                                      IUNIT(10),0,IUNIT(13),
+     +                                      IUNIT(15),IUNIT(63),IGRID)
         IF(IUNIT(51).GT.0.AND.KKPER.EQ.1) CALL GWF2MNW2I7RP(IUNIT(51),
      1                     0,IGRID)
         IF(IUNIT(52).GT.0) CALL GWF2MNW17RP(IUNIT(52),IUNIT(1),

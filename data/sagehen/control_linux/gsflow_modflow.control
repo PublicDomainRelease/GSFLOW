@@ -8,5 +8,9 @@ MODFLOW
 modflow_name
 1
 4
-../input/modflow/sagehen_linux.mf.nam
-
+./sagehen_linux.mf.nam
+####
+param_file
+1
+4
+../input/prms/gsflow.params

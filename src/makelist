@@ -1,9 +1,14 @@
 
 #-------------------------------------------------------------------
-# $Id: makelist 2546 2011-03-03 17:32:28Z rsregan $
+# $Id: makelist 4273 2012-03-09 00:20:14Z rsregan $
 #-------------------------------------------------------------------
 
-MMFDIR      = ./mmf
+MMFDIR      = ../mms
+PRMSDIR     = ../prms
+GSFLOWDIR   = ../gsflow
+MODFLOWDIR  = ../modflow
+BINDIR      = ../../bin
+LIBDIR      = ../../lib
 
 #########################################################
 # Configure tags for each system
@@ -18,7 +23,7 @@ LDFLAGS		=$(OPTLEVEL)
 ##########################################################
 # Define the Fortran compile flags
 ##########################################################
-#FFLAGS= $(OPTLEVEL) -fbounds-check -fno-second-underscore
+#FFLAGS= $(OPTLEVEL) -fbounds-check -fno-second-underscore -Wall
 FFLAGS= $(OPTLEVEL) -fno-second-underscore
 FC		= gfortran
 

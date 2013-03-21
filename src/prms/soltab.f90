@@ -19,13 +19,13 @@
 ! TWOPI ~ 6.2831853071786
 ! RADIANS ~ 0.017453292519943
 ! PI_12 ~ 3.8197186342055
-      INTEGER, SAVE :: Hemisphere
-      DOUBLE PRECISION, SAVE :: Basin_lat
+      CHARACTER(LEN=6), PARAMETER :: MODNAME = 'soltab'
+      CHARACTER(LEN=26), PARAMETER :: PROCNAME = 'Solar Table'
       DOUBLE PRECISION, SAVE, ALLOCATABLE :: Hru_cossl(:), Soltab_basinpotsw(:)
       DOUBLE PRECISION, SAVE, ALLOCATABLE :: Soltab_sunhrs(:, :)
       DOUBLE PRECISION, SAVE, ALLOCATABLE :: Soltab_potsw(:, :), Soltab_horad_potsw(:, :)
 !   Declared Parameters
-      REAL, SAVE, ALLOCATABLE :: Hru_aspect(:), Hru_lat(:), Hru_slope(:)
+      REAL, SAVE, ALLOCATABLE :: Hru_aspect(:), Hru_slope(:)
       END MODULE PRMS_SOLTAB
 
 !***********************************************************************
@@ -50,44 +50,39 @@
 !***********************************************************************
 !     sthdecl - set up parameters for solar radiation computations
 !   Declared Parameters
-!     hru_aspect, hru_lat, hru_slope, hru_area
+!     hru_aspect, hru_lat, hru_slope
 !***********************************************************************
       INTEGER FUNCTION sthdecl()
-      USE PRMS_SOLTAB, ONLY: Hru_slope, Hru_aspect, Hru_lat
-      USE PRMS_MODULE, ONLY: Nhru, Print_debug, Version_soltab, Soltab_nc
+      USE PRMS_SOLTAB, ONLY: Hru_slope, Hru_aspect, MODNAME, PROCNAME
+      USE PRMS_MODULE, ONLY: Nhru, Version_soltab, Soltab_nc
       IMPLICIT NONE
 ! Functions
       INTRINSIC INDEX
       INTEGER, EXTERNAL :: declmodule, declparam
       EXTERNAL read_error
+! Local Variables
+      INTEGER i
 !***********************************************************************
       sthdecl = 1
 
-      Version_soltab = '$Id: soltab.f90 3894 2011-11-07 21:19:32Z rsregan $'
-      Soltab_nc = INDEX( Version_soltab, ' $' ) + 1
-      IF ( Print_debug>-1 ) THEN
-        IF ( declmodule(Version_soltab(:Soltab_nc))/=0 ) STOP
-      ENDIF
+      Version_soltab = '$Id: soltab.f90 5008 2012-11-02 18:00:54Z rsregan $'
+      Soltab_nc = INDEX( Version_soltab, 'Z' )
+      i = INDEX ( Version_soltab, '.f90' ) + 3
+      IF ( declmodule(Version_soltab(6:i), PROCNAME, Version_soltab(i+2:Soltab_nc))/=0 ) STOP
 
 !   Declared Parameters
       ALLOCATE ( Hru_slope(Nhru) )
-      IF ( declparam('soltab', 'hru_slope', 'nhru', 'real', &
+      IF ( declparam(MODNAME, 'hru_slope', 'nhru', 'real', &
            '0.0', '0.0', '10.0', &
            'HRU slope', &
            'Slope of each HRU, specified as change in vertical length divided by change in horizontal length', &
            'decimal fraction')/=0 ) CALL read_error(1, 'hru_slope')
 
       ALLOCATE ( Hru_aspect(Nhru) )
-      IF ( declparam('soltab', 'hru_aspect', 'nhru', 'real', &
+      IF ( declparam(MODNAME, 'hru_aspect', 'nhru', 'real', &
            '0.0', '0.0', '360.0', &
            'HRU aspect', 'Aspect of each HRU', &
            'degrees')/=0 ) CALL read_error(1, 'hru_aspect')
-
-      ALLOCATE ( Hru_lat(Nhru) )
-      IF ( declparam('soltab', 'hru_lat', 'nhru', 'real', &
-           '40.0', '-90.0', '90.0', &
-           'HRU latitude', 'Latitude of each HRU', &
-           'degrees')/=0 ) CALL read_error(1, 'hru_lat')
 
       sthdecl = 0
       END FUNCTION sthdecl
@@ -101,17 +96,17 @@
       INTEGER FUNCTION sthinit()
       USE PRMS_SOLTAB
       USE PRMS_MODULE, ONLY: Nhru, Print_debug
-      USE PRMS_BASIN, ONLY: Hru_area, Basin_area_inv, Hru_type, Active_hrus, Hru_route_order
+      USE PRMS_BASIN, ONLY: Hru_type, Active_hrus, Hru_route_order, Basin_lat, Hru_lat
       IMPLICIT NONE
 ! Functions
       INTRINSIC SIN, COS, DBLE
 !     INTRINSIC ASIN
-      INTEGER, EXTERNAL :: getparam, get_ftnunit
-      EXTERNAL compute_soltab, read_error
+      INTEGER, EXTERNAL :: getparam
+      EXTERNAL compute_soltab, read_error, PRMS_open_output_file
 ! Local Variables
       CHARACTER(LEN=12) :: output_path
       INTEGER :: jd, j, n, file_unit, ierr, nn
-      REAL :: lat, dmy, dmy2
+      REAL :: lat
       DOUBLE PRECISION :: basin_cossl
       DOUBLE PRECISION, ALLOCATABLE :: basin_sunhrs(:)
       DOUBLE PRECISION, ALLOCATABLE :: e(:), dm(:)
@@ -126,9 +121,8 @@
 
       ALLOCATE ( basin_sunhrs(366), e(366), dm(366) )
 
-      IF ( getparam('soltab', 'hru_slope', Nhru, 'real', Hru_slope)/=0 ) CALL read_error(2, 'hru_slope')
-      IF ( getparam('soltab', 'hru_aspect', Nhru, 'real', Hru_aspect)/=0 ) CALL read_error(2, 'hru_aspect')
-      IF ( getparam('soltab', 'hru_lat', Nhru, 'real', Hru_lat)/=0 ) CALL read_error(2, 'hru_lat')
+      IF ( getparam(MODNAME, 'hru_slope', Nhru, 'real', Hru_slope)/=0 ) CALL read_error(2, 'hru_slope')
+      IF ( getparam(MODNAME, 'hru_aspect', Nhru, 'real', Hru_aspect)/=0 ) CALL read_error(2, 'hru_aspect')
 
       DO jd = 1, 366
         jddbl = DBLE(jd)
@@ -155,10 +149,8 @@
       ALLOCATE ( Soltab_horad_potsw(366, Nhru) )
       Soltab_sunhrs = 0.0D0
       Soltab_potsw = 0.0D0
-      Basin_lat = 0.0D0
       Soltab_horad_potsw = 0.0D0
       ierr = 0
-      dmy2 = 0.0
       DO nn = 1, Active_hrus
         n = Hru_route_order(nn)
         IF ( Hru_aspect(n)<0.0 ) THEN
@@ -177,36 +169,24 @@
           ierr = 1
         ENDIF
 
-        CALL compute_soltab(e, dm, dmy2, Hru_aspect(n), Hru_lat(n), &
+        CALL compute_soltab(e, dm, 0.0, 0.0, Hru_lat(n), &
                             Hru_cossl(n), Soltab_horad_potsw(1, n), &
                             Soltab_sunhrs(1, n), Hru_type(n), n)
         CALL compute_soltab(e, dm, Hru_slope(n), Hru_aspect(n), &
                             Hru_lat(n), Hru_cossl(n), Soltab_potsw(1, n), &
                             Soltab_sunhrs(1, n), Hru_type(n), n)
-        Basin_lat = Basin_lat + Hru_lat(n)*Hru_area(n)
       ENDDO
       IF ( ierr==1 ) STOP '**Solar table parameter specification error**'
-      Basin_lat = Basin_lat*Basin_area_inv
 
-      dmy = 0.0
-      dmy2 = 0.0
       lat = SNGL( Basin_lat )
-      CALL compute_soltab(e, dm, dmy2, dmy, lat, basin_cossl, &
+      CALL compute_soltab(e, dm, 0.0, 0.0, lat, basin_cossl, &
                           Soltab_basinpotsw, basin_sunhrs, 0, 0)
-
-      ! used in solrad modules to winter/summer radiation adjustment
-      IF ( Basin_lat>0.0 ) THEN
-        Hemisphere = 0 ! Northern
-      ELSE
-        Hemisphere = 1 ! Southern
-      ENDIF
 
       IF ( Print_debug==5 ) THEN
         output_path = 'soltab_debug'
-        file_unit = get_ftnunit(191)
         PRINT *, ''
         PRINT *, 'soltab debug data written to: ', output_path
-        OPEN ( UNIT=file_unit, FILE=output_path )
+        CALL PRMS_open_output_file(file_unit, output_path, 'xxx', ierr)
         DO n = 1, Nhru
           WRITE ( file_unit, * ) 'HRU:', n
           WRITE ( file_unit, * ) '***Soltab_sunhrs***'
@@ -236,7 +216,7 @@
 !     data jday/356,10,23,38,51,66,80,94,109,123,138,152,173/
       ENDIF
 
-      DEALLOCATE ( basin_sunhrs, e, dm, Hru_slope, Hru_aspect, Hru_lat )
+      DEALLOCATE ( basin_sunhrs, e, dm, Hru_aspect )
 
       sthinit = 0
       END FUNCTION sthinit

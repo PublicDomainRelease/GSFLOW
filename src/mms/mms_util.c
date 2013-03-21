@@ -11,9 +11,9 @@
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
- *  $Revision: 4065 $
+ *  $Revision: 4870 $
  *       $Log: alloc_space.c,v $
  *       Revision 1.19  1996/04/29 16:22:56  markstro
  *       Unknown
@@ -181,8 +181,8 @@ void alloc_space (void) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
-   $Revision: 4065 $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
+   $Revision: 4870 $
         $Log: batch_run.c,v $
         Revision 1.10  2000/02/18 18:27:03  markstro
         Made previous Julian time a global.  It is set to -1.0 before the run
@@ -262,7 +262,7 @@ int BATCH_run (void) {
    }
 
    if (call_modules("initialize")) {
-      closeUserFiles();
+      //closeUserFiles();
       fprintf (stderr, "single_run:  Problem with initializing modules.");
       return(1);
    }
@@ -291,7 +291,7 @@ int BATCH_run (void) {
          errno = 0;
 
          if(call_modules("run")) {
-            closeUserFiles ();
+            //closeUserFiles ();
             fprintf (stderr, "Problem while running modules.");
             return(1);
          }
@@ -337,9 +337,9 @@ int BATCH_run (void) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: single_run.c,v $
         Revision 1.47  2006/11/27 14:30:50  rsregan
 	changed GIS file to animation (ani) file
@@ -1036,7 +1036,7 @@ char *single_run_post_cleanup () {
 * close files and tidy up
 */
   DATA_close ();
-  closeUserFiles();
+  //closeUserFiles();
 
   if (stats_flag)
     fclose(statvar_file);
@@ -1104,9 +1104,9 @@ char *single_run_post_cleanup () {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: build_lists.c,v $
         Revision 1.4  1996/04/09 21:04:02  markstro
         (1) Work on control files
@@ -1238,9 +1238,9 @@ void ADD_to_list (LIST *list, void *itm) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         Revision 1.12  2006/11/27  rsregan
 	change gis to ani
 
@@ -1459,9 +1459,9 @@ char *CHECK_map_vars (void) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: control_addr.c,v $
         Revision 1.5  1996/04/09 21:04:03  markstro
         (1) Work on control files
@@ -1526,9 +1526,9 @@ CONTROL *control_addr (char *key) {
  * control_darray - returns double *
  * control_sarray - returns char ** - string
 
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: control_array.c,v $
         Revision 1.7  1996/02/19 19:59:35  markstro
         Now lints pretty clean
@@ -1660,9 +1660,9 @@ char *control_sarray (char *key, long ind) {
  * control_dvar - returns double *
  * control_svar - returns char ** - string
 
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: control_var.c,v $
         Revision 1.6  1996/02/19 19:59:36  markstro
         Now lints pretty clean
@@ -1827,9 +1827,9 @@ long control_integer_ (int *retval, char *key, ftnlen len) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: create_vstats.c,v $
         Revision 1.10  1996/06/28 19:32:22  markstro
         (1) Fixed 3d control window.
@@ -1965,9 +1965,9 @@ void create_vstats (void) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: decl_control.c,v $
         Revision 1.12  1996/04/09 21:04:05  markstro
         (1) Work on control files
@@ -2218,9 +2218,9 @@ void decl_control_ (char *ckey, ftnint *ctype, ftnint *csize, void *value, ftnle
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: decldim.c,v $
         Revision 1.13  1996/09/10 16:25:21  markstro
         Unknown
@@ -2345,10 +2345,14 @@ long decldim (char *name, long value, long max, char *descr) {
 * check that name does not already exist
 */
 
-   if (dim_addr(name) != NULL) {
-      (void)fprintf(stderr,
-          "ERROR - decldim - dimension '%s' already exists.\n", name);
-      return(1);
+
+	dim = dim_addr(name);
+   if (dim != NULL) {
+		// This dimension has already been declared. Set the size to the
+		// value of the last call.
+		dim->value = value;
+
+      return(0);
    }
 
    if (Mdebuglevel >= M_FULLDEBUG) {
@@ -2443,10 +2447,10 @@ long declfix_ (char *dname, ftnint *dval, ftnint *dmax, char *ddescr, ftnlen nam
  | RETURN VALUE : 
  | RESTRICTIONS :
 \*--------------------------------------------------------------------*/
-long declmodule (char *id) {
+long declmodule (char *mod_name, char * modType, char *id) {
 	char *foo, *cp;
 
-	printf ("declmodule: %s\n", id);
+	printf ("%s %s, version: %s\n", modType, mod_name, id);
 
 	foo = strdup (id);
 	foo = foo + 5;
@@ -2456,7 +2460,7 @@ long declmodule (char *id) {
 	}
 	
 	current_module = (MODULE_DATA *) umalloc (sizeof(MODULE_DATA));
-	current_module->name = strdup (foo);
+	current_module->name = strdup (mod_name);
 	current_module->version = strdup (id);
 	current_module->params = ALLOC_list ("params", 0, 100);
 	current_module->vars = ALLOC_list ("vars", 0, 100);
@@ -2465,15 +2469,39 @@ long declmodule (char *id) {
 
 	return 0;
 }
+///*--------------------------------------------------------------------*\
+// | FUNCTION     : getmodule
+// | COMMENT		:
+// | PARAMETERS   :
+// | RETURN VALUE : 
+// | RESTRICTIONS :
+//\*--------------------------------------------------------------------*/
+//MODULE_DATA * getmodule (char *key) { 
+//	MODULE_DATA *module;
+//	long i;
+//
+//	for (i = 0; i < module_db->count; i++) {
+//		module = (MODULE_DATA *)(module_db->itm[i]);
+//	   printf ("comparing %s to %s\n", key, module->name);
+//		if (!strcmp(module->name, key))
+//		return module;
+//	}
+//
+//	/* if no match found, return null */
+//	return NULL;
+//}
+
 /*--------------------------------------------------------------------*\
- | FUNCTION     : set_source_id_
+ | FUNCTION     : declmodule_
  | COMMENT		: called from Fortran to set the version id for the module.
  | PARAMETERS   :
  | RETURN VALUE : 
  | RESTRICTIONS :
 \*--------------------------------------------------------------------*/
-long declmodule_ (char *id, ftnlen idlen) {
+long declmodule_ (char *mn, char *mt, char *id, ftnlen mnlen , ftnlen mtlen , ftnlen idlen) {
 	char *id_foo;
+	char *mt_foo;
+	char *mn_foo;
 
 /*
 * copy args to new strings, and terminate correctly
@@ -2481,7 +2509,16 @@ long declmodule_ (char *id, ftnlen idlen) {
 	id_foo = (char *) umalloc(idlen + 1);
 	strncpy(id_foo, id, idlen);
 	id_foo[idlen] = '\0';
-	declmodule (id_foo);
+
+	mt_foo = (char *) umalloc(mtlen + 1);
+	strncpy(mt_foo, mt, mtlen);
+	mt_foo[mtlen] = '\0';
+
+	mn_foo = (char *) umalloc(mnlen + 1);
+	strncpy(mn_foo, mn, mnlen);
+	mn_foo[mnlen] = '\0';
+
+	declmodule (mn_foo, mt_foo, id_foo);
 	return 0;
 }
 
@@ -2507,9 +2544,9 @@ long declmodule_ (char *id, ftnlen idlen) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: declparam.c,v $
         Revision 1.21  2001/05/04 20:58:22  markstro
         Added the xml print file
@@ -2850,11 +2887,12 @@ long declparam (char *module, char *name, char *dimen, char *type, char *value,
 	if (!(var_type = VAR_type (type)))
 		return (0);
 
-	// DANGER - markstro - this overrides the module name that is passed in
-	// from the module and replaces it with the name of the last module that
-	// called declmodule
-	module = current_module->name;
-	ADD_to_list (current_module->params, pkey);
+//Not sure why this stuff is needed. Don't seem to be using it
+	//// DANGER - markstro - this overrides the module name that is passed in
+	//// from the module and replaces it with the name of the last module that
+	//// called declmodule
+	//module = current_module->name;
+	//ADD_to_list (current_module->params, pkey);
 
 	if (CHECK_param_in_db (pkey, module, dimen, var_type, value,
 									minimum, maximum, descr, help, units)) {
@@ -3238,9 +3276,9 @@ static int VAR_type (char *type) {
  *
  * Returns 0 if successful, 1 otherwise.
 
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: declvar.c,v $
         Revision 1.17  1999/10/22 17:14:35  markstro
         Added private variables
@@ -3383,6 +3421,7 @@ long declvar (char *module, char *name, char *dimen, long maxsize, char *type,
   long i, size;
 
   PUBVAR **vars, *var;
+  //MODULE_DATA *mod_data;
 
   /*
    * realloc if too large
@@ -3414,11 +3453,10 @@ long declvar (char *module, char *name, char *dimen, long maxsize, char *type,
               return(1); }
   }
 
-  	// DANGER - markstro - this overrides the module name that is passed in
-	// from the module and replaces it with the name of the last module that
-	// called declmodule
-	module = current_module->name;
-	ADD_to_list (current_module->vars, vkey);
+// Not sure why this stuff is needed, so I commented it out.
+
+	//mod_data = getmodule(module);
+	//ADD_to_list (mod_data->vars, vkey);
 
   /*
    * convert fortran types to C equivalents
@@ -3725,9 +3763,9 @@ long declpri (char *name, long size, char *type, char *value) {
  * returns a pointer to a DIMEN struct which contains the given name
  * returns NULL if name not found
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: dim_addr.c,v $
         Revision 1.7  1996/04/29 16:23:00  markstro
         Unknown
@@ -3817,9 +3855,9 @@ char *dim_notes (char *ch_ptr) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: dprint.c,v $
         Revision 1.5  1996/02/19 19:59:54  markstro
         Now lints pretty clean
@@ -3838,136 +3876,136 @@ char *dim_notes (char *ch_ptr) {
 
 /**1************************ INCLUDE FILES ****************************/
 
-#define DPRINT_C
-#include <string.h>
-#include "mms.h"
-
-/**2************************* LOCAL MACROS ****************************/
-
-/**3************************ LOCAL TYPEDEFS ***************************/
-
-/**4***************** DECLARATION LOCAL FUNCTIONS *********************/
-
-/**5*********************** LOCAL VARIABLES ***************************/
-
-/**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
-/*--------------------------------------------------------------------*\
- | FUNCTION     : dpstr
- | COMMENT		: print string
- | dpstr_ is called from Fortran as 'call dpstr(string, dlevel)'
- | dpstr is called from C as 'dpstr(string, dlevel)
- | PARAMETERS   :
- | RETURN VALUE : 
- | RESTRICTIONS :
-\*--------------------------------------------------------------------*/
-void dpstr_ (char *str, ftnint *dlevel, ftnlen stringlen) {
-
-  char *string;
-
-  /*
-   * act only if the current debug level equals or exceeds
-   * that specified in the print
-   */
-
-  if(*dlevel > Mdebuglevel)
-    return;
-
-  /*
-   * copy string to new string
-   */
-
-  string = (char *) umalloc(stringlen + 1);
-  strncpy(string, str, stringlen);
-  string[stringlen] = '\0';
-
-  (void)fprintf(stderr, "%s\n", string);
-  
-  ufree(string);
-
-}
-
-/*--------------------------------------------------------------------*\
- | FUNCTION     : dpstr
- | COMMENT		:
- | PARAMETERS   :
- | RETURN VALUE : 
- | RESTRICTIONS :
-\*--------------------------------------------------------------------*/
-void dpstr (char *string, long dlevel) {
-
-  if(dlevel > Mdebuglevel)
-    return;
-
-  (void)fprintf(stderr, "%s\n", string);
-
-}
-
-/*--------------------------------------------------------------------*\
- | FUNCTION     : dpint4_
- | COMMENT		: The fortran call is:
- |     call dpint4(string, array, n, dlevel)
- | PARAMETERS   :
- |     where 'string' is a string,
- |           'array' is the INTEGER*4 of long array or scalar to be printed
- |           'n' is the number of values in the array, 1 if a scalar.
- |           'dlevel' is the debug level
- | RETURN VALUE : 
- | RESTRICTIONS :
-\*--------------------------------------------------------------------*/
-void dpint4_ (char *str, ftnint *array, ftnint *n, ftnint *dlevel, ftnlen stringlen) {
-
-  char *string;
-  int i;
-
-  if(*dlevel > Mdebuglevel)
-    return;
-
-  /*
-   * copy string to new string
-   */
-
-  string = (char *) umalloc(stringlen + 1);
-  strncpy(string, str, stringlen);
-  string[stringlen] = '\0';
-
-  (void)fprintf(stderr, "%s ",string);
-
-  for (i=0; i < *n; i++)
-/*
-    (void)fprintf(stderr, " %ld",array[i]);
-*/
-    (void)fprintf(stderr, " %d",array[i]);
-
-  (void)fprintf(stderr, "\n");
-
-}
-
-/*--------------------------------------------------------------------*\
- | FUNCTION     : dplong
- | COMMENT		: print long from C The C call is
- |     dplong(string, array, n, dlevel)
- | PARAMETERS   :where 'string' is a string,
- |           'array' is the INTEGER*4 of long array or scalar to be printed
- |           'n' is the number of values in the array, 1 if a scalar.
- |           'dlevel' is the debug level
- | RETURN VALUE : 
- | RESTRICTIONS :
-\*--------------------------------------------------------------------*/
-void dplong (char *string, long *array, long n, long dlevel) {
-
-  int i;
-
-  if(dlevel > Mdebuglevel)
-    return;
-
-  (void)fprintf(stderr, "%s ",string);
-
-  for (i=0; i < n; i++)
-    (void)fprintf(stderr, " %ld", array[i]);
-
-  (void)fprintf(stderr, "\n");
-
-}
+//#define DPRINT_C
+//#include <string.h>
+//#include "mms.h"
+//
+///**2************************* LOCAL MACROS ****************************/
+//
+///**3************************ LOCAL TYPEDEFS ***************************/
+//
+///**4***************** DECLARATION LOCAL FUNCTIONS *********************/
+//
+///**5*********************** LOCAL VARIABLES ***************************/
+//
+///**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
+///*--------------------------------------------------------------------*\
+// | FUNCTION     : dpstr
+// | COMMENT		: print string
+// | dpstr_ is called from Fortran as 'call dpstr(string, dlevel)'
+// | dpstr is called from C as 'dpstr(string, dlevel)
+// | PARAMETERS   :
+// | RETURN VALUE : 
+// | RESTRICTIONS :
+//\*--------------------------------------------------------------------*/
+//void dpstr_ (char *str, ftnint *dlevel, ftnlen stringlen) {
+//
+//  char *string;
+//
+//  /*
+//   * act only if the current debug level equals or exceeds
+//   * that specified in the print
+//   */
+//
+//  if(*dlevel > Mdebuglevel)
+//    return;
+//
+//  /*
+//   * copy string to new string
+//   */
+//
+//  string = (char *) umalloc(stringlen + 1);
+//  strncpy(string, str, stringlen);
+//  string[stringlen] = '\0';
+//
+//  (void)fprintf(stderr, "%s\n", string);
+//  
+//  ufree(string);
+//
+//}
+//
+///*--------------------------------------------------------------------*\
+// | FUNCTION     : dpstr
+// | COMMENT		:
+// | PARAMETERS   :
+// | RETURN VALUE : 
+// | RESTRICTIONS :
+//\*--------------------------------------------------------------------*/
+//void dpstr (char *string, long dlevel) {
+//
+//  if(dlevel > Mdebuglevel)
+//    return;
+//
+//  (void)fprintf(stderr, "%s\n", string);
+//
+//}
+//
+///*--------------------------------------------------------------------*\
+// | FUNCTION     : dpint4_
+// | COMMENT		: The fortran call is:
+// |     call dpint4(string, array, n, dlevel)
+// | PARAMETERS   :
+// |     where 'string' is a string,
+// |           'array' is the INTEGER*4 of long array or scalar to be printed
+// |           'n' is the number of values in the array, 1 if a scalar.
+// |           'dlevel' is the debug level
+// | RETURN VALUE : 
+// | RESTRICTIONS :
+//\*--------------------------------------------------------------------*/
+//void dpint4_ (char *str, ftnint *array, ftnint *n, ftnint *dlevel, ftnlen stringlen) {
+//
+//  char *string;
+//  int i;
+//
+//  if(*dlevel > Mdebuglevel)
+//    return;
+//
+//  /*
+//   * copy string to new string
+//   */
+//
+//  string = (char *) umalloc(stringlen + 1);
+//  strncpy(string, str, stringlen);
+//  string[stringlen] = '\0';
+//
+//  (void)fprintf(stderr, "%s ",string);
+//
+//  for (i=0; i < *n; i++)
+///*
+//    (void)fprintf(stderr, " %ld",array[i]);
+//*/
+//    (void)fprintf(stderr, " %d",array[i]);
+//
+//  (void)fprintf(stderr, "\n");
+//
+//}
+//
+///*--------------------------------------------------------------------*\
+// | FUNCTION     : dplong
+// | COMMENT		: print long from C The C call is
+// |     dplong(string, array, n, dlevel)
+// | PARAMETERS   :where 'string' is a string,
+// |           'array' is the INTEGER*4 of long array or scalar to be printed
+// |           'n' is the number of values in the array, 1 if a scalar.
+// |           'dlevel' is the debug level
+// | RETURN VALUE : 
+// | RESTRICTIONS :
+//\*--------------------------------------------------------------------*/
+//void dplong (char *string, long *array, long n, long dlevel) {
+//
+//  int i;
+//
+//  if(dlevel > Mdebuglevel)
+//    return;
+//
+//  (void)fprintf(stderr, "%s ",string);
+//
+//  for (i=0; i < n; i++)
+//    (void)fprintf(stderr, " %ld", array[i]);
+//
+//  (void)fprintf(stderr, "\n");
+//
+//}
 
 /*--------------------------------------------------------------------*\
  | FUNCTION     : dpreal_
@@ -3981,125 +4019,125 @@ void dplong (char *string, long *array, long n, long dlevel) {
  | RETURN VALUE : 
  | RESTRICTIONS :
 \*--------------------------------------------------------------------*/
-void dpreal_ (char *str, float *array, ftnint *n, ftnint *dlevel, ftnlen stringlen) {
-  char *string;
-  int i;
-
-  if(*dlevel > Mdebuglevel)
-    return;
-
-  /*
-   * copy string to new string
-   */
-
-  string = (char *) umalloc(stringlen + 1);
-  strncpy(string, str, stringlen);
-  string[stringlen] = '\0';
-
-  (void)fprintf(stderr, "%s ",string);
-
-  for (i=0; i < *n; i++)
-    (void)fprintf(stderr, " %10g", array[i]);
-
-  (void)fprintf(stderr, "\n");
-}
-
-/*--------------------------------------------------------------------*\
- | FUNCTION     : dpfloat
- | COMMENT		: print float array from C 
- |   The C call is:
- |     dpfloat(string, array, n, dlevel)
- | PARAMETERS   : where 'string' is a string,
- |           'array' is the REAL or float array or scalar to be printed
- |           'n' is the number of values in the array, 1 if a scalar.
- |           'dlevel' is the debug level
- | RETURN VALUE : 
- | RESTRICTIONS :
-\*--------------------------------------------------------------------*/
-void dpfloat (char *string, float *array, long n, long dlevel) {
-  int i;
-
-  if(dlevel > Mdebuglevel)
-    return;
-
-  (void)fprintf(stderr, "%s ",string);
-
-  for (i=0; i < n; i++)
-    (void)fprintf(stderr, " %10g", array[i]);
-
-  (void)fprintf(stderr, "\n");
-
-}
-
-/*--------------------------------------------------------------------*\
- | FUNCTION     : dpdble_
- | COMMENT		: print double precision array from Fortran
- |  The fortran call is:
- |     call dpdble (string, array, n, dlevel)
- | PARAMETERS   : 'string' is a string,
- |           'array' is the double precision array or scalar to be printed
- |           'n' is the number of values in the array, 1 if a scalar.
- |           'dlevel' is the debug level
- | RETURN VALUE : 
- | RESTRICTIONS :
-\*--------------------------------------------------------------------*/
-void dpdble_ (char *str, double *array, ftnint *n, ftnint *dlevel, ftnlen stringlen) {
-
-  char *string;
-  int i;
-
-  if(*dlevel > Mdebuglevel)
-    return;
-
-  /*
-   * copy string to new string
-   */
-
-  string = (char *) umalloc(stringlen + 1);
-  strncpy(string, str, stringlen);
-  string[stringlen] = '\0';
-
-  (void)fprintf(stderr, "%s ",string);
-
-  for (i=0; i < *n; i++)
-    (void)fprintf(stderr, " %10lg", array[i]);
-
-  (void)fprintf(stderr, "\n");
-
-}
-
-/*--------------------------------------------------------------------*\
- | FUNCTION     : dpdble
- | COMMENT		: print double array from C
- | The fortran call is:
- |     call dpdble(string, array, n, dlevel)
- | PARAMETERS   : 'string' is a string,
- |           'array' is the double precision array or scalar to be printed
- |           'n' is the number of values in the array, 1 if a scalar.
- |           'dlevel' is the debug level
- | RETURN VALUE : 
- | RESTRICTIONS :
-\*--------------------------------------------------------------------*/
-void dpdble (char *string, double *array, long n, long dlevel) {
-
-  int i;
-
-  if(dlevel > Mdebuglevel)
-    return;
-
-  (void)fprintf(stderr, "%s ",string);
-
-  for (i=0; i < n; i++)
-    (void)fprintf(stderr, " %10lg", array[i]);
-
-  (void)fprintf(stderr, "\n");
-
-}
-
-/**7****************** LOCAL FUNCTION DEFINITIONS *********************/
-
-/**8************************** TEST DRIVER ****************************/
-
+//void dpreal_ (char *str, float *array, ftnint *n, ftnint *dlevel, ftnlen stringlen) {
+//  char *string;
+//  int i;
+//
+//  if(*dlevel > Mdebuglevel)
+//    return;
+//
+//  /*
+//   * copy string to new string
+//   */
+//
+//  string = (char *) umalloc(stringlen + 1);
+//  strncpy(string, str, stringlen);
+//  string[stringlen] = '\0';
+//
+//  (void)fprintf(stderr, "%s ",string);
+//
+//  for (i=0; i < *n; i++)
+//    (void)fprintf(stderr, " %10g", array[i]);
+//
+//  (void)fprintf(stderr, "\n");
+//}
+//
+///*--------------------------------------------------------------------*\
+// | FUNCTION     : dpfloat
+// | COMMENT		: print float array from C 
+// |   The C call is:
+// |     dpfloat(string, array, n, dlevel)
+// | PARAMETERS   : where 'string' is a string,
+// |           'array' is the REAL or float array or scalar to be printed
+// |           'n' is the number of values in the array, 1 if a scalar.
+// |           'dlevel' is the debug level
+// | RETURN VALUE : 
+// | RESTRICTIONS :
+//\*--------------------------------------------------------------------*/
+//void dpfloat (char *string, float *array, long n, long dlevel) {
+//  int i;
+//
+//  if(dlevel > Mdebuglevel)
+//    return;
+//
+//  (void)fprintf(stderr, "%s ",string);
+//
+//  for (i=0; i < n; i++)
+//    (void)fprintf(stderr, " %10g", array[i]);
+//
+//  (void)fprintf(stderr, "\n");
+//
+//}
+//
+///*--------------------------------------------------------------------*\
+// | FUNCTION     : dpdble_
+// | COMMENT		: print double precision array from Fortran
+// |  The fortran call is:
+// |     call dpdble (string, array, n, dlevel)
+// | PARAMETERS   : 'string' is a string,
+// |           'array' is the double precision array or scalar to be printed
+// |           'n' is the number of values in the array, 1 if a scalar.
+// |           'dlevel' is the debug level
+// | RETURN VALUE : 
+// | RESTRICTIONS :
+//\*--------------------------------------------------------------------*/
+//void dpdble_ (char *str, double *array, ftnint *n, ftnint *dlevel, ftnlen stringlen) {
+//
+//  char *string;
+//  int i;
+//
+//  if(*dlevel > Mdebuglevel)
+//    return;
+//
+//  /*
+//   * copy string to new string
+//   */
+//
+//  string = (char *) umalloc(stringlen + 1);
+//  strncpy(string, str, stringlen);
+//  string[stringlen] = '\0';
+//
+//  (void)fprintf(stderr, "%s ",string);
+//
+//  for (i=0; i < *n; i++)
+//    (void)fprintf(stderr, " %10lg", array[i]);
+//
+//  (void)fprintf(stderr, "\n");
+//
+//}
+//
+///*--------------------------------------------------------------------*\
+// | FUNCTION     : dpdble
+// | COMMENT		: print double array from C
+// | The fortran call is:
+// |     call dpdble(string, array, n, dlevel)
+// | PARAMETERS   : 'string' is a string,
+// |           'array' is the double precision array or scalar to be printed
+// |           'n' is the number of values in the array, 1 if a scalar.
+// |           'dlevel' is the debug level
+// | RETURN VALUE : 
+// | RESTRICTIONS :
+//\*--------------------------------------------------------------------*/
+//void dpdble (char *string, double *array, long n, long dlevel) {
+//
+//  int i;
+//
+//  if(dlevel > Mdebuglevel)
+//    return;
+//
+//  (void)fprintf(stderr, "%s ",string);
+//
+//  for (i=0; i < n; i++)
+//    (void)fprintf(stderr, " %10lg", array[i]);
+//
+//  (void)fprintf(stderr, "\n");
+//
+//}
+//
+///**7****************** LOCAL FUNCTION DEFINITIONS *********************/
+//
+///**8************************** TEST DRIVER ****************************/
+//
 /*+
  * United States Geological Survey
  *
@@ -4113,9 +4151,9 @@ void dpdble (char *string, double *array, long n, long dlevel) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: free_vstats.c,v $
         Revision 1.7  1996/06/28 19:32:23  markstro
         (1) Fixed 3d control window.
@@ -4199,9 +4237,9 @@ void free_vstats (void) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: get_elem_add.c,v $
         Revision 1.12  1996/02/19 20:00:01  markstro
         Now lints pretty clean
@@ -4571,9 +4609,9 @@ char *GetElemAddress (char *key, char *elemString, int type) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: get_times.c,v $
         Revision 1.5  1996/02/19 20:00:02  markstro
         Now lints pretty clean
@@ -4652,9 +4690,9 @@ void get_times (void) {
  * There are 2 functions: getdim() to be called from C
  *                        getdim_() to be called from Fortran
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: getdim.c,v $
         Revision 1.5  1996/02/19 20:00:03  markstro
         Now lints pretty clean
@@ -4757,9 +4795,9 @@ long getdim (char *name) {
  *
  * Returns 0 if successful, 1 otherwise.
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: getparam.c,v $
         Revision 1.10  1997/03/26 17:04:14  markstro
         Added function getdataname
@@ -4844,48 +4882,34 @@ long updateparam (char *name) {
 long getparam_ (char *mname, char *pname, ftnint *pmaxsize, char *ptype, double *pval,
 	       ftnlen mnamelen, ftnlen pnamelen, ftnlen ptypelen) {
 
-  char *module, *name, *type;
-  int maxsize;
-  long retval;
+	char *module, *name, *type;
+	int maxsize;
+	long retval;
 
-  /*
-   * copy maxsize to local long int
-   */
+// copy maxsize to local long int
+	maxsize = *pmaxsize;
 
-  maxsize = *pmaxsize;
+// copy args to new strings, and terminate
+	module = (char *) umalloc(mnamelen + 1);
+	strncpy(module, mname, mnamelen);
+	module[mnamelen] = '\0';
 
-  /*
-   * copy args to new strings, and terminate
-   */
+	name = (char *) umalloc(pnamelen + 1);
+	strncpy(name, pname, pnamelen);
+	name[pnamelen] = '\0';
 
-  module = (char *) umalloc(mnamelen + 1);
-  strncpy(module, mname, mnamelen);
-  module[mnamelen] = '\0';
+	type = (char *) umalloc(ptypelen + 1);
+	strncpy(type, ptype, ptypelen);
+	type[ptypelen] = '\0';
 
-  name = (char *) umalloc(pnamelen + 1);
-  strncpy(name, pname, pnamelen);
-  name[pnamelen] = '\0';
-
-  type = (char *) umalloc(ptypelen + 1);
-  strncpy(type, ptype, ptypelen);
-  type[ptypelen] = '\0';
-
-  /*
-   * call C version of getparam()
-   */
-
-  retval = getparam(module, name, maxsize, type, pval);
-
-  /*
-   * ufree up arrays
-   */
+// call C version of getparam()
+	retval = getparam(module, name, maxsize, type, pval);
 
 //ufree(module);
 //ufree(name);
 //ufree(type);
 
-  return(retval);
-
+	return(retval);
 }
 
 /*--------------------------------------------------------------------*\
@@ -4896,91 +4920,49 @@ long getparam_ (char *mname, char *pname, ftnint *pmaxsize, char *ptype, double 
  | RESTRICTIONS :
 \*--------------------------------------------------------------------*/
 long getparam (char *module, char *name, int maxsize, char *type, double *pval) {
-  int var_type;
-  PARAM *param;
-  char *pkey;
+	int var_type;
+	PARAM *param;
+	char *pkey;
 
+	pkey = strdup (name);
 
-  /*
-   * compute the key
-   */
-/*
-  pkey = (char *) umalloc (strlen(module) + strlen(name) + 2);
-  (void)strcpy(pkey, module);
-  strcat(strcat(pkey, "."), name);
-*/
-  pkey = strdup (name);
+// convert fortran types to C types
+	var_type = M_LONG;
+	if (!strcmp(type, "real") || !strcmp(type, "float")) {
+		var_type = M_FLOAT;
+	} else if (!strcmp(type, "double precision") || !strcmp(type, "double")) {
+		var_type = M_DOUBLE;
+	} else if (!strcmp (type, "string")) {
+		var_type = M_STRING;
+	}
 
-  /*
-   * convert fortran types to C types
-   */
-  var_type = M_LONG;
-  if (!strcmp(type, "real") || !strcmp(type, "float")) {
-    var_type = M_FLOAT;
-  } else if (!strcmp(type, "double precision") || !strcmp(type, "double")) {
-    var_type = M_DOUBLE;
-  } else if (!strcmp (type, "string")) {
-    var_type = M_STRING;
-  }
+// check that type is possible
+	if((var_type != M_LONG) && (var_type != M_FLOAT) && (var_type != M_DOUBLE) && (var_type != M_STRING)) {
+		(void)fprintf(stderr, "\nERROR: data type for parameter %s in module %s has inconsistent uses.\n", pkey, module);
+		return(1);
+	}
 
-  /*
-   * check that type is possible
-   */
+// get pointer to parameter with key
+	param = param_addr(pkey);
 
-  if((var_type != M_LONG) && (var_type != M_FLOAT) && (var_type != M_DOUBLE) && (var_type != M_STRING)) {
-    (void)fprintf(stderr,
-	    "ERROR - getparam - type %s is illegal.\n", type);
-    (void)fprintf(stderr, "Key is '%s'.\n", pkey);
-    (void)fprintf(stderr, "Type is '%s'.\n", type);
-    return(1);
-  }
+	if (param == NULL) {
+		(void)fprintf(stderr, "\nERROR: getting parameter %s in module %s, but parameter is not found.\n", pkey, module);
+		return(1);
+	}
 
-  /*
-   * get pointer to parameter with key
-   */
+//  Check to see if the parameter values were set in the Parameter File
+	if (param->read_in == 0) {
+		(void)fprintf(stderr,"\nWARNING: parameter %s is used by module %s but values are not set in the Parameter File.\n", pkey, module);
+		(void)fprintf(stderr,"         Module default values are being used.\n");
+	}
 
-  param = param_addr(pkey);
+// check that there is enough space allocated in the calling routine
+	if (param->size > maxsize) {
+		(void)fprintf(stderr, "\nERROR: parameter %s declared array size is not big enough in module %s.\n", pkey, module);
+		return(1);
+	}
 
-  if (param == NULL) {
-    (void)fprintf(stderr,
-	    "ERROR - getparam - parameter not found.\n");
-    (void)fprintf(stderr, "Key:   '%s'\n", pkey);
-    return(1);
-  }
-
-  /*
-  **  Check to see if the parameter values were set in the parameter file
-  */
-  if (param->read_in == 0) {
-    (void)fprintf(stderr,
-	    "getparam - parameter %s is used but values are not set in the parameter file.  Module default values are being used.\n", pkey);
-  }
-
-  /*
-   * check that there is enough space allocated in the calling routine
-   * to accommodate the data
-   */
-
-  if (param->size > maxsize) {
-    (void)fprintf(stderr,
-	    "ERROR - getparam - insufficient space for data transfer.\n");
-    (void)fprintf(stderr, "Key:   '%s'\n", pkey);
-    (void)fprintf(stderr, "Actual size in data base: %ld\n", param->size);
-    (void)fprintf(stderr, "Available space in calling routine: %d\n", maxsize);
-    return(1);
-  }
-/*
-  if (strcmp(Mtypes[param->type], type)) {
-    (void)fprintf(stderr,
-	    "ERROR - getparam - incorrect data type requested.\n");
-    (void)fprintf(stderr, "Key:   '%s'\n", pkey);
-    (void)fprintf(stderr, "Requested type: %s\n", type);
-    (void)fprintf(stderr, "Actual declared type: %s\n", Mtypes[param->type]);
-    return(1);
-  }
-*/
-
-  return paramcopy (param, pval, maxsize);
+	return paramcopy (param, pval, maxsize);
 }
 
 /*--------------------------------------------------------------------*\
@@ -5014,8 +4996,10 @@ static long paramcopy (PARAM *param, double *pval, int maxsize) {
 				memcpy ((char *)pval, (char *)param->value, param->size * sizeof(double));
 				break;
 
-			case M_STRING:
-				memcpy ((char *)pval, (char *)param->value, param->size * sizeof(char *));
+			case M_STRING:  // DANGER fortran string size hardwired to 16 characters
+ 	  			for (i = 0; i < param->size; i++) {
+					memcpy ((char *)pval+i, *((char **)param->value+i), 16 * sizeof(char *));
+                }
 				break;
 		}
 	} else {
@@ -5086,9 +5070,9 @@ static long paramcopy (PARAM *param, double *pval, int maxsize) {
  | RESTRICTIONS :
 \*--------------------------------------------------------------------*/
 long getdatainfo_ (char *dinfo, ftnlen len) {
-  long retval;
-  retval = getdatainfo (dinfo, len);
-  return(retval);
+	long retval;
+	retval = getdatainfo (dinfo, len);
+	return(retval);
 }
 
 /*--------------------------------------------------------------------*\
@@ -5099,8 +5083,8 @@ long getdatainfo_ (char *dinfo, ftnlen len) {
  | RESTRICTIONS :
 \*--------------------------------------------------------------------*/
 long getdatainfo (char *dinfo, ftnlen len) {
-  strncpy (dinfo, Mdatainfo, len);
-  return(0);
+	strncpy (dinfo, Mdatainfo, len);
+	return(0);
 }
 
 /*--------------------------------------------------------------------*\
@@ -5266,7 +5250,7 @@ long getparamfile_ (char *dinfo, ftnlen len) {
 \*--------------------------------------------------------------------*/
 
 long getparamstring_ (char *mname, char *pname, ftnint *pmaxsize, char *ptype, ftnint *pindex, char *pstring,
-	       ftnlen mnamelen, ftnlen pnamelen, ftnlen ptypelen) {
+	       ftnlen mnamelen, ftnlen pnamelen, ftnlen ptypelen, ftnlen pslen) {
 
   char *module, *name, *type;
   int maxsize;
@@ -5301,21 +5285,23 @@ long getparamstring_ (char *mname, char *pname, ftnint *pmaxsize, char *ptype, f
 
   if (param == NULL) {
     (void)fprintf(stderr,
-	    "ERROR - getparamstring - parameter not found.\n");
-    (void)fprintf(stderr, "Key:   '%s'\n", name);
+		"\nERROR: - parameter %s is not found.\n", name);
+//    (void)fprintf(stderr, "Key:   '%s'\n", name);
     return(1);
   }
 
   /*
-  **  Check to see if the parameter values were set in the parameter file
+  **  Check to see if the parameter values were set in the Parameter File
   */
   if (param->read_in == 0) {
-    (void)fprintf(stderr,
-	    "getparamstring - parameter %s is used but values are not set in the parameter file.  Module default values are being used.\n", name);
+		(void)fprintf(stderr,"\nWARNING: parameter %s is used by module %s but values are not set in the Parameter File.\n", name, module);
+		(void)fprintf(stderr,"         Module default values are being used.\n");
+//	  (void)fprintf(stderr,
+//	    "getparamstring - parameter %s is used but values are not set in the Parameter File.  Module default values are being used.\n", name);
   }
 
 //   strncpy (pstring, (char *)(param->value)[*pindex], 80);
-   strncpy (pstring, *((char **)param->value + *pindex), 80);
+   strncpy (pstring, *((char **)param->value + *pindex), pslen);
 
    return(0);
 
@@ -5341,9 +5327,9 @@ long getparamstring_ (char *mname, char *pname, ftnint *pmaxsize, char *ptype, f
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: getvar.c,v $
         Revision 1.8  1996/04/09 21:04:06  markstro
         (1) Work on control files
@@ -5591,6 +5577,29 @@ long getvartype_ (char *vname, ftnlen vnamelen) {
 	return (var->type);
 }
 
+/*--------------------------------------------------------------------*\
+ | FUNCTION		: getvarsize_
+ | COMMENT		: called from Fortran, sorts out args and returns the variable size()
+ | PARAMETERS   :
+ | RETURN VALUE : size of the array for input variable
+ | RESTRICTIONS : variable must be declared
+\*--------------------------------------------------------------------*/
+long getvarsize_ (char *vname, ftnlen vnamelen) {
+	char vkey[128];
+	PUBVAR *var;
+  
+    strncpy (vkey, vname, 128);
+/*
+* get pointer to variable with key
+*/
+	if (!(var = var_addr (vkey))) {
+		(void)fprintf(stderr, "ERROR - getvartype - variable not found.\n");
+		(void)fprintf(stderr, "Key:   '%s'\n", vkey);
+		return(-1);
+	}
+
+	return (var->size);
+}
 /**8************************** TEST DRIVER ****************************/
 
 /**7****************** LOCAL FUNCTION DEFINITIONS *********************/
@@ -5608,7 +5617,7 @@ long getvartype_ (char *vname, ftnlen vnamelen) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
  */
 
@@ -5788,9 +5797,9 @@ int closeRuntimeGraphs (void) {
  * The Julian day starts at noon of the Gregorian day and extends
  * to noon the next Gregorian day.
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
 		$Log: julconvert.c,v $
 		Revision 1.6  2001/04/03 18:18:06  markstro
 		Unknown
@@ -5916,7 +5925,7 @@ int isleap (int year) {
  *
  * Mike Dixon CADSWES CU July 1990
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
  **********************************************************************/
 #define JULDAY_C
@@ -5989,9 +5998,9 @@ int julday (DATETIME *datetime) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: load_param.c,v $
         Revision 1.5  1996/02/19 20:00:15  markstro
         Now lints pretty clean
@@ -6148,27 +6157,26 @@ long load_param (PARAM *param) {
 
 			if (dmin[i] > dmax[i]) {
 				(void)fprintf(stderr,
-				    "ERROR - load_param - min value exceeds max value.\n");
-				(void)fprintf(stderr, "Key is: '%s'\n", param->key);
+					"ERROR: minimum value exceeds maximum value.\n");
+				(void)fprintf(stderr, "Parameter is: '%s'\n", param->key);
 				(void)fprintf(stderr,
-				    "Min and max strings are:\nMin: '%s'\nMax: '%s'\n",
+				    "Default minimum and maximum values are:\nMin: '%s'\nMax: '%s'\n",
 				    param->min_string, param->max_string);
-				(void)fprintf(stderr, "The problem is with posn no %ld.\n", i+1);
+//				(void)fprintf(stderr, "The problem is with posn no %ld.\n", i+1);
 				(void)fprintf(stderr,
-				    "Min = %lf, max = %lf\n", dmin[i], dmax[i]);
+				    "Assigned minimum value = %lf, Specified maximum value = %lf\n", dmin[i], dmax[i]);
 				return(1);
 			}
 
 			if (dval[i] < dmin[i] || dval[i] > dmax[i]) {
 				(void)fprintf(stderr,
-				    "ERROR - load_param - default value out of range.\n");
-				(void)fprintf(stderr, "Key is: '%s'\n", param->key);
+					"\nERROR: assigned value is out of range for Parameter: '%s'\n", param->key);
 				(void)fprintf(stderr,
-				    "Val, min and max strings are:\nVal: '%s'\nMin: '%s'\nMax: '%s'\n",
+				    "       Default: '%s'\n       Minimum: '%s'\n       Maximum: '%s'\n",
 				    param->value_string, param->min_string, param->max_string);
-				(void)fprintf(stderr, "The problem is with posn no %ld.\n", i+1);
+				(void)fprintf(stderr, "       Assigned values are:\n");
 				(void)fprintf(stderr,
-				    "Val = %lf, min = %lf, max = %lf\n",
+				    "       Value = %lf, Minimum = %lf, Maximum = %lf\n",
 				    dval[i], dmin[i], dmax[i]);
 				return(1);
 			}
@@ -6187,27 +6195,26 @@ long load_param (PARAM *param) {
 
 			if (fmin[i] > fmax[i]) {
 				(void)fprintf(stderr,
-				    "ERROR - load_param - min value exceeds max value.\n");
-				(void)fprintf(stderr, "Key is: '%s'\n", param->key);
+					"ERROR: minimum value exceeds maximum value.\n");
+				(void)fprintf(stderr, "Parameter is: '%s'\n", param->key);
 				(void)fprintf(stderr,
-				    "Min and max strings are:\nMin: '%s'\nMax: '%s'\n",
+				    "Default minimum and maximum values are:\nMin: '%s'\nMax: '%s'\n",
 				    param->min_string, param->max_string);
-				(void)fprintf(stderr, "The problem is with posn no %ld.\n", i+1);
+//				(void)fprintf(stderr, "The problem is with posn no %ld.\n", i+1);
 				(void)fprintf(stderr,
-				    "Min = %f, max = %f\n", fmin[i], fmax[i]);
+				    "Assigned minimum = %f, maximum = %f\n", fmin[i], fmax[i]);
 				return(1);
 			}
 
 			if (fval[i] < fmin[i] || fval[i] > fmax[i]) {
 				(void)fprintf(stderr,
-				    "ERROR - load_param - default value out of range.\n");
-				(void)fprintf(stderr, "Key is: '%s'\n", param->key);
+					"\nERROR: assigned value is out of range for Parameter: '%s'\n", param->key);
 				(void)fprintf(stderr,
-				    "Val, min and max strings are:\nVal: '%s'\nMin: '%s'\nMax: '%s'\n",
+				    "       Default: '%s'\n       Minimum: '%s'\n       Maximum: '%s'\n",
 				    param->value_string, param->min_string, param->max_string);
-				(void)fprintf(stderr, "The problem is with posn no %ld.\n", i+1);
+				(void)fprintf(stderr, "       Assigned values are:\n");
 				(void)fprintf(stderr,
-				    "Val = %f, min = %f, max = %f\n",
+				    "       Value = %f, Minimum = %f, Maximum = %f\n",
 				    fval[i], fmin[i], fmax[i]);
 				return(1);
 			}
@@ -6226,27 +6233,26 @@ long load_param (PARAM *param) {
 
 			if (lmin[i] > lmax[i]) {
 				(void)fprintf(stderr,
-				    "ERROR - load_param - min value exceeds max value.\n");
-				(void)fprintf(stderr, "Key is: '%s'\n", param->key);
+					"ERROR: minimum value exceeds maximum value.\n");
+				(void)fprintf(stderr, "Parameter is: '%s'\n", param->key);
 				(void)fprintf(stderr,
-				    "Min and max strings are:\nMin: '%s'\nMax: '%s'\n",
+				    "Default Minimum and maximum values are:\nMin: '%s'\nMax: '%s'\n",
 				    param->min_string, param->max_string);
-				(void)fprintf(stderr, "The problem is with posn no %ld.\n", i+1);
+//				(void)fprintf(stderr, "The problem is with posn no %ld.\n", i+1);
 				(void)fprintf(stderr,
-				    "Min = %ld, max = %ld\n", lmin[i], lmax[i]);
+				    "Assigned minimum = %ld, maximum = %ld\n", lmin[i], lmax[i]);
 				return(1);
 			}
 
 			if (lval[i] < lmin[i] || lval[i] > lmax[i]) {
 				(void)fprintf(stderr,
-				    "ERROR - load_param - default value out of range.\n");
-				(void)fprintf(stderr, "Key is: '%s'\n", param->key);
+					"\nERROR: assigned value is out of range for Parameter: '%s'\n", param->key);
 				(void)fprintf(stderr,
-				    "Val, min and max strings are:\nVal: '%s'\nMin: '%s'\nMax: '%s'\n",
+				    "       Default: '%s'\n       Minimum: '%s'\n       Maximum: '%s'\n",
 				    param->value_string, param->min_string, param->max_string);
-				(void)fprintf(stderr, "The problem is with posn no %ld.\n", i+1);
+				(void)fprintf(stderr, "       Assigned values are:\n");
 				(void)fprintf(stderr,
-				    "Val = %ld, min = %ld, max = %ld\n",
+				    "       Value = %ld, Minimum = %ld, Maximum = %ld\n",
 				    lval[i], lmin[i], lmax[i]);
 				return(1);
 			}
@@ -6279,9 +6285,9 @@ long load_param (PARAM *param) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: oprint.c,v $
         Revision 1.4  1996/02/19 20:00:29  markstro
         Now lints pretty clean
@@ -6363,235 +6369,235 @@ void opstr (char *string) {
 }
 
 
-/*--------------------------------------------------------------------*\
- | FUNCTION     : opint4_
- | COMMENT		: opint4_ : print integer from Fortran
- |                 The fortran call is:
- |                   call opint4(string, array, n)
- | PARAMETERS   : 'string' is a string,
- |                'array' is the INTEGER*4 of long array or scalar to
- |                    be printed
- |                'n' is the number of values in the array, 1 if a scalar.
- | RETURN VALUE : void
- | RESTRICTIONS :
-\*--------------------------------------------------------------------*/
-void opint4_ (char *str, ftnint *array, ftnint *n, ftnlen stringlen) {
-
-  char *string;
-  int i;
-
-  /*
-   * return if file pointer is NULL
-   */
-
-  if (Moutfile == NULL)
-    return;
-
-  /*
-   * copy string to new string
-   */
-
-  string = (char *) umalloc(stringlen + 1);
-  strncpy(string, str, stringlen);
-  string[stringlen] = '\0';
-
-  (void)fprintf(Moutfile, "%s ",string);
-
-  for (i=0; i < *n; i++)
-    (void)fprintf(Moutfile, " %d",array[i]);
-/*
-    (void)fprintf(Moutfile, " %ld",array[i]);
-*/
-
-  (void)fprintf(Moutfile, "\n");
-
-}
-
-/*--------------------------------------------------------------------*\
- | FUNCTION     : oplong
- | COMMENT		: print long from C
- |                  The C call is
- |                      oplong(string, array, n)
- | PARAMETERS   : 'string' is a string
- |                'array' is the INTEGER*4 of long array or scalar
- |                  to be printed
- |                'n' is the number of values in the array, 1 if a scalar.
- | RETURN VALUE : void
- | RESTRICTIONS :
-\*--------------------------------------------------------------------*/
-void oplong (char *string, long *array, long n) {
-
-  int i;
-
-  /*
-   * return if file pointer is NULL
-   */
-
-  if (Moutfile == NULL)
-    return;
-
-  (void)fprintf(Moutfile, "%s ",string);
-
-  for (i=0; i < n; i++)
-    (void)fprintf(Moutfile, " %ld", array[i]);
-
-  (void)fprintf(Moutfile, "\n");
-
-}
-
-
-/*--------------------------------------------------------------------*\
- | FUNCTION     : opreal_
- | COMMENT		: print real array from Fortran
- |                 The fortran call is:
- |                   call opreal(string, array, n)
- | PARAMETERS   : 'string' is a string
- |                'array' is the REAL or float array or scalar to be printed
- |                'n' is the number of values in the array, 1 if a scalar.
- | RETURN VALUE : void
- | RESTRICTIONS :
-\*--------------------------------------------------------------------*/
-void opreal_ (char *str, float *array, ftnint *n, ftnlen stringlen) {
-
-  char *string;
-  int i;
-
-  /*
-   * return if file pointer is NULL
-   */
-
-  if (Moutfile == NULL)
-    return;
-
-  /*
-   * copy string to new string
-   */
-
-  string = (char *) umalloc(stringlen + 1);
-  strncpy(string, str, stringlen);
-  string[stringlen] = '\0';
-
-  (void)fprintf(Moutfile, "%s ",string);
-
-  for (i=0; i < *n; i++)
-    (void)fprintf(Moutfile, " %10g", array[i]);
-
-  (void)fprintf(Moutfile, "\n");
-
-}
-
-/*--------------------------------------------------------------------*\
- | FUNCTION     : opfloat
- | COMMENT		: print float array from C
- |                The C call is:
- |                   opfloat(string, array, n)
- | PARAMETERS   : 'string' is a string
- |                'array' is the REAL or float array or scalar to be printed
- |                'n' is the number of values in the array, 1 if a scalar
- | RETURN VALUE : void
- | RESTRICTIONS :
-\*--------------------------------------------------------------------*/
-void opfloat (char *string, float *array, long n) {
-
-  int i;
-
-  /*
-   * return if file pointer is NULL
-   */
-
-  if (Moutfile == NULL)
-    return;
-
-  (void)fprintf(Moutfile, "%s ",string);
-
-  for (i=0; i < n; i++)
-    (void)fprintf(Moutfile, " %10g", array[i]);
-
-  (void)fprintf(Moutfile, "\n");
-}
-
-/*--------------------------------------------------------------------*\
- | FUNCTION     : opdble_
- | COMMENT		: print double precision array from Fortran
- |                 The fortran call is:
- |                    call opdble(string, array, n)
- | PARAMETERS   : 'string' is a string
- |                'array' is the double precision array or scalar to be printed
- |                'n' is the number of values in the array, 1 if a scalar
- | RETURN VALUE : void
- | RESTRICTIONS :
-\*--------------------------------------------------------------------*/
-void opdble_ (char *str, double *array, ftnint *n, ftnlen stringlen) {
-
-  char *string;
-  int i;
-
-  /*
-   * return if file pointer is NULL
-   */
-
-  if (Moutfile == NULL)
-    return;
-
-  /*
-   * copy string to new string
-   */
-
-  string = (char *) umalloc(stringlen + 1);
-  strncpy(string, str, stringlen);
-  string[stringlen] = '\0';
-
-  (void)fprintf(Moutfile, "%s ",string);
-
-  for (i=0; i < *n; i++)
-    (void)fprintf(Moutfile, " %10lg", array[i]);
-
-  (void)fprintf(Moutfile, "\n");
-
-}
-
-/*--------------------------------------------------------------------*\
- | FUNCTION     : opdble
- | COMMENT		: print double array from C
- |                  The C call is:
- |                    opdble(string, array, n)
- | PARAMETERS   : 'string' is a string
- |                'array' is the double precision array or scalar to be printed
- |                'n' is the number of values in the array, 1 if a scalar
- | RETURN VALUE : void
- | RESTRICTIONS :
-\*--------------------------------------------------------------------*/
-void opdble (char *string, double *array, long n) {
-
-  int i;
-
-  /*
-   * return if file pointer is NULL
-   */
-
-  if (Moutfile == NULL)
-    return;
-
-  (void)fprintf(Moutfile, "%s ",string);
-
-  for (i=0; i < n; i++)
-    (void)fprintf(Moutfile, " %10lg", array[i]);
-
-  (void)fprintf(Moutfile, "\n");
-
-}
-
-/**7****************** LOCAL FUNCTION DEFINITIONS *********************/
-
-/**8************************** TEST DRIVER ****************************/
-
+///*--------------------------------------------------------------------*\
+// | FUNCTION     : opint4_
+// | COMMENT		: opint4_ : print integer from Fortran
+// |                 The fortran call is:
+// |                   call opint4(string, array, n)
+// | PARAMETERS   : 'string' is a string,
+// |                'array' is the INTEGER*4 of long array or scalar to
+// |                    be printed
+// |                'n' is the number of values in the array, 1 if a scalar.
+// | RETURN VALUE : void
+// | RESTRICTIONS :
+//\*--------------------------------------------------------------------*/
+//void opint4_ (char *str, ftnint *array, ftnint *n, ftnlen stringlen) {
+//
+//  char *string;
+//  int i;
+//
+//  /*
+//   * return if file pointer is NULL
+//   */
+//
+//  if (Moutfile == NULL)
+//    return;
+//
+//  /*
+//   * copy string to new string
+//   */
+//
+//  string = (char *) umalloc(stringlen + 1);
+//  strncpy(string, str, stringlen);
+//  string[stringlen] = '\0';
+//
+//  (void)fprintf(Moutfile, "%s ",string);
+//
+//  for (i=0; i < *n; i++)
+//    (void)fprintf(Moutfile, " %d",array[i]);
+///*
+//    (void)fprintf(Moutfile, " %ld",array[i]);
+//*/
+//
+//  (void)fprintf(Moutfile, "\n");
+//
+//}
+//
+///*--------------------------------------------------------------------*\
+// | FUNCTION     : oplong
+// | COMMENT		: print long from C
+// |                  The C call is
+// |                      oplong(string, array, n)
+// | PARAMETERS   : 'string' is a string
+// |                'array' is the INTEGER*4 of long array or scalar
+// |                  to be printed
+// |                'n' is the number of values in the array, 1 if a scalar.
+// | RETURN VALUE : void
+// | RESTRICTIONS :
+//\*--------------------------------------------------------------------*/
+//void oplong (char *string, long *array, long n) {
+//
+//  int i;
+//
+//  /*
+//   * return if file pointer is NULL
+//   */
+//
+//  if (Moutfile == NULL)
+//    return;
+//
+//  (void)fprintf(Moutfile, "%s ",string);
+//
+//  for (i=0; i < n; i++)
+//    (void)fprintf(Moutfile, " %ld", array[i]);
+//
+//  (void)fprintf(Moutfile, "\n");
+//
+//}
+//
+//
+///*--------------------------------------------------------------------*\
+// | FUNCTION     : opreal_
+// | COMMENT		: print real array from Fortran
+// |                 The fortran call is:
+// |                   call opreal(string, array, n)
+// | PARAMETERS   : 'string' is a string
+// |                'array' is the REAL or float array or scalar to be printed
+// |                'n' is the number of values in the array, 1 if a scalar.
+// | RETURN VALUE : void
+// | RESTRICTIONS :
+//\*--------------------------------------------------------------------*/
+//void opreal_ (char *str, float *array, ftnint *n, ftnlen stringlen) {
+//
+//  char *string;
+//  int i;
+//
+//  /*
+//   * return if file pointer is NULL
+//   */
+//
+//  if (Moutfile == NULL)
+//    return;
+//
+//  /*
+//   * copy string to new string
+//   */
+//
+//  string = (char *) umalloc(stringlen + 1);
+//  strncpy(string, str, stringlen);
+//  string[stringlen] = '\0';
+//
+//  (void)fprintf(Moutfile, "%s ",string);
+//
+//  for (i=0; i < *n; i++)
+//    (void)fprintf(Moutfile, " %10g", array[i]);
+//
+//  (void)fprintf(Moutfile, "\n");
+//
+//}
+//
+///*--------------------------------------------------------------------*\
+// | FUNCTION     : opfloat
+// | COMMENT		: print float array from C
+// |                The C call is:
+// |                   opfloat(string, array, n)
+// | PARAMETERS   : 'string' is a string
+// |                'array' is the REAL or float array or scalar to be printed
+// |                'n' is the number of values in the array, 1 if a scalar
+// | RETURN VALUE : void
+// | RESTRICTIONS :
+//\*--------------------------------------------------------------------*/
+//void opfloat (char *string, float *array, long n) {
+//
+//  int i;
+//
+//  /*
+//   * return if file pointer is NULL
+//   */
+//
+//  if (Moutfile == NULL)
+//    return;
+//
+//  (void)fprintf(Moutfile, "%s ",string);
+//
+//  for (i=0; i < n; i++)
+//    (void)fprintf(Moutfile, " %10g", array[i]);
+//
+//  (void)fprintf(Moutfile, "\n");
+//}
+//
+///*--------------------------------------------------------------------*\
+// | FUNCTION     : opdble_
+// | COMMENT		: print double precision array from Fortran
+// |                 The fortran call is:
+// |                    call opdble(string, array, n)
+// | PARAMETERS   : 'string' is a string
+// |                'array' is the double precision array or scalar to be printed
+// |                'n' is the number of values in the array, 1 if a scalar
+// | RETURN VALUE : void
+// | RESTRICTIONS :
+//\*--------------------------------------------------------------------*/
+//void opdble_ (char *str, double *array, ftnint *n, ftnlen stringlen) {
+//
+//  char *string;
+//  int i;
+//
+//  /*
+//   * return if file pointer is NULL
+//   */
+//
+//  if (Moutfile == NULL)
+//    return;
+//
+//  /*
+//   * copy string to new string
+//   */
+//
+//  string = (char *) umalloc(stringlen + 1);
+//  strncpy(string, str, stringlen);
+//  string[stringlen] = '\0';
+//
+//  (void)fprintf(Moutfile, "%s ",string);
+//
+//  for (i=0; i < *n; i++)
+//    (void)fprintf(Moutfile, " %10lg", array[i]);
+//
+//  (void)fprintf(Moutfile, "\n");
+//
+//}
+//
+///*--------------------------------------------------------------------*\
+// | FUNCTION     : opdble
+// | COMMENT		: print double array from C
+// |                  The C call is:
+// |                    opdble(string, array, n)
+// | PARAMETERS   : 'string' is a string
+// |                'array' is the double precision array or scalar to be printed
+// |                'n' is the number of values in the array, 1 if a scalar
+// | RETURN VALUE : void
+// | RESTRICTIONS :
+//\*--------------------------------------------------------------------*/
+//void opdble (char *string, double *array, long n) {
+//
+//  int i;
+//
+//  /*
+//   * return if file pointer is NULL
+//   */
+//
+//  if (Moutfile == NULL)
+//    return;
+//
+//  (void)fprintf(Moutfile, "%s ",string);
+//
+//  for (i=0; i < n; i++)
+//    (void)fprintf(Moutfile, " %10lg", array[i]);
+//
+//  (void)fprintf(Moutfile, "\n");
+//
+//}
+//
+///**7****************** LOCAL FUNCTION DEFINITIONS *********************/
+//
+///**8************************** TEST DRIVER ****************************/
+//
 /**************************************************************************
  * param_addr.c: 
  *
  * returns a pointer to a PARAM struct which contains the given key
  * returns NULL if key not found
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: param_addr.c,v $
         Revision 1.4  1996/02/19 20:00:33  markstro
         Now lints pretty clean
@@ -6602,7 +6608,7 @@ void opdble (char *string, double *array, long n) {
  * Revision 1.2  1994/01/31  20:17:02  markstro
  * Make sure that all source files have CVS log.
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
  **************************************************************************/
 #define PARAM_ADDR_C
@@ -6654,9 +6660,9 @@ PARAM * param_addr (char *key) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: parse_args.c,v $
         Revision 1.15  1999/10/22 17:14:36  markstro
         Added private variables
@@ -6803,7 +6809,7 @@ void parse_args (int argc, char **argv, int *set_count, char **set_name, char **
 /**8************************** TEST DRIVER ****************************/
 
 /*
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  */
 #define PRINT_MODEL_INFO_C
 #include <string.h>
@@ -6840,10 +6846,11 @@ int print_model_info (void) {
    * write header
    */
 
+	(void)fprintf(model_info_file, "PRMS Module Name File\n");
 	(void)fprintf(model_info_file, "%s\n", model_name);
 	(void)fprintf(model_info_file, "============\n\n");
 
-	(void)fprintf(model_info_file, "Printout of module call order, version, variables, and parameters.\n\n");
+	(void)fprintf(model_info_file, "Module versions used in the application, listed in computation order.\n\n");
 
 	for (i = 0; i < module_db->count; i++) {
 		// print module name
@@ -6878,9 +6885,9 @@ int print_model_info (void) {
 /**************************************************************************
  * print_params.c: prints the param data base to a file
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: print_params.c,v $
         Revision 1.15  2001/11/27 16:00:10  markstro
         Unknown
@@ -6959,7 +6966,7 @@ int print_params (void) {
 
   if ((param_file = fopen (pathname, "w")) == NULL) {
     (void)fprintf(stderr,
-	    "ERROR - print_params - creating file '%s'\n", pathname);
+		"ERROR: creating Parameter Name File: '%s'\n", pathname);
     perror("");
     return(1);
   }
@@ -6968,10 +6975,10 @@ int print_params (void) {
    * write header
    */
 
-  (void)fprintf(param_file, "Program MMS                     \n");
+  (void)fprintf(param_file, "PRMS\n");
   (void)fprintf(param_file, "============\n\n");
 
-  (void)fprintf(param_file, "Printout of parameters.\n\n");
+  (void)fprintf(param_file, "Description of dimensions and parameters required in the application.\n\n");
 
   /*
    * write file name
@@ -7193,9 +7200,9 @@ void print_param (FILE *param_file, PARAM *param, long l, long nl, long k,
 /**************************************************************************
  * print_vars.c: prints the var data base to a file
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: print_vars.c,v $
         Revision 1.10  1999/10/22 17:14:37  markstro
         Added private variables
@@ -7268,10 +7275,10 @@ int print_vars (void) {
    * write header
    */
 
-  (void)fprintf(var_file, "Program MMS                     \n");
+  (void)fprintf(var_file, "PRMS\n");
   (void)fprintf(var_file, "============\n\n");
 
-  (void)fprintf(var_file, "Printout of variables after a run.\n\n");
+  (void)fprintf(var_file, "Description of variables required in the application.\n\n");
 
   /*
    * write file names
@@ -7466,9 +7473,9 @@ void print_var (FILE *var_file, PUBVAR *var, long l, long nl, long k, long nk,
  *
  * Returns 0 if successful, 1 otherwise.
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: putvar.c,v $
         Revision 1.7  1996/02/19 20:00:38  markstro
         Now lints pretty clean
@@ -7738,9 +7745,9 @@ long putvar (char *module, char *name, long maxsize, char *type, double *value) 
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: read_control.c,v $
         Revision 1.21  1996/08/28 15:24:10  markstro
         Unknown
@@ -7883,12 +7890,12 @@ static char *rc (char *control_name) {
 **   get type
 */
       if (!fgets_rc (line, MAXDATALNLEN, control_file)) {
-         (void)sprintf (buf, "read_control: reading type; key = %s", key);
+         (void)sprintf (buf, "WARNING: reading type; key = %s", key);
          return (buf);
       }
 
       if (!(type = atol(line))) {
-         (void)sprintf (buf, "read_control: invalid type; key = %s, line = %s", key, line);
+         (void)sprintf (buf, "WARNING: invalid type; key = %s, line = %s", key, line);
          return (buf);
       }
 
@@ -7899,7 +7906,7 @@ static char *rc (char *control_name) {
      }
      
 	  if (cp->set_in_file > 0) {
-		   printf ("\n\nread_control: %s is duplicated in the control file %s.\n\n\n", key, control_name);
+		   printf ("\n\nWARNING: %s is duplicated in the control file %s.\n\n", key, control_name);
 	  }
 
 //  Set the values to what was just read from the file
@@ -8034,9 +8041,9 @@ char *fgets_rc (char *str, int num, FILE *stream) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: read_datainfo.c,v $
         Revision 1.15  2000/03/07 20:35:18  markstro
         Added comments to data file header
@@ -8175,24 +8182,9 @@ char *read_datainfo (FILE_DATA *fd) {
                return (err_buf);
             }
 
-            if ((var = var_addr(key)) == NULL) {
-               (void)sprintf (err_buf,
-                  "Variable %s not declared at line number %ld in\n%s\n%s",
-                  key, nline, fd->name, line);
-               return (err_buf);
-            }
-
-/*
-**   make space for data base entry, load pointer to var
-*/
-
-            Mcheckbase[Mnreads] = (READCHECK *) umalloc(sizeof(READCHECK));
-            Mcheckbase[Mnreads]->var = var;
-
 /*
 **   get size of var in data file
 */
-
             countstr = strtok(NULL, " \t");
 
             if (countstr == NULL) {
@@ -8204,39 +8196,58 @@ char *read_datainfo (FILE_DATA *fd) {
             errno = 0;
             count = strtol (countstr, &endptr, 10);
 
-            if (errno || (count < 0)) {
-               (void)sprintf (err_buf,"Decoding %s at line number %ld in\n%s\n%s",
-                  countstr, nline, fd->name, line);
-               return (err_buf);
-            }
+				if (count > 0) {  // Old style Data files have variables with size 0. PRMS should now skip over these, as if they are not there.
 
-            Mcheckbase[Mnreads]->count = count;
+					if ((var = var_addr(key)) == NULL) {
+						(void)sprintf (err_buf,
+							"Variable %s not declared at line number %ld in\n%s\n%s",
+							key, nline, fd->name, line);
+						return (err_buf);
+					}
 
-/* 
-**   allocate enough room to read variables in, depending on variable type
-*/
+	/*
+	**   make space for data base entry, load pointer to var
+	*/
 
-            if (Mcheckbase[Mnreads]->var) {
-               switch (Mcheckbase[Mnreads]->var->type) {
-                  case M_LONG :
-                     Mcheckbase[Mnreads]->Types.valuel = (long *)umalloc(count * 
-                        sizeof(long));
-                     break;
-     
-                  case M_FLOAT :
-                     Mcheckbase[Mnreads]->Types.valuef = (float *)umalloc(count *
-                        sizeof(float));
-                     break;
-     
-                  case M_DOUBLE :
-                     Mcheckbase[Mnreads]->Types.valued=(double *)umalloc(count *
-                        sizeof(double));
-                     break;
+					Mcheckbase[Mnreads] = (READCHECK *) umalloc(sizeof(READCHECK));
+					Mcheckbase[Mnreads]->var = var;
 
-               }
-            }           
-            Mnreads++;
-         }
+
+
+					if (errno || (count < 0)) {
+						(void)sprintf (err_buf,"Decoding %s at line number %ld in\n%s\n%s",
+							countstr, nline, fd->name, line);
+						return (err_buf);
+					}
+
+					Mcheckbase[Mnreads]->count = count;
+
+	/* 
+	**   allocate enough room to read variables in, depending on variable type
+	*/
+
+					if (Mcheckbase[Mnreads]->var) {
+						switch (Mcheckbase[Mnreads]->var->type) {
+							case M_LONG :
+								Mcheckbase[Mnreads]->Types.valuel = (long *)umalloc(count * 
+									sizeof(long));
+								break;
+	     
+							case M_FLOAT :
+								Mcheckbase[Mnreads]->Types.valuef = (float *)umalloc(count *
+									sizeof(float));
+								break;
+	     
+							case M_DOUBLE :
+								Mcheckbase[Mnreads]->Types.valued=(double *)umalloc(count *
+									sizeof(double));
+								break;
+
+						}
+					}           
+					Mnreads++;
+				}
+			}
       }
    }
 
@@ -8277,9 +8288,9 @@ char *read_datainfo (FILE_DATA *fd) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: read_line.c,v $
         Revision 1.35  2001/01/22 22:26:41  markstro
         unknown
@@ -9173,9 +9184,9 @@ static void INSERT_time (char *line, DATETIME *ptr) {
  * read_params.c: reads the params data base from a file
  * File name is passed in as an argument
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: read_params.c,v $
         Revision 1.30  1998/10/20 15:53:02  markstro
         Fixed "blank" format.
@@ -9358,9 +9369,9 @@ char *read_dims (char *param_file_name) {
 */
 	if ((param_file = fopen (param_file_name, "r")) == NULL) {
 		if (param_file_name) {
-			(void)sprintf (buf, "read_dims: cannot open file: %s", param_file_name);
+			(void)sprintf (buf, "ERROR: cannot open Parameter File: %s", param_file_name);
 		} else {
-			(void)sprintf (buf, "read_dims: cannot open file:");
+			(void)sprintf (buf, "ERROR: cannot open Parameter File");
 		}
 		return (buf);
 	}
@@ -9374,7 +9385,7 @@ char *read_dims (char *param_file_name) {
 		   param_file = NULL;
 		}
 
-		(void)sprintf (buf, "read_dims: problems reading info line");
+		(void)sprintf (buf, "ERROR: problems reading info line in Parameter File");
 		return (buf);
 	}
 
@@ -9392,7 +9403,7 @@ char *read_dims (char *param_file_name) {
 		   param_file = NULL;
 		}
 
-		(void)sprintf (buf, "read_dims: problems reading version number");
+		(void)sprintf (buf, "ERROR: problems reading version number in Parameter File");
 		return (buf);
 	}
 
@@ -9416,7 +9427,7 @@ char *read_dims (char *param_file_name) {
 		   fclose (param_file);
 		   param_file = NULL;
 		}
-		(void)sprintf (buf, "read_dims: problems reading dimension label");
+		(void)sprintf (buf, "ERROR: problems reading dimension label in Parameter File");
 		return (buf);
 	}
 
@@ -9434,7 +9445,7 @@ char *read_dims (char *param_file_name) {
 		      fclose (param_file);
 		      param_file = NULL;
 		   }
-			(void)sprintf (buf, "read_dims: problems skipping comments");
+			(void)sprintf (buf, "ERROR: problems skipping comments in Parameter File");
 			return (buf);
 		}
 
@@ -9453,7 +9464,7 @@ char *read_dims (char *param_file_name) {
 		   fclose (param_file);
 		   param_file = NULL;
 		}
-		(void)sprintf (buf, "read_dims: file: %s '** Dimensions **' label expected but not found.",
+		(void)sprintf (buf, "ERROR: ** Dimensions ** label not found in Parameter File %s.",
 		param_file_name);
 		return (buf);
 	}
@@ -9463,7 +9474,7 @@ char *read_dims (char *param_file_name) {
 		   fclose (param_file);
 		   param_file = NULL;
 		}
-		(void)sprintf (buf, "read_dims: unexpected end of file");
+		(void)sprintf (buf, "ERROR: unexpected end of Parameter File");
 		return (buf);
 	}
 
@@ -9477,7 +9488,7 @@ char *read_dims (char *param_file_name) {
 		      fclose (param_file);
 		      param_file = NULL;
 		   }
-			(void)sprintf (buf, "read_dims: file: %s.  Expecting '####' found %s.", param_file_name, line);
+			(void)sprintf (buf, "ERROR: expecting '####' found %s in Parameter File %s", line, param_file_name);
 			return (buf);
 		}
 
@@ -9489,7 +9500,7 @@ char *read_dims (char *param_file_name) {
 		      fclose (param_file);
 		      param_file = NULL;
 	       }
-			(void)sprintf (buf, "read_dims: file: %s.  Trying to read dimension name.", param_file_name);
+			(void)sprintf (buf, "ERROR: trying to read dimension name %s in Parameter File %s.", key, param_file_name);
 			return (buf);
 		}
 
@@ -9505,7 +9516,7 @@ char *read_dims (char *param_file_name) {
 		          fclose (param_file);
 		          param_file = NULL;
 	           }
-				(void)sprintf (buf, "read_dims: file: %s key: %s Can't read dimension size.", param_file_name, key);
+				(void)sprintf (buf, "ERROR: can't read dimension size for %s in Parameter File %s.", key, param_file_name);
 				return (buf);
 			}
 
@@ -9516,7 +9527,7 @@ char *read_dims (char *param_file_name) {
 		          fclose (param_file);
 		          param_file = NULL;
 		       }
-				(void)sprintf (buf, "read_dims: Trouble decoding size from: %s file: %s", line, param_file_name);
+				(void)sprintf (buf, "ERROR: size problem with %s in Parameter File %s", key, param_file_name);
 				return (buf);
 			}
 
@@ -9594,7 +9605,8 @@ char *read_dims (char *param_file_name) {
 				return (NULL);
 			}
 		} else {
-			(void)fprintf (stderr,"\nMMS Warning -- from read_dims:\ndimension '%s' is set in parameter file:\n%s\nbut has never been declared.\n\n", key, param_file_name);
+			(void)fprintf (stderr,"\nWARNING: dimension '%s' is not required; set in parameter file:\n         %s\n", key, param_file_name);
+//			(void)fprintf (stderr,"\nMMS Warning -- from read_dims:\ndimension '%s' is set in parameter file:\n%s\nbut has never been declared.\n\n", key, param_file_name);
 			fgets (line, MAXDATALNLEN, param_file);
 			fgets (line, MAXDATALNLEN, param_file);
 		}
@@ -9628,9 +9640,9 @@ static char *rp (char *param_file_name, int index) {
 */
 	if ((param_file = fopen (param_file_name, "r")) == NULL) {
 		if (param_file_name)
-			(void)sprintf (buf, "read_params: cannot open file: %s", param_file_name);
+			(void)sprintf (buf, "ERROR: cannot open Parameter File: %s", param_file_name);
 		else
-			(void)sprintf (buf, "read_params: cannot open file:");
+			(void)sprintf (buf, "ERROR: cannot open Parameter File");
 
 		return (buf);
 	}
@@ -9722,7 +9734,7 @@ static char *READ_param_head (PARAM **param_ptr, FILE **param_file, char *param_
 * get key, column width and format
 */
   if (fgets (line, MAXDATALNLEN, *param_file) == NULL) {
-    (void)sprintf (buf, "\nread_params: Early end-of-file: %s", param_file_name);
+	  (void)sprintf (buf, "\nERROR: Early end of Parameter File: %s", param_file_name);
     return (buf);
   }
 
@@ -9764,132 +9776,120 @@ static char *READ_param_head (PARAM **param_ptr, FILE **param_file, char *param_
 /*
 **  param is allocated by calls from the modules to declparam.
 */
-  *param_ptr = param_addr (key);
-  if (*param_ptr) {
+	*param_ptr = param_addr (key);
+	if (*param_ptr) {
 	  /*
 	  **  Set the read_in flag to true
 	  */
-	  (*param_ptr)->read_in = 1;
+		(*param_ptr)->read_in = 1;
 /*
 * save format and column width
 */
-/*
-		(void)fprintf (stderr,"READ_param_head: tempwidth = %d\n", tempwidth);
-*/
-    (*param_ptr)->column_width = tempwidth;
-    if (tempfmt) {
-      tempfmt[strlen(tempfmt)-1] = '\0';
-      if(!(*param_ptr)->format)
-	(*param_ptr)->format = (char *)(malloc(strlen(tempfmt)+1));
-      else
-	(*param_ptr)->format = (char *)(realloc((*param_ptr)->format, strlen(tempfmt) + 1));
-      (void)strcpy((*param_ptr)->format, tempfmt);
-    } else
-      (*param_ptr)->format = NULL;
+		(*param_ptr)->column_width = tempwidth;
+		if (tempfmt) {
+			tempfmt[strlen(tempfmt)-1] = '\0';
+			if(!(*param_ptr)->format) {
+				(*param_ptr)->format = (char *)(malloc(strlen(tempfmt)+1));
+			} else {
+				(*param_ptr)->format = (char *)(realloc((*param_ptr)->format, strlen(tempfmt) + 1));
+			}   
+			(void)strcpy((*param_ptr)->format, tempfmt);
+		} else {
+			(*param_ptr)->format = NULL;
+		}
 /*
 * get number of dimensions
 */
-    if(fgets(line, MAXDATALNLEN, *param_file) == NULL) {
-      (void)printf ("ERROR, getparam: reading param ndimen, Early end-of-file: %s",
-		     param_file_name);
-      exit(1);
-    }
+		if(fgets(line, MAXDATALNLEN, *param_file) == NULL) {
+			(void)sprintf (buf,"ERROR: reading param number of dimensions for %s in Parameter File %s", key, param_file_name);
+			return buf;
+		}
 
-   if (isdigit(*line)) {
-      if ((*param_ptr)->ndimen != atol(line)) {
-         (void)printf (
-            "\nERROR, getparam: number of dimensions for parameter %s\ndoesn't match parameter declaration.\nParameter File: %s\n",
-			key, param_file_name);
-         exit(1);
-      }
+		if (isdigit(*line)) {
+			if ((*param_ptr)->ndimen != atol(line)) {
+				sprintf (buf, "\nERROR: number of dimensions for parameter %s doesn't match parameter declaration.\nParameter File: %s\n", key, param_file_name);
+				return buf;
+			}
 
-      if((*param_ptr)->ndimen == 0) {
-         (void)sprintf (buf,
-            "read_params: decoding param ndimen from: %s\nkey is: %s\nfile: %s",
-            line, key, param_file_name);
-         return (buf);
-      }
+			if((*param_ptr)->ndimen == 0) {
+				(void)sprintf (buf, "\nERROR: number of dimensions is 0 for %s in Parameter File %s", key, param_file_name);
+				return (buf);
+			}
 /*
 * get number of dimensions if file format supports 2D arrays. Otherwise
 * get dimension name.
 */
+			for (i = 0; i < (*param_ptr)->ndimen; i++) {
+				if(fgets(dimen, MAXDATALNLEN, *param_file) == NULL) {
+					(void)sprintf (buf, "\nERROR: number of dimensions is wrong for %s in Parameter File %s", key, param_file_name);
+					return (buf);
+				}
 
-      for (i = 0; i < (*param_ptr)->ndimen; i++) {
-        if(fgets(dimen, MAXDATALNLEN, *param_file) == NULL) {
-           (void)sprintf (buf,
-                   "read_params: reading param dimen, Early end-of-file: %s",
-			       param_file_name);
-           return (buf);
-        }
-        dimen[strlen(dimen) - 1] = '\0';
-
-        if (strcmp(dimen, (*param_ptr)->dimen[i]->name)) {
-			(void)fprintf (stderr,
-                 "ERROR, getparam: expecting dimension: %s\nread dimension: %s\nparameter: %s\nfile: %s\n",
-                 (*param_ptr)->dimen[i]->name, dimen, key, param_file_name);
-			exit(1);
-        }
-     } /* i */
+				dimen[strlen(dimen) - 1] = '\0';
+				if (strcmp(dimen, (*param_ptr)->dimen[i]->name)) {
+					(void)sprintf (buf, "\nERROR: dimension specification is wrong for %s in Parameter File %s", key, param_file_name);
+					return (buf);
+				}
+			} /* i */
 
 /*
 * get param size
 */
+			if(fgets(line, MAXDATALNLEN, *param_file) == NULL) {
+				(void)sprintf (buf, "ERROR: incorrect parameter size for %s in Parameter File %s", key, param_file_name);
+				return (buf);
+			}
 
-     if(fgets(line, MAXDATALNLEN, *param_file) == NULL) {
-        (void)sprintf (buf, "read_params: reading param size, Early end-of-file: %s", param_file_name);
-        return (buf);
-     }
+			if((param_size = atol(line)) == 0) {
+				(void)sprintf (buf, "\nERROR: incorrect parameter size for %s in Parameter File %s", key, param_file_name);
+				return (buf);
+			}
 
-     if((param_size = atol(line)) == 0) {
-        (void)sprintf (buf, "read_params: decoding size from:%s\nkey: %s\nfile: %s",
-        line, key, param_file_name);
-        return (buf);
-     }
+			if(param_size != (*param_ptr)->size) {
+				(void)sprintf (buf, "\nERROR: incorrect parameter size for %s in Parameter File %s", key, param_file_name);
+				return (buf);
+			}
 
-      if(param_size != (*param_ptr)->size) {
-		  (void)printf ("ERROR, getparam: size incorrect, \nexpected: %ld, specified: %d\nkey: %s\nfile: %s",
-		       (*param_ptr)->size, param_size, key, param_file_name);
-		exit(1);
-      }
-    } else {
-      (*param_ptr)->ndimen = 1;
-      strncpy(dimen, line, strlen(line));
-      dimen[strlen(line)-1] = '\0';
+		} else {
+			(*param_ptr)->ndimen = 1;
+			strncpy(dimen, line, strlen(line));
+			dimen[strlen(line)-1] = '\0';
 
-      if (strcmp(dimen, (*param_ptr)->dimen[0]->name)) {
-	(void)sprintf (buf, "read_params: reading parameter dimension \nexpecting: %s\nread: %s\nkey is: %s\nfile: %s",
-		       (*param_ptr)->dimen[1]->name, dimen, key, param_file_name);
-	return (buf);
-      }
-      (*param_ptr)->size = getdim(dimen);
-      param_size = (*param_ptr)->size;
-    }
+			if (strcmp(dimen, (*param_ptr)->dimen[0]->name)) {
+				(void)sprintf (buf, "\nERROR: incorrect dimension specified for parameter %s in Parameter File %s",
+				  key, param_file_name);
+				return (buf);
+			}
+			(*param_ptr)->size = getdim(dimen);
+			param_size = (*param_ptr)->size;
+		}
 /*
 * get type
 */
 
-    if(fgets(line, MAXDATALNLEN, *param_file) == NULL) {
-      (void)sprintf (buf, "read_params: reading param type, Early end-of-file: %s",
-		     param_file_name);
-      return (buf);
-    }
-    if((type = atol(line)) == 0) {
-      (void)printf ("\nERROR, getparam: decoding type from:%s\nkey: %s\nfile: %s\n",
-		     line, key, param_file_name);
-      exit(1);
-    }
-    if(type != (*param_ptr)->type) {
-		(void)fprintf (stderr, "ERROR, getparam: incorrect or missing type: \nparameter: %s\nfile: %s\n", key, param_file_name);
-		exit(1);
-    }
+		if(fgets(line, MAXDATALNLEN, *param_file) == NULL) {
+			(void)sprintf (buf, "\nERROR: incorrect data type specified for parameter %s in Parameter File %s", key, param_file_name);
+			return (buf);
+		}
+
+		if((type = atol(line)) == 0) {
+			sprintf (buf, "\nERROR: incorrect data type specified for parameter %s in Parameter File %s", key, param_file_name);
+			return (buf);
+		}
+
+		if(type != (*param_ptr)->type) {
+			sprintf (buf, "\nERROR: incorrect data type specified for parameter %s in Parameter File %s", key, param_file_name);
+			return (buf);
+		}
   
+	} else {
+//		(void)printf ("WARNING: parameter %s is included in the Parameter File (%s) and is not required.\n", key, param_file_name);
+//		(void)printf ("         This parameter is read and ignored.\n\n");
+		(void)printf ("\nWARNING: parameter %s is ignored as it is not required.\n", key);
+		(void)printf ("         Read from Parameter File: %s\n", param_file_name);
+	}
 
-  } else {
-	  (void)printf ("read_params: parameter %s in %s not declared.\n",
-		     key, param_file_name);
-  }
-
-  return (NULL);
+	return (NULL);
 }
 
 /*--------------------------------------------------------------------*\
@@ -10010,12 +10010,9 @@ static char *READ_param_values (PARAM *param, FILE *param_file, char line[]) {
 								if (comp_ptr != endp && *endp == '\n') {
 									((double *)(param->value))[i++] = d;
 								} else {
-									sprintf (buf, "There is a parameter format error. Parameter name: %s Index = %d\n   The data type should be a double precision float or there could be white spaces after the values on the line.", param->name, (i+1));
-									//printf ("%s", buf);
+									sprintf (buf, "\nERROR: parameter format error. Parameter name: %s Index = %d\n   The data type should be a double precision float or there could be white spaces after the values on the line.", param->name, (i+1));
 									return (buf);
 								}
-
-								//((double *)(param->value))[i++] = atof(comp_ptr);
 								break;
 
 							case M_FLOAT:
@@ -10023,12 +10020,9 @@ static char *READ_param_values (PARAM *param, FILE *param_file, char line[]) {
 								if (comp_ptr != endp && *endp == '\n') {
 									((float *)(param->value))[i++] = (float)d;
 								} else {
-									sprintf (buf, "Parameter format error. Parameter name: %s Index = %d\n   The data type should be a float or there could be white spaces after the values on the line.", param->name, (i+1));
-									//printf ("%s", buf);
+									sprintf (buf, "\nERROR: parameter format error. Parameter name: %s Index = %d\n   The data type should be a float or there could be white spaces after the values on the line.", param->name, (i+1));
 									return (buf);
 								}
-
-								//((float *)(param->value))[i++] = (float) atof(comp_ptr);
 								break;
 
 							case M_LONG:
@@ -10036,12 +10030,9 @@ static char *READ_param_values (PARAM *param, FILE *param_file, char line[]) {
 								if (comp_ptr != endp && *endp == '\n') {
 									((int *)(param->value))[i++] = (int)l;
 								} else {
-									sprintf (buf, "Parameter format error. Parameter name: %s Index = %d\n   The data type should be an integer or there could be white spaces after the values on the line.", param->name, (i+1));
-									//printf ("%s", buf);
+									sprintf (buf, "\nERROR: parameter format error. Parameter name: %s Index = %d\n   The data type should be an integer or there could be white spaces after the values on the line.", param->name, (i+1));
 									return (buf);
 								}
-
-								//((int *)(param->value))[i++] =  atol(comp_ptr);
 								break;
 						} // switch
 				 
@@ -10051,32 +10042,17 @@ static char *READ_param_values (PARAM *param, FILE *param_file, char line[]) {
 					} // if (i < param->size)
 				}
 				result = strtok(NULL, delims);
-				//printf ("foo\n");
 			} // while
-
-/*
-**	If the parameter file was written by version 1.6 (or eariler) of
-**	save_params, read the line for minimum and maximum parameter values, but
-**	disregard them.
-*/
-			//if ((ver < 1)  || ((ver == 1) && (rev <=6))) {
-			//	if (!fgets (line, MAXLNLEN, param_file))
-			//		done = TRUE;
-			//	if (!fgets (line, MAXLNLEN, param_file))
-			//		done = TRUE;
-			//}
 		}
 	}
 
 	if (i < param->size) {
-		printf ("ERROR, getparam: too few values read. \nparameter %s\nread_count = %d size = %ld\n", param->name, i, param->size);
-		exit(1);
+		sprintf (buf, "\nERROR: too few values read for paramter %s in Parameter File", param->name);
+		return (buf);
 	} else if (i > param->size) {
-		sprintf (buf, "READ_param_values: too MANY values read. param = %s read_count = %d size = %ld\n", param->name, i, param->size);
-		printf ("%s", buf);
+		sprintf (buf, "\nERROR: too many values read for paramter %s in Parameter File", param->name);
 		return (buf);
 	}
-
 	return (NULL);
 }
 /***************************** TEST DRIVER ****************************/
@@ -10094,9 +10070,9 @@ static char *READ_param_values (PARAM *param, FILE *param_file, char line[]) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: read_vars.c,v $
         Revision 1.12  2000/02/18 18:27:06  markstro
         Made previous Julian time a global.  It is set to -1.0 before the run
@@ -10517,9 +10493,9 @@ static int read_var_line (char *key, char *line, FILE *var_file, char *var_file_
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: readvar.c,v $
         Revision 1.8  1996/04/09 21:04:14  markstro
         (1) Work on control files
@@ -10643,9 +10619,7 @@ long readvar (char *module, char *name) {
 */
 
 	if (found == -1) {
-		(void)fprintf(stderr, "ERROR - readvar\n");
-		(void)fprintf(stderr, "Attempting to read var '%s'\n", vkey);
-		(void)fprintf(stderr, "Variable not found in data file\n");
+		(void)fprintf(stderr, "\nERROR: Attempting to read variable %s, which is not in Data File\n", vkey);
 		return (1);
 	}
 
@@ -10720,9 +10694,9 @@ long readvar (char *module, char *name) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: reset_dim.c,v $
         Revision 1.15  1999/10/22 17:14:37  markstro
         Added private variables
@@ -11116,9 +11090,9 @@ static void resize_param (PARAM *param, long dimen_num, long nold, long nnew, lo
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: save_vars.c,v $
         Revision 1.14  2000/02/18 18:27:07  markstro
         Made previous Julian time a global.  It is set to -1.0 before the run
@@ -11314,7 +11288,7 @@ int save_vars (char *var_file_name) {
  * REF      :
  * REVIEW   :
  * PR NRS   :
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: save_params.c,v $
         Revision 1.17  1998/03/04 17:20:20  markstro
         Added seperate runcontrol functions for each run type.
@@ -11420,7 +11394,7 @@ int save_params (char *param_file_name) {
 		return(1);
 	}
 
-	write_header (param_file, "Default file generated by model\n");
+	write_header (param_file, "Default Parameter File generated based on active modules and any specified Parameter File(s)\n");
 	write_dimensions (param_file);
 	write_parameters (param_file, TRUE);
 	
@@ -11467,7 +11441,7 @@ int write_preprocess_params () {
 
 static void write_header (FILE *param_file, char *desc) {
     (void)fprintf (param_file, desc);
-	(void)fprintf (param_file, "Version: 1.7\n");
+	(void)fprintf (param_file, "PRMS version 4\n");
 }
 
 static void write_dimensions (FILE *param_file) {
@@ -11612,9 +11586,9 @@ static void write_parameters (FILE *param_file, int writeAllParams) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: setup_cont.c,v $
         Revision 1.31  1999/08/24 16:34:16  markstro
         Version 1.1.1
@@ -11738,7 +11712,7 @@ static void write_parameters (FILE *param_file, int writeAllParams) {
 extern void decl_control_string (char *key, char *valstr);
 extern void decl_control_int_array (char *key, long size, long *valstr);
 extern void decl_control_float_array (char *key, long size, float *valstr);
-//extern void decl_control_string_array (char *valstr, char *key, long size);
+extern void decl_control_string_array (char *key, long size, char *valstr);
 
 /**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
 /*--------------------------------------------------------------------*\
@@ -11767,7 +11741,7 @@ void setup_cont (void) {
         decl_control_string ("temp_module", "temp_1sta");
         decl_control_string ("et_module", "potet_jh");
         decl_control_string ("srunoff_module", "srunoff_smidx");
-        decl_control_string ("solrad_module", "ddsolrad_hru");
+        decl_control_string ("solrad_module", "ddsolrad");
         decl_control_string ("soltab_module", "soltab");
         decl_control_string ("soilzone_module", "soilzone");
         decl_control_string ("stats_module", "null");
@@ -11778,11 +11752,12 @@ void setup_cont (void) {
         decl_control_string ("transp_module", "transp_tindex");
         decl_control_string ("gsflow_output_file", "gsflow.out");
         decl_control_string ("gsflow_csv_file", "gsflow.csv");
+        decl_control_string ("capillary_module", "null");
 
 /*
         cval = (char *)umalloc (sizeof (long));
         cval[0] = "recharge";
-        decl_control_string_array (cval, "mapOutVar_names", 20);
+        decl_control_string_array ("mapOutVar_names", 20, cval);
 */
 
         lval = (long *)umalloc (sizeof (long));
@@ -11827,15 +11802,71 @@ void setup_cont (void) {
 
         lval = (long *)umalloc (sizeof (long));
 		lval[0] = 0;
+		decl_control_int_array ("dyn_imperv_flag", 1, lval);
+
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("dyn_intcp_flag", 1, lval);
+
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("dyn_covden_flag", 1, lval);
+
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("dyn_covtype_flag", 1, lval);
+
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("dyn_transp_flag", 1, lval);
+
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("dyn_potet_flag", 1, lval);
+
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("dyn_soil_flag", 1, lval);
+
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("dyn_radtrncf_flag", 1, lval);
+
+		lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("dyn_dprst_flag", 1, lval);
+
+		lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("segment_transferON_OFF", 1, lval);
+
+		lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("gwr_transferON_OFF", 1, lval);
+
+		lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("external_transferON_OFF", 1, lval);
+
+		lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("lake_transferON_OFF", 1, lval);
+
+		lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("dprst_transferON_OFF", 1, lval);
+
+		lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("seg2hru_flag", 1, lval);
+
+		lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
 		decl_control_int_array ("glacier_flag", 1, lval);
 
         lval = (long *)umalloc (sizeof (long));
 		lval[0] = 0;
 		decl_control_int_array ("mbInit_flag", 1, lval);
-
-		lval = (long *)umalloc (sizeof (long));
-		lval[0] = 0;
-		decl_control_int_array ("gwflow_flag", 1, lval);
 
         lval = (long *)umalloc (sizeof (long));
 		lval[0] = 0;
@@ -11844,10 +11875,6 @@ void setup_cont (void) {
         lval = (long *)umalloc (sizeof (long));
 		lval[0] = 0;
 		decl_control_int_array ("orad_flag", 1, lval);
-
-		lval = (long *)umalloc (sizeof (long));
-		lval[0] = 0;
-		decl_control_int_array ("app_div_flag", 1, lval);
 
         lval = (long *)umalloc (sizeof (long));
 		lval[0] = 0;
@@ -11860,20 +11887,38 @@ void setup_cont (void) {
 **	file names
 */
         decl_control_string ("executable_desc", "MOWS executable");
-        decl_control_string ("executable_model", "prms-iv");
+        decl_control_string ("executable_model", "prmsIV");
         decl_control_string ("data_file", "prms.data");
         decl_control_string ("param_file", "prms.params");
         decl_control_string ("var_save_file", "prms_ic.out");
         decl_control_string ("var_init_file", "prms_ic.in");
         //decl_control_string ("stats_output_file", "stats.out");
-        decl_control_string ("stat_var_file", "tsv.out");
-        decl_control_string ("ani_output_file", "tsd.out");
+        decl_control_string ("stat_var_file", "statvar.out");
+        decl_control_string ("ani_output_file", "animation.out");
         decl_control_string ("model_output_file", "prms.out");
         decl_control_string ("tmax_day", "tmax.day");
         decl_control_string ("tmin_day", "tmin.day");
         decl_control_string ("precip_day", "precip.day");
         decl_control_string ("swrad_day", "swrad.day");
         decl_control_string ("potet_day", "potet.day");
+        decl_control_string ("transp_day", "transp.day");
+        decl_control_string ("covden_dynamic", "dyncovden");
+        decl_control_string ("dprst_area_dynamic", "dyndprst");
+        decl_control_string ("dprst_depth_dynamic", "dyndprst");
+		decl_control_string ("snow_intcp_dynamic", "dynsnowintcp");
+		decl_control_string ("srain_intcp_dynamic", "dynsrainintcp");
+		decl_control_string ("wrain_intcp_dynamic", "dynwrainintcp");
+		decl_control_string ("imperv_frac_dynamic", "dynimperv");
+		decl_control_string ("imperv_stor_dynamic", "dynimperv");
+		decl_control_string ("covtype_dynamic", "dyncovtype");
+		decl_control_string ("jhcoef_dynamic", "dynjhcoef");
+		decl_control_string ("potet_coef_dynamic", "dynpotetcoef");
+		decl_control_string ("transpbeg_dynamic", "dyntranspbeg");
+		decl_control_string ("transpend_dynamic", "dyntranspend");
+		decl_control_string ("soilrechr_dynamic", "dynsoilrechr");
+		decl_control_string ("soilmoist_dynamic", "dynsoilmoist");
+		decl_control_string ("radtrncf_dynamic", "dynradtrncf");
+		decl_control_string ("csv_output_file", "prms_summary.csv");
 /*
 **	run start and end times
 */
@@ -11955,6 +12000,10 @@ void setup_cont (void) {
 		lval[0] = 50;
         decl_control_int_array ("dispGraphsBuffSize", 1, lval);
 
+// CSV output
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+        decl_control_int_array ("csvON_OFF", 1, lval);
 /*
 **  Env file
 */
@@ -11974,14 +12023,13 @@ void setup_cont (void) {
 /**7****************** LOCAL FUNCTION DEFINITIONS *********************/
 
 /**8************************** TEST DRIVER ****************************/
-
 /**************************************************************************
  * sort_dims.c: sorts the dimen array so that the key for each
  * structure is in increasing alphabetical order
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: sort_dims.c,v $
         Revision 1.5  1996/04/29 16:23:25  markstro
         Unknown
@@ -12038,9 +12086,9 @@ void sort_dims (void) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: sort_params.c,v $
         Revision 1.5  1996/02/19 20:01:12  markstro
         Now lints pretty clean
@@ -12117,9 +12165,9 @@ void sort_params (void) {
  * sort_vars.c: sorts the pubvar array so that the key for each
  * structure is in increasing alphabetical order
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: sort_vars.c,v $
         Revision 1.5  1996/02/19 20:01:12  markstro
         Now lints pretty clean
@@ -12202,9 +12250,9 @@ void sort_vars (void) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: stats.c,v $
         Revision 1.13  1998/11/10 15:17:44  markstro
         unknown
@@ -12516,9 +12564,9 @@ int stats (void) {
  * If the total number of entries is less than required, the sequence
  * is repeated.
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: str_to_vals.c,v $
         Revision 1.7  1996/02/19 20:01:17  markstro
         Now lints pretty clean
@@ -12741,9 +12789,9 @@ long str_to_vals (char *encoded_string, long size, long type, char *store_addr) 
  *
  * The routines without the suffix are called from C
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: timing.c,v $
         Revision 1.7  1997/04/18 16:44:15  markstro
         (1)  Commented out errno problem with opening files from fortran.
@@ -13242,7 +13290,7 @@ double delnex (void) {
  *
  * Mike Dixon CADSWES CU July 1990
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
  **********************************************************************/
 #define UMALLOC_ETC_C
@@ -13332,9 +13380,9 @@ void ufree (char *ptr) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: uprint.c,v $
         Revision 1.10  1996/04/29 16:23:26  markstro
         Unknown
@@ -13368,420 +13416,420 @@ void ufree (char *ptr) {
 -*/
 
 /**1************************ INCLUDE FILES ****************************/
-#define UPRINT_C
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include "mms.h"
-
-/**2************************* LOCAL MACROS ****************************/
-
-/**3************************ LOCAL TYPEDEFS ***************************/
-
-/**4***************** DECLARATION LOCAL FUNCTIONS *********************/
-
-/**5*********************** LOCAL VARIABLES ***************************/
-
-/**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
-/*--------------------------------------------------------------------*\
- | FUNCTION     : GetUserFile
- | COMMENT		:
- | PARAMETERS   :
- | RETURN VALUE : 
- | RESTRICTIONS :
-\*--------------------------------------------------------------------*/
-FILE *GetUserFile (char *name, long dimNo) {
-	DIMEN *dim;
-	//char pathname[512];
-	int i;
-
-	/*
-   * Find if dimension "name" has names defined
-   */
-
-	dim = dim_addr(name);
-
-	if (!dim)
-	{
-		(void)fprintf(stderr, "ERROR - GetUserFile, Can't find dimension named %s\n",name);
-		return (NULL);
-	}
-
-	if (!dim->names)
-	{
-		(void)fprintf(stderr, "ERROR - GetUserFile. Dimension %s has no named indices\n",name);
-		return (NULL);
-	}
-
-	/*
-   * If so, find if the file indexed dimNo is opened. If it isn't, open it.
-   */
-
-	if (!dim->files)
-	{
-		dim->files = (FILE **)calloc(dim->value,sizeof(FILE *));
-
-		/*
-       * initalize all pointers to NULL
-       */
-
-		for (i = 0; i < dim->value; i++)
-			dim->files[i] = NULL;
-	}
-
-	//if (!dim->files[dimNo-1] && MuserFiles)
-	//{
-	//	/*
- //      * get user output directory from environment
- //      */
-
- //     (void)sprintf (pathname, "%s%s", *control_svar("stats_output_file"), dim->names[dimNo-1]);
- //     dim->files[dimNo-1] = fopen(pathname,"w");
-	//}
-
-	/* 
-   * return file pointer
-   */
-
-	return(dim->files[dimNo-1]);
-
-}
-
-/*--------------------------------------------------------------------*\
- | FUNCTION     : closeUserFiles
- | COMMENT		:
- | PARAMETERS   :
- | RETURN VALUE : 
- | RESTRICTIONS :
-\*--------------------------------------------------------------------*/
-void closeUserFiles (void) {
-
-	int		i, j;
-	DIMEN	*dp;
-
-	for (i = 0; i < dim_db->count; i++) {
-		dp = (DIMEN *)(dim_db->itm[i]);
-		if (dp->files) {
-			for (j = 0; j < dp->value; j++) {
-				if (dp->files[j]) {
-					fclose (dp->files[j]);
-				}
-			}
-//			free (dp->files);
-			dp->files = NULL;
-		}
-	}
-	MuserFiles = 0;
-}
-
-/*--------------------------------------------------------------------*\
- | FUNCTION     : upstr_
- | COMMENT		: called from Fortran as 'call upstr(dimname, dimNo, string)'
- | PARAMETERS   :
- | RETURN VALUE : 
- | RESTRICTIONS :
-\*--------------------------------------------------------------------*/
-void upstr_ (char *dimname, ftnint *dimNo, char *str, ftnlen dimlen, ftnlen stringlen) {
-
-	char *string;
-	char *name;
-	FILE *UserFile;
-
-	/*
-   * return if file pointer is NULL
-   */
-
-	name = (char *) umalloc(dimlen + 1);
-	strncpy(name, dimname, dimlen);
-	name[dimlen] = '\0';
-
-	UserFile = GetUserFile(name,*dimNo);
-
-	if (UserFile == NULL)
-		return;
-
-	/*
-   * copy string to new string
-   */
-
-	string = (char *) umalloc(stringlen + 1);
-	strncpy(string, str, stringlen);
-	string[stringlen] = '\0';
-
-	(void)fprintf(UserFile, "%s\n", string);
-
-//	ufree(string);
-}
-
-
-/*--------------------------------------------------------------------*\
- | FUNCTION     : upstr
- | COMMENT		: upstr is called from C as 'upstr(dimname, dimNo, string)
- | PARAMETERS   :
- | RETURN VALUE : 
- | RESTRICTIONS :
-\*--------------------------------------------------------------------*/
-void upstr (char *dimname, long dimNo, char *string) {
-
-	FILE *UserFile;
-	/*
-   * return if file pointer is NULL
-   */
-
-	UserFile = GetUserFile(dimname,dimNo);
-
-	if (UserFile == NULL)
-		return;
-
-	(void)fprintf(UserFile, "%s\n", string);
-
-}
-
-/*--------------------------------------------------------------------*\
- | FUNCTION     : upint4_
- | COMMENT		: print integer from Fortran
- | PARAMETERS   : 'string' is a string
- |                'array' is the INTEGER*4 of long array or scalar to be printed
- |                'n' is the number of values in the array, 1 if a scalar
- | RETURN VALUE : 
- | RESTRICTIONS :
-\*--------------------------------------------------------------------*/
-void upint4_ (char *dimname, ftnint *dimNo, char *str, ftnint *array, ftnint *n,
-ftnlen dimlen, ftnlen stringlen) {
-
-	FILE *UserFile;
-
-	char *string;
-	char * name;
-	int i;
-
-	name = (char *) umalloc(dimlen + 1);
-	strncpy(name, dimname, dimlen);
-	name[dimlen] = '\0';
-
-	/*
-   * return if file pointer is NULL
-   */
-
-	UserFile = GetUserFile(name,*dimNo);
-
-	if (UserFile == NULL)
-		return;
-
-	/*
-   * copy string to new string
-   */
-
-	string = (char *) umalloc(stringlen + 1);
-	strncpy(string, str, stringlen);
-	string[stringlen] = '\0';
-
-	(void)fprintf(UserFile, "%s ",string);
-
-	for (i=0; i < *n; i++)
-		(void)fprintf(UserFile, " %d",array[i]);
-//		(void)fprintf(UserFile, " %ld",array[i]);
-
-	(void)fprintf(UserFile, "\n");
-
-}
-
-/*--------------------------------------------------------------------*\
- | FUNCTION     : uplong
- | COMMENT      : print long from C
- | PARAMETERS   : 'string' is a string
- |                'array' is the INTEGER*4 of long array or scalar to be printed
- |                'n' is the number of values in the array, 1 if a scalar
- | RETURN VALUE :
- | RESTRICTIONS :
-\*--------------------------------------------------------------------*/
-void uplong (char *dimname, long dimNo, char *string, long *array, long n) {
-
-	int i;
-	FILE *UserFile;
-
-	/*
-   * return if file pointer is NULL
-   */
-
-	UserFile = GetUserFile(dimname,dimNo);
-
-	if (UserFile == NULL)
-		return;
-
-	(void)fprintf(UserFile, "%s ",string);
-
-	for (i=0; i < n; i++)
-		(void)fprintf(UserFile, " %ld", array[i]);
-
-	(void)fprintf(UserFile, "\n");
-
-}
-
-/*--------------------------------------------------------------------*\
- | FUNCTION     : upreal_
- | COMMENT		: print real array from Fortran
- |                The fortran call is:
- |                call upreal(string, array, n)
- | PARAMETERS   : 'string' is a string
- |                'array' is the REAL or float array or scalar to be printeD
- |                'n' is the number of values in the array, 1 if a scalar.
- | RETURN VALUE : 
- | RESTRICTIONS :
-\*--------------------------------------------------------------------*/
-void upreal_ (char *dimname, ftnint *dimNo, char *str, float *array, ftnint *n,
-ftnlen dimlen, ftnlen stringlen) {
-
-	char *string;
-	char *name;
-	int i;
-	FILE *UserFile;
-
-	name = (char *) umalloc(dimlen + 1);
-	strncpy(name, dimname, dimlen);
-	name[dimlen] = '\0';
-
-	/*
-   * return if file pointer is NULL
-   */
-
-	UserFile = GetUserFile(name,*dimNo);
-
-	if (UserFile == NULL)
-		return;
-
-	/*
-   * copy string to new string
-   */
-
-	string = (char *) umalloc(stringlen + 1);
-	strncpy(string, str, stringlen);
-	string[stringlen] = '\0';
-
-	(void)fprintf(UserFile, "%s ",string);
-
-	for (i=0; i < *n; i++)
-		(void)fprintf(UserFile, " %10g", array[i]);
-
-	(void)fprintf(UserFile, "\n");
-
-}
-
-/*--------------------------------------------------------------------*\
- | FUNCTION     : upfloat
- | COMMENT		: print float array from C
- |                The C call is:
- |                upfloat(string, array, n)
- | PARAMETERS   : 'string' is a string
- |                'array' is the REAL or float array or scalar to be printeD
- |                'n' is the number of values in the array, 1 if a scalar.
- | RETURN VALUE : 
- | RESTRICTIONS :
-\*--------------------------------------------------------------------*/
-void upfloat (char *dimname, long dimNo, char *string, float *array, long n) {
-
-	int i;
-	FILE *UserFile;
-
-	/*
-   * return if file pointer is NULL
-   */
-
-	UserFile = GetUserFile(dimname,dimNo);
-
-	if (UserFile == NULL)
-		return;
-
-	(void)fprintf(UserFile, "%s ",string);
-
-	for (i=0; i < n; i++)
-		(void)fprintf(UserFile, " %10g", array[i]);
-
-	(void)fprintf(UserFile, "\n");
-
-}
-
-/*--------------------------------------------------------------------*\
- | FUNCTION     : updble_
- | COMMENT		: print double precision array from Fortran
- |                The fortran call is:
- |                call updble(string, array, n)
- | PARAMETERS   : 'string' is a string
- |                'array' is the double precision array or scalar to be printed
- |                'n' is the number of values in the array, 1 if a scalar
- | RETURN VALUE : 
- | RESTRICTIONS :
-\*--------------------------------------------------------------------*/
-void updble_ (char *dimname, ftnint *dimNo, char *str, double *array, ftnint *n, ftnlen dimlen, ftnlen stringlen) {
-
-	char *string;
-	char *name;
-	int i;
-	FILE *UserFile;
-
-	name = (char *) umalloc(dimlen + 1);
-	strncpy(name, dimname, dimlen);
-	name[dimlen] = '\0';
-
-	/*
-   * return if file pointer is NULL
-   */
-
-	UserFile = GetUserFile(name,*dimNo);
-
-	if (UserFile == NULL)
-		return;
-
-	/*
-   * copy string to new string
-   */
-
-	string = (char *) umalloc(stringlen + 1);
-	strncpy(string, str, stringlen);
-	string[stringlen] = '\0';
-
-	(void)fprintf(UserFile, "%s ",string);
-
-	for (i=0; i < *n; i++)
-		(void)fprintf(UserFile, " %10lg", array[i]);
-
-	(void)fprintf(UserFile, "\n");
-
-}
-
-/*--------------------------------------------------------------------*\
- | FUNCTION     : updble
- | COMMENT		: print double array from C
- |                The C call is
- |                call updble(string, array, n)
- | PARAMETERS   : 'string' is a string
- |                'array' is the double precision array or scalar to be printed
- |                'n' is the number of values in the array, 1 if a scalar
- | RETURN VALUE : 
- | RESTRICTIONS :
-\*--------------------------------------------------------------------*/
-void updble (char *dimname, long dimNo, char *string, double *array, long n) {
-
-	int i;
-	FILE *UserFile;
-
-	/*
-   * return if file pointer is NULL
-   */
-
-	UserFile = GetUserFile(dimname,dimNo);
-
-	if (UserFile == NULL)
-		return;
-
-	(void)fprintf(UserFile, "%s ",string);
-
-	for (i=0; i < n; i++)
-		(void)fprintf(UserFile, " %10lg", array[i]);
-
-	(void)fprintf(UserFile, "\n");
-
-}
+////#define UPRINT_C
+////#include <string.h>
+////#include <stdlib.h>
+////#include <stdio.h>
+////#include "mms.h"
+////
+/////**2************************* LOCAL MACROS ****************************/
+////
+/////**3************************ LOCAL TYPEDEFS ***************************/
+////
+/////**4***************** DECLARATION LOCAL FUNCTIONS *********************/
+////
+/////**5*********************** LOCAL VARIABLES ***************************/
+////
+/////**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
+/////*--------------------------------------------------------------------*\
+//// | FUNCTION     : GetUserFile
+//// | COMMENT		:
+//// | PARAMETERS   :
+//// | RETURN VALUE : 
+//// | RESTRICTIONS :
+////\*--------------------------------------------------------------------*/
+////FILE *GetUserFile (char *name, long dimNo) {
+////	DIMEN *dim;
+////	//char pathname[512];
+////	int i;
+////
+////	/*
+////   * Find if dimension "name" has names defined
+////   */
+////
+////	dim = dim_addr(name);
+////
+////	if (!dim)
+////	{
+////		(void)fprintf(stderr, "ERROR - GetUserFile, Can't find dimension named %s\n",name);
+////		return (NULL);
+////	}
+////
+////	if (!dim->names)
+////	{
+////		(void)fprintf(stderr, "ERROR - GetUserFile. Dimension %s has no named indices\n",name);
+////		return (NULL);
+////	}
+////
+////	/*
+////   * If so, find if the file indexed dimNo is opened. If it isn't, open it.
+////   */
+////
+////	if (!dim->files)
+////	{
+////		dim->files = (FILE **)calloc(dim->value,sizeof(FILE *));
+////
+////		/*
+////       * initalize all pointers to NULL
+////       */
+////
+////		for (i = 0; i < dim->value; i++)
+////			dim->files[i] = NULL;
+////	}
+////
+////	//if (!dim->files[dimNo-1] && MuserFiles)
+////	//{
+////	//	/*
+//// //      * get user output directory from environment
+//// //      */
+////
+//// //     (void)sprintf (pathname, "%s%s", *control_svar("stats_output_file"), dim->names[dimNo-1]);
+//// //     dim->files[dimNo-1] = fopen(pathname,"w");
+////	//}
+////
+////	/* 
+////   * return file pointer
+////   */
+////
+////	return(dim->files[dimNo-1]);
+////
+////}
+////
+/////*--------------------------------------------------------------------*\
+//// | FUNCTION     : closeUserFiles
+//// | COMMENT		:
+//// | PARAMETERS   :
+//// | RETURN VALUE : 
+//// | RESTRICTIONS :
+////\*--------------------------------------------------------------------*/
+////void closeUserFiles (void) {
+////
+////	int		i, j;
+////	DIMEN	*dp;
+////
+////	for (i = 0; i < dim_db->count; i++) {
+////		dp = (DIMEN *)(dim_db->itm[i]);
+////		if (dp->files) {
+////			for (j = 0; j < dp->value; j++) {
+////				if (dp->files[j]) {
+////					fclose (dp->files[j]);
+////				}
+////			}
+//////			free (dp->files);
+////			dp->files = NULL;
+////		}
+////	}
+////	MuserFiles = 0;
+////}
+////
+/////*--------------------------------------------------------------------*\
+//// | FUNCTION     : upstr_
+//// | COMMENT		: called from Fortran as 'call upstr(dimname, dimNo, string)'
+//// | PARAMETERS   :
+//// | RETURN VALUE : 
+//// | RESTRICTIONS :
+////\*--------------------------------------------------------------------*/
+////void upstr_ (char *dimname, ftnint *dimNo, char *str, ftnlen dimlen, ftnlen stringlen) {
+////
+////	char *string;
+////	char *name;
+////	FILE *UserFile;
+////
+////	/*
+////   * return if file pointer is NULL
+////   */
+////
+////	name = (char *) umalloc(dimlen + 1);
+////	strncpy(name, dimname, dimlen);
+////	name[dimlen] = '\0';
+////
+////	UserFile = GetUserFile(name,*dimNo);
+////
+////	if (UserFile == NULL)
+////		return;
+////
+////	/*
+////   * copy string to new string
+////   */
+////
+////	string = (char *) umalloc(stringlen + 1);
+////	strncpy(string, str, stringlen);
+////	string[stringlen] = '\0';
+////
+////	(void)fprintf(UserFile, "%s\n", string);
+////
+//////	ufree(string);
+////}
+////
+////
+/////*--------------------------------------------------------------------*\
+//// | FUNCTION     : upstr
+//// | COMMENT		: upstr is called from C as 'upstr(dimname, dimNo, string)
+//// | PARAMETERS   :
+//// | RETURN VALUE : 
+//// | RESTRICTIONS :
+////\*--------------------------------------------------------------------*/
+////void upstr (char *dimname, long dimNo, char *string) {
+////
+////	FILE *UserFile;
+////	/*
+////   * return if file pointer is NULL
+////   */
+////
+////	UserFile = GetUserFile(dimname,dimNo);
+////
+////	if (UserFile == NULL)
+////		return;
+////
+////	(void)fprintf(UserFile, "%s\n", string);
+////
+////}
+////
+/////*--------------------------------------------------------------------*\
+//// | FUNCTION     : upint4_
+//// | COMMENT		: print integer from Fortran
+//// | PARAMETERS   : 'string' is a string
+//// |                'array' is the INTEGER*4 of long array or scalar to be printed
+//// |                'n' is the number of values in the array, 1 if a scalar
+//// | RETURN VALUE : 
+//// | RESTRICTIONS :
+////\*--------------------------------------------------------------------*/
+////void upint4_ (char *dimname, ftnint *dimNo, char *str, ftnint *array, ftnint *n,
+////ftnlen dimlen, ftnlen stringlen) {
+////
+////	FILE *UserFile;
+////
+////	char *string;
+////	char * name;
+////	int i;
+////
+////	name = (char *) umalloc(dimlen + 1);
+////	strncpy(name, dimname, dimlen);
+////	name[dimlen] = '\0';
+////
+////	/*
+////   * return if file pointer is NULL
+////   */
+////
+////	UserFile = GetUserFile(name,*dimNo);
+////
+////	if (UserFile == NULL)
+////		return;
+////
+////	/*
+////   * copy string to new string
+////   */
+////
+////	string = (char *) umalloc(stringlen + 1);
+////	strncpy(string, str, stringlen);
+////	string[stringlen] = '\0';
+////
+////	(void)fprintf(UserFile, "%s ",string);
+////
+////	for (i=0; i < *n; i++)
+////		(void)fprintf(UserFile, " %d",array[i]);
+//////		(void)fprintf(UserFile, " %ld",array[i]);
+////
+////	(void)fprintf(UserFile, "\n");
+////
+////}
+////
+/////*--------------------------------------------------------------------*\
+//// | FUNCTION     : uplong
+//// | COMMENT      : print long from C
+//// | PARAMETERS   : 'string' is a string
+//// |                'array' is the INTEGER*4 of long array or scalar to be printed
+//// |                'n' is the number of values in the array, 1 if a scalar
+//// | RETURN VALUE :
+//// | RESTRICTIONS :
+////\*--------------------------------------------------------------------*/
+////void uplong (char *dimname, long dimNo, char *string, long *array, long n) {
+////
+////	int i;
+////	FILE *UserFile;
+////
+////	/*
+////   * return if file pointer is NULL
+////   */
+////
+////	UserFile = GetUserFile(dimname,dimNo);
+////
+////	if (UserFile == NULL)
+////		return;
+////
+////	(void)fprintf(UserFile, "%s ",string);
+////
+////	for (i=0; i < n; i++)
+////		(void)fprintf(UserFile, " %ld", array[i]);
+////
+////	(void)fprintf(UserFile, "\n");
+////
+////}
+////
+/////*--------------------------------------------------------------------*\
+//// | FUNCTION     : upreal_
+//// | COMMENT		: print real array from Fortran
+//// |                The fortran call is:
+//// |                call upreal(string, array, n)
+//// | PARAMETERS   : 'string' is a string
+//// |                'array' is the REAL or float array or scalar to be printeD
+//// |                'n' is the number of values in the array, 1 if a scalar.
+//// | RETURN VALUE : 
+//// | RESTRICTIONS :
+////\*--------------------------------------------------------------------*/
+////void upreal_ (char *dimname, ftnint *dimNo, char *str, float *array, ftnint *n,
+////ftnlen dimlen, ftnlen stringlen) {
+////
+////	char *string;
+////	char *name;
+////	int i;
+////	FILE *UserFile;
+////
+////	name = (char *) umalloc(dimlen + 1);
+////	strncpy(name, dimname, dimlen);
+////	name[dimlen] = '\0';
+////
+////	/*
+////   * return if file pointer is NULL
+////   */
+////
+////	UserFile = GetUserFile(name,*dimNo);
+////
+////	if (UserFile == NULL)
+////		return;
+////
+////	/*
+////   * copy string to new string
+////   */
+////
+////	string = (char *) umalloc(stringlen + 1);
+////	strncpy(string, str, stringlen);
+////	string[stringlen] = '\0';
+////
+////	(void)fprintf(UserFile, "%s ",string);
+////
+////	for (i=0; i < *n; i++)
+////		(void)fprintf(UserFile, " %10g", array[i]);
+////
+////	(void)fprintf(UserFile, "\n");
+////
+////}
+////
+/////*--------------------------------------------------------------------*\
+//// | FUNCTION     : upfloat
+//// | COMMENT		: print float array from C
+//// |                The C call is:
+//// |                upfloat(string, array, n)
+//// | PARAMETERS   : 'string' is a string
+//// |                'array' is the REAL or float array or scalar to be printeD
+//// |                'n' is the number of values in the array, 1 if a scalar.
+//// | RETURN VALUE : 
+//// | RESTRICTIONS :
+////\*--------------------------------------------------------------------*/
+////void upfloat (char *dimname, long dimNo, char *string, float *array, long n) {
+////
+////	int i;
+////	FILE *UserFile;
+////
+////	/*
+////   * return if file pointer is NULL
+////   */
+////
+////	UserFile = GetUserFile(dimname,dimNo);
+////
+////	if (UserFile == NULL)
+////		return;
+////
+////	(void)fprintf(UserFile, "%s ",string);
+////
+////	for (i=0; i < n; i++)
+////		(void)fprintf(UserFile, " %10g", array[i]);
+////
+////	(void)fprintf(UserFile, "\n");
+////
+////}
+////
+/////*--------------------------------------------------------------------*\
+//// | FUNCTION     : updble_
+//// | COMMENT		: print double precision array from Fortran
+//// |                The fortran call is:
+//// |                call updble(string, array, n)
+//// | PARAMETERS   : 'string' is a string
+//// |                'array' is the double precision array or scalar to be printed
+//// |                'n' is the number of values in the array, 1 if a scalar
+//// | RETURN VALUE : 
+//// | RESTRICTIONS :
+////\*--------------------------------------------------------------------*/
+////void updble_ (char *dimname, ftnint *dimNo, char *str, double *array, ftnint *n, ftnlen dimlen, ftnlen stringlen) {
+////
+////	char *string;
+////	char *name;
+////	int i;
+////	FILE *UserFile;
+////
+////	name = (char *) umalloc(dimlen + 1);
+////	strncpy(name, dimname, dimlen);
+////	name[dimlen] = '\0';
+////
+////	/*
+////   * return if file pointer is NULL
+////   */
+////
+////	UserFile = GetUserFile(name,*dimNo);
+////
+////	if (UserFile == NULL)
+////		return;
+////
+////	/*
+////   * copy string to new string
+////   */
+////
+////	string = (char *) umalloc(stringlen + 1);
+////	strncpy(string, str, stringlen);
+////	string[stringlen] = '\0';
+////
+////	(void)fprintf(UserFile, "%s ",string);
+////
+////	for (i=0; i < *n; i++)
+////		(void)fprintf(UserFile, " %10lg", array[i]);
+////
+////	(void)fprintf(UserFile, "\n");
+////
+////}
+////
+/////*--------------------------------------------------------------------*\
+//// | FUNCTION     : updble
+//// | COMMENT		: print double array from C
+//// |                The C call is
+//// |                call updble(string, array, n)
+//// | PARAMETERS   : 'string' is a string
+//// |                'array' is the double precision array or scalar to be printed
+//// |                'n' is the number of values in the array, 1 if a scalar
+//// | RETURN VALUE : 
+//// | RESTRICTIONS :
+////\*--------------------------------------------------------------------*/
+////void updble (char *dimname, long dimNo, char *string, double *array, long n) {
+////
+////	int i;
+////	FILE *UserFile;
+////
+////	/*
+////   * return if file pointer is NULL
+////   */
+////
+////	UserFile = GetUserFile(dimname,dimNo);
+////
+////	if (UserFile == NULL)
+////		return;
+////
+////	(void)fprintf(UserFile, "%s ",string);
+////
+////	for (i=0; i < n; i++)
+////		(void)fprintf(UserFile, " %10lg", array[i]);
+////
+////	(void)fprintf(UserFile, "\n");
+////
+////}
 
 /**7****************** LOCAL FUNCTION DEFINITIONS *********************/
 
@@ -13793,9 +13841,9 @@ void updble (char *dimname, long dimNo, char *string, double *array, long n) {
  * returns a pointer to a PUBVAR struct which contains the given key
  * returns NULL if key not found
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: var_addr.c,v $
         Revision 1.5  1999/10/22 17:14:38  markstro
         Added private variables
@@ -13902,9 +13950,9 @@ PUBVAR *var_addr (char *key) {
  * REVIEW   :
  * PR NRS   :
  *
- * $Id: mms_util.c 4065 2011-12-13 23:42:57Z rsregan $
+ * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: write_vstats.c,v $
         Revision 1.4  1996/02/19 20:01:24  markstro
         Now lints pretty clean
@@ -14041,7 +14089,7 @@ int call_setdims()
  * REVIEW   :
  * PR NRS   :
  *
-   $Revision: 4065 $
+   $Revision: 4870 $
         $Log: getdimname.c,v $
         Revision 1.10  1999/08/24 16:34:04  markstro
         Version 1.1.1

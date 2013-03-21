@@ -4,6 +4,8 @@
 /*
  *  Generic PCG:
  *
+ *    Starting value for cfac modified: R.L. Naff, 03/25/2010
+ *
  *    Iterative method for approximating the solution to Ax=b
  *    where x is an r_vector structure representing the initial guess
  *    and b is an r_vector structure representing the right-hand side.
@@ -169,7 +171,8 @@ int PCG_eval(r_vector* x_ptr, r_vector* b_ptr, void* A_ptr)
   if(pf)
   {
     BIGR0=BIGR=sqrt(RES);
-    cfac=BIGR/BIGR0;
+    /* cfac=BIGR/BIGR0; R.L. Naff, 03/25/2010 */
+    cfac=1.0;
     resprint(&IOUT,&k,&BIGR,&cfac);
   }
 

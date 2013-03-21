@@ -6,9 +6,12 @@
       IMPLICIT NONE
 !   Local Variables
       INTEGER, PARAMETER :: MSGUNT = 189
-      INTEGER, SAVE :: Iorder, Igworder, Ndown
+      CHARACTER(LEN=7), PARAMETER :: MODNAME = 'cascade'
+      CHARACTER(LEN=26), PARAMETER :: PROCNAME = 'Cascading Flow'
+      INTEGER, SAVE :: Iorder, Igworder, Ndown, Ncascade, Ncascdgw
       INTEGER, SAVE :: Iseg_out, Nwtrbdy, Iwtrbdyorder
       INTEGER, SAVE :: Nhrup1, Nsegments, Gwcasc_flg
+      INTEGER, SAVE :: Cascade_flag, Cascadegw_flag
       ! Flag to indicate if an HRU is connected to a far-field stream
       ! (0=no; 1=yes).
       ! Flag to indicate if a GWR is connected to a far-field stream
@@ -54,7 +57,7 @@
       INTEGER, SAVE, ALLOCATABLE :: Hru_down_id(:)
       INTEGER, SAVE, ALLOCATABLE :: Gw_up_id(:), Gw_strmseg_down_id(:)
       INTEGER, SAVE, ALLOCATABLE :: Gw_down_id(:)
-      INTEGER, SAVE, ALLOCATABLE :: Strmseg_down_id(:), Seg_res_id(:)
+      INTEGER, SAVE, ALLOCATABLE :: Strmseg_down_id(:), Seg_lake_id(:)
       INTEGER, SAVE, ALLOCATABLE :: Lake_hru_down_id(:)
       REAL, SAVE, ALLOCATABLE:: Hru_pct_up(:), Gw_pct_up(:)
       END MODULE PRMS_CASCADE
@@ -86,27 +89,50 @@
 !     hru_up_id, hru_down_id, hru_pct_up, hru_strmseg_down_id
 !     gw_up_id, gw_down_id, gw_pct_up, gw_strmseg_down_id
 !     hru_area, cascade_tol, cascade_flg, circle_switch
-!     strmseg_down_id, sfres_hru, Lake_hru_down_id, seg_res_id
+!     strmseg_down_id, lake_hru, lake_hru_down_id, seg_lake_id
 !***********************************************************************
       INTEGER FUNCTION cascdecl()
       USE PRMS_CASCADE
-      USE PRMS_MODULE, ONLY: Model, Ncascade, Ncascdgw, Nhru, Ngw,
-     +    Nsfres, Nsegment, Print_debug, Cascadegw_flag, Strmflow_flag,
-     +    Cascade_flag, Version_cascade, Cascade_nc
+      USE PRMS_MODULE, ONLY: Model, Nhru, Ngw, Nlake, Nsegment,
+     +    Strmflow_flag, Call_cascade, Version_cascade, Cascade_nc
       IMPLICIT NONE
 ! Functions
       INTRINSIC INDEX
-      INTEGER, EXTERNAL :: declmodule, declparam
+      INTEGER, EXTERNAL :: declmodule, declparam, getdim
+      INTEGER, EXTERNAL :: control_integer
       EXTERNAL read_error
+! Local Variables
+      INTEGER :: n
 !***********************************************************************
       cascdecl = 1
 
-      Version_cascade =
-     +'$Id: cascade.f 4181 2012-02-15 21:32:50Z rsregan $'
-      IF ( Print_debug>-1 ) THEN
-        Cascade_nc = INDEX( Version_cascade, ' $' ) + 1
-        IF ( declmodule(Version_cascade(:Cascade_nc))/=0 ) STOP
+      Ncascade = getdim('ncascade')
+      IF ( Ncascade==-1 ) CALL read_error(7, 'ncascade')
+      Ncascdgw = getdim('ncascdgw')
+      IF ( Ncascdgw==-1 ) CALL read_error(7, 'ncascdgw')
+
+      IF ( control_integer(Cascade_flag, 'cascade_flag')/=0 )
+     +     Cascade_flag = 1
+      IF ( Ncascade==0 ) Cascade_flag = 0
+      IF ( control_integer(Cascadegw_flag, 'cascadegw_flag')/=0 )
+     +     Cascadegw_flag = 1
+      IF ( Ncascdgw==0 ) Cascadegw_flag = 0
+
+      IF ( Strmflow_flag/=2 .AND. Cascade_flag/=1 .AND.
+     +     Cascadegw_flag/=1 ) THEN
+        cascdecl = 0
+        Call_cascade = 0
+        RETURN
+      ELSE
+        Call_cascade = 1
       ENDIF
+
+      Version_cascade =
+     +'$Id: cascade.f 5002 2012-11-02 17:23:52Z rsregan $'
+      Cascade_nc = INDEX( Version_cascade, 'Z' )
+      n = INDEX( Version_cascade, '.f' ) + 1
+      IF ( declmodule(Version_cascade(6:n), PROCNAME,
+     +                Version_cascade(n+2:Cascade_nc))/=0 ) STOP
 
       Nhrup1 = Nhru + 1
 
@@ -120,10 +146,10 @@
 
 ! declare lake cascade parameters and variables
       IF ( (Cascade_flag==1.AND.Strmflow_flag==2) .OR. Model==99 ) THEN
-        Nwtrbdy = Nsegment + Nsfres
+        Nwtrbdy = Nsegment + Nlake
 
         ALLOCATE (Strmseg_down_id(Nsegment))
-        IF ( declparam('cascade', 'strmseg_down_id', 'nsegment',
+        IF ( declparam(MODNAME, 'strmseg_down_id', 'nsegment',
      +       'integer', '0', 'bounded', 'nsegment',
      +       'Index of down stream segment',
      +       'Index number of the down stream segment to which this'//
@@ -131,7 +157,7 @@
      +       'none')/=0 ) CALL read_error(1, 'strmseg_down_id')
 
         ALLOCATE (Lake_hru_down_id(Nsegment))
-        IF ( declparam('cascade', 'lake_hru_down_id',
+        IF ( declparam(MODNAME, 'lake_hru_down_id',
      +       'nsegment', 'integer',
      +       '0', 'bounded', 'nhru',
      +       'Index of down stream lake HRU in the water body network',
@@ -154,26 +180,26 @@
         ALLOCATE (Wtrbdy_down(Nwtrbdy))
         Wtrbdy_down = 0
 
-        ALLOCATE (Seg_res_id(Nsegment))
-        IF ( declparam('cascade', 'seg_res_id', 'nsegment', 'integer',
-     +       '0', 'bounded', 'nsfres',
+        ALLOCATE (Seg_lake_id(Nsegment))
+        IF ( declparam(MODNAME, 'seg_lake_id', 'nsegment', 'integer',
+     +       '0', 'bounded', 'nlake',
      +       'Lake index number for a stream segment within a lake',
      +       'Lake index number for a stream segment within a lake'//
      +       ' (0=segment not in lake; >0=lake index number)',
-     +       'none')/=0 ) CALL read_error(1, 'seg_res_id')
+     +       'none')/=0 ) CALL read_error(1, 'seg_lake_id')
       ENDIF
 
 ! declare HRU cascade parameters
       IF ( Cascade_flag==1 .OR. Model==99 ) THEN
         ALLOCATE (Hru_up_id(Ncascade))
-        IF ( declparam('cascade', 'hru_up_id', 'ncascade', 'integer',
+        IF ( declparam(MODNAME, 'hru_up_id', 'ncascade', 'integer',
      +       '1', 'bounded', 'nhru',
      +       'Index of HRU containing cascade area',
      +       'Index of HRU containing cascade area',
      +       'none')/=0 ) CALL read_error(1, 'hru_up_id')
 
         ALLOCATE (Hru_strmseg_down_id(Ncascade))
-        IF ( declparam('cascade', 'hru_strmseg_down_id', 'ncascade',
+        IF ( declparam(MODNAME, 'hru_strmseg_down_id', 'ncascade',
      +       'integer', '0', 'bounded', 'nsegment',
      +       'Stream segment index that cascade area contributes flow',
      +       'Index number of the stream segment that cascade area'//
@@ -181,7 +207,7 @@
      +       'none')/=0 ) CALL read_error(1, 'hru_strmseg_down_id')
 
         ALLOCATE (Hru_down_id(Ncascade))
-        IF ( declparam('cascade', 'hru_down_id', 'ncascade', 'integer',
+        IF ( declparam(MODNAME, 'hru_down_id', 'ncascade', 'integer',
      +       '0', 'bounded', 'nhru',
      +       'HRU index of down slope HRU',
      +       'Index number of the down slope HRU to which the upslope'//
@@ -189,21 +215,21 @@
      +       'none')/=0 ) CALL read_error(1, 'hru_down_id')
 
         ALLOCATE (Hru_pct_up(Ncascade))
-        IF ( declparam('cascade', 'hru_pct_up', 'ncascade', 'real',
+        IF ( declparam(MODNAME, 'hru_pct_up', 'ncascade', 'real',
      +       '1.0', '0.0', '1.0',
-     +       'Fraction of HRU area associated with cascade area.',
+     +       'Fraction of HRU area associated with cascade area',
      +       'Fraction of HRU area used to compute flow contributed'//
-     +       ' to a down slope HRU or stream segment for cascade area.',
+     +       ' to a down slope HRU or stream segment for cascade area',
      +       'decimal fraction')/=0 ) CALL read_error(1, 'hru_pct_up')
       ENDIF
 
-      IF ( declparam('cascade', 'cascade_tol', 'one', 'real',
+      IF ( declparam(MODNAME, 'cascade_tol', 'one', 'real',
      +     '5.0', '0.0', '99.0',
-     +     'Cascade area below which a cascade link is ignored.',
-     +     'Cascade area below which a cascade link is ignored.',
+     +     'Cascade area below which a cascade link is ignored',
+     +     'Cascade area below which a cascade link is ignored',
      +     'acres')/=0 ) CALL read_error(1, 'cascade_tol')
 
-      IF ( declparam('cascade', 'cascade_flg', 'one', 'integer',
+      IF ( declparam(MODNAME, 'cascade_flg', 'one', 'integer',
      +     '0', '0', '1',
      +     'Flag to indicate cascade type (0=allow many to many;'//
      +     ' 1=force one to one)',
@@ -211,7 +237,7 @@
      +     ' 1=force one to one)',
      +     'none')/=0 ) CALL read_error(1, 'cascade_flg')
 
-      IF ( declparam('cascade', 'circle_switch', 'one', 'integer',
+      IF ( declparam(MODNAME, 'circle_switch', 'one', 'integer',
      +     '1', '0', '1',
      +     'Switch to check for circles',
      +     'Switch to check for circles (0=no check; 1=check)',
@@ -220,22 +246,22 @@
       IF ( Gwcasc_flg==1 .OR. Model==99 ) THEN
 ! declare GWR cascade parameters
         ALLOCATE (Gw_up_id(Ncascdgw))
-        IF ( declparam('cascade', 'gw_up_id', 'ncascdgw', 'integer',
+        IF ( declparam(MODNAME, 'gw_up_id', 'ncascdgw', 'integer',
      +       '1', 'bounded', 'ngw',
      +       'Index of GWR containing cascade area',
      +       'Index of GWR containing cascade area',
      +       'none')/=0 ) CALL read_error(1, 'gw_up_id')
 
         ALLOCATE (Gw_strmseg_down_id(Ncascdgw))
-        IF ( declparam('cascade', 'gw_strmseg_down_id', 'ncascdgw',
+        IF ( declparam(MODNAME, 'gw_strmseg_down_id', 'ncascdgw',
      +       'integer', '0', 'bounded', 'nsegment',
      +       'Stream segment index that cascade area contributes flow',
-     +       'StrIndex number of the stream segment that cascade area'//
+     +       'Index number of the stream segment that cascade area'//
      +       ' contributes flow',
      +       'none')/=0 ) CALL read_error(1, 'gw_strmseg_down_id')
 
         ALLOCATE (Gw_down_id(Ncascdgw))
-        IF ( declparam('cascade', 'gw_down_id', 'ncascdgw', 'integer',
+        IF ( declparam(MODNAME, 'gw_down_id', 'ncascdgw', 'integer',
      +       '0', 'bounded', 'ngw',
      +       'GWR index of down slope GWR',
      +       'Index number of the down slope GWR to which the upslope'//
@@ -243,7 +269,7 @@
      +       'none')/=0 ) CALL read_error(1, 'gw_down_id')
 
         ALLOCATE (Gw_pct_up(Ncascdgw))
-        IF ( declparam('cascade', 'gw_pct_up', 'ncascdgw', 'real',
+        IF ( declparam(MODNAME, 'gw_pct_up', 'ncascdgw', 'real',
      +       '1.0', '0.0', '1.0',
      +       'Fraction of GWR area associated with cascade area',
      +       'Fraction of GWR area used to compute flow contributed'//
@@ -260,8 +286,7 @@
 !***********************************************************************
       INTEGER FUNCTION cascinit()
       USE PRMS_CASCADE
-      USE PRMS_MODULE, ONLY: Ngw, Nsegment, Strmflow_flag, Cascade_flag,
-     +    Print_debug
+      USE PRMS_MODULE, ONLY: Ngw, Nsegment, Strmflow_flag, Print_debug
       USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order,
      +    Gwr_route_order, Active_gwrs
       IMPLICIT NONE
@@ -274,13 +299,13 @@
 !***********************************************************************
       cascinit = 1
 
-      IF ( getparam('cascade', 'cascade_tol', 1, 'real', Cascade_tol)
+      IF ( getparam(MODNAME, 'cascade_tol', 1, 'real', Cascade_tol)
      +     /=0 ) CALL read_error(2, 'cascade_tol')
 
-      IF ( getparam('cascade', 'cascade_flg', 1, 'integer', Cascade_flg)
+      IF ( getparam(MODNAME, 'cascade_flg', 1, 'integer', Cascade_flg)
      +     /=0 ) CALL read_error(2, 'cascade_flg')
 
-      IF ( getparam('cascade', 'circle_switch', 1, 'integer',
+      IF ( getparam(MODNAME, 'circle_switch', 1, 'integer',
      +     Circle_switch)/=0 ) CALL read_error(2, 'circle_switch')
 
       IF ( Print_debug==13 ) OPEN ( MSGUNT, FILE='cascade.msgs' )
@@ -338,7 +363,6 @@
 !***********************************************************************
       INTEGER FUNCTION cascclean()
       USE PRMS_CASCADE
-      USE PRMS_MODULE, ONLY: Cascade_flag
       IMPLICIT NONE
 !***********************************************************************
       IF ( Cascade_flag>0 ) THEN
@@ -358,10 +382,10 @@
 !***********************************************************************
       SUBROUTINE init_cascade(Iret)
       USE PRMS_CASCADE
-      USE PRMS_MODULE, ONLY: Ncascade, Ncascdgw, Nhru, Ngw, Nsegment,
-     +    Nsegmentp1, Nsfres, Print_debug, Cascade_flag, Strmflow_flag
+      USE PRMS_MODULE, ONLY: Nhru, Ngw, Nsegment, Nsegmentp1, Nlake,
+     +    Print_debug, Strmflow_flag
       USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type,
-     +    Hru_area, Sfres_hru
+     +    Hru_area, Lake_hru
       IMPLICIT NONE
       INTEGER, EXTERNAL :: getparam
       EXTERNAL order_hrus, read_error
@@ -369,24 +393,24 @@
 ! Arguments
       INTEGER, INTENT(OUT) :: Iret
 ! Local Variables
-      INTEGER :: i, j, k, ii, kk, dnhru, kup, jdn, istrm, ierr
+      INTEGER :: i, j, k, ii, kk, dnhru, kup, jdn, istrm, ierr, num
       REAL, ALLOCATABLE :: hru_frac(:)
-      REAL :: fracchk, carea, frac
+      REAL :: carea, frac
 !***********************************************************************
       Iret = 1
 
 ! Cascade parameters
-      IF ( getparam('cascade', 'hru_up_id', Ncascade, 'integer',
+      IF ( getparam(MODNAME, 'hru_up_id', Ncascade, 'integer',
      +     Hru_up_id)/=0 ) CALL read_error(2, 'hru_up_id')
 
-      IF ( getparam('cascade', 'hru_strmseg_down_id', Ncascade,
+      IF ( getparam(MODNAME, 'hru_strmseg_down_id', Ncascade,
      +     'integer', Hru_strmseg_down_id)/=0 )
      +     CALL read_error(2, 'hru_strmseg_down_id')
 
-      IF ( getparam('cascade', 'hru_down_id', Ncascade, 'integer',
+      IF ( getparam(MODNAME, 'hru_down_id', Ncascade, 'integer',
      +     Hru_down_id)/=0 ) CALL read_error(2, 'hru_down_id')
 
-      IF ( getparam('cascade', 'hru_pct_up', Ncascade, 'real',
+      IF ( getparam(MODNAME, 'hru_pct_up', Ncascade, 'real',
      +     Hru_pct_up)/=0 ) CALL read_error(2, 'hru_pct_up')
 
       Iret = 0
@@ -417,11 +441,11 @@
       ENDDO
  
       IF ( Gwcasc_flg==1 ) THEN
-        IF ( getparam('cascade', 'gw_up_id', Ncascdgw, 'integer',
+        IF ( getparam(MODNAME, 'gw_up_id', Ncascdgw, 'integer',
      +       Gw_up_id)/=0 ) CALL read_error(2, 'gw_up_id')
-        IF ( getparam('cascade', 'gw_down_id', Ncascdgw, 'integer',
+        IF ( getparam(MODNAME, 'gw_down_id', Ncascdgw, 'integer',
      +       Gw_down_id)/=0 ) CALL read_error(2, 'gw_down_id')
-        IF ( getparam('cascade', 'gw_pct_up', Ncascdgw, 'real',
+        IF ( getparam(MODNAME, 'gw_pct_up', Ncascdgw, 'real',
      +       Gw_pct_up)/=0 ) CALL read_error(2, 'gw_pct_up')
         Ncascade_gwr = 0
         DO i = 1, Ncascdgw
@@ -466,12 +490,12 @@
       ! determine number of water bodies (lakes + stream segments)
       ! but ignoring stream segments within lakes
       IF ( Cascade_flag==1 .AND. Strmflow_flag==2 ) THEN
-        IF ( getparam('cascade', 'seg_res_id', Nsegment, 'integer',
-     +       Seg_res_id)/=0 ) CALL read_error(2, 'seg_res_id')
-        IF ( getparam('cascade', 'strmseg_down_id', Nsegment, 'integer',
+        IF ( getparam(MODNAME, 'seg_lake_id', Nsegment, 'integer',
+     +       Seg_lake_id)/=0 ) CALL read_error(2, 'seg_lake_id')
+        IF ( getparam(MODNAME, 'strmseg_down_id', Nsegment, 'integer',
      +       Strmseg_down_id)/=0 )
      +       CALL read_error(2, 'strmseg_down_id')
-        IF ( getparam('cascade', 'lake_hru_down_id', Nsegment,
+        IF ( getparam(MODNAME, 'lake_hru_down_id', Nsegment,
      +       'integer', Lake_hru_down_id)/=0 )
      +       CALL read_error(2, 'lake_hru_down_id')
 
@@ -480,7 +504,7 @@
         Nsegments = Nsegment
         DO i = 1, Nsegment
           ! ignore stream segments in lakes
-          IF ( Seg_res_id(i)/=0 ) THEN
+          IF ( Seg_lake_id(i)/=0 ) THEN
             Strm_lake_down(i) = Nhrup1
             Wtrbdy_down(i) = -Nhrup1
             Nsegments = Nsegments - 1
@@ -512,8 +536,8 @@
 
         IF ( Cascade_flag==1 .AND. Strmflow_flag==2 ) THEN
           IF ( Hru_type(kup)==2 ) THEN
-            DO k = 1, Nsfres
-              IF ( kup==Sfres_hru(k) ) THEN
+            DO k = 1, Nlake
+              IF ( kup==Lake_hru(k) ) THEN
                 kk = Nsegment + k
                 ! what if closed
                 Ncascade_wtrbdy(kk) = Ncascade_wtrbdy(kk) + 1
@@ -650,60 +674,54 @@
 
       DO ii = 1, Active_hrus
         i = Hru_route_order(ii)
-        IF ( Ncascade_hru(i)>0 ) THEN
-          fracchk = 0.0
-          j = 1
-          k = 1
-          DO WHILE ( j<=Ncascade_hru(i) )
-            frac = Hru_down_frac(k, i)
-            Hru_down_frac(j, i) = frac + 
-     +                            frac*(1.0-hru_frac(i))/hru_frac(i)
-            fracchk = fracchk + Hru_down_frac(j, i)
-            dnhru = Hru_down(k, i)
-            DO kk = 1, j - 1
-              IF ( dnhru.EQ.Hru_down(kk, i) ) THEN
-                Hru_down_frac(kk, i) = Hru_down_frac(kk, i) +
-     +                                Hru_down_frac(k, i)
-                IF ( Hru_down_frac(kk, i)>1.0 ) THEN
-                  IF ( Print_debug==13 ) THEN
-                    WRITE ( MSGUNT, * )
+        num = Ncascade_hru(i)
+        IF ( num==0 ) CYCLE
+        DO k = 1, num
+          frac = Hru_down_frac(k, i)
+          Hru_down_frac(k,i) = frac + frac*(1.0-hru_frac(i))/hru_frac(i)
+        ENDDO
+
+        k = 1
+        DO kk = 1, num
+          dnhru = Hru_down(kk, i)
+          IF ( dnhru==0 ) CYCLE
+          Hru_down_frac(k, i) = Hru_down_frac(kk, i)
+          Hru_down(k, i) = dnhru
+          j = num
+          DO WHILE (j>kk )
+            IF ( dnhru==Hru_down(j, i) ) THEN
+              Hru_down(j, i) = 0
+              Hru_down_frac(k, i) = Hru_down_frac(k, i) +
+     +                              Hru_down_frac(j, i)
+              IF ( Hru_down_frac(k, i)>1.0 ) THEN
+                IF ( Print_debug==13 ) THEN
+                  WRITE ( MSGUNT, * )
      +               'Combining cascade links makes contributing area'//
      +               ' add up to > 1.0, thus fraction reduced.'
-                    WRITE ( MSGUNT,* ) 'Up HRU:', i, ' Down HRU:', dnhru
-                  ENDIF
-                  fracchk = fracchk + 1.0 - Hru_down_frac(kk, i)
-                  Hru_down_frac(kk, i) = 1.0
+                  WRITE ( MSGUNT,* ) 'Up HRU:', i, ' Down HRU:', dnhru
                 ENDIF
-                j = j - 1
-                Ncascade_hru(i) = Ncascade_hru(i) - 1
-                IF ( dnhru<0 ) THEN
-! two cascades to same stream segment, combine
-!                  IF ( Print_debug>-1 ) PRINT 9002, i, 'stream segment',
-!     +                                              ABS(dnhru)
-                  IF ( Print_debug==13 ) WRITE ( MSGUNT, 9002 ) i,
-     +                 'stream segment', ABS( dnhru )
-                ELSE
-! two cascades to same HRU, combine
-                  IF ( Print_debug==13 ) WRITE ( MSGUNT, 9002 ) i,
-     +                 'downslope HRU', dnhru
-                ENDIF
+                Hru_down_frac(k, i) = 1.0
               ENDIF
-            ENDDO
-            Cascade_area(j, i) = Hru_down_frac(j, i)*Hru_area(i)
-            IF ( dnhru>0 ) Hru_down_fracwt(j, i) =
-     +                     Cascade_area(j, i)/Hru_area(dnhru)
-            IF ( j<k ) Hru_down(j, i) = dnhru
-            j = j + 1
-            k = k + 1
+              IF ( dnhru<0 ) THEN
+! two cascades to same stream segment, combine
+!                IF ( Print_debug>-1 ) PRINT 9002, i, 'stream segment',
+!     +                                            ABS(dnhru)
+                IF ( Print_debug==13 ) WRITE ( MSGUNT, 9002 ) i,
+     +               'stream segment', ABS( dnhru )
+              ELSE
+! two cascades to same HRU, combine
+                IF ( Print_debug==13 ) WRITE ( MSGUNT, 9002 ) i,
+     +               'downslope HRU', dnhru
+              ENDIF
+              Ncascade_hru(i) = Ncascade_hru(i) - 1
+            ENDIF
+            j = j - 1
           ENDDO
-          ! allow for close enough
-          IF ( fracchk<0.9998 ) THEN
-            IF ( Print_debug==13 )
-     +        WRITE (MSGUNT, *) 'Warning, contributing area of cascade',
-     +            ' links for HRU:', i, ' sums to < HRU area:', fracchk
-!           Iret = 1
-          ENDIF
-        ENDIF
+          Cascade_area(k, i) = Hru_down_frac(k, i)*Hru_area(i)
+          IF ( dnhru>0 ) Hru_down_fracwt(k, i) =
+     +                   Cascade_area(k, i)/Hru_area(dnhru)
+          k = k + 1
+        ENDDO
       ENDDO
       DEALLOCATE ( hru_frac )
 
@@ -741,7 +759,7 @@
       USE PRMS_MODULE, ONLY: Nhru, Print_debug
       USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type
       IMPLICIT NONE
-      EXTERNAL up_tree
+      EXTERNAL up_tree, PRMS_open_output_file
 !     Arguments
       INTEGER, INTENT(OUT) :: Iret
 !     Local Variables
@@ -750,6 +768,7 @@
       INTEGER, ALLOCATABLE :: up_id_count(:), up_id_cnt(:)
       INTEGER :: i, j, k, ii, nroots, circle_flg, ihru, npath, type_flag
       INTEGER :: goes_on_list, up_hru_id, added, dnhru, max_up_id_count
+      INTEGER :: ounit
 !-----------------------------------------------------------------------
 !     up_id_count equals number of upslope HRUs an HRU has
 !     dn_id_count equals number of downslope HRUs an HRU has
@@ -823,10 +842,10 @@
       IF ( type_flag==1 ) THEN
         PRINT *, 'hru_type parameter written to file hru_typexxx.param'
         PRINT *, 'can use to replace current values to address warnings'
-        OPEN ( 861, FILE='hru_typexxx.param', STATUS='REPLACE' )
-        WRITE ( 861, 11 ) Nhru
-        WRITE ( 861, '(I1)' ) ( Hru_type(i), i = 1, Nhru )
-        CLOSE ( 861 )
+        CALL PRMS_open_output_file(ounit, 'hru_typexxx.param', 'xxx', k)
+        WRITE ( ounit, 11 ) Nhru
+        WRITE ( ounit, '(I1)' ) ( Hru_type(i), i = 1, Nhru )
+        CLOSE ( ounit )
    11   FORMAT ('####', /, 'hru_type', /, '1', /, 'nhru', /, I6, /, '2')
       ENDIF
 
@@ -949,8 +968,8 @@
 !***********************************************************************
       SUBROUTINE initgw_cascade(Iret)
       USE PRMS_CASCADE
-      USE PRMS_MODULE, ONLY: Ncascdgw, Ngw, Nsegment, Nsegmentp1,
-     +    Print_debug, Strmflow_flag
+      USE PRMS_MODULE, ONLY: Ngw, Nsegment, Nsegmentp1, Print_debug,
+     +    Strmflow_flag
       USE PRMS_BASIN, ONLY: Active_gwrs, Gwr_route_order, Gwr_type,
      +    Hru_area
       IMPLICIT NONE
@@ -960,14 +979,14 @@
 ! Arguments
       INTEGER, INTENT(OUT) :: Iret
 ! Local Variables
-      INTEGER :: i, j, k, ii, kk, dngwr, kup, jdn, istrm
-      REAL :: fracchk, carea, frac
+      INTEGER :: i, j, k, ii, kk, dngwr, kup, jdn, istrm, num
+      REAL :: carea, frac
       REAL, ALLOCATABLE :: gwr_frac(:)
 !***********************************************************************
       Iret = 1
 
 ! Cascade parameters
-      IF ( getparam('cascade', 'gw_strmseg_down_id', Ncascdgw,
+      IF ( getparam(MODNAME, 'gw_strmseg_down_id', Ncascdgw,
      +     'integer', Gw_strmseg_down_id)/=0 )
      +     CALL read_error(2, 'gw_strmseg_down_id')
 
@@ -1114,54 +1133,54 @@
 
       DO ii = 1, Active_gwrs
         i = Gwr_route_order(ii)
-        IF ( Ncascade_gwr(i)>0 ) THEN
-          fracchk = 0.0
-          j = 1
-          k = 1
-          DO WHILE ( j<=Ncascade_gwr(i) )
-            frac = Gwr_down_frac(k, i)
-            Gwr_down_frac(j, i) = frac +
-     +                            frac*(1.0-gwr_frac(i))/gwr_frac(i)
-            fracchk = fracchk + Gwr_down_frac(j, i)
-            dngwr = Gwr_down(k, i)
-            DO kk = 1, j - 1
-              IF ( dngwr.EQ.Gwr_down(kk, i) ) THEN
-                Gwr_down_frac(kk, i) = Gwr_down_frac(kk, i) +
-     +                                 Gwr_down_frac(k, i)
-                IF ( Gwr_down_frac(kk, i)>1.0 ) THEN
-                  IF ( Print_debug==13 ) WRITE ( MSGUNT, 9004 )
-     +           'Combining GWR cascade links makes contributing area'//
-     +            ' add up to > 1.0, thus fraction reduced',
-     +            i, dngwr, Gwr_down_frac(kk, i)
-                  fracchk = fracchk + 1.0 - Gwr_down_frac(kk, i)
-                  Gwr_down_frac(kk, i) = 1.0
+        num = Ncascade_gwr(i)
+        IF ( num==0 ) CYCLE
+        DO k = 1, num
+          frac = Gwr_down_frac(k, i)
+          Gwr_down_frac(k,i) = frac + frac*(1.0-gwr_frac(i))/gwr_frac(i)
+        ENDDO
+
+        k = 1
+        DO kk = 1, num
+          dngwr = Gwr_down(kk, i)
+          IF ( dngwr==0 ) CYCLE
+          Gwr_down_frac(k, i) = Gwr_down_frac(kk, i)
+          Gwr_down(k, i) = dngwr
+          j = num
+          DO WHILE (j>kk )
+            IF ( dngwr==Gwr_down(j, i) ) THEN
+              Gwr_down(j, i) = 0
+              Gwr_down_frac(k, i) = Gwr_down_frac(k, i) +
+     +                              Gwr_down_frac(j, i)
+              IF ( Gwr_down_frac(k, i)>1.0 ) THEN
+                IF ( Print_debug==13 ) THEN
+                  WRITE ( MSGUNT, * )
+     +               'Combining cascade links makes contributing area'//
+     +               ' add up to > 1.0, thus fraction reduced.'
+                  WRITE ( MSGUNT,* ) 'Up GWR:', i, ' Down GWR:', dngwr
                 ENDIF
-                j = j - 1
-                Ncascade_gwr(i) = Ncascade_gwr(i) - 1
-                IF ( dngwr<0 ) THEN
-! two cascades to same stream segment, combine
-                  IF ( Print_debug==13 )
-     +              WRITE (MSGUNT, 9002) i, 'stream segment', ABS(dngwr)
-                ELSE
-                  IF ( Print_debug==13 )
-     +                 WRITE ( MSGUNT, 9002 ) i, 'downslope GWR', dngwr
-                ENDIF
+                Gwr_down_frac(k, i) = 1.0
               ENDIF
-            ENDDO
-            Cascade_gwr_area(j, i) = Gwr_down_frac(j, i)*Hru_area(i)
-!           IF ( dngwr>0 ) Gwr_down_fracwt(j, i) =
-!    +                         Cascade_gwr_area(j, i)/Hru_area(dngwr)
-            IF ( j<k ) Gwr_down(j, i) = dngwr
-            j = j + 1
-            k = k + 1
+              IF ( dngwr<0 ) THEN
+! two cascades to same stream segment, combine
+!                IF ( Print_debug>-1 ) PRINT 9002, i, 'stream segment',
+!     +                                            ABS(dngwr)
+                IF ( Print_debug==13 ) WRITE ( MSGUNT, 9002 ) i,
+     +               'stream segment', ABS( dngwr )
+              ELSE
+! two cascades to same HRU, combine
+                IF ( Print_debug==13 ) WRITE ( MSGUNT, 9002 ) i,
+     +               'downslope GWR', dngwr
+              ENDIF
+              Ncascade_gwr(i) = Ncascade_gwr(i) - 1
+            ENDIF
+            j = j - 1
           ENDDO
-          IF ( fracchk<0.9998 ) THEN
-            IF ( Print_debug==13 )
-     +        WRITE (MSGUNT, *) 'Warning, contributing area of cascade',
-     +            ' links for GWR:', i, ' sums to < GWR area:', fracchk
-!           Iret = 1
-          ENDIF
-        ENDIF
+          Cascade_gwr_area(k, i) = Gwr_down_frac(k, i)*Hru_area(i)
+!          IF ( dngwr>0 ) Gwr_down_fracwt(k, i) =
+!     +                   Cascade_gwr_area(k, i)/Hru_area(dnhru)
+          k = k + 1
+        ENDDO
       ENDDO
       DEALLOCATE (gwr_frac)
 
@@ -1460,7 +1479,7 @@
       ENDIF
 
       DEALLOCATE ( Strmseg_down_id, Lake_hru_down_id )
-      DEALLOCATE ( Seg_res_id )
+      DEALLOCATE ( Seg_lake_id )
 
  9001 FORMAT (/, ' Water-body routing order:')
  9002 FORMAT (12I6)
@@ -1472,8 +1491,8 @@
 !***********************************************************************
       SUBROUTINE order_wtrbdy(Iret)
       USE PRMS_CASCADE
-      USE PRMS_MODULE, ONLY: Nsfres, Nsegment, Print_debug
-      USE PRMS_BASIN, ONLY: Sfres_hru
+      USE PRMS_MODULE, ONLY: Nlake, Nsegment, Print_debug
+      USE PRMS_BASIN, ONLY: Lake_hru
       IMPLICIT NONE
       EXTERNAL up_tree
 !     Arguments
@@ -1493,7 +1512,7 @@
 !                  a water body has
       max_up_id_count = 0
       ALLOCATE ( up_id_count(Nwtrbdy), dn_id_count(Nwtrbdy) )
-      ALLOCATE ( dn_wtrbdy_lake(Nsfres) )
+      ALLOCATE ( dn_wtrbdy_lake(Nlake) )
       DO i = 1, Nwtrbdy
         up_id_count(i) = 0
         dn_id_count(i) = 0
@@ -1508,8 +1527,8 @@
           ! wtrbdy_down for stream segments in lakes are set to -Nhrup1
           IF ( iwtrbdy/=Nhrup1 ) THEN
             ! could have disconnected lakes
-            DO j = 1, Nsfres
-              IF ( iwtrbdy==Sfres_hru(j) ) THEN
+            DO j = 1, Nlake
+              IF ( iwtrbdy==Lake_hru(j) ) THEN
                 iwtrbdy = Nsegment + j
                 up_id_count(iwtrbdy) = up_id_count(iwtrbdy) + 1
                 EXIT
@@ -1549,8 +1568,8 @@
         dnwtrbdy = ABS(Wtrbdy_down(i))
         IF ( dnwtrbdy>0 .AND. dnwtrbdy/=Nhrup1 ) THEN
           IF ( Wtrbdy_down(i)<0 ) THEN
-            DO j = 1, Nsfres
-              IF ( dnwtrbdy==Sfres_hru(j) ) THEN
+            DO j = 1, Nlake
+              IF ( dnwtrbdy==Lake_hru(j) ) THEN
                 dnwtrbdy = Nsegment + j
                 EXIT
               ENDIF
@@ -1733,4 +1752,3 @@
  9001 FORMAT (10I8)
 
       END SUBROUTINE check_path
-

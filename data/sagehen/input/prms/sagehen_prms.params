@@ -24508,13 +24508,6 @@ nhru
 2.75
 2.75
 ####
-pmo 4
-1
-one
-1
-1
-0
-####
 gwsink_coef 15
 1
 ngw
@@ -29920,13 +29913,6 @@ nhru
 0.1
 0.1
 0.1
-####
-moyrsum 4
-1
-one
-1
-1
-0
 ####
 circle_switch 15
 1

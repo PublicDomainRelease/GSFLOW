@@ -3,7 +3,9 @@
 !-------SUBROUTINE GWF2NWT1AR
 !
       SUBROUTINE GWF2NWT1AR(In, Mxiter, Iunitlak, Igrid)
- 
+!
+!------NEWTON SOLVER VERSION NUMBER 1.0.6:  DECEMBER 5, 2012
+!      RICHARD G. NISWONGER
       USE GLOBAL,     ONLY:NCOL,NROW,NLAY,ITRSS,LAYHDT,LAYHDS,LAYCBD,
      1                     NCNFBD,IBOUND,BUFF,BOTM,NBOTM,DELR,DELC,IOUT,
      2                     LBOTM,HNEW
@@ -46,7 +48,7 @@
 !1------IDENTIFY PACKAGE AND INITIALIZE.
       WRITE (Iout, 9001) In
  9001 FORMAT (1X, /' NWT1 -- Newton Solver, ',
-     +       'VERSION 1.0.3, 12/29/2011', /, 9X, 'INPUT READ FROM UNIT',
+     +       'VERSION 1.0.6, 12/05/2012', /, 9X, 'INPUT READ FROM UNIT',
      +        I3,/)
       i = 1
       Itreal = 0
@@ -136,7 +138,7 @@ C3B-----GET OPTIONS.
         Btoldum = 1.5
         Breducdum = 0.97
       ELSEIF ( IFDPARAM.EQ.2 ) THEN
-        thetadum = 0.7
+        thetadum = 0.90
         akappadum = 0.0001
         gammadum = 0.00
         amomentdum = 0.1
@@ -145,13 +147,13 @@ C3B-----GET OPTIONS.
         Btoldum = 1.1
         Breducdum = 0.9
       ELSEIF ( IFDPARAM.EQ.3 ) THEN
-        thetadum = 0.4
+        thetadum = 0.85
         akappadum = 0.00001
         gammadum = 0.0
         amomentdum = 0.1
-        Btrack = 0
+        Btrack = 1
         Numtrack = 50
-        Btoldum = 2.0
+        Btoldum = 1.1
         Breducdum = 0.7
       ELSE
         Write(iout,*)
@@ -234,8 +236,8 @@ C3B-----GET OPTIONS.
         Do ir = 1, Nrow
           Do ic = 1, Ncol
             IF ( IBOUND(ic,ir,il).GT.0 ) THEN
-              IF ( BOTM(ic,ir,LBOTM(il)-1) - 
-     +             BOTM(ic,ir,LBOTM(il)).LT.4.0*Thickfact ) THEN
+              IF ( dble(BOTM(ic,ir,LBOTM(il)-1)) - 
+     +             dble(BOTM(ic,ir,LBOTM(il))).LT.100.0*Thickfact ) THEN
                 WRITE(IOUT,*) 'Extremely thin cell for Column = ',ic,
      +                         ' and Row = ',ir,' and Layer = ',il,
      +                         ' Check input, Setting IBOUND = 0'
@@ -400,11 +402,13 @@ C
         IF ( IBOUND(IC,IR+1,IL).NE.0 ) THEN
           Hrp1 = Hnew(Ic, Ir+1, Il)
           IF ( Hrp1-H.GT.CLOSEZERO)THEN
-            THICK = BOTM(IC,IR+1,LBOTM(IL)-1) - BOTM(IC,IR+1,LBOTM(IL))
+            THICK = dble(BOTM(IC,IR+1,LBOTM(IL)-1)) - 
+     +              dble(BOTM(IC,IR+1,LBOTM(IL)))
             ij  = Icell(IC,IR+1,IL)
             Ccc = Cc(Ic, Ir, Il)*THICK*Sn(ij)
           ELSE
-            THICK = BOTM(IC,IR,LBOTM(IL)-1) - BOTM(IC,IR,LBOTM(IL))
+            THICK = dble(BOTM(IC,IR,LBOTM(IL)-1)) - 
+     +              dble(BOTM(IC,IR,LBOTM(IL)))
             ij  = Icell(IC,IR,IL)
             Ccc = Cc(Ic, Ir, Il)*THICK*Sn(ij)
           END IF
@@ -414,11 +418,13 @@ C
         IF ( IBOUND(IC+1,IR,IL).NE.0 ) THEN
           Hcp1 = Hnew(Ic+1, Ir, Il)
           IF ( Hcp1-H.GT.CLOSEZERO )THEN
-            THICK = BOTM(IC+1,IR,LBOTM(IL)-1) - BOTM(IC+1,IR,LBOTM(IL))
+            THICK = dble(BOTM(IC+1,IR,LBOTM(IL)-1)) - 
+     +              dble(BOTM(IC+1,IR,LBOTM(IL)))
             ij = Icell(IC+1,IR,IL)
             Crr = Cr(Ic, Ir, Il)*THICK*Sn(ij)
           ELSE 
-            THICK = BOTM(IC,IR,LBOTM(IL)-1) - BOTM(IC,IR,LBOTM(IL))
+            THICK = dble(BOTM(IC,IR,LBOTM(IL)-1)) - 
+     +              dble(BOTM(IC,IR,LBOTM(IL)))
             ij = Icell(IC,IR,IL)
             Crr = Cr(Ic, Ir, Il)*THICK*Sn(ij)
           END IF
@@ -444,11 +450,13 @@ C
         IF ( IBOUND(IC,IR-1,IL).NE.0 ) THEN
           Hrm1 = Hnew(Ic, Ir-1, Il)
           IF ( Hrm1-H.GT.CLOSEZERO)THEN
-            THICK = BOTM(IC,IR-1,LBOTM(IL)-1) - BOTM(IC,IR-1,LBOTM(IL))
+            THICK = dble(BOTM(IC,IR-1,LBOTM(IL)-1)) - 
+     +              dble(BOTM(IC,IR-1,LBOTM(IL)))
             ij = Icell(IC,IR-1,IL)
             Ccm1 = Cc(Ic, Ir-1, Il)*THICK*Sn(ij)
           ELSE
-            THICK = BOTM(IC,IR,LBOTM(IL)-1) - BOTM(IC,IR,LBOTM(IL))
+            THICK = dble(BOTM(IC,IR,LBOTM(IL)-1)) - 
+     +              dble(BOTM(IC,IR,LBOTM(IL)))
             ij = Icell(IC,IR,IL)
             Ccm1 = Cc(Ic, Ir-1, Il)*THICK*Sn(ij)
           END IF
@@ -458,11 +466,13 @@ C
         IF ( IBOUND(IC-1,IR,IL).NE.0 ) THEN
           Hcm1 = Hnew(Ic-1, Ir, Il)
           IF ( Hcm1-H.GT.CLOSEZERO )THEN
-            THICK = BOTM(IC-1,IR,LBOTM(IL)-1) - BOTM(IC-1,IR,LBOTM(IL))
+            THICK = dble(BOTM(IC-1,IR,LBOTM(IL)-1)) - 
+     +              dble(BOTM(IC-1,IR,LBOTM(IL)))
             ij = Icell(IC-1,IR,IL)
             Crm1 = Cr(Ic-1, Ir, Il)*THICK*Sn(ij)
           ELSE 
-            THICK = BOTM(IC,IR,LBOTM(IL)-1) - BOTM(IC,IR,LBOTM(IL))
+            THICK = dble(BOTM(IC,IR,LBOTM(IL)-1)) - 
+     +              dble(BOTM(IC,IR,LBOTM(IL)))
             ij = Icell(IC,IR,IL)
             Crm1 = Cr(Ic-1, Ir, Il)*THICK*Sn(ij)
           END IF
@@ -630,7 +640,8 @@ C-------STRAIGHT LINE WITH PARABOLIC SMOOTHING
       SUBROUTINE ORDERCELL()
 ! Order system for MODFLOW storage scheme by relating Row, Col, and Lay to
 ! Jacobian order
-      USE GLOBAL, ONLY:Ncol, Nrow, Nlay, Ibound, Iout
+      USE GLOBAL, ONLY:Ncol, Nrow, Nlay, Ibound, Iout, HNEW
+      USE GWFBASMODULE, ONLY: HDRY
       USE GWFNWTMODULE
       IMPLICIT NONE
 !     ------------------------------------------------------------------
@@ -680,6 +691,7 @@ C-------STRAIGHT LINE WITH PARABOLIC SMOOTHING
             WRITE(IOUT,*)'ROW=',ir,'COL=',ic,'LAY=',il
             WRITE(IOUT,*)
             Ibound(ic, ir, il) = 0
+            HNEW(ic,ir,il) = HDRY
           END IF
         ENDIF
         ic = ic + 1
@@ -708,7 +720,7 @@ C-------STRAIGHT LINE WITH PARABOLIC SMOOTHING
 !ij is the number of active cells (row in sol. vector)
 !jj is the number of non-zero elements in the Jacobian
 !IA() is the pointer to a new row in Jacobian (CRS)
-!JA() is the order of unknowns (CRS)
+!JA() points to the vector of unknowns for each entry in Jacobian (CRS)
       IA = 0
       JA = 0
       jj = 1
@@ -758,6 +770,14 @@ C-------STRAIGHT LINE WITH PARABOLIC SMOOTHING
         END IF
       ENDDO
       IA(Numactive+1) = jj
+!      DO ij = 1, Numactive+1
+!      write(iout,*)ia(ij)
+!      end do
+!      DO ij = 1, Numactive
+!      DO jj = IA(ij),IA(ij+1)-1
+!      write(iout,*)ja(jj)
+!      end do 
+!      end do
       RETURN     
       END SUBROUTINE FILLINDEX
 !
@@ -897,7 +917,7 @@ C-------STRAIGHT LINE WITH PARABOLIC SMOOTHING
       END IF
       IF ( II.EQ.0 ) RMSAVE = RMS1
       RMS2 = RMS1
-      RMS1 = RMS_func(icfld,irfld,ilfld,kkiter)
+      RMS1 = RMS_func(icfld,irfld,ilfld)
       Icnvg = 0
       IF ( RMS1.GT.FTOL .OR. ABS(Fheadsave).GT.Tol .OR. 
      +                           kkiter.LT.2 ) THEN
@@ -967,14 +987,14 @@ c            ia,ja,a matrix in CRS format
 c            BB= right hand side of the linear system
 c            Hchange= first guess / solution of the linear system
 c            matrix=22 if not symmetric else matrix=12
-             matrix=22 
+!             matrix=22 
 c            Stop_tol_samg = closure criterion L2-norm 
 c               if eps<0 :: absolute residual 
 c               else     :: relative reduction compared to first guess
 c            Maxitr_samg=maximal number of iterations
 c            control=1 no setup reuse
 c            control=2 automatic setup reuse
-             control=1
+!             control=1
 c            iout  Controls print output related to SAMG’s solution phase.
 c                <0 No printout, except for warnings and errors24.
 c                =0 Minimal output on results and timings.
@@ -1098,8 +1118,8 @@ C--Update heads.
           ELSE
             WRITE (Iout, 9002) II,itreal,n_iter,ichld,irhld,ilhld,fhead,
      +                   icfld,irfld,ilfld,fflux,RMS1
-!     +      HNEW(ichld,irhld,ilhld),BOTM(ichld,irhld,ilhld-1),
-!     +      BOTM(ichld,irhld,ilhld)
+ !    +      HNEW(ichld,irhld,ilhld),BOTM(ichld,irhld,ilhld-1),
+ !    +      BOTM(ichld,irhld,ilhld)
           END IF
         END IF
       END IF
@@ -1120,7 +1140,8 @@ C--Update heads.
 !     -----------------------------------------------------------------
 !     Set the head in dewatered cells to Hdry.
       SUBROUTINE GWF2NWT1BD()
-      USE GLOBAL, ONLY:Hnew, Nrow, Ncol, Nlay, BOTM, LBOTM, IBOUND, iout
+      USE GLOBAL, ONLY:Hnew, Nrow, Ncol, Nlay, BOTM, LBOTM, IBOUND,
+     +                 LAYHDT, IOUT  
       USE GWFBASMODULE,ONLY:HDRY
       USE GWFUPWMODULE,ONLY:IPHDRY
       IMPLICIT NONE
@@ -1136,14 +1157,17 @@ C--Update heads.
 !      end do
 ! 222  format(113e20.10)
       DO il = 1, Nlay
-        DO ir = 1, Nrow
-          DO ic = 1, Ncol
-            IF ( IBOUND(ic,ir,il).GT.0 .AND. IPHDRY.GT.0 ) THEN
-              IF ( Hnew(ic, ir, il)-BOTM(ic,ir,LBOTM(il)).LT.2.0e-3 ) 
-     +             Hnew(ic, ir, il) = Hdry
-            END IF
+        IF ( LAYHDT(il).GT.0 ) THEN
+          DO ir = 1, Nrow
+            DO ic = 1, Ncol
+              IF ( IBOUND(ic,ir,il).GT.0 .AND. IPHDRY.GT.0 ) THEN
+                IF ( Hnew(ic, ir, il)-dble(BOTM(ic,ir,LBOTM(il)))
+     +                                                  .LT.2.0e-3 )
+     +               Hnew(ic, ir, il) = dble(Hdry)
+              END IF
+            ENDDO
           ENDDO
-        ENDDO
+        END IF
       ENDDO
 !      do ir=1,nrow
 !      write(iout,101)(Hnew(ic, ir, 1),ic=1,ncol)
@@ -1190,8 +1214,8 @@ C--Update heads.
             IF ( IBOUND(ic,ir,i).GT.0 ) ibotlay = ibotlay + 1
           END DO
           IF ( il.EQ.NLAY ) THEN
-            IF (Hnew(ic, ir, il).LT.Botm(ic, ir, Lbotm(il)) ) THEN
-              IF ( Hiter(ic, ir, il).LT.BOTM(ic, ir, Lbotm(il)) )
+            IF (Hnew(ic, ir, il).LT.dble(Botm(ic, ir, Lbotm(il))) ) THEN
+              IF ( Hiter(ic, ir, il).LT.dble(BOTM(ic, ir, Lbotm(il))) )
      +          Hiter(ic, ir, il) = BOTM(ic, ir, Lbotm(il)) + 
      +                              1.0e-6
               sum = 0.0D0
@@ -1201,14 +1225,16 @@ C--Update heads.
               IF ( sum .LT.1.0e-7 ) THEN
                 hsave = Hnew(ic, ir, il)
                 Hnew(ic, ir, il) = (Hiter(ic, ir, il)+
-     +                              BOTM(ic, ir, Lbotm(il)))/2.0d0
+     +                              dble(BOTM(ic, ir, Lbotm(il))))/2.0d0
                 Hchange(jj) = Hnew(ic, ir, il) - hsave
               END IF
             END IF
           ELSEIF ( IBOUND(ic,ir,ibotlay+1).EQ.0 ) THEN
-            IF (Hnew(ic, ir, il).LT.Botm(ic, ir, Lbotm(ibotlay)) ) THEN
-              IF ( Hiter(ic, ir, il).LT.BOTM(ic, ir, Lbotm(ibotlay)) )
-     +          Hiter(ic, ir, il) = BOTM(ic, ir, Lbotm(ibotlay)) + 
+            IF (Hnew(ic, ir, il).LT.dble(Botm(ic, ir, Lbotm(ibotlay))) )
+     +                                                        THEN
+              IF ( Hiter(ic, ir, il).LT.
+     +                              dble(BOTM(ic, ir, Lbotm(ibotlay))) )
+     +          Hiter(ic, ir, il) = dble(BOTM(ic, ir, Lbotm(ibotlay))) +
      +                              1.0e-6
               sum = 0.0D0
               sum = Sum_sat(Sum_sat(Sum_sat(Sum_sat(Sum_sat(Sum_sat
@@ -1217,7 +1243,7 @@ C--Update heads.
               IF ( sum .LT.1.0e-7 ) THEN
                 hsave = Hnew(ic, ir, il)
                 Hnew(ic, ir, il) = (Hiter(ic, ir, il)+
-     +                              BOTM(ic, ir, Lbotm(ibotlay)))/2.0d0
+     +                     dble(BOTM(ic, ir, Lbotm(ibotlay))))/2.0d0
                 Hchange(jj) = Hnew(ic, ir, il) - hsave
               END IF
             END IF
@@ -1283,8 +1309,8 @@ C--Update heads.
             IF ( IBOUND(ic,ir,i).GT.0 ) ibotlay = ibotlay + 1
           END DO
           IF ( il.EQ.NLAY ) THEN
-            IF (Hnew(ic, ir, il).LT.Botm(ic, ir, Lbotm(il)) ) THEN
-              IF ( Hiter(ic, ir, il).LT.BOTM(ic, ir, Lbotm(il)) )
+            IF (Hnew(ic, ir, il).LT.dble(Botm(ic, ir, Lbotm(il))) ) THEN
+              IF ( Hiter(ic, ir, il).LT.dble(BOTM(ic, ir, Lbotm(il))) )
      +          Hiter(ic, ir, il) = BOTM(ic, ir, Lbotm(il)) + 
      +                              1.0e-6
               sum = 0.0D0
@@ -1294,14 +1320,16 @@ C--Update heads.
               IF ( sum .LT.1.0e-7 ) THEN
                 hsave = Hnew(ic, ir, il)
                 Hnew(ic, ir, il) = (Hiter(ic, ir, il)+
-     +                              BOTM(ic, ir, Lbotm(il)))/2.0d0
+     +                              dble(BOTM(ic, ir, Lbotm(il))))/2.0d0
                 Hchange(jj) = Hnew(ic, ir, il) - hsave
               END IF
             END IF
           ELSEIF ( IBOUND(ic,ir,ibotlay+1).EQ.0 ) THEN
-            IF (Hnew(ic, ir, il).LT.Botm(ic, ir, Lbotm(ibotlay)) ) THEN
-              IF ( Hiter(ic, ir, il).LT.BOTM(ic, ir, Lbotm(ibotlay)) )
-     +          Hiter(ic, ir, il) = BOTM(ic, ir, Lbotm(ibotlay)) + 
+            IF (Hnew(ic, ir, il).LT.dble(Botm(ic, ir, Lbotm(ibotlay))) )
+     +                                                              THEN
+              IF ( Hiter(ic, ir, il).LT.
+     +                              dble(BOTM(ic, ir, Lbotm(ibotlay))) )
+     +          Hiter(ic, ir, il) = dble(BOTM(ic, ir, Lbotm(ibotlay))) +
      +                              1.0e-6
               sum = 0.0D0
               sum = Sum_sat(Sum_sat(Sum_sat(Sum_sat(Sum_sat(Sum_sat
@@ -1310,7 +1338,7 @@ C--Update heads.
               IF ( sum .LT.1.0e-7 ) THEN
                 hsave = Hnew(ic, ir, il)
                 Hnew(ic, ir, il) = (Hiter(ic, ir, il)+
-     +                              BOTM(ic, ir, Lbotm(ibotlay)))/2.0d0
+     +                    dble(BOTM(ic, ir, Lbotm(ibotlay))))/2.0d0
                 Hchange(jj) = Hnew(ic, ir, il) - hsave
               END IF
             END IF
@@ -1373,14 +1401,26 @@ C--Update heads.
       term2 = (-Cvm1-Ccm1-Crm1-Crr-Ccc-Cvv+Hcoff)*H
       term3 = Crr*Hcp1 + Ccc*Hrp1 + Cvv*Hvp1 - Rhss
       GW_func = term1 + term2 + term3
+!      if(ic==271)then
+!      write(iout,222)ic,ir,il,cvm1*(Hvm1-h),ccm1*(hrm1-h),crm1*(hcm1-h),
+!     +cvv*(hvp1-h),ccc*(hrp1-h),crr*(hcp1-h),rhss,gw_func
+!      end if
+!  222 format(3i5,8e20.10)
+      !if(ibound(ic,ir,il)==-1)then
+      !if(ibound(ic,ir-1,il)==1)sum=sum+ccm1*(hrm1-h)
+      !if(ibound(ic-1,ir,il)==1)sum=sum+crm1*(hcm1-h)
+      !if(ibound(ic+1,ir,il)==1)sum=sum+crr*(hcp1-h)
+      !if(ibound(ic,ir+1,il)==1)sum=sum+ccc*(hrp1-h)
+      !write(iout,*)'sum=',ic,ir,il,sum
+      !end if
       END FUNCTION GW_func
 !
 !
 !
 !     -----------------------------------------------------------------
-!     Return value of root mean square error of GW equation, max flux
+!     Return value of L2-Norm of GW equation, max flux
 !     and head residuals
-      DOUBLE PRECISION FUNCTION RMS_func(icfld,irfld,ilfld,kkiter)
+      DOUBLE PRECISION FUNCTION RMS_func(icfld,irfld,ilfld)
       USE GWFNWTMODULE, ONLY: Fflux,Numactive,Diag
       USE GWFUPWMODULE, ONLY: Laytypupw
       USE GLOBAL,      ONLY:Iout,Hnew,Ibound
@@ -1392,7 +1432,6 @@ C--Update heads.
       DOUBLE PRECISION, EXTERNAL :: GW_func
 !     -----------------------------------------------------------------
 !     ARGUMENTS
-      INTEGER kkiter
 !     -----------------------------------------------------------------
 !     -----------------------------------------------------------------
 !     LOCAL VARIABLES
@@ -1414,6 +1453,7 @@ C--Update heads.
             CALL TEMPFILLCON(ic, ir, il)
           END IF
           ferr = GW_func(ic, ir, il)
+      
           rms = rms + ferr**2.0D0
           IF ( abs(ferr).GT.abs(Fflux) ) THEN
             fflux = ferr
@@ -1453,8 +1493,8 @@ C--Update heads.
           Dc(ij,I) = 0.0D0
         END DO
         hh = HNEW(ic,ir,il)
-        ttop = BOTM(ic,ir,LBOTM(il)-1)
-        bbot = BOTM(ic,ir,LBOTM(il))
+        ttop = dble(BOTM(ic,ir,LBOTM(il)-1))
+        bbot = dble(BOTM(ic,ir,LBOTM(il)))
         IF ( LAYTYPUPW(il)==0 ) THEN
           Dv = 0.0D0
           Dh = 0.0D0
@@ -1547,7 +1587,7 @@ C--Update heads.
         ir = Diag(ij, 2)
         ic = Diag(ij, 3)
         Hchange(ij) = HNEW(ic,ir,il)
-        botcheck = BOTM(ic,ir,il)
+        botcheck = dble(BOTM(ic,ir,il))
 ! Constant head cells.
         IF ( IBOUND(ic,ir,il).LT.0 ) THEN
           A(IA(ij)) = 1.0D0
@@ -1637,13 +1677,16 @@ C--Update heads.
         END IF
 !        I1 = IA(ij)
 !        I2 = IA(ij+1)-1
+!        do i=i1,i2
 !!        if ( kper.gt.28)then
 !!        if(ic==49.and.ir==236.and.il==1)then
-!        WRITE(IOUT,66)ij,BB(ij),HNEW(ic,ir,il),BOTM(ic,ir,il-1),
-!     +                BOTM(ic,ir,il),HCOFF,RHSS,(A(I),I=I1,I2)
+ !       WRITE(IOUT,66)ij,BB(ij),HNEW(ic,ir,il),BOTM(ic,ir,il-1),
+ !    +                BOTM(ic,ir,il),HCOFF,RHSS,(A(I),I=I1,I2)
+!       write(iout,*)IA(ij),i,A(I),BB(ij)
 !!        end if
 !!        end if      
 ! 66      FORMAT(I9,1X,3G15.6,2X,11G15.6)
+ !      end do
       END DO
       RETURN
       END SUBROUTINE Jacobian

@@ -1,17 +1,16 @@
 #
-# Makefile for mms
+# Makefile for MMF
 # markstro
 # Tue Jul 26 08:43:10 MST 2005
 #
-# $Id: Makefile 2155 2010-11-19 19:22:06Z rsregan $
+# $Id: Makefile 4215 2012-02-23 21:57:14Z rsregan $
 #
 
 include ../makelist
-MLIBDIR  = ../../lib
 
 SRCS = 	gsflow_main.c mms_util.c
 
-MMSOBJS = ${SRCS:.c=.o}
+MMFOBJS = ${SRCS:.c=.o}
 
 .c.o:
 	$(CC) $(CFLAGS) -c $<
@@ -19,15 +18,15 @@ MMSOBJS = ${SRCS:.c=.o}
 #
 # Private makefile defines
 #
-MMSLIB = $(MLIBDIR)/libmms.a
+MMFLIB = $(LIBDIR)/libmmf.a
 
 #
 # Standard Targets for Users
 #
 
-$(MMSLIB): $(MMSOBJS)
-	$(AR) $(MMSLIB) $(MMSOBJS)
-	$(RANLIB) $(MMSLIB)
+$(MMFLIB): $(MMFOBJS)
+	$(AR) $(MMFLIB) $(MMFOBJS)
+	$(RANLIB) $(MMFLIB)
 
 clean:
-	${RM} $(MMSLIB) *.o *.ln *~ *.a ${OBJS} core lint \#*
+	$(RM) $(MMFLIB) *.o *.ln *~ *.a

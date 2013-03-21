@@ -3,7 +3,12 @@
 !***********************************************************************
       MODULE GSFMF2PRMS
       IMPLICIT NONE
-!   Declared Variables
+! Local Variables
+      CHARACTER(LEN=14) :: MODNAME
+      PARAMETER(MODNAME='gsflow_mf2prms')
+      CHARACTER(LEN=26) PROCNAME
+      PARAMETER(PROCNAME='GSFLOW integration')
+! Declared Variables
       REAL, SAVE, ALLOCATABLE :: Gw2sm_grav(:)
       END MODULE GSFMF2PRMS
 
@@ -18,7 +23,8 @@
      &    Gvr_cell_id
       USE GSFPRMS2MF, ONLY: Hrucheck, Gvr_hru_id
       USE GWFUZFMODULE, ONLY: SEEPOUT
-      USE PRMS_MODULE, ONLY: Print_debug, Process_flag
+      USE PRMS_MODULE, ONLY: Process_flag, Version_gsflow_mf2prms,
+     &    Gsflow_mf2prms_nc
       USE PRMS_BASIN, ONLY: Timestep
       IMPLICIT NONE
 ! Functions
@@ -45,18 +51,19 @@
         ENDDO
 
       ELSEIF ( Process_flag==1 ) THEN
-        IF ( Print_debug>-1 ) THEN
-          IF ( declmodule(
-     &'$Id: gsflow_mf2prms.f 3829 2011-10-26 18:33:07Z rsregan $')
-     &       .NE.0 ) RETURN
-        ENDIF
+      Version_gsflow_mf2prms =
+     &'$Id: gsflow_mf2prms.f 4262 2012-03-08 18:29:07Z rsregan $'
+      Gsflow_mf2prms_nc = INDEX( Version_gsflow_mf2prms, 'Z' )
+      i = INDEX( Version_gsflow_mf2prms, '.f' ) + 1
+      IF ( declmodule(Version_gsflow_mf2prms(6:i), PROCNAME,
+     +     Version_gsflow_mf2prms(i+2:Gsflow_mf2prms_nc))/=0 ) STOP
 
 ! Declared Variables
         ALLOCATE (Gw2sm_grav(Nhrucell))
-        IF ( declvar('mf2prms', 'gw2sm_grav', 'nhrucell', Nhrucell,
+        IF ( declvar(MODNAME, 'gw2sm_grav', 'nhrucell', Nhrucell,
      &       'real',
      &       'Groundwater discharge to gravity-flow reservoirs',
-     &       'inches', Gw2sm_grav).NE.0 )
+     &       'inches', Gw2sm_grav)/=0 )
      &       CALL read_error(3, 'gw2sm_grav')
 
       ELSEIF ( Process_flag==2 ) THEN

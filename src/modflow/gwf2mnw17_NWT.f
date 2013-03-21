@@ -36,8 +36,10 @@ c
 C
 c-------------------------------------------------------------------------
 c
-      SUBROUTINE GWF2MNW17AR(In, Iusip, Iude4, Iusor, Iupcg, Iulmg,
-     +                      Iugmg, Fname, Igrid)
+      SUBROUTINE GWF2MNW17AR(In, Iusip, Iude4, Iunwt, Iusor, Iupcg, 
+     +                      Iulmg, Iugmg, Fname, Igrid)
+!rgn------REVISION NUMBER CHANGED TO BE CONSISTENT WITH NWT RELEASE
+!rgn------NEW VERSION NUMBER 1.0.5:  April 5, 2012
 C     VERSION 20020819 KJH
 c
 c----- MNW by K.J. Halford        1/31/98
@@ -53,6 +55,7 @@ c     ------------------------------------------------------------------
       USE DE4MODULE,ONLY:HCLOSEDE4
       USE PCGMODULE,ONLY:HCLOSEPCG
       USE GMGMODULE,ONLY:HCLOSEGMG
+      USE GWFNWTMODULE,ONLY:Tol
       IMPLICIT NONE
 c     ------------------------------------------------------------------
       INTRINSIC ABS
@@ -61,7 +64,8 @@ c     ------------------------------------------------------------------
 c     ------------------------------------------------------------------
 c     Arguments
 c     ------------------------------------------------------------------
-      INTEGER :: In, Iusip, Iude4, Iusor, Iupcg, Iulmg, Iugmg, Igrid
+      INTEGER :: In, Iusip, Iude4, Iusor, Iupcg, Iulmg, Iugmg, 
+     +           Iunwt, Igrid
       CHARACTER(LEN=200) :: Fname                 !!08/19/02KJH-MODIFIED
 c     ------------------------------------------------------------------
 c     Local Variables
@@ -90,7 +94,7 @@ c
 c1------identify package and initialize nwell2
       WRITE (IOUT, 9001) In
  9001 FORMAT (/, ' MNW1 -- MULTI-NODE WELL 1 PACKAGE, VERSION 7,', 
-     +        ' 11/07/2005.', /, '    INPUT READ FROM UNIT', i4)
+     +        ' 04/05/2012.', /, '    INPUT READ FROM UNIT', i4)
       NWELL2 = 0
 c
 c2------read max number of wells and
@@ -246,12 +250,14 @@ C                    dimension from 17 to 18
       ALLOCATE (WELL2(18, MXWEL2+1), MNWSITE(MXWEL2))
 c
 C-------SET SMALL DEPENDING ON CLOSURE CRITERIA OF THE SOLVER
+      SMALL = 0.0D0
       IF ( Iusip.NE.0 ) SMALL = HCLOSE
       IF ( Iude4.NE.0 ) SMALL = HCLOSEDE4
 !     IF ( Iusor.NE.0 ) SMALL = HCLOSESOR
       IF ( Iupcg.NE.0 ) SMALL = HCLOSEPCG
       IF ( Iulmg.NE.0 ) SMALL = 0.0D0  !LMG SETS HCLOSE TO ZERO
       IF ( Iugmg.NE.0 ) SMALL = HCLOSEGMG
+      IF ( Iunwt.NE.0 ) SMALL = TOL
 c
 c-----SAVE POINTERS FOR GRID AND RETURN
       CALL SGWF2MNW1PSV(Igrid)
@@ -557,7 +563,8 @@ c Check for extreme contrast in conductance
 c
         WELL2(8, NWELL2+1) = 0.0D0
         IF ( nstart.LT.1 ) nstart = 1
-        IF ( nstart.GT.NWELL2 ) nstart = NWELL2 - itmp + 1
+cswm        IF ( nstart.GT.NWELL2 ) nstart = NWELL2 - itmp + 1
+        IF ( nstart.GT.NWELL2 ) nstart = itmp - NWELL2 + 1
         DO i = nstart, NWELL2
           IF ( WELL2(8, i).LT.-1.E30 .AND. WELL2(8, i+1).GT.-1.E30 .OR. 
      +         WELL2(8, i).LT.-1.E30 .AND. i.EQ.NWELL2 ) THEN
@@ -1371,7 +1378,7 @@ c Arguments
       INTEGER, INTENT(IN) :: Igrid
 c Local Variables
       DOUBLE PRECISION :: hwell, conc, qt, qin, qout, q, timein, hcell 
-      DOUBLE PRECISION :: qsum, qwbar, timmult
+      DOUBLE PRECISION :: qsum, qwbar, timmult,timeinlast
       INTEGER :: i, icnt, io, iobynd, iopt, ioqsum, iostart, iot, istop
       INTEGER :: me, nb, ne, node
       CHARACTER(LEN=1) :: tab
@@ -1429,13 +1436,15 @@ c
       icnt = 0
       istop = 0
       lasttag = 'NO-PRINT'
+      timeinlast=-1.
 c
       DO WHILE ( istop.EQ.0 )
         READ (iobynd, '(a32,1x,2i8,6g15.8)') temptag, me, node, timein, 
      +        q, hwell, hcell, conc
 c
 c   Test for output before accumulating INFO
-        IF ( lasttag(1:8).NE.'NO-PRINT' .AND. temptag.NE.lasttag ) THEN  !! Output
+        IF ( lasttag(1:8).NE.'NO-PRINT' .AND. 
+     +      (temptag.NE.lasttag .or.timein.ne.timeinlast)) THEN  !! Output
           iot = IFRL(WELL2(9, 1))
 c   Write a Header ?????
           iopt = iot - iostart
@@ -1506,6 +1515,7 @@ c     Read MN well output if available
 c
 c   Save Value of TEMPTAG for comparison
         lasttag = temptag
+        timeinlast=timein
       ENDDO
 c
 c   Add IO close routine here if needed

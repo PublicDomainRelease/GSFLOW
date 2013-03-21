@@ -9,8 +9,8 @@
 !     hru_tsta, hru_elev, hru_area, temp_units, basin_tsta
 !***********************************************************************
       INTEGER FUNCTION temp_1sta()
-      USE PRMS_MODULE, ONLY: Process, Print_debug, Nhru, Version_temp_1sta, Temp_1sta_nc
-      USE PRMS_BASIN, ONLY: Hru_elev, Starttime, Hru_area, &
+      USE PRMS_MODULE, ONLY: Process, Nhru, Version_temp_1sta, Temp_1sta_nc
+      USE PRMS_BASIN, ONLY: Hru_elev, Start_month, Hru_area, &
           Active_hrus, Hru_route_order, Basin_area_inv
       USE PRMS_CLIMATEVARS, ONLY: Tmax_adj, Tmin_adj, Tsta_elev, Ntemp, &
           Hru_tsta, Solrad_tmax, Solrad_tmin, Basin_temp, Basin_tmax, &
@@ -30,6 +30,8 @@
       REAL, SAVE, ALLOCATABLE :: tcrn(:), tcrx(:), elfac(:), tmax_prev(:), tmin_prev(:)
       REAL, SAVE :: solrad_tmax_good, solrad_tmin_good
       INTEGER, SAVE, ALLOCATABLE :: tmax_cnt(:), tmin_cnt(:), nuse_tsta(:)
+      CHARACTER(LEN=9), PARAMETER :: MODNAME = 'temp_1sta'
+      CHARACTER(LEN=26), PARAMETER :: PROCNAME = 'Temperature Distribution'
 !***********************************************************************
       temp_1sta = 1
 
@@ -39,7 +41,7 @@
         DO i = 1, Ntemp
           k = 0
           IF ( nuse_tsta(i)>0 ) THEN
-            IF ( Tmax(i)<-89.0 .OR. Tmax(i)>150.0 ) THEN
+            IF ( Tmax(i)<-99.0 .OR. Tmax(i)>150.0 ) THEN
               tmax_cnt(i) = tmax_cnt(i) + 1
               IF ( tmax_cnt(i)<Max_missing ) THEN
                 PRINT 9001, 'tmax', Tmax(i), i, Nowyear, Nowmonth, Nowday, tmax_prev(i)
@@ -54,7 +56,7 @@
               tmax_prev(i) = Tmax(i)
               tmax_cnt(i) = 0
             ENDIF
-            IF ( Tmin(i)<-89.0 .OR. Tmin(i)>150.0 ) THEN
+            IF ( Tmin(i)<-99.0 .OR. Tmin(i)>150.0 ) THEN
               tmin_cnt(i) = tmin_cnt(i) + 1
               IF ( tmin_cnt(i)<Max_missing ) THEN
                 PRINT 9001, 'tmin', Tmin(i), i, Nowyear, Nowmonth, Nowday, tmin_prev(i)
@@ -99,14 +101,14 @@
         Basin_temp = Basin_temp*Basin_area_inv
         Solrad_tmax = Tmax(Basin_tsta)
         Solrad_tmin = Tmin(Basin_tsta)
-        IF ( Solrad_tmax<-89.0 .OR. Solrad_tmax>150.0 ) THEN
+        IF ( Solrad_tmax<-99.0 .OR. Solrad_tmax>150.0 ) THEN
           PRINT *, 'Bad temperature data to set solrad_tmax:', Solrad_tmax, ' using last valid value'
           PRINT *, 'Value set to', solrad_tmax_good, ' Date:', Nowyear, Nowmonth, Nowday
           Solrad_tmax = solrad_tmax_good
         ELSE
           solrad_tmax_good = Solrad_tmax
         ENDIF
-        IF ( Solrad_tmin<-89.0 .OR. Solrad_tmin>150.0 ) THEN
+        IF ( Solrad_tmin<-99.0 .OR. Solrad_tmin>150.0 ) THEN
           PRINT *, 'Bad temperature data to set solrad_tmin:', Solrad_tmin, ' using last valid value'
           PRINT *, 'Value set to', solrad_tmin_good, ' Date:', Nowyear, Nowmonth, Nowday
           Solrad_tmin = solrad_tmin_good
@@ -115,27 +117,26 @@
         ENDIF
 
       ELSEIF ( Process(:4)=='decl' ) THEN
-        Version_temp_1sta = '$Id: temp_1sta.f90 4198 2012-02-21 16:30:29Z rsregan $'
-        Temp_1sta_nc = INDEX( Version_temp_1sta, ' $' ) + 1
-        IF ( Print_debug>-1 ) THEN
-          IF ( declmodule(Version_temp_1sta(:Temp_1sta_nc))/=0 ) STOP
-        ENDIF
+        Version_temp_1sta = '$Id: temp_1sta.f90 5000 2012-11-02 17:18:36Z rsregan $'
+        Temp_1sta_nc = INDEX( Version_temp_1sta, 'Z' )
+        i = INDEX( Version_temp_1sta, '.f90' ) + 3
+        IF ( declmodule(Version_temp_1sta(6:i), PROCNAME, Version_temp_1sta(i+2:Temp_1sta_nc))/=0 ) STOP
 
         ALLOCATE ( Tmax_lapse(12) )
-        IF ( declparam('temp', 'tmax_lapse', 'nmonths', 'real', &
+        IF ( declparam(MODNAME, 'tmax_lapse', 'nmonths', 'real', &
              '3.0', '-10.0', '10.0', &
              'Monthly maximum temperature lapse rate', &
              'Monthly (January to December) values representing the change in maximum air temperature per 1000 elev_units of'// &
              ' elevation change', &
              'degrees')/=0 ) CALL read_error(1, 'tmax_lapse')
         ALLOCATE ( Tmin_lapse(12) )
-        IF ( declparam('temp', 'tmin_lapse', 'nmonths', 'real', &
+        IF ( declparam(MODNAME, 'tmin_lapse', 'nmonths', 'real', &
              '3.0', '-10.0', '10.0', &
              'Monthly minimum temperature lapse rate', &
              'Monthly (January to December) values representing the change in minimum air temperture per 1000 elev_units of'// &
              ' elevation change', &
              'degrees')/=0 ) CALL read_error(1, 'tmin_lapse') 
-        IF ( declparam('temp', 'max_missing', 'one', 'integer', &
+        IF ( declparam(MODNAME, 'max_missing', 'one', 'integer', &
              '3', '0', '10', &
              'Maximum number of consecutive missing values allowed for'// &
              ' any measured air temperature station; 0 = unlimited', &
@@ -145,15 +146,15 @@
 
       ELSEIF ( Process(:4)=='init' ) THEN
 ! Initialize variables, get parameter values, compute elfac
-        IF ( getparam('temp', 'tmin_lapse', 12, 'real', Tmin_lapse)/=0 ) CALL read_error(2, 'tmin_lapse')
-        IF ( getparam('temp', 'tmax_lapse', 12, 'real', Tmax_lapse)/=0 ) CALL read_error(2, 'tmax_lapse')
-        IF ( getparam('temp', 'max_missing', 1, 'integer', Max_missing)/=0 ) CALL read_error(2, 'max_missing')
+        IF ( getparam(MODNAME, 'tmin_lapse', 12, 'real', Tmin_lapse)/=0 ) CALL read_error(2, 'tmin_lapse')
+        IF ( getparam(MODNAME, 'tmax_lapse', 12, 'real', Tmax_lapse)/=0 ) CALL read_error(2, 'tmax_lapse')
+        IF ( getparam(MODNAME, 'max_missing', 1, 'integer', Max_missing)/=0 ) CALL read_error(2, 'max_missing')
         IF ( Max_missing==0 ) Max_missing = 3
         Max_missing = Max_missing + 1
 
         ALLOCATE ( tcrn(Nhru), tcrx(Nhru), elfac(Nhru), nuse_tsta(Ntemp) )
-        tmaxlaps_mo = Tmax_lapse(Starttime(2))
-        tminlaps_mo = Tmin_lapse(Starttime(2))
+        tmaxlaps_mo = Tmax_lapse(Start_month)
+        tminlaps_mo = Tmin_lapse(Start_month)
         nuse_tsta = 0
         DO j = 1, Nhru
           k = Hru_tsta(j)
@@ -168,7 +169,7 @@
         ALLOCATE ( tmin_cnt(Ntemp), tmax_cnt(Ntemp), tmax_prev(Ntemp), tmin_prev(Ntemp) )
         tmax_cnt = 0
         tmin_cnt = 0
-        tmax_prev = Tmax_allrain(Starttime(2))
+        tmax_prev = Tmax_allrain(Start_month)
         tmin_prev = tmax_prev
       ENDIF
 
@@ -180,4 +181,3 @@
 
       temp_1sta = 0
       END FUNCTION temp_1sta
-

@@ -12,6 +12,8 @@
       INTEGER, SAVE, ALLOCATABLE :: Numreach_segment(:), Hrucheck(:)
       REAL, SAVE, ALLOCATABLE :: Sm2gw_grav_older(:), Excess(:)
       DOUBLE PRECISION, SAVE, ALLOCATABLE :: Lake_area(:)
+      CHARACTER(LEN=14), PARAMETER :: MODNAME = 'gsflow_prms2mf'
+      CHARACTER(LEN=26), PARAMETER :: PROCNAME = 'GSFLOW Integration'
 !   Declared Variables
       INTEGER, SAVE :: Stopcount
       DOUBLE PRECISION, SAVE :: Basin_reach_latflow, Net_sz2gw
@@ -22,7 +24,7 @@
       DOUBLE PRECISION, SAVE, ALLOCATABLE :: Segment_pct_area(:)
       DOUBLE PRECISION, SAVE, ALLOCATABLE :: Gvr_hru_pct_adjusted(:)
 !   Declared Parameters
-      INTEGER, SAVE :: Mnsziter
+      INTEGER, SAVE :: Mnsziter, Mxsziter
       REAL, SAVE :: Szconverge
       INTEGER, SAVE, ALLOCATABLE :: Gvr_hru_id(:)
 !     INTEGER, SAVE, ALLOCATABLE :: Local_reachid(:)
@@ -61,145 +63,156 @@
       INTEGER FUNCTION prms2mfdecl()
       USE GSFPRMS2MF
       USE GSFCONVERT, ONLY: Nhrucell, Ngwcell
-      USE PRMS_MODULE, ONLY: Nhru, Nsegment, Print_debug
+      USE PRMS_MODULE, ONLY: Nhru, Nsegment, Version_gsflow_prms2mf,
+     &    Gsflow_prms2mf_nc
       IMPLICIT NONE
       INTEGER, EXTERNAL :: declmodule, declparam, declvar
       EXTERNAL read_error
+! Local Variables
+      INTEGER :: n
 !***********************************************************************
       prms2mfdecl = 1
 
-      IF ( Print_debug>-1 ) THEN
-        IF ( declmodule(
-     &'$Id: gsflow_prms2mf.f 4165 2012-02-06 20:23:01Z rsregan $')
-     &     .NE.0 ) RETURN
-      ENDIF
+      Version_gsflow_prms2mf =
+     &'$Id: gsflow_prms2mf.f 4875 2012-10-04 18:30:33Z rsregan $'
+      Gsflow_prms2mf_nc = INDEX( Version_gsflow_prms2mf, 'Z' )
+      n = INDEX( Version_gsflow_prms2mf, '.f' ) + 1
+      IF ( declmodule(Version_gsflow_prms2mf(6:n), PROCNAME,
+     +     Version_gsflow_prms2mf(n+2:Gsflow_prms2mf_nc))/=0 ) STOP
 
 !      Nreach = getdim('nreach')
 !      IF ( Nreach.EQ.-1 ) RETURN
 
 ! Declared Variables
-      IF ( declvar('prms2mf', 'net_sz2gw', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'net_sz2gw', 'one', 1, 'double',
      &     'Net volumetric flow rate of gravity drainage from the'//
      &     ' soil zone to the unsaturated and saturated zones', 'L3/T',
-     &     Net_sz2gw).NE.0 ) CALL read_error(3, 'net_sz2gw')
+     &     Net_sz2gw)/=0 ) CALL read_error(3, 'net_sz2gw')
 
-      IF ( declvar('prms2mf', 'stopcount', 'one', 1, 'integer',
+      IF ( declvar(MODNAME, 'stopcount', 'one', 1, 'integer',
      &     'Number of times the mxsziter reached during a simulation',
      &     'none ',
-     &     Stopcount).NE.0 ) CALL read_error(3, 'stopcount')
+     &     Stopcount)/=0 ) CALL read_error(3, 'stopcount')
 
       ALLOCATE (Unused_potet(Nhru))
-      IF ( declvar('prms2mf', 'unused_potet', 'nhru', Nhru, 'real',
+      IF ( declvar(MODNAME, 'unused_potet', 'nhru', Nhru, 'real',
      &     'Unsatisfied potential ET for UZF and MODFLOW', 'inches',
-     &     Unused_potet).NE.0 ) CALL read_error(3, 'unused_potet')
+     &     Unused_potet)/=0 ) CALL read_error(3, 'unused_potet')
      
 !     ALLOCATE (Reach_latflow(Nreach))
-!     IF ( decl var('prms2mf', 'reach_latflow', 'nreach', Nreach, 'double',
+!     IF ( decl var(MODNAME, 'reach_latflow', 'nreach', Nreach, 'double',
 !    &     'Lateral flow (surface runoff and interflow) into each'//
 !    &     'stream reach', 'cfs',
-!    &     Reach_latflow).NE.0 ) CALL read_error(3, 'reach_latflow')
+!    &     Reach_latflow)/=0 ) CALL read_error(3, 'reach_latflow')
 
 !     ALLOCATE (Reach_id(Nreach, Nsegment))
-!     IF ( decl var('prms2mf', 'reach_id', 'nsegment,nreach',
+!     IF ( decl var(MODNAME, 'reach_id', 'nsegment,nreach',
 !    &     Nsegment*Nreach, 'integer',
 !    &     'Mapping of reach id by segment id', 'none',
-!    &     Reach_id).NE.0 ) CALL read_error(3, 'reach_id')
+!    &     Reach_id)/=0 ) CALL read_error(3, 'reach_id')
 
       ALLOCATE (Cell_drain_rate(Ngwcell))
-      IF ( declvar('prms2mf', 'cell_drain_rate', 'ngwcell', Ngwcell,
+      IF ( declvar(MODNAME, 'cell_drain_rate', 'ngwcell', Ngwcell,
      &     'real', 'Recharge rate for each cell', 'MF L/T',
-     &     Cell_drain_rate).NE.0 ) CALL read_error(3, 'Cell_drain_rate')
+     &     Cell_drain_rate)/=0 ) CALL read_error(3, 'Cell_drain_rate')
 
-      IF ( declvar('prms2mf', 'basin_reach_latflow', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basin_reach_latflow', 'one', 1, 'double',
      &     'Lateral flow into all reaches in basin', 'cfs',
-     &     Basin_reach_latflow).NE.0 )
+     &     Basin_reach_latflow)/=0 )
      &     CALL read_error(3, 'basin_reach_latflow')
 
       ALLOCATE (Gw_rejected_grav(Nhrucell))
-      IF ( declvar('prms2mf', 'gw_rejected_grav', 'nhrucell', Nhrucell,
+      IF ( declvar(MODNAME, 'gw_rejected_grav', 'nhrucell', Nhrucell,
      &     'real',
      &     'Recharge rejected by UZF for each gravity-flow reservoir',
      &     'inches',
-     &     Gw_rejected_grav).NE.0 )
+     &     Gw_rejected_grav)/=0 )
      &     CALL read_error(3, 'gw_rejected_grav')
 
       !rsr, all reaches receive same precentage of flow to each segment
       ALLOCATE (Segment_pct_area(Nsegment))
-!      IF ( declvar('prms2mf', 'segment_pct_area', 'nsegment', Nsegment,
+!      IF ( declvar(MODNAME, 'segment_pct_area', 'nsegment', Nsegment,
 !     &     'double',
 !     &     'Proportion of each segment that contributes flow to a'//
 !     &     ' stream reach',
 !     &     'decimal fraction',
-!     &     Segment_pct_area).NE.0 )
+!     &     Segment_pct_area)/=0 )
 !     &     CALL read_error(3, 'segment_pct_area')
 
       ALLOCATE (Gvr_hru_pct_adjusted(Nhrucell))
-      IF ( declvar('prms2mf', 'gvr_hru_pct_adjusted', 'nhrucell',
+      IF ( declvar(MODNAME, 'gvr_hru_pct_adjusted', 'nhrucell',
      &     Nhrucell, 'double',
      &     'Proportion of the HRU area associated with each gravity'//
      &     ' reservoir adjusted to account for full HRU',
      &     'decimal fraction',
-     &     Gvr_hru_pct_adjusted).NE.0 )
+     &     Gvr_hru_pct_adjusted)/=0 )
      &     CALL read_error(3, 'gvr_hru_pct_adjusted')
 
 ! Declared Parameters
-      IF ( declparam('prms2mf', 'szconverge', 'one', 'real',
+      IF ( declparam(MODNAME, 'szconverge', 'one', 'real',
      &     '1.0E-8', '1.0E-15', '1.0E-1',
      &     'Significant difference for checking soilzone states',
      &     'Significant difference for checking soilzone states',
-     &     'inches').NE.0 ) CALL read_error(1, 'szconverge')
+     &     'inches')/=0 ) CALL read_error(1, 'szconverge')
 
-      IF ( declparam('prms2mf', 'mnsziter', 'one', 'integer',
+      IF ( declparam(MODNAME, 'mnsziter', 'one', 'integer',
      &     '0', '0', '5000',
      &     'Minimum number of iterations soilzone states are computed',
      &     'Minimum number of iterations soilzone states are computed',
-     &     'none').NE.0 ) CALL read_error(1, 'mnsziter')
+     &     'none')/=0 ) CALL read_error(1, 'mnsziter')
+
+      IF ( declparam(MODNAME, 'mxsziter', 'one', 'integer',
+     &    '0', '0', '5000',
+     &    'Maximum number of iterations soilzone states are computed',
+     &    'Maximum number of iterations soilzone states are computed',
+     &    'none')/=0 ) CALL read_error(1, 'mxsziter')
 
       ALLOCATE (Gvr_hru_id(Nhrucell))
-      IF ( declparam('prms2mf', 'gvr_hru_id', 'nhrucell', 'integer',
+      IF ( declparam(MODNAME, 'gvr_hru_id', 'nhrucell', 'integer',
      &     '1', 'bounded', 'nhru',
      &     'Corresponding HRU id of each GVR',
      &     'Index of the HRU associated with each gravity reservoir',
-     &     'none').NE.0 ) CALL read_error(1, 'gvr_hru_id')
+     &     'none')/=0 ) CALL read_error(1, 'gvr_hru_id')
 
       ALLOCATE (Gvr_hru_pct(Nhrucell))
-      IF ( declparam('prms2mf', 'gvr_hru_pct', 'nhrucell', 'real',
+      IF ( declparam(MODNAME, 'gvr_hru_pct', 'nhrucell', 'real',
      &     '0.0', '0.0', '1.0',
      &     'Proportion of the HRU associated with each GVR',
      &     'Proportion of the HRU area associated with each gravity'//
      &     ' reservoir',
-     &     'decimal fraction').NE.0 ) CALL read_error(1, 'gvr_hru_pct')
+     &     'decimal fraction')/=0 ) CALL read_error(1, 'gvr_hru_pct')
 
 !     ALLOCATE (Local_reachid(Nreach))
-!     IF ( decl param('prms2mf', 'local_reachid', 'nreach', 'integer',
+!     IF ( decl param(MODNAME, 'local_reachid', 'nreach', 'integer',
 !    &     '0', 'bounded', 'nreach',
 !    &     'Map of the global reach ids to reach ids of each segment',
 !    &     'Index of stream reach within a stream segment for each'//
 !    &     ' stream reach',
-!    &     'none').NE.0 ) CALL read_error(1, 'local_reachid')
+!    &     'none')/=0 ) CALL read_error(1, 'local_reachid')
 
 !     ALLOCATE (Reach_segment(Nreach))
-!     IF ( decl param('prms2mf', 'reach_segment', 'nreach', 'integer',
+!     IF ( decl param(MODNAME, 'reach_segment', 'nreach', 'integer',
 !    &     '0', 'bounded', 'nsegment',
 !    &     'Map of the stream reaches to the stream segments',
 !    &     'Index of stream segment associate with each stream reach',
-!    &     'none').NE.0 ) CALL read_error(1, 'reach_segment')
+!    &     'none')/=0 ) CALL read_error(1, 'reach_segment')
 
       ALLOCATE (Numreach_segment(Nsegment))
-!      IF ( decl param('prms2mf', 'numreach_segment', 'nsegment',
+!      IF ( decl param(MODNAME, 'numreach_segment', 'nsegment',
 !     &     'integer', '0', 'bounded', 'nreach',
 !     &     'Number of reaches in each segment',
 !     &     'Number of stream reaches in each stream segment',
-!     &     'none').NE.0 ) CALL read_error(1, 'numreach_segment')
+!     &     'none')/=0 ) CALL read_error(1, 'numreach_segment')
 
-      IF ( declparam('prms2mf', 'lake_hru_id', 'nhru', 'integer',
+      ALLOCATE (Lake_hru_id(Nhru))
+      IF ( declparam(MODNAME, 'lake_hru_id', 'nhru', 'integer',
      +     '0', 'bounded', 'nhru',
      +     'Indentification number of the lake associated with'//
      +     ' an HRU',
      +     'Indentification number of the lake associated with'//
      +     ' an HRU; more than one HRU can be associated with'//
      +     ' each lake',
-     +     'none').NE.0 ) CALL read_error(1, 'lake_hru_id')
+     +     'none')/=0 ) CALL read_error(1, 'lake_hru_id')
 
 ! Allocate arrays from other modules and local arrays
       ALLOCATE ( Excess(Ngwcell), Hrucheck(Nhru) )
@@ -218,7 +231,7 @@
       USE GWFSFRMODULE, ONLY: ISEG, NSS
       USE GWFLAKMODULE, ONLY: NLAKES
       USE GSFCONVERT, ONLY: Nhrucell, Gvr_cell_id, Gwc_row, Gwc_col
-      USE GSFMODFLOW, ONLY: Have_lakes, Logunt, Mxsziter
+      USE GSFMODFLOW, ONLY: Have_lakes, Logunt, Iter_cnt
       USE PRMS_MODULE, ONLY: Nhru, Nsegment
       USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type,
      +    Basin_area_inv, Hru_area, Timestep, NEARZERO
@@ -241,29 +254,36 @@
 
       Nlayp1 = NLAY + 1
 
-      IF ( getparam('prms2mf', 'szconverge', 1, 'real', Szconverge)
-     &     .NE.0 ) CALL read_error(2, 'szconverge')
+      IF ( getparam(MODNAME, 'szconverge', 1, 'real', Szconverge)
+     &     /=0 ) CALL read_error(2, 'szconverge')
       IF ( szconverge<NEARZERO ) szconverge = 1.0E-8
 
-      IF ( getparam('prms2mf', 'mnsziter', 1, 'integer', Mnsziter)
-     &     .NE.0 ) CALL read_error(2, 'mnsziter')
+      IF ( getparam(MODNAME, 'mnsziter', 1, 'integer', Mnsziter)
+     &     /=0 ) CALL read_error(2, 'mnsziter')
+      IF ( getparam(MODNAME, 'mxsziter', 1, 'integer',
+     &     Mxsziter).NE.0 ) CALL read_error(2, 'mxsziter')
+      ! make the default number of soilzone iterations equal to the
+      ! maximum MF iterations, which is a good practice using NWT and cells=nhru
+      IF ( Mxsziter<1 ) Mxsziter = MXITER
       ! make the default number of soilzone iterations equal to the
       ! maximum MF iterations, which is a good practice using NWT and cells=nhru
       IF ( Mnsziter<1 ) Mnsziter = MXITER
       IF ( Mnsziter<3 ) Mnsziter = 3
       IF ( Mnsziter>Mxsziter ) Mxsziter = Mnsziter
+      ALLOCATE (Iter_cnt(Mxsziter))
+      Iter_cnt = 0
       WRITE (Logunt, *) 'szconverge =', Szconverge, 'mxsziter =',
      &                  Mxsziter, 'mnsziter =', Mnsziter
       WRITE (Logunt, *) 'Tolerance check for Gvr_hru_pct:', PCT_CHK
 
-      IF ( getparam('prms2mf', 'gvr_hru_id', Nhrucell, 'integer',
-     &     Gvr_hru_id).NE.0 ) CALL read_error(2, 'gvr_hru_id')
+      IF ( getparam(MODNAME, 'gvr_hru_id', Nhrucell, 'integer',
+     &     Gvr_hru_id)/=0 ) CALL read_error(2, 'gvr_hru_id')
 
-      IF ( getparam('prms2mf', 'gvr_hru_pct', Nhrucell, 'real',
-     &     Gvr_hru_pct).NE.0 ) CALL read_error(2, 'gvr_hru_pct')
+      IF ( getparam(MODNAME, 'gvr_hru_pct', Nhrucell, 'real',
+     &     Gvr_hru_pct)/=0 ) CALL read_error(2, 'gvr_hru_pct')
 
-!     IF ( get param('prms2mf', 'reach_segment', Nreach, 'integer',
-!    &     Reach_segment).NE.0 ) CALL read_error(2, 'reach_segment')
+!     IF ( get param(MODNAME, 'reach_segment', Nreach, 'integer',
+!    &     Reach_segment)/=0 ) CALL read_error(2, 'reach_segment')
 
       IF ( Nsegment/=NSS ) THEN
         PRINT *, 'ERROR, nsegment must equal NSS', Nsegment, NSS
@@ -278,24 +298,25 @@
 !       iseg = Reach_segment(i)
 !       Segment_pct_area(i) = 1.0D0 / DBLE(Numreach_segment(iseg))
 !     ENDDO
-!      IF ( get param('prms2mf', 'segment_pct_area', Nreach, 'real',
-!     &     Segment_pct_area).NE.0 ) CALL read_error(2, 'segment_pct_area')
-!      IF ( get param('prms2mf', 'numreach_segment', Nsegment, 'integer',
-!     &     Numreach_segment).NE.0 ) CALL read_error(2, 'numreach_segment')
+!      IF ( get param(MODNAME, 'segment_pct_area', Nreach, 'real',
+!     &     Segment_pct_area)/=0 ) CALL read_error(2, 'segment_pct_area')
+!      IF ( get param(MODNAME, 'numreach_segment', Nsegment, 'integer',
+!     &     Numreach_segment)/=0 ) CALL read_error(2, 'numreach_segment')
       DO i = 1, Nsegment
         Numreach_segment(i) = ISEG(4, i)
         Segment_pct_area(i) = 1.0D0 / DBLE(Numreach_segment(i))
       ENDDO
 
-!     IF ( get param('prms2mf', 'local_reachid', Nreach, 'integer',
-!    &     Local_reachid).NE.0 ) CALL read_error(2, 'local_reachid')
+!     IF ( get param(MODNAME, 'local_reachid', Nreach, 'integer',
+!    &     Local_reachid)/=0 ) CALL read_error(2, 'local_reachid')
 
       IF ( Have_lakes==1 ) THEN
-        ALLOCATE (Lake_hru_id(Nhru))
-        IF ( getparam('prms2mf', 'lake_hru_id', Nhru, 'integer',
-     &       Lake_hru_id).NE.0 ) CALL read_error(1, 'lake_hru_id')
+        IF ( getparam(MODNAME, 'lake_hru_id', Nhru, 'integer',
+     &       Lake_hru_id)/=0 ) CALL read_error(1, 'lake_hru_id')
         ALLOCATE ( Lake_area(NLAKES) )
         Lake_area = 0.0D0
+      ELSE
+        Lake_hru_id = 0
       ENDIF
 
       IF ( Timestep==0 ) THEN
@@ -322,26 +343,26 @@
 !       Reach_id = 0
 !       DO i = 1, Nreach
 !         iseg = Reach_segment(i)
-!         IF ( iseg.GT.max_seg ) max_seg = iseg
-!         IF ( iseg.GT.Nsegment ) PRINT *,
+!         IF ( iseg>max_seg ) max_seg = iseg
+!         IF ( iseg>Nsegment ) PRINT *,
 !    &         'Problem with segment number', i, Nsegment, iseg
 !         irch = Local_reachid(i)
 !         seg_area(iseg) = seg_area(iseg) + Segment_pct_area(i)
-!         IF ( irch.GT.Numreach_segment(iseg) ) PRINT *,
+!         IF ( irch>Numreach_segment(iseg) ) PRINT *,
 !    &         'Problem with segment reach id', i, irch,
 !    &         Numreach_segment(iseg)
 !         Reach_id(iseg, irch) = i
 !         nseg_rch(iseg) = nseg_rch(iseg) + 1
 !         Reach_latflow(i) = 0.0
 !       ENDDO
-!       IF ( max_seg.NE.Nsegment ) PRINT *,
+!       IF ( max_seg/=Nsegment ) PRINT *,
 !    &       'Problem with number of segments', Nsegment, max_seg
 
 !       DO i = 1, Nsegment
-!         IF ( nseg_rch(i).NE.Numreach_segment(i) ) PRINT *,
+!         IF ( nseg_rch(i)/=Numreach_segment(i) ) PRINT *,
 !    &         'Problem with number of reaches in a segment', i,
 !    &         nseg_rch(i), Numreach_segment(i)
-!         IF ( ABS(seg_area(i)-1.0).GT.PCT_CHK ) WRITE (Logunt, *)
+!         IF ( ABS(seg_area(i)-1.0)>PCT_CHK ) WRITE (Logunt, *)
 !    &         'Possible issue with segment area percentages', i,
 !    &         seg_area(i)
 !       ENDDO
@@ -394,6 +415,11 @@
               ENDIF
               Hrucheck(i) = 0
             ENDIF
+          ENDIF
+          IF ( Lake_hru_id(i)>0 .AND. Hru_type(i)/=2 ) THEN
+            PRINT *, 'ERROR, lake_hru_id>0 and hru_type not set to 2',
+     +               ' for HRU:', i
+            ierr = 1
           ENDIF
         ENDDO
 
@@ -507,8 +533,7 @@
 !     USE GLOBAL, ONLY: IOUT
       USE GWFUZFMODULE, ONLY: IUZFBND, NWAVST, PETRATE, IGSFLOW
       USE GWFLAKMODULE, ONLY: RNF, EVAPLK, PRCPLK, NLAKES
-      USE GSFMODFLOW, ONLY: Szcheck, Have_lakes, Logunt, KKITER,
-     +    Mxsziter
+      USE GSFMODFLOW, ONLY: Szcheck, Have_lakes, Logunt, KKITER
       USE PRMS_MODULE, ONLY: Nhru, Nsegment
       USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type,
      +    Hru_area
@@ -527,7 +552,7 @@
       prms2mfrun = 1
 
 ! gsflow sets to current iteration
-      IF ( KKITER.LT.Mnsziter ) THEN
+      IF ( KKITER<Mnsziter ) THEN
         icheck = -2
         Szcheck = 2
       ELSE
@@ -538,7 +563,7 @@
 !-----------------------------------------------------------------------
 ! Add runoff to stream reaches
 !-----------------------------------------------------------------------
-      IF ( toStream().NE.0 ) RETURN
+      IF ( toStream()/=0 ) RETURN
 
 !-----------------------------------------------------------------------
 ! Add runoff and precip to lakes
@@ -589,7 +614,7 @@
         jk = 0
         ik = 1
         DO WHILE ( jk.EQ.0 .AND. ik<Nlayp1 )
-          IF ( IBOUND(icol, irow, ik).GT.0 ) jk = 1
+          IF ( IBOUND(icol, irow, ik)>0 ) jk = 1
           ik = ik + 1
         ENDDO
 
@@ -604,7 +629,7 @@
 ! the soilzone
 !-----------------------------------------------------------------------
         seep = Sm2gw_grav(j)
-        IF ( seep.GT.0.0 ) THEN
+        IF ( seep>0.0 ) THEN
           IF ( ibndcheck/=0 ) THEN
             IF ( NWAVST(icol, irow)<NTRAIL_CHK ) THEN
 !-----------------------------------------------------------------------
@@ -614,12 +639,12 @@
 !rsr, check to see if current infiltration is within a tolerance of
 !     the last iteration, if so, stop recomputing soil zone states
                 diff = ABS(seep-Sm2gw_grav_old(j))
-                IF ( diff.GT.Szconverge ) THEN
+                IF ( diff>Szconverge ) THEN
 !rsr, check to see if current infiltration is equal to (within a
 !     tolerance) of the iteration before last (i.e, solution is likely
 !     oscillating), if so, stop recomputing soil zone states
                   diff2 = ABS(seep-Sm2gw_grav_older(j))
-                  IF ( diff2.GT.SZ_CHK ) THEN
+                  IF ( diff2>SZ_CHK ) THEN
                     icheck = 1
                     maxdiff = diff
                     maxdiff_cell = icell
@@ -628,7 +653,7 @@
               ENDIF
               Cell_drain_rate(icell) = Cell_drain_rate(icell)
      &                                 + seep*Gvr2cell_conv(j)
-            ELSE ! ELSEIF ( NWAVST(icol, irow).GE.NTRAIL_CHK ) THEN
+            ELSE ! ELSEIF ( NWAVST(icol, irow)>=NTRAIL_CHK ) THEN
 !              WRITE (IOUT, *) '--WARNING-- Too many waves in UZF cell'
 !              WRITE (IOUT, *) ' col =', icol, ' row =', irow, 'numwaves=',
 !     &                        NTRAIL_CHK
@@ -646,12 +671,12 @@
 ! Get the remaining potet from the HRU and put it into the cell
 ! Unused_potet() is in inches
 !-----------------------------------------------------------------------
-        IF ( Unused_potet(ihru).GT.0.0 ) THEN
+        IF ( Unused_potet(ihru)>0.0 ) THEN
           PETRATE(icol, irow) = PETRATE(icol, irow)
      &                          + Unused_potet(ihru)*Gvr2cell_conv(j)
           Unused_potet(ihru) = Unused_potet(ihru) -
      &                        Unused_potet(ihru)*Gvr_hru_pct_adjusted(j)
-          IF ( Unused_potet(ihru).LT.0.0 ) Unused_potet(ihru) = 0.0
+          IF ( Unused_potet(ihru)<0.0 ) Unused_potet(ihru) = 0.0
         ENDIF
         Sm2gw_grav_older(j) = Sm2gw_grav_old(j)
       ENDDO
@@ -749,7 +774,7 @@
       DO icell = 1, Ngwcell
         irow = Gwc_row(icell)
         icol = Gwc_col(icell)
-        IF ( Cell_drain_rate(icell).GT.0.0 ) THEN
+        IF ( Cell_drain_rate(icell)>0.0 ) THEN
           land = ABS(IUZFBND(icol, irow))
           IF ( NUZTOP.EQ.1 ) THEN
             celtop = BOTM(icol, irow, 0) - 0.5 * SURFDEP
@@ -761,19 +786,19 @@
 !-----------------------------------------------------------------------
           finfvks = VKS(icol, irow)
           finfprms = Cell_drain_rate(icell)
-          IF ( finfprms.GT.finfvks ) THEN
+          IF ( finfprms>finfvks ) THEN
 ! reject part, as infiltration exceeds VKS, don't bin
             finf_temp = finfvks
 ! bin when water table is below celtop
-          ELSE IF ( HNEW( icol, irow, land ).LT.celtop ) THEN
+          ELSE IF ( HNEW( icol, irow, land )<celtop ) THEN
 !-----------------------------------------------------------------------
 ! can accept all infiltration, bin to avoid too many waves.
 !-----------------------------------------------------------------------
             finf_temp = finfprms
-            IF ( finf_temp.LT.FBINS(1) ) THEN
+            IF ( finf_temp<FBINS(1) ) THEN
               finf_temp = 0.0       ! reject small values
             ELSE
-              IF ( finf_temp.LT.FBINS(25) ) THEN
+              IF ( finf_temp<FBINS(25) ) THEN
                 ij1 = 25
                 ij2 = 1
               ELSE
@@ -782,7 +807,7 @@
               ENDIF
               ij2m1 = ij2 - 1
               DO WHILE ( ij1>ij2m1 )
-                IF ( finf_temp.GE.FBINS(ij1) ) THEN
+                IF ( finf_temp>=FBINS(ij1) ) THEN
                   finf_temp = FBINS(ij1)  ! set to bin value
                   EXIT
                 ENDIF

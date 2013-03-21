@@ -4,12 +4,14 @@
         CHARACTER(LEN=16),SAVE, DIMENSION(:),   POINTER     ::WELAUX
         REAL,             SAVE, DIMENSION(:,:), POINTER     ::WELL
         REAL,             SAVE,                 POINTER     ::PSIRAMP
+        INTEGER,          SAVE,                 POINTER     ::IUNITRAMP
       TYPE GWFWELTYPE
         INTEGER,POINTER  ::NWELLS,MXWELL,NWELVL,IWELCB,IPRWEL
         INTEGER,POINTER  ::NPWEL,IWELPB,NNPWEL,IRDPSI
         CHARACTER(LEN=16), DIMENSION(:),   POINTER     ::WELAUX
         REAL,              DIMENSION(:,:), POINTER     ::WELL
         REAL,                              POINTER     ::PSIRAMP
+        INTEGER,                           POINTER     ::IUNITRAMP
       END TYPE
       TYPE(GWFWELTYPE), SAVE:: GWFWELDAT(10)
       END MODULE GWFWELMODULE
@@ -24,20 +26,21 @@ C        SPECIFICATIONS:
 C     ------------------------------------------------------------------
       USE GLOBAL,       ONLY:IOUT,NCOL,NROW,NLAY,IFREFM
       USE GWFWELMODULE, ONLY:NWELLS,MXWELL,NWELVL,IWELCB,IPRWEL,NPWEL,
-     1                       IWELPB,NNPWEL,WELAUX,WELL,PSIRAMP
+     1                       IWELPB,NNPWEL,WELAUX,WELL,PSIRAMP,IUNITRAMP
 C
       CHARACTER*200 LINE
 C     ------------------------------------------------------------------
       ALLOCATE(NWELLS,MXWELL,NWELVL,IWELCB,IPRWEL)
-      ALLOCATE(NPWEL,IWELPB,NNPWEL,PSIRAMP)
+      ALLOCATE(NPWEL,IWELPB,NNPWEL,PSIRAMP,IUNITRAMP)
 C
 C1------IDENTIFY PACKAGE AND INITIALIZE NWELLS.
       WRITE(IOUT,1)IN
-    1 FORMAT(1X,/1X,'WEL -- WELL PACKAGE, VERSION 1.0.3, 12/29/2011',
+    1 FORMAT(1X,/1X,'WEL -- WELL PACKAGE, VERSION 1.0.6, 12/05/2012',
      1' INPUT READ FROM UNIT ',I4)
       NWELLS=0
       NNPWEL=0
-      PSIRAMP = 0.05
+      PSIRAMP = 0.1
+      IUNITRAMP=IOUT
 C
 C2------READ MAXIMUM NUMBER OF WELLS AND UNIT OR FLAG FOR
 C2------CELL-BY-CELL FLOW TERMS.
@@ -54,14 +57,16 @@ C2------CELL-BY-CELL FLOW TERMS.
       END IF
       i = 0
       WRITE(IOUT,3) MXACTW
-    3 FORMAT(1X,'MAXIMUM OF ',I15,' ACTIVE WELLS AT ONE TIME')
+    3 FORMAT(1X,'MAXIMUM OF ',I6,' ACTIVE WELLS AT ONE TIME')
       IF(IWELCB.LT.0) WRITE(IOUT,7)
     7 FORMAT(1X,'CELL-BY-CELL FLOWS WILL BE PRINTED WHEN ICBCFL NOT 0')
       IF(IWELCB.GT.0) WRITE(IOUT,8) IWELCB
     8 FORMAT(1X,'CELL-BY-CELL FLOWS WILL BE SAVED ON UNIT ',I4)
     9 FORMAT(1X,'NEGATIVE PUMPING RATES WILL BE REDUCED IF HEAD '/
-     +       'FALLS WITHIN THE INTERVAL PSIRAMP TIMES THE CELL '/
-     +       'THICKNESS. THE VALUE SPECIFIED FOR PHISRAMP IS ',E12.5)
+     +       ' FALLS WITHIN THE INTERVAL PSIRAMP TIMES THE CELL '/
+     +       ' THICKNESS. THE VALUE SPECIFIED FOR PHISRAMP IS ',E12.5,/
+     +       ' WELLS WITH REDUCED PUMPING WILL BE '
+     +       'REPORTED TO FILE UNIT NUMBER',I5)
 C
 C3------READ AUXILIARY VARIABLES AND PRINT FLAG.
       ALLOCATE(WELAUX(20))
@@ -84,23 +89,25 @@ C3------READ AUXILIARY VARIABLES AND PRINT FLAG.
          IPRWEL = 0
          GO TO 10
       END IF
-! Check keyword for specifying PHI (NWT).
+! Check keyword for specifying PSI (NWT).
       CALL URDCOM(IN,IOUT,LINE)
       CALL UPARLSTAL(IN,IOUT,LINE,NPP,MXVL)
       LLOC=1
       CALL URWORD(LINE,LLOC,ISTART,ISTOP,1,I,R,IOUT,IN)
       IF(LINE(ISTART:ISTOP).EQ.'SPECIFY') THEN
          CALL URWORD(LINE,LLOC,ISTART,ISTOP,3,I,PSIRAMP,IOUT,IN)
+         CALL URWORD(LINE,LLOC,ISTART,ISTOP,2,IUNITRAMP,R,IOUT,IN)
          IF(PSIRAMP.LT.1.0E-5) PSIRAMP=1.0E-5
-         WRITE(IOUT,31) PSIRAMP
-   31    FORMAT(' THE PERCENTAGE OF THE CELL THICKNESS FOR ',
-     +                 'DECREASING THE PUMPING RATE IS SPECIFIED AS '
-     +                 ,F14.7)
+         IF ( IUNITRAMP.EQ.0 ) IUNITRAMP = IOUT
+         WRITE(IOUT,*)
+         WRITE(IOUT,9) PSIRAMP,IUNITRAMP
       ELSE
          BACKSPACE IN
          IF ( IUNITNWT.GT.0 )THEN
-           WRITE(IOUT,'(A)') ' PHIRAMP WILL BE SET TO A DEFAULT VALUE '
-     +                      ,'OF 0.05'
+           IUNITRAMP = IOUT
+      WRITE(IOUT,*)' PHIRAMP WILL BE SET TO A DEFAULT VALUE OF 0.05'
+      WRITE(IOUT,*) ' WELLS WITH REDUCED PUMPING WILL BE '
+     +                      ,'REPORTED TO THE MAIN LISTING FILE'
          END IF
       END IF
 !
@@ -186,7 +193,6 @@ C1----AND NUMBER OF PARAMETERS
 C
 C------Calculate some constants.
       NAUX=NWELVL-5
-      
       IOUTU = IOUT
       IF (IPRWEL.EQ.0) IOUTU=-IOUTU
 C
@@ -247,13 +253,23 @@ C     ------------------------------------------------------------------
       USE GWFWELMODULE, ONLY:NWELLS,WELL,PSIRAMP
       USE GWFNWTMODULE, ONLY: A, IA, Heps, Icell
       USE GWFUPWMODULE, ONLY: LAYTYPUPW
-      double precision bbot, Hh, aa, b, cof1, cof2, cof3, Qp, x
-      double precision ttop, s
-      double precision zero
+!External function interface
+      INTERFACE 
+      FUNCTION SMOOTH3(H,T,B,dQ)
+      DOUBLE PRECISION SMOOTH3
+      DOUBLE PRECISION, INTENT(IN) :: H
+      DOUBLE PRECISION, INTENT(IN) :: T
+      DOUBLE PRECISION, INTENT(IN) :: B
+      DOUBLE PRECISION, INTENT(OUT) :: dQ
+      END FUNCTION SMOOTH3
+      END INTERFACE
+!
+      DOUBLE PRECISION Qp,Hh,Ttop,Bbot,dQp
       INTEGER Iunitnwt
 C     ------------------------------------------------------------------
       CALL SGWF2WEL7PNT(IGRID)
       ZERO=0.0D0
+      Qp = 0.0
 C
 C1------IF NUMBER OF WELLS <= 0 THEN RETURN.
       IF(NWELLS.LE.0) RETURN
@@ -270,33 +286,14 @@ C2A-----IF THE CELL IS INACTIVE THEN BYPASS PROCESSING.
 C
 C2B-----IF THE CELL IS VARIABLE HEAD THEN SUBTRACT Q FROM
 C       THE RHS ACCUMULATOR.
-      IF ( Q .LT. ZERO .AND. Iunitnwt.NE.0 ) THEN
+      IF ( Q .LT. ZERO .AND. IUNITNWT.NE.0 ) THEN
         IF ( LAYTYPUPW(il).GT.0 ) THEN
           Hh = HNEW(ic,ir,il)
           bbot = Botm(IC, IR, Lbotm(IL))
           ttop = Botm(IC, IR, Lbotm(IL)-1)
-          s = PSIRAMP
-          s = s*(Ttop-Bbot)   ! puming rate begins to be ramped down.
- !         thick = s
- !         IF (s.GT.(Ttop-Bbot)/2.0) s = (Ttop-Bbot)/2.0
-          x = (Hh-bbot)
-          aa = -6.0d0/(s**3.0d0)
-          b = -6.0d0/(s**2.0d0)
-          cof1 = x**2.0D0
-          cof2 = -(2.0D0*x)/(s**3.0D0)
-          cof3 = 3.0D0/(s**2.0D0)
-          Qp = cof1*(cof2+cof3)
-          dQp = (aa*x**2.0D0-b*x)
-          IF ( x.LT.0.0D0 ) THEN
-            Qp = 0.0D0
-            dQp = 0.0D0
-          ELSEIF ( x-s.GT.-1.0e-14 ) THEN
-            Qp = 1.0D0
-            dQp = 0.0D0
-          END IF
-          Qp = Q*Qp
+          Qp = Q*smooth3(Hh,Ttop,Bbot,dQp)
           RHS(IC,IR,IL)=RHS(IC,IR,IL)-Qp
-! Derivative for HRS
+! Derivative for RHS
           ij = Icell(IC,IR,IL)
           A(IA(ij)) = A(IA(ij)) + dQp
         ELSE
@@ -321,14 +318,23 @@ C     ------------------------------------------------------------------
      1                      HNEW
       USE GWFBASMODULE,ONLY:MSUM,ICBCFL,IAUXSV,DELT,PERTIM,TOTIM,
      1                      VBVL,VBNM
-      USE GWFWELMODULE,ONLY:NWELLS,IWELCB,WELL,NWELVL,WELAUX,PSIRAMP
+      USE GWFWELMODULE,ONLY:NWELLS,IWELCB,WELL,NWELVL,WELAUX,PSIRAMP,
+     1                      IUNITRAMP,IPRWEL
       USE GWFUPWMODULE, ONLY: LAYTYPUPW
-C
+!External function interface
+      INTERFACE 
+        FUNCTION SMOOTH3(H,T,B,dQ)
+        DOUBLE PRECISION SMOOTH3
+        DOUBLE PRECISION, INTENT(IN) :: H
+        DOUBLE PRECISION, INTENT(IN) :: T
+        DOUBLE PRECISION, INTENT(IN) :: B
+        DOUBLE PRECISION, INTENT(OUT) :: dQ
+        END FUNCTION SMOOTH3
+      END INTERFACE
       CHARACTER*16 TEXT
-      DOUBLE PRECISION RATIN,RATOUT,QQ
-      double precision bbot, Hh, cof1, cof2, cof3, Qp, x, s
-      double precision ttop
-      INTEGER Iunitnwt
+      DOUBLE PRECISION RATIN,RATOUT,QQ,QSAVE
+      double precision Qp,Hh,Ttop,Bbot,dQp
+      INTEGER Iunitnwt, iw1
       DATA TEXT /'           WELLS'/
 C     ------------------------------------------------------------------
       CALL SGWF2WEL7PNT(IGRID)
@@ -339,9 +345,11 @@ C1------BUDGET FLAG.
       RATIN=ZERO
       RATOUT=ZERO
       IBD=0
+      Qp = 0.0
       IF(IWELCB.LT.0 .AND. ICBCFL.NE.0) IBD=-1
       IF(IWELCB.GT.0) IBD=ICBCFL
       IBDLBL=0
+      iw1 = 1
 C
 C2-----IF CELL-BY-CELL FLOWS WILL BE SAVED AS A LIST, WRITE HEADER.
       IF(IBD.EQ.2) THEN
@@ -375,37 +383,17 @@ C5B-----IF THE CELL IS NO-FLOW OR CONSTANT HEAD, IGNORE IT.
 C
 C5C-----GET FLOW RATE FROM WELL LIST.
       Q=WELL(4,L)
+      QSAVE = Q
+      bbot = Botm(IC, IR, Lbotm(IL))
+      ttop = Botm(IC, IR, Lbotm(IL)-1)
+      Hh = HNEW(ic,ir,il)
       IF ( Q.LT.zero  .AND. Iunitnwt.NE.0) THEN
         IF ( LAYTYPUPW(il).GT.0 ) THEN
-          bbot = Botm(IC, IR, Lbotm(IL))
-          ttop = Botm(IC, IR, Lbotm(IL)-1)
-          Hh = HNEW(ic,ir,il)
-          x = (Hh-bbot)
-          s = PSIRAMP
-          s = s*(Ttop-Bbot)
-          aa = -1.0d0/(s**2.0d0)
-          b = 2.0d0/s
-          cof1 = x**2.0D0
-          cof2 = -(2.0D0*x)/(s**3.0D0)
-          cof3 = 3.0D0/(s**2.0D0)
-          Qp = cof1*(cof2+cof3)
-          IF ( x.LT.0.0D0 ) THEN
-            Qp = 0.0D0
-          ELSEIF ( x-s.GT.-1.0e-14 ) THEN
-            Qp = 1.0D0
-          END IF
-          IF ( Qp.LT.1.0 ) THEN
-            WRITE(IOUT,60)IC,IR,IL,Q,Q*Qp,hh,bbot
-          END IF
+          Qp = smooth3(Hh,Ttop,Bbot,dQp)
           Q = Q*Qp
         END IF
       END IF
       QQ=Q
-   60 FORMAT('TO AVOID PUMPING WATER FROM A DRY CELL',/,
-     +       'THE PUMPING RATE WAS REDUCED FOR CELL(IC,IR,IL) ',
-     +        I5,I5,I5/,'THE SPECIFIED RATE IS ',1PG15.6,
-     +       ' AND THE REDUCED RATE IS ',1PG15.6,/,
-     +       ' THE HEAD IS ',1E15.6,' AND THE CELL BOTTOM IS ',1e15.6)
 C
 C5D-----PRINT FLOW RATE IF REQUESTED.
       IF(IBD.LT.0) THEN
@@ -436,7 +424,25 @@ C5I-----COPY FLOW TO WELL LIST.
    99 IF(IBD.EQ.2) CALL UBDSVB(IWELCB,NCOL,NROW,IC,IR,IL,Q,
      1                  WELL(:,L),NWELVL,NAUX,5,IBOUND,NLAY)
       WELL(NWELVL,L)=Q
+! write wells with reduced pumping
+      IF ( Qp.LT.0.9999D0 .AND. Iunitnwt.NE.0 .AND. 
+     +     IPRWEL.NE.0 ) THEN
+        IF ( iw1.EQ.1 ) THEN
+          WRITE(IUNITRAMP,*)
+          WRITE(IUNITRAMP,300)KPER,KSTP
+          WRITE(IUNITRAMP,400)
+        END IF
+        WRITE(IUNITRAMP,500)IL,IR,IC,QSAVE,Q,hh,bbot
+        iw1 = iw1 + 1
+      END IF
+  300 FORMAT(' WELLS WITH REDUCED PUMPING FOR STRESS PERIOD ',I5,
+     1      ' TIME STEP ',I5)
+  400 FORMAT('   LAY   ROW   COL         APPL.Q          ACT.Q',
+     1       '        GW-HEAD       CELL-BOT')
+  500 FORMAT(3I6,4E15.6)
+
   100 CONTINUE
+      IF (iw1.GT.1 )WRITE(IUNITRAMP,*)
 C
 C6------IF CELL-BY-CELL FLOWS WILL BE SAVED AS A 3-D ARRAY,
 C6------CALL UBUDSV TO SAVE THEM.
@@ -458,12 +464,48 @@ C
 C9------RETURN
       RETURN
       END
+      DOUBLE PRECISION FUNCTION smooth3(H,T,B,dQ)
+C     ******************************************************************
+C     SMOOTHLY REDUCES PUMPING TO ZERO FOR DEWATERED CONDITIONS
+C     ******************************************************************
+! h is the depth 
+! dC is the derivative of well conductance with respect to well head
+      USE GWFWELMODULE,ONLY:PSIRAMP
+      IMPLICIT NONE
+      DOUBLE PRECISION s, aa, bb, x
+      DOUBLE PRECISION cof1, cof2, cof3, Qp
+      DOUBLE PRECISION, INTENT(IN) :: H
+      DOUBLE PRECISION, INTENT(IN) :: T
+      DOUBLE PRECISION, INTENT(IN) :: B
+      DOUBLE PRECISION, INTENT(OUT) :: dQ
+      smooth3 = 0.0D0
+      s = PSIRAMP
+      s = s*(T-B)   ! puming rate begins to be ramped down.
+      x = (H-B)
+      aa = -6.0d0/(s**3.0d0)
+      bb = -6.0d0/(s**2.0d0)
+      cof1 = x**2.0D0
+      cof2 = -(2.0D0*x)/(s**3.0D0)
+      cof3 = 3.0D0/(s**2.0D0)
+      Qp = cof1*(cof2+cof3)
+      dQ = (aa*x**2.0D0-bb*x)
+      IF ( x.LT.0.0D0 ) THEN
+        Qp = 0.0D0
+        dQ = 0.0D0
+      ELSEIF ( x-s.GT.-1.0e-14 ) THEN
+        Qp = 1.0D0
+        dQ = 0.0D0
+      END IF
+      smooth3 = Qp
+      END FUNCTION smooth3
+C
       SUBROUTINE GWF2WEL7DA(IGRID)
 C  Deallocate WEL MEMORY
       USE GWFWELMODULE
 C
         CALL SGWF2WEL7PNT(IGRID)
-        DEALLOCATE(PSIRAMP)  
+        DEALLOCATE(PSIRAMP) 
+        DEALLOCATE(IUNITRAMP) 
         DEALLOCATE(NWELLS)
         DEALLOCATE(MXWELL)
         DEALLOCATE(NWELVL)
@@ -481,7 +523,8 @@ C
 C  Change WEL data to a different grid.
       USE GWFWELMODULE
 C
-        PSIRAMP=>GWFWELDAT(IGRID)%PSIRAMP  
+        PSIRAMP=>GWFWELDAT(IGRID)%PSIRAMP
+        IUNITRAMP=>GWFWELDAT(IGRID)%IUNITRAMP 
         NWELLS=>GWFWELDAT(IGRID)%NWELLS
         MXWELL=>GWFWELDAT(IGRID)%MXWELL
         NWELVL=>GWFWELDAT(IGRID)%NWELVL
@@ -500,6 +543,7 @@ C  Save WEL data for a grid.
       USE GWFWELMODULE
 C 
         GWFWELDAT(IGRID)%PSIRAMP=>PSIRAMP
+        GWFWELDAT(IGRID)%IUNITRAMP=>IUNITRAMP
         GWFWELDAT(IGRID)%NWELLS=>NWELLS
         GWFWELDAT(IGRID)%MXWELL=>MXWELL
         GWFWELDAT(IGRID)%NWELVL=>NWELVL

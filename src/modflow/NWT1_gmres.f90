@@ -11,6 +11,8 @@
       END MODULE GMRESMODULE
 !C------------------------------------------------------------------
       SUBROUTINE GMRES7AR(IN)
+!rgn------REVISION NUMBER CHANGED TO BE CONSISTENT WITH NWT RELEASE
+!rgn------NEW VERSION NUMBER 1.0.5:  APRIL 5, 2012
 
       USE GLOBAL, ONLY: IOUT,STRT,IBOUND
       USE GMRESMODULE
@@ -28,7 +30,7 @@
 !     ------------------------------------------------------------------
 !     LOCAL VARIABLES
 !     ------------------------------------------------------------------
-      INTEGER lloc, istart, istop, i, n 
+      INTEGER lloc, istart, istop, i
       CHARACTER(LEN=200) line
       REAL Stop_toldum, R
 !     ------------------------------------------------------------------
@@ -206,7 +208,7 @@
   REAL(KIND=kdp), DIMENSION(:), ALLOCATABLE :: c, s, rs, mvy
   REAL(KIND=kdp), PARAMETER :: eps_a=1.e-16_kdp   ! *** make multiple of mach eps
   ! ... Set string for use with RCS ident command
-  CHARACTER(LEN=80) :: ident_string='$RCSfile: gmres.f90,v $//$Revision: 4067 $'
+  CHARACTER(LEN=80) :: ident_string='$RCSfile: gmres.f90,v $//$Revision: 4817 $'
   !     ------------------------------------------------------------------
   !...
   ! ... comments follow Templates p.20 as closely as possible
@@ -399,7 +401,7 @@ CONTAINS
     !
     INTEGER :: i, k
     ! ... Set string for use with RCS ident command
-    CHARACTER(LEN=80) :: ident_string='$RCSfile: gmres.f90,v $//$Revision: 4067 $'
+    CHARACTER(LEN=80) :: ident_string='$RCSfile: gmres.f90,v $//$Revision: 4817 $'
     !     ------------------------------------------------------------------
     !...
     ! ... forward solve
@@ -434,7 +436,7 @@ CONTAINS
     INTEGER :: i, k
     REAL(KIND=kdp) :: t
     ! ... Set string for use with RCS ident command
-    CHARACTER(LEN=80) :: ident_string='$RCSfile: gmres.f90,v $//$Revision: 4067 $'
+    CHARACTER(LEN=80) :: ident_string='$RCSfile: gmres.f90,v $//$Revision: 4817 $'
     !     ------------------------------------------------------------------
     !...
     DO  i = 1,n                ! ... n is known from host

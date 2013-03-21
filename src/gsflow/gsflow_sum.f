@@ -26,6 +26,8 @@
       DOUBLE PRECISION, SAVE :: Last_basinimpervstor
       DOUBLE PRECISION, SAVE :: Last_basinpweqv, Last_basinsoilmoist
       DOUBLE PRECISION, SAVE :: Basin_gsfstor, Last_basinprefstor
+      CHARACTER(LEN=10), PARAMETER :: MODNAME = 'gsflow_sum'
+      CHARACTER(LEN=26), PARAMETER :: PROCNAME = 'GSFLOW Summary'
 !      DOUBLE PRECISION, SAVE :: Cumvol_lakeppt, Cumvol_lakeevap, Cumvol_uzfet
 ! Added lake variables
       DOUBLE PRECISION, SAVE :: Rate_lakin, Rate_lakot, Cumvol_lakin
@@ -101,314 +103,316 @@
 !***********************************************************************
       INTEGER FUNCTION gsfsumdecl()
       USE GSFSUM
-      USE PRMS_MODULE, ONLY: Print_debug
+      USE PRMS_MODULE, ONLY: Version_gsflow_sum, Gsflow_sum_nc
       IMPLICIT NONE
       INTEGER, EXTERNAL :: declmodule, declparam, declvar
+! Local Variables
+      INTEGER :: n
 !***********************************************************************
       gsfsumdecl = 1
 
-      IF ( Print_debug>-1 ) THEN
-        IF ( declmodule(
-     &'$Id: gsflow_sum.f 3980 2011-11-22 23:17:24Z rsregan $')
-     &     /=0 ) RETURN
-      ENDIF
+      Version_gsflow_sum =
+     &'$Id: gsflow_sum.f 4217 2012-02-24 22:45:55Z rsregan $'
+      Gsflow_sum_nc = INDEX( Version_gsflow_sum, 'Z' )
+      n = INDEX( Version_gsflow_sum, '.f' ) + 1
+      IF ( declmodule(Version_gsflow_sum(6:n), PROCNAME,
+     +     Version_gsflow_sum(n+2:Gsflow_sum_nc))/=0 ) STOP
 
-      IF ( declvar('gsflow_sum', 'basinsrofffarflow', 'one', 1,'double',
+      IF ( declvar(MODNAME, 'basinsrofffarflow', 'one', 1, 'double',
      &     'Volumetric flow rate of PRMS surface runoff'//
      &     ' leaving land surface as far-field flow',
      &     'L3/T', Basinsrofffarflow)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basinszfarflow', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basinszfarflow', 'one', 1, 'double',
      &     'Volumetric flow rate of PRMS interflow and surface runoff'//
      &     ' leaving soilzone modeled region as far-field flow',
      &     'L3/T', Basinszfarflow)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basinfarfieldflow', 'one', 1,'double',
+      IF ( declvar(MODNAME, 'basinfarfieldflow', 'one', 1, 'double',
      &     'Volumetric flow rate of PRMS interflow and surface runoff'//
      &     ' leaving modeled region as far-field flow',
      &     'L3/T', Basinfarfieldflow)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basinsoiltogw', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basinsoiltogw', 'one', 1, 'double',
      &     'Volumetric flow rate of direct gravity drainage from'//
      &     ' excess capillary water to the unsaturated zone',
      &     'L3/T', Basinsoiltogw)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basinppt', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basinppt', 'one', 1, 'double',
      &     'Volumetric flow rate of precipitation on modeled region',
      &     'L3/T', Basinppt)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basinsnow', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basinsnow', 'one', 1, 'double',
      &     'Volumetric flow rate of snow on modeled region',
      &     'L3/T', Basinsnow)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basinrain', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basinrain', 'one', 1, 'double',
      &     'Volumetric flow rate of rain on modeled region',
      &     'L3/T', Basinrain)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basinpervet', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basinpervet', 'one', 1, 'double',
      &     'Volumetric flow rate of evapotranspiration from pervious'//
      &     ' areas', 'L3/T',
      &     Basinpervet)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basinimpervevap', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basinimpervevap', 'one', 1, 'double',
      &     'Volumetric flow rate of evaporation from impervious areas',
      &     'L3/T', Basinimpervevap)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basinintcpevap', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basinintcpevap', 'one', 1, 'double',
      &     'Volumetric flow rate of evaporation of intercepted'//
      &     ' precipitation', 'L3/T',
      &     Basinintcpevap)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basinsnowevap', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basinsnowevap', 'one', 1, 'double',
      &     'Volumetric flow rate of snowpack sublimation', 'L3/T',
      &     Basinsnowevap)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basinlakeevap', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basinlakeevap', 'one', 1, 'double',
      &     'Volumetric flow rate of evaporation from lakes',
      &     'L3/T', Basinlakeevap)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basinlakeprecip', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basinlakeprecip', 'one', 1, 'double',
      &     'Volumetric flow rate of precipitation on lakes',
      &     'L3/T', Basinlakeprecip)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basinstrmflow', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basinstrmflow', 'one', 1, 'double',
      &     'Volumetric flow rate of streamflow leaving modeled region',
      &     'L3/T', Basinstrmflow)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basinsz2gw', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basinsz2gw', 'one', 1, 'double',
      &     'Potential volumetric flow rate of gravity drainage from'//
      &     ' the soil zone to the unsaturated zone (before conditions'//
      &     ' of the unsaturated and saturated zones are applied)',
      &     'L3/T', Basinsz2gw)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basingw2sz', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basingw2sz', 'one', 1, 'double',
      &     'Volumetric flow rate of ground-water discharge from the'//
      &     ' saturated zone to the soil zone', 'L3/T',
      &     Basingw2sz)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'uzf_recharge', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'uzf_recharge', 'one', 1, 'double',
      &     'Volumetric flow rate of recharge from the unsaturated'//
      &     ' zone to the saturated zone', 'L3/T',
      &     Uzf_recharge)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basinseepout', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basinseepout', 'one', 1, 'double',
      &     'Volumetric flow rate of ground-water discharge from the'//
      &     ' saturated zone to the soil zone', 'L3/T',
      &     Basinseepout)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basinsoilmoist', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basinsoilmoist', 'one', 1, 'double',
      &     'Volume of water in capillary reservoirs of the soil zone',
      &     'L3', Basinsoilmoist)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basingravstor', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basingravstor', 'one', 1, 'double',
      &     'Volume of water in gravity reservoirs of the soil zone',
      &     'L3', Basingravstor)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basinintcpstor', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basinintcpstor', 'one', 1, 'double',
      &     'Volume of intercepted percipitation in plant-canopy'//
      &     ' reservoirs', 'L3',
      &     Basinintcpstor)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basinimpervstor', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basinimpervstor', 'one', 1, 'double',
      &     'Volume of water in impervious reservoirs', 'L3',
      &     Basinimpervstor)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basininterflow', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basininterflow', 'one', 1, 'double',
      &     'Volumetric flow rate of slow interflow to streams', 'L3/T',
      &     Basininterflow)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basinsroff', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basinsroff', 'one', 1, 'double',
      &     'Volumetric flow rate of surface runoff to streams', 'L3/T',
      &     Basinsroff)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basinhortonianlakes', 'one', 1,
-     &     'double',
+      IF ( declvar(MODNAME, 'basinhortonianlakes', 'one', 1, 'double',
      &     'Volumetric flow rate of Hortonian surface runoff to lakes',
      &     'L3/T', Basinhortonianlakes)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basinlakeinsz', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basinlakeinsz', 'one', 1, 'double',
      &     'Volumetric flow rate of interflow and Dunnian surface'//
      &     ' runoff to lakes',
      &     'L3/T', Basinlakeinsz)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'strm_stor', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'strm_stor', 'one', 1, 'double',
      &     'Volume of water in streams', 'L3',
      &     Strm_stor)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'lake_stor', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'lake_stor', 'one', 1, 'double',
      &     'Volume of water in lakes', 'L3',
      &     Lake_stor)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'obs_strmflow', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'obs_strmflow', 'one', 1, 'double',
      &     'Volumetric flow rate of streamflow measured at a gaging'//
      &     ' station', 'L3/T',
      &     Obs_strmflow)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basinszreject', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basinszreject', 'one', 1, 'double',
      &     'Volumetric flow rate of gravity drainage from the soil'//
      &     ' zone not accepted due to conditions in the unsaturated'//
      &     ' and saturated zones', 'L3/T',
      &     Basinszreject)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basinprefstor', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basinprefstor', 'one', 1, 'double',
      &     'Volume of water stored in preferential-flow reservoirs of'//
      &     ' the soil zone', 'L3',
      &     Basinprefstor)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'uzf_et', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'uzf_et', 'one', 1, 'double',
      &     'Volumetric flow rate of evapotranspiration from the'//
      &     ' unsaturated and saturated zones', 'L3/T',
      &     Uzf_et)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'unsat_et', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'unsat_et', 'one', 1, 'double',
      &     'Volumetric flow rate of evapotranspiration from the'//
      &     ' unsaturated zone', 'L3/T',
      &     Unsat_et)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'sat_et', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'sat_et', 'one', 1, 'double',
      &     'Volumetric flow rate of evapotranspiration from the'//
      &     ' saturated zone', 'L3/T',
      &     Sat_et)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'uzf_del_stor', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'uzf_del_stor', 'one', 1, 'double',
      &     'Change in unsaturated-zone storage', 'L3',
      &     Uzf_del_stor)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'uzf_infil', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'uzf_infil', 'one', 1, 'double',
      &     'Volumetric flow rate of gravity drainage to the'//
      &     ' unsaturated and saturated zones', 'L3/T',
      &     Uzf_infil)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'streambed_loss', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'streambed_loss', 'one', 1, 'double',
      &     'Volumetric flow rate of stream leakage to the'//
      &     ' unsaturated and saturated zones', 'L3/T',
      &     Streambed_loss)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'sfruz_change_stor', 'one', 1,'double',
+      IF ( declvar(MODNAME, 'sfruz_change_stor', 'one', 1, 'double',
      &     'Change in unsaturated-zone storage under streams', 'L3',
      &     Sfruz_change_stor)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'gwflow2strms', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'gwflow2strms', 'one', 1, 'double',
      &     'Volumetric flow rate of ground-water discharge to streams',
      &     'L3/T', Gwflow2strms)/=0 ) RETURN
      
-      IF ( declvar('gsflow_sum', 'sfruz_tot_stor', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'sfruz_tot_stor', 'one', 1, 'double',
      &     'Volume of water in the unsaturated zone beneath streams',
      &     'L3', Sfruz_tot_stor)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'lakebed_loss', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'lakebed_loss', 'one', 1, 'double',
      &     'Volumetric flow rate of lake leakage to the unsaturated'//
      &     ' and saturated zones', 'L3/T',
      &     Lakebed_loss)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'lake_change_stor', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'lake_change_stor', 'one', 1, 'double',
      &     'Change in lake storage', 'L3',
      &     Lake_change_stor)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'gwflow2lakes', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'gwflow2lakes', 'one', 1, 'double',
      &     'Volumetric flow rate of ground-water discharge to lakes',
      &     'L3/T', Gwflow2lakes)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basininfil', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basininfil', 'one', 1, 'double',
      &     'Volumetric flow rate of soil infiltration including'//
      &     ' precipitation, snowmelt, and cascading Hortonian flow',
      &     'L3/T', Basininfil)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basindunnian', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basindunnian', 'one', 1, 'double',
      &     'Volumetric flow rate of Dunnian runoff to streams', 'L3/T',
      &     Basindunnian)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basinsm2gvr', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basinsm2gvr', 'one', 1, 'double',
      &     'Volumetric flow rate of flow from capillary reservoirs to'//
      &     ' gravity reservoirs', 'L3/T',
      &     Basinsm2gvr)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basingvr2sm', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basingvr2sm', 'one', 1, 'double',
      &     'Volumetric flow rate of flow from gravity reservoirs to'//
      &     ' capillary reservoirs', 'L3/T',
      &     Basingvr2sm)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basininfil_tot', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basininfil_tot', 'one', 1, 'double',
      &     'Volumetric flow rate of soil infiltration into capillary'//
      &     ' reservoirs including precipitation, snowmelt, and'//
      &     ' cascading Hortonian and Dunnian runoff and interflow'//
      &     ' minus infiltration to preferential-flow reservoirs',
      &     'L3/T', Basininfil_tot)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basininfil2pref', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basininfil2pref', 'one', 1, 'double',
      &     'Volumetric flow rate of soil infiltration into'//
      &     ' preferential-flow reservoirs including precipitation,'//
      &     ' snowmelt, and cascading surface runoff', 'L3/T',
      &     Basininfil2pref)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basindnflow', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basindnflow', 'one', 1, 'double',
      &     'Volumetric flow rate of cascading Dunnian runoff and'//
      &     ' interflow to HRUs', 'L3/T',
      &     Basindnflow)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basinactet', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basinactet', 'one', 1, 'double',
      &     'Volumetric flow rate of actual evaporation from HRUS',
      &     'L3/T', Basinactet)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basinsnowmelt', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basinsnowmelt', 'one', 1, 'double',
      &     'Volumetric flow rate of snowmelt', 'L3/T',
      &     Basinsnowmelt)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'ave_uzf_infil', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'ave_uzf_infil', 'one', 1, 'double',
      &     'Running average infiltration to UZF cell', 'L3',
      &     Ave_uzf_infil)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'cum_pweqv', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'cum_pweqv', 'one', 1, 'double',
      &     'Cumulative change in snowpack storage in MODFLOW units',
      &     'L3', Cum_pweqv)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'cum_soilstor', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'cum_soilstor', 'one', 1, 'double',
      &     'Cumulative change in soil storage in MODFLOW units', 'L3',
      &     Cum_soilstor)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'cum_uzstor', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'cum_uzstor', 'one', 1, 'double',
      &     'Cumulative change in unsaturated storage', 'L3',
      &     Cum_uzstor)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'cum_satstor', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'cum_satstor', 'one', 1, 'double',
      &     'Cumulative change in saturated storage', 'L3',
      &     Cum_satstor)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'rate_pweqv', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'rate_pweqv', 'one', 1, 'double',
      &     'Change in snow pack storage in MODFLOW units', 'L3',
      &     Rate_pweqv)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'rate_soilstor', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'rate_soilstor', 'one', 1, 'double',
      &     'Change in soil storage in MODFLOW units', 'L3',
      &     Rate_soilstor)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'rate_uzstor', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'rate_uzstor', 'one', 1, 'double',
      &     'Change in unsaturated storage', 'L3',
      &     Rate_uzstor)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'rate_satstor', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'rate_satstor', 'one', 1, 'double',
      &     'Change in saturated storage', 'L3',
      &     Rate_satstor)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basinpweqv', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basinpweqv', 'one', 1, 'double',
      &     'Volume of water in snowpack storage', 'L3',
      &     Basinpweqv)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basinsoilstor', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basinsoilstor', 'one', 1, 'double',
      &     'Soil moisture storage in volume of MODFLOW units', 'L3',
      &     Basinsoilstor)/=0 ) RETURN
 
-      IF ( declvar('gsflow_sum', 'basinnetgwwel', 'one', 1, 'double',
+      IF ( declvar(MODNAME, 'basinnetgwwel', 'one', 1, 'double',
      &     'Net groundwater pumping in volume of MODFLOW units', 'L3',
      &     Basinnetgwwel)/=0 ) RETURN
 
-      IF ( declparam('gsflow_sum', 'id_obsrunoff', 'one', 'integer',
+      IF ( declparam(MODNAME, 'id_obsrunoff', 'one', 'integer',
      &     '0', 'bounded', 'nobs',
      &     'Index of basin outlet observed runoff station',
      &     'Index of basin outlet observed runoff station',
      &     'none')/=0 ) RETURN
 
-      IF ( declparam('gsflow_sum', 'runoff_units', 'one', 'integer',
+      IF ( declparam(MODNAME, 'runoff_units', 'one', 'integer',
      &     '0', '0', '1',
      &     'Measured runoff units',
      &     'Measured runoff units (0=cfs; 1=cms)',
@@ -437,11 +441,11 @@
 !***********************************************************************
       gsfsuminit = 1
 
-      IF ( getparam('gsflow_sum', 'id_obsrunoff', 1, 'integer',
+      IF ( getparam(MODNAME, 'id_obsrunoff', 1, 'integer',
      &     Id_obsrunoff)/=0 ) RETURN
       IF ( Id_obsrunoff.EQ.0 ) Id_obsrunoff = 1
 
-      IF ( getparam('gsflow_sum', 'runoff_units', 1, 'integer',
+      IF ( getparam(MODNAME, 'runoff_units', 1, 'integer',
      &     Runoff_units)/=0 ) RETURN
 
       IF ( Print_debug.EQ.1 ) THEN
@@ -1363,4 +1367,3 @@
       ENDDO
 
       END SUBROUTINE MODFLOW_SFR_GET_STORAGE
-
