@@ -1,16 +1,21 @@
+      ! $Id: utils_prms.f90 7531 2015-07-29 22:34:39Z rsregan $
 !***********************************************************************
 !     Read CBH File to current time
 !***********************************************************************
-      SUBROUTINE find_current_time(Iunit, Year, Month, Day, Iret)
+      SUBROUTINE find_current_time(Iunit, Year, Month, Day, Iret, Cbh_binary_flag)
 ! Argument
-      INTEGER, INTENT(IN) :: Iunit, Year, Month, Day
+      INTEGER, INTENT(IN) :: Iunit, Year, Month, Day, Cbh_binary_flag
       INTEGER, INTENT(OUT) :: Iret
 ! Local Variables
       INTEGER :: yr, mo, dy
 !***********************************************************************
       Iret = 0
       DO
-        READ ( Iunit, *, IOSTAT=Iret ) yr, mo, dy
+        IF ( Cbh_binary_flag==0 ) THEN
+          READ ( Iunit, *, IOSTAT=Iret ) yr, mo, dy
+        ELSE
+          READ ( Iunit, IOSTAT=Iret ) yr, mo, dy
+        ENDIF
         IF ( Iret==-1 ) PRINT *, 'ERROR, end-of-file found reading input file for date:', Year, Month, Day
         IF ( Iret/=0 ) RETURN
         IF ( yr==Year .AND. mo==Month .AND. dy==Day ) EXIT
@@ -85,42 +90,61 @@
 !***********************************************************************
 !     Read File to line before data starts in file
 !***********************************************************************
-      SUBROUTINE find_header_end(Iunit, Fname, Paramname, Iret)
-      USE PRMS_MODULE, ONLY: Nhru
+      SUBROUTINE find_header_end(Iunit, Fname, Paramname, Iret, Cbh_flag, Cbh_binary_flag)
+      USE PRMS_MODULE, ONLY: Nhru, Orad_flag
       IMPLICIT NONE
 ! Argument
+      INTEGER, INTENT(IN) :: Cbh_flag, Cbh_binary_flag
       INTEGER, INTENT(OUT) :: Iunit, Iret
       CHARACTER(LEN=*), INTENT(IN) :: Fname, Paramname
 ! Functions
       EXTERNAL :: PRMS_open_input_file
 ! Local Variables
-      INTEGER :: i, ios, dim, orad_flag
+      INTEGER :: i, ios, dim
       CHARACTER(LEN=4) :: dum
+      CHARACTER(LEN=80) :: dum2
 !***********************************************************************
-      orad_flag = Iret
-      Iret = 0
-      CALL PRMS_open_input_file(Iunit, Fname, Paramname, Iret)
+      CALL PRMS_open_input_file(Iunit, Fname, Paramname, Cbh_binary_flag, Iret)
       IF ( Iret==0 ) THEN
 ! read to line before data starts in each file
         i = 0
         DO WHILE ( i==0 )
-          READ ( Iunit, FMT='(A4)', IOSTAT=ios ) dum
+          IF ( Cbh_binary_flag==0 ) THEN
+            READ ( Iunit, FMT='(A4)', IOSTAT=ios ) dum
+          ELSE
+            READ ( Iunit, IOSTAT=ios ) dum2
+            READ ( dum2, '(A4)' ) dum
+          ENDIF
           IF ( ios/=0 ) THEN
-            WRITE ( *, '(/,A,/,A,/)' ) 'ERROR reading file:', Fname, 'check to be sure the input file is in correct format'
+            WRITE ( *, '(/,A,/,A,/,A)' ) 'ERROR reading file:', Fname, 'check to be sure the input file is in correct format'
             Iret = 1
             EXIT
           ELSEIF ( dum=='####' ) THEN
+            IF ( Cbh_flag==0 ) EXIT
             BACKSPACE Iunit
             BACKSPACE Iunit
-            IF ( orad_flag==2 ) BACKSPACE Iunit ! backspace again as swrad CBH file contains orad as last column
-            READ ( Iunit, * ) dum, dim
-            !print *, 'utils: ', dum, dim
+            IF ( Orad_flag==1 .AND. Paramname(:5)=='swrad' ) BACKSPACE Iunit ! backspace again as swrad CBH file contains orad as last column
+            IF ( Cbh_binary_flag==0 ) THEN
+              READ ( Iunit, *, IOSTAT=ios ) dum, dim
+            ELSE
+              READ ( Iunit, IOSTAT=ios ) dum2
+              READ ( dum2, * ) dum, dim
+            ENDIF
+            IF ( ios/=0 ) THEN
+              WRITE ( *, '(/,A,/,A,/,A)' ) 'ERROR reading file:', Fname, 'check to be sure dimension line is in correct format'
+              Iret = 1
+              EXIT
+            ENDIF
             IF ( dim/=Nhru ) THEN
               PRINT '(/,2(A,I7))', '***CBH file dimension incorrect*** nhru=', Nhru, ' CBH dimension=', dim, ' File: '//Fname
               STOP 'ERROR: update Control File with correct CBH files'
             ENDIF
-            READ ( Iunit, FMT='(A4)' ) dum
-            IF ( orad_flag==2 ) READ ( Iunit, FMT='(A4)' ) dum ! read again as swrad CBH file contains orad as last column
+            IF ( Cbh_binary_flag==0 ) THEN
+              READ ( Iunit, FMT='(A4)', IOSTAT=ios ) dum
+            ELSE
+              READ ( Iunit, IOSTAT=ios ) dum
+            ENDIF
+            IF ( Orad_flag==1 .AND. Paramname(:5)=='swrad' ) READ ( Iunit, FMT='(A4)' ) dum ! read again as swrad CBH file contains orad as last column
             i = 1
           ENDIF
         ENDDO
@@ -134,7 +158,7 @@
       IMPLICIT NONE
 ! Arguments
       INTEGER, INTENT(IN) :: Iunit
-      INTEGER, INTENT (OUT) :: Next_yr, Next_mo, Next_day
+      INTEGER, INTENT(OUT) :: Next_yr, Next_mo, Next_day
 ! Local Variables
       INTEGER :: ios, i
       CHARACTER(LEN=80) :: dum
@@ -172,7 +196,7 @@
       opend = .TRUE.
       DO WHILE ( opend )
         good_unit = good_unit + 1
-        INQUIRE (UNIT=good_unit, OPENED=opend)
+        INQUIRE ( UNIT=good_unit, OPENED=opend )
       ENDDO
       get_ftnunit = good_unit
       END FUNCTION get_ftnunit
@@ -207,7 +231,7 @@
       CHARACTER(LEN=*), INTENT(IN) :: Parm_name, Dimen_name
 ! Local Variables
       INTEGER i
-      CHARACTER(LEN=40), PARAMETER :: fmt1 = '("####", /, A, /, "1", /, A, /, I6, "1")'
+      CHARACTER(LEN=48), PARAMETER :: fmt1 = '("####", /, A, /, "1", /, A, /, I6, /, "1")'
 !***********************************************************************
       WRITE ( Iunit, fmt1 ) Parm_name, Dimen_name, Dimen
       DO i = 1, Dimen
@@ -225,7 +249,7 @@
       CHARACTER(LEN=*), INTENT(IN) :: Parm_name, Dimen_name
 ! Local Variables
       INTEGER i
-      CHARACTER(LEN=40), PARAMETER :: fmt1 = '("####", /, A, /, "1", /, A, /, I6, "2")'
+      CHARACTER(LEN=48), PARAMETER :: fmt1 = '("####", /, A, /, "1", /, A, /, I6, /, "2")'
 !***********************************************************************
       WRITE ( Iunit, fmt1) Parm_name, Dimen_name, Dimen
       DO i = 1, Dimen
@@ -253,7 +277,7 @@
 
 !***********************************************************************
       SUBROUTINE write_2D_double_param(Iunit, Parm_name, Dimen_name1, Dimen1, &
-                                       Dimen_name2, Dimen2, Values)
+     &                                 Dimen_name2, Dimen2, Values)
 !***********************************************************************
       IMPLICIT NONE
 ! Arguments
@@ -275,14 +299,13 @@
 
 !***********************************************************************
       SUBROUTINE write_2D_double_array_grid(Iunit, Parm_name, Dimen_name1, &
-                                    Dimen1, Dimen_name2, Dimen2, Values)
+     &                                      Dimen1, Dimen_name2, Dimen2, Values)
 !***********************************************************************
       IMPLICIT NONE
 ! Arguments
       INTEGER, INTENT(IN) :: Iunit, Dimen1, Dimen2
       DOUBLE PRECISION, INTENT(IN) :: Values(Dimen1, Dimen2)
-      CHARACTER(LEN=*), INTENT(IN) :: Parm_name
-      CHARACTER(LEN=*), INTENT(IN) :: Dimen_name1, Dimen_name2
+      CHARACTER(LEN=*), INTENT(IN) :: Parm_name, Dimen_name1, Dimen_name2
 ! Local Variables
       INTEGER i, j
       CHARACTER(LEN=12) :: fmt
@@ -311,39 +334,53 @@
         PRINT *, 'Enter return to continue'
         READ (*, *)
       ENDIF
- 9001 FORMAT ('Warning, module versions are not identical', /, &
-              '      Executable version: ', A, /, &
-              '  Parameter File version: ', A, /)
+ 9001 FORMAT ('WARNING, module versions are not identical', /, &
+     &        'Executable version: ', A, /, &
+     &        'Parameter File version: ', A, /)
       END SUBROUTINE version_check
 
 !**********************************************************************
 !     Parameter or Variable delcare or read error
 !**********************************************************************
-      SUBROUTINE read_error(Type, Name)
+      SUBROUTINE read_error(Iflag, Name)
       IMPLICIT NONE
 ! Arguments
-      INTEGER, INTENT(IN) :: Type
+      INTEGER, INTENT(IN) :: Iflag
       CHARACTER(LEN=*), INTENT(IN) :: Name
 !**********************************************************************
       PRINT '(/,A,/)', 'Due to error condition simulation halted'
-      IF ( Type==1 ) THEN
+      IF ( Iflag==1 ) THEN
         PRINT *, 'Declare error for parameter: ', Name
-      ELSEIF ( Type==2 ) THEN
+      ELSEIF ( Iflag==2 ) THEN
         PRINT *, 'Get error for parameter: ', Name
-      ELSEIF ( Type==3 ) THEN
+      ELSEIF ( Iflag==3 ) THEN
         PRINT *, 'Declare error for variable: ', Name
-      ELSEIF ( Type==4 ) THEN
+      ELSEIF ( Iflag==4 ) THEN
         PRINT *, 'Get error for variable: ', Name
-      ELSEIF ( Type==5 ) THEN
+      ELSEIF ( Iflag==5 ) THEN
         PRINT *, 'Read error for control parameter: ', Name
-      ELSEIF ( Type==6 ) THEN
+      ELSEIF ( Iflag==6 ) THEN
         PRINT *, 'Read error for dimension parameter: ', Name
-      ELSEIF ( Type==7 ) THEN
+      ELSEIF ( Iflag==7 ) THEN
         PRINT *, 'Declare error for dimension parameter: ', Name
-      ELSEIF ( Type==8 ) THEN
+      ELSEIF ( Iflag==8 ) THEN
         PRINT *, 'Declare error for Data File variable: ', Name
-      ELSEIF ( Type==9 ) THEN
+      ELSEIF ( Iflag==9 ) THEN
         PRINT *, 'Read error for Data File variable: ', Name
+      ELSEIF ( Iflag==10 ) THEN
+        PRINT *, 'Open error of Control File ', Name
+      ELSEIF ( Iflag==11 ) THEN
+        PRINT *, 'Read error of Parameter File ', Name
+      ELSEIF ( Iflag==12 ) THEN
+        PRINT *, 'Read error of Control File ', Name
+      ELSEIF ( Iflag==13 ) THEN
+        PRINT *, 'Read error of Data File ', Name
+      ELSEIF ( Iflag==14 ) THEN
+        PRINT *, 'Control parameter not found: ', Name
+      ELSEIF ( Iflag==15 ) THEN
+        PRINT *, 'ERROR, control ', Name, ' expected and is not available in PRMS'
+      ELSEIF ( Iflag==16 ) THEN
+        PRINT *, 'ERROR, declared parameter ', Name
       ENDIF
       STOP
       END SUBROUTINE read_error
@@ -363,20 +400,21 @@
       END SUBROUTINE module_error
 
 !***********************************************************************
-! Compute saturation vapor pressure over water
-! 6th order Polynominal method (Flatau et. all., 1992) valid: -50 to 50C
+! Compute saturation vapor pressure over water in millibars
+! 1 kPa = 10 millibars
 !***********************************************************************
       REAL FUNCTION sat_vapor_press_poly(Tempc)
       IMPLICIT NONE
 ! Arguments
       REAL, INTENT(IN) :: Tempc
 !***********************************************************************
+! 6th order Polynominal method (Flatau et. all., 1992) valid: -50 to 50C
       sat_vapor_press_poly = 6.11176750 + 0.443986062*Tempc &
-                             + 0.0143053301*Tempc**2 &
-                             + 0.265027242E-03*Tempc**3 &
-                             + 0.302246994E-05*Tempc**4 &
-                             + 0.203886313E-07*Tempc**5 &
-                             + 0.638780966E-10*Tempc**6
+     &                       + 0.0143053301*Tempc**2 &
+     &                       + 0.265027242E-03*Tempc**3 &
+     &                       + 0.302246994E-05*Tempc**4 &
+     &                       + 0.203886313E-07*Tempc**5 &
+     &                       + 0.638780966E-10*Tempc**6
 ! Mastin documentation for potet_dpm
 !      sat_vapor_press_poly = 23.38*exp(18.1-5303.3/(Tempc+273.0))
 ! Mastin documentation for param_leaf-loss.aml
@@ -385,6 +423,8 @@
 !      sat_vapor_press_poly = 6.1121D0*EXP((18.678D0-Tempc/234.5D0)*Tempc/(257.14+Tempc))
 ! WMO 2008, CIMO Guide
 !      sat_vapor_press_poly = 6.112*EXP(17.62*Tempc/(243.12+Tempc))
+! Irmak and others (2012)
+!      sat_vapor_press_poly = 0.6108*EXP(17.27*Tempc/(237.3+Tempc))
       END FUNCTION sat_vapor_press_poly
 
 !***********************************************************************
@@ -396,15 +436,276 @@
 ! Arguments
       REAL, INTENT(IN) :: Tempc
 !***********************************************************************
-      sat_vapor_press = 6.1078*EXP(17.269*Tempc/(237.30+Tempc))
+      sat_vapor_press = 6.1078*EXP( (17.26939*Tempc)/(237.30+Tempc) )
       END FUNCTION sat_vapor_press
+
+!***********************************************************************
+! leap_day - is the year a leap year: (1=yes; 0=no)
+!***********************************************************************
+      INTEGER FUNCTION leap_day(Year)
+      IMPLICIT NONE
+      ! Arguments
+      INTEGER, INTENT(IN) :: Year
+      ! Functions
+      INTRINSIC MOD
+!***********************************************************************
+      leap_day = 0
+      ! Check if leapyear - Start by identifying all years not divisible by 4
+      IF ( MOD(Year,4)==0 ) THEN
+        leap_day = 1
+        IF ( MOD(Year,100)==0 ) THEN
+          IF ( MOD(Year,400)/=0 ) leap_day = 0
+        ENDIF
+      ENDIF
+      END FUNCTION leap_day
+
+!***********************************************************************
+! write_outfile - print to model output file
+!***********************************************************************
+      SUBROUTINE write_outfile(String)
+      USE PRMS_MODULE, ONLY: PRMS_output_unit
+      IMPLICIT NONE
+      ! Functions
+      INTRINSIC LEN_TRIM
+      ! Arguments
+      CHARACTER(LEN=*), INTENT(IN) :: String
+      ! Local variable
+      INTEGER nchars
+!***********************************************************************
+      nchars = LEN_TRIM(String)
+      IF ( nchars>0 ) THEN
+        WRITE ( PRMS_output_unit, '(A)' ) String(:nchars)
+      ELSE
+        WRITE ( PRMS_output_unit, '(/)' )
+      ENDIF
+      END SUBROUTINE write_outfile
+
+!***********************************************************************
+! julian_day
+! computes the Julian date given a Gregorian calendar date
+! (Year, Month, Day) relative to: calendar (Jan 1),
+! solar (12/22 in Northern; 6/21 in Southern) and
+! water year (10/1 in Northern; 4/1 in Southern) start dates.
+! The Julian day starts at noon of the Gregorian day and
+! extends to noon the next Gregorian day.
+!***********************************************************************
+      INTEGER FUNCTION julian_day(Date_type, Year_type)
+      USE PRMS_MODULE, ONLY: Starttime, Endtime
+      USE PRMS_BASIN, ONLY: Hemisphere
+      USE PRMS_SET_TIME, ONLY: Nowtime
+      IMPLICIT NONE
+      ! Arguments
+      CHARACTER(LEN=*), INTENT(IN) :: Date_type ! "start", "end", "now"
+      CHARACTER(LEN=*), INTENT(IN) :: Year_type ! "calendar", "solar", "water", "absolute"
+      ! Functions
+      INTEGER, EXTERNAL :: compute_julday
+      ! Local Variables
+      INTEGER :: reftime_year, reftime_month, reftime_day, time_array(6)
+      INTEGER :: year, month, day, absolute_julday, relative_julday, length, found
+!***********************************************************************
+      IF ( Date_type(:3)=='end' ) THEN
+        time_array = Endtime
+      ELSEIF ( Date_type(:3)=='now' ) THEN
+        time_array = Nowtime
+      ELSEIF ( Date_type(:5)=='start' ) THEN
+        time_array = Starttime
+      ELSE
+        PRINT *, 'ERROR, invalid argument to compute Julian Day: ', Date_type
+        STOP
+      ENDIF
+      year = time_array(1)
+      month = time_array(2)
+      day = time_array(3)
+
+      found = 0
+      length = LEN(Year_type)
+      ! set reftime depending on type arg
+      IF ( length>4 ) THEN
+        IF ( Year_type(:5)=='solar' ) THEN
+          found = 1
+          IF ( Hemisphere==0 ) THEN ! Northern
+            IF ( month==12 .AND. day>21 ) THEN
+              reftime_year = year
+            ELSE
+              reftime_year = year - 1
+            ENDIF
+            reftime_month = 12
+            reftime_day = 21
+          ELSE ! Southern
+            IF ( month==6 .AND. day>20 ) THEN
+              reftime_year = year;
+            ELSE
+              reftime_year = year - 1
+            ENDIF
+            reftime_month = 6
+            reftime_day = 20
+          ENDIF
+        ELSEIF ( Year_type(:5)=='water' ) THEN
+          found = 1
+          IF ( Hemisphere==0 ) THEN ! Northern
+            IF ( month>9 ) THEN
+              reftime_year = year
+            ELSE
+              reftime_year = year - 1
+            ENDIF
+            reftime_month = 9
+            reftime_day = 30
+          ELSE ! Southern
+            IF ( month>3 ) THEN
+              reftime_year = year
+            ELSE
+              reftime_year = year - 1
+            ENDIF
+            reftime_month = 3
+            reftime_day = 31
+          ENDIF
+        ENDIF
+      ENDIF
+      IF ( found==0 .AND. length>5 ) THEN
+        IF ( Year_type(:6)=='spring' ) THEN
+          found = 1
+          IF ( Hemisphere==0 ) THEN ! Northern
+            IF ( month>3 .OR. (month==3 .AND. day>20) ) THEN
+              reftime_year = year
+            ELSE
+              reftime_year = year - 1
+            ENDIF
+            reftime_month = 3
+            reftime_day = 20
+          ELSE ! Southern
+            IF ( month>9 .OR. (month==9 .AND. day>22) ) THEN
+              reftime_year = year
+            ELSE
+              reftime_year = year - 1
+            ENDIF
+            reftime_month = 9
+            reftime_day = 22
+          ENDIF
+        ENDIF
+      ENDIF
+      IF ( found==0 .AND. length>7 ) THEN
+        IF ( Year_type(:8)=='calendar' ) THEN
+          found = 1
+          reftime_year = year - 1
+          reftime_month = 12
+          reftime_day = 31
+        ENDIF
+      ENDIF
+      IF ( found==0 ) THEN
+        PRINT *, 'ERROR, invalid year type argument to compute Julian Day: ', Year_type
+        STOP
+      ENDIF
+
+      ! set actual Julian Day
+      absolute_julday = compute_julday(year, month, day)
+
+      relative_julday = 0
+      IF ( length==8 ) THEN
+        IF ( Year_type(:8)=='calendar' ) relative_julday = compute_julday(reftime_year, reftime_month, reftime_day)
+      ELSE
+        relative_julday = compute_julday(reftime_year, reftime_month, reftime_day)
+      ENDIF
+      julian_day = absolute_julday - relative_julday
+
+      END FUNCTION julian_day
+
+!***********************************************************************
+! compute_julday
+! computes the Julian Day given a Gregorian calendar date
+!***********************************************************************
+      INTEGER FUNCTION compute_julday(Year, Month, Day)
+      IMPLICIT NONE
+      ! Arguments
+      INTEGER, INTENT(IN) :: Year, Month, Day
+      ! Local Variables
+      !INTEGER yr, mo
+!!***********************************************************************
+!      mo = Month
+!      yr = Year
+!      IF ( Month < 3 ) THEN
+!        mo = mo + 12
+!        yr = yr - 1
+!      ENDIF
+!      compute_julday = Day + (153*mo - 457) / 5 + 365*yr + (yr/4) - (yr/100) + (yr/400) + 1721118.5
+      compute_julday = Day - 32075 + 1461*(Year+4800+(Month-14)/12)/4 + 367*(Month-2-(Month-14)/12*12) &
+     &    /12-3*((Year+4900+(Month-14)/12)/100)/4
+
+      END FUNCTION compute_julday
+
+!***********************************************************************
+! compute_gregorian
+! computes the Gregorian calendar date given the Julian Day
+!***********************************************************************
+      SUBROUTINE compute_gregorian(Julday, Year, Month, Day)
+      IMPLICIT NONE
+      ! Arguments
+      INTEGER, INTENT(OUT) :: Year, Month, Day
+      INTEGER, INTENT(IN) :: Julday
+      ! Functions
+      INTRINSIC FLOOR, NINT
+      ! Local Variables
+      INTEGER m, n
+!***********************************************************************
+      m = Julday + 68569
+      n = 4*m/146097
+      m = m - (146097*n+3)/4
+      Year = 4000*(m+1)/1461001
+      m = m - 1461*Year/4+31
+      Month = 80*m/2447
+      Day = m - 2447*Month/80
+      m = Month/11
+      Month = Month + 2 - 12*m
+      Year = 100*(n-49) + Year + m
+
+      !
+      !Z = Julday + 0.5
+      !W = FLOOR((Z - 1867216.25)/36524.25)
+      !X = FLOOR(W/4.0)
+      !A = Z + 1.0 + W - X
+      !B = A + 1524.0
+      !C = FLOOR((B - 122.1)/365.25)
+      !D = FLOOR(365.25*C)
+      !E = FLOOR((B - D)/30.6001)
+      !F = FLOOR(30.6001*E)
+      !Day = NINT(B - D -F)
+      !Month = NINT(E - 1)
+      !IF ( Month>12 ) Month = Month - 12
+      !IF ( Month<3 ) THEN
+      !  Year = NINT(C - 4715)
+      !ELSE
+      !  Year = NINT(C - 4716)
+      !ENDIF
+      END SUBROUTINE compute_gregorian
+
+!***********************************************************************
+! julday_in_year
+! computes the Julian Day of a date
+!***********************************************************************
+      INTEGER FUNCTION julday_in_year(Year, Month, Day)
+      IMPLICIT NONE
+      ! Arguments
+      INTEGER, INTENT(IN) :: Year, Month, Day
+      ! Functions
+      INTEGER, EXTERNAL :: leap_day
+      ! Local Variables
+      INTEGER daypmo(12), i
+      DATA daypmo/31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31/
+!***********************************************************************
+      daypmo(2) = 28
+      IF ( leap_day(Year)==1 ) daypmo(2) = 29
+      julday_in_year = Day
+      DO i = 1, Month - 1
+        julday_in_year = julday_in_year + daypmo(i)
+      ENDDO
+      END FUNCTION julday_in_year
 
 !***********************************************************************
 !     Open PRMS input File and assign unit number
 !***********************************************************************
-      SUBROUTINE PRMS_open_input_file(Iunit, Fname, Paramname, Iret)
+      SUBROUTINE PRMS_open_input_file(Iunit, Fname, Paramname, Ftype, Iret)
       IMPLICIT NONE
 ! Argument
+      INTEGER, INTENT(IN) :: Ftype
       INTEGER, INTENT(OUT) :: Iunit, Iret
       CHARACTER(LEN=*), INTENT(IN) :: Fname, Paramname
 ! Functions
@@ -415,11 +716,15 @@
       Iret = 0
       Iunit = get_ftnunit(777)
       nchars = numchars(Fname)
-      OPEN ( Iunit, FILE=Fname(:nchars), STATUS='OLD', IOSTAT=ios )
+      IF ( Ftype==0 ) THEN
+        OPEN ( Iunit, FILE=Fname(:nchars), STATUS='OLD', IOSTAT=ios )
+      ELSE
+        OPEN ( Iunit, FILE=Fname(:nchars), STATUS='OLD', FORM='UNFORMATTED', IOSTAT=ios )
+      ENDIF
       IF ( ios/=0 ) THEN
         WRITE ( *, '(/,2A,/,A,/,2A,/)' ) 'ERROR opening input file: ', Fname(:nchars), &
-     &                             'check to be sure the input file exists', &
-     &                             'file specified by control parameter: ', Paramname
+     &                                   'check to be sure the input file exists', &
+     &                                   'file specified by control parameter: ', Paramname
         Iret = 1
       ENDIF
       END SUBROUTINE PRMS_open_input_file
@@ -427,9 +732,10 @@
 !***********************************************************************
 !     Open PRMS output file and assign unit number
 !***********************************************************************
-      SUBROUTINE PRMS_open_output_file(Iunit, Fname, Paramname, Iret)
+      SUBROUTINE PRMS_open_output_file(Iunit, Fname, Paramname, Ftype, Iret)
       IMPLICIT NONE
 ! Argument
+      INTEGER, INTENT(IN) :: Ftype ! 0=text; 1=BINARY
       INTEGER, INTENT(OUT) :: Iunit, Iret
       CHARACTER(LEN=*), INTENT(IN) :: Fname, Paramname
 ! Functions
@@ -440,15 +746,44 @@
       Iret = 0
       Iunit = get_ftnunit(888)
       nchars = numchars(Fname)
-      OPEN ( Iunit, FILE=Fname(:nchars), STATUS='REPLACE', IOSTAT=ios )
+
+      IF ( Ftype==0 ) THEN
+        OPEN ( Iunit, FILE=Fname(:nchars), STATUS='REPLACE', IOSTAT=ios )
+      ELSE
+        OPEN ( Iunit, FILE=Fname(:nchars), STATUS='REPLACE', IOSTAT=ios, FORM='UNFORMATTED' )
+      ENDIF
+
       IF ( ios/=0 ) THEN
         WRITE ( *, '(/,A,/,A,/)' ) 'ERROR opening output file:', Fname(:nchars), &
      &                             'check to be sure the pathname is valid and the file is not open'
-        IF ( Paramname(:3)=='xxx' ) STOP ! Danger, file tag set to xxx if not a control parameter based file
         WRITE ( *, '(2A,/)' ) 'file specified by control parameter: ', Paramname
         Iret = 1
       ENDIF
+
       END SUBROUTINE PRMS_open_output_file
+
+!***********************************************************************
+!     Open PRMS module output file and assign unit number
+!***********************************************************************
+      SUBROUTINE PRMS_open_module_file(Iunit, Fname)
+      IMPLICIT NONE
+! Argument
+      INTEGER, INTENT(OUT) :: Iunit
+      CHARACTER(LEN=*), INTENT(IN) :: Fname
+! Functions
+      INTEGER, EXTERNAL :: get_ftnunit, numchars
+! Local Variables
+      INTEGER :: ios, nchars
+!***********************************************************************
+      Iunit = get_ftnunit(888)
+      nchars = numchars(Fname)
+      OPEN ( Iunit, FILE=Fname(:nchars), STATUS='REPLACE', IOSTAT=ios )
+      IF ( ios/=0 ) THEN
+        WRITE ( *, '(/,A,/,A,/)' ) 'ERROR opening water balance output file:', Fname(:nchars), &
+     &                             'check to be sure the pathname is valid and the file is not open'
+        STOP
+      ENDIF
+      END SUBROUTINE PRMS_open_module_file
 
 !***********************************************************************
 !     Determine number of characters in a string
@@ -472,3 +807,261 @@
         STOP
       ENDIF
       END FUNCTION numchars
+
+!***********************************************************************
+! print_module
+! print module version information to user's screen
+!***********************************************************************
+      SUBROUTINE print_module(Versn, Description, Ftntype)
+      USE PRMS_MODULE, ONLY: PRMS_output_unit, Model, Logunt
+      IMPLICIT NONE
+      ! Arguments
+      CHARACTER(LEN=*), INTENT(IN) :: Description, Versn
+      INTEGER, INTENT(IN) :: Ftntype
+      ! Functions
+      INTRINSIC INDEX
+      ! Local Variables
+      INTEGER nc, n
+!***********************************************************************
+      nc = INDEX( Versn, 'Z' )
+      IF ( Ftntype==90 ) THEN
+        n = INDEX( Versn, '.f90' ) + 3
+      ELSE
+        n = INDEX( Versn, '.f' ) + 1
+      ENDIF
+      PRINT '(A)', Description//' '//Versn(6:n)//', version: '//Versn(n+2:nc-10)
+      WRITE ( Logunt, '(A)' ) Description//' '//Versn(6:n)//', version: '//Versn(n+2:nc)
+      IF ( Model/=2 ) WRITE ( PRMS_output_unit, '(A)' ) Description//' '//Versn(6:n)//', version: '//Versn(n+2:nc)
+      END SUBROUTINE print_module
+
+!***********************************************************************
+! check restart file module order
+!***********************************************************************
+      SUBROUTINE check_restart(Modname, Restart_module)
+      IMPLICIT NONE
+      ! Arguments
+      CHARACTER(LEN=*), INTENT(IN) :: Modname, Restart_module
+!***********************************************************************
+      IF ( Restart_module/=Modname ) THEN
+        PRINT *, 'ERROR READING RESTART FILE, expecting module: ', Modname, ' found: ', Restart_module
+        STOP
+      ENDIF
+      END SUBROUTINE check_restart
+
+!***********************************************************************
+! check restart file dimensions order
+!***********************************************************************
+      SUBROUTINE check_restart_dimen(Dimen, Oldval, Newval, ierr)
+      IMPLICIT NONE
+      ! Arguments
+      INTEGER, INTENT(IN) :: Oldval, Newval
+      INTEGER, INTENT(INOUT) :: ierr
+      CHARACTER(LEN=*), INTENT(IN) :: Dimen
+!***********************************************************************
+      IF ( Oldval/=Newval ) THEN
+        PRINT *, 'ERROR READING RESTART FILE, for dimension ', Dimen
+        PRINT *, '      restart value=', Oldval, ' new value=', Newval
+        ierr = 1
+      ENDIF
+      END SUBROUTINE check_restart_dimen
+
+!***********************************************************************
+! Print date
+!***********************************************************************
+      SUBROUTINE print_date(Flag)
+      USE PRMS_SET_TIME, ONLY: Nowyear, Nowmonth, Nowday, Nowhour, Nowminute
+      IMPLICIT NONE
+      ! Arguments
+      INTEGER, INTENT(IN) :: Flag
+!***********************************************************************
+      IF ( Flag==1 ) THEN
+        PRINT 9001, Nowyear, Nowmonth, Nowday, Nowhour, Nowminute
+      ELSEIF ( Flag==0 ) THEN
+        PRINT 9001, Nowyear, Nowmonth, Nowday
+      ELSE
+        WRITE ( Flag, 9001 ) Nowyear, Nowmonth, Nowday
+      ENDIF
+ 9001 FORMAT ('    Date: ', I4, 2('/', I2.2), I3.2, ':', I2.2, /)
+      END SUBROUTINE print_date
+
+!***********************************************************************
+!     Check parameter value limits
+!***********************************************************************
+      SUBROUTINE check_param_value(Ihru, Param, Param_value, Iret)
+! Arguments
+      INTEGER, INTENT(IN) :: Ihru
+      REAL, INTENT(IN) :: Param_value
+      CHARACTER(LEN=*), INTENT(IN) :: Param
+      INTEGER, INTENT(INOUT) :: Iret
+!***********************************************************************
+      IF ( Param_value<0.0 .OR. Param_value>1.0 ) THEN
+        PRINT *, 'ERROR, ', Param, ' < 0.0 or > 1.0 for HRU:', Ihru, ' value specified:', Param_value
+        Iret = 1
+      ENDIF
+      END SUBROUTINE check_param_value
+
+!***********************************************************************
+!     Check parameter value limits
+!***********************************************************************
+      SUBROUTINE check_param_limits(Indx, Param, Param_value, Lower_val, Upper_val, Iret)
+! Arguments
+      INTEGER, INTENT(IN) :: Indx
+      REAL, INTENT(IN) :: Param_value, Lower_val, Upper_val
+      CHARACTER(LEN=*), INTENT(IN) :: Param
+      INTEGER, INTENT(INOUT) :: Iret
+!***********************************************************************
+      IF ( Param_value<Lower_val .OR. Param_value>Upper_val ) THEN
+        PRINT *, 'ERROR, bad value, parameter: ', Param, ' Value:', Param_value, ' array index:', Indx
+        PRINT *, '       lower bound:', Lower_val, ' upper bound:', Upper_val
+        Iret = 1
+      ENDIF
+      END SUBROUTINE check_param_limits
+
+!***********************************************************************
+!     Check integer parameter value limits
+!***********************************************************************
+      SUBROUTINE checkint_param_limits(Indx, Param, Param_value, Lower_val, Upper_val, Iret)
+! Arguments
+      INTEGER, INTENT(IN) :: Indx, Param_value, Lower_val, Upper_val
+      CHARACTER(LEN=*), INTENT(IN) :: Param
+      INTEGER, INTENT(INOUT) :: Iret
+!***********************************************************************
+      IF ( Param_value<Lower_val .OR. Param_value>Upper_val ) THEN
+        PRINT *, 'ERROR, bad value, parameter: ', Param, ' Value:', Param_value, ' array index:', Indx
+        PRINT *, '       lower bound:', Lower_val, ' upper bound:', Upper_val
+        Iret = 1
+      ENDIF
+      END SUBROUTINE checkint_param_limits
+
+!***********************************************************************
+!     Check parameter value against dimension
+!***********************************************************************
+      SUBROUTINE checkdim_param_limits(Indx, Param, Dimen, Param_value, Lower_val, Upper_val, Iret)
+! Arguments
+      INTEGER, INTENT(IN) :: Indx, Param_value, Lower_val, Upper_val
+      CHARACTER(LEN=*), INTENT(IN) :: Param, Dimen
+      INTEGER, INTENT(INOUT) :: Iret
+!***********************************************************************
+      IF ( Param_value<Lower_val .OR. Param_value>Upper_val ) THEN
+        PRINT *, 'ERROR, bad value, parameter: ', Param, ' Value:', Param_value, ' array index:', Indx
+        PRINT *, '       lower bound:', Lower_val, ' ', Dimen, '=', Upper_val
+        Iret = 1
+      ENDIF
+      END SUBROUTINE checkdim_param_limits
+
+!***********************************************************************
+!     Check parameter value < 0.0
+!***********************************************************************
+      SUBROUTINE check_param_zero(Indx, Param, Param_value, Iret)
+! Arguments
+      INTEGER, INTENT(IN) :: Indx
+      REAL, INTENT(IN) :: Param_value
+      CHARACTER(LEN=*), INTENT(IN) :: Param
+      INTEGER, INTENT(INOUT) :: Iret
+!***********************************************************************
+      IF ( Param_value<0.0 ) THEN
+        PRINT *, 'ERROR, value < 0.0, parameter: ', Param, ' Value:', Param_value, ' HRU:', Indx
+        Iret = 1
+      ENDIF
+    END SUBROUTINE check_param_zero
+
+!***********************************************************************
+!     check_nhru_params - Check some basin-wide parameters and
+!                              compute some basin variable
+!***********************************************************************
+      SUBROUTINE check_nhru_params()
+      USE PRMS_MODULE, ONLY: Temp_flag, Ntemp, Nevap, Print_debug, Inputerror_flag, Solrad_flag, Et_flag, Sroff_flag
+      USE PRMS_BASIN, ONLY: Hru_type, Active_hrus, Hru_route_order, SMALLPARAM, Cov_type, Covden_win, Covden_sum
+      USE PRMS_CLIMATEVARS, ONLY: Hru_tsta, Hru_pansta, Use_pandata, Radj_sppt, Radj_wppt, Epan_coef
+      USE PRMS_FLOWVARS, ONLY: Soil_moist_max
+      USE PRMS_POTET_JH, ONLY: Jh_coef, Jh_coef_hru
+      USE PRMS_SRUNOFF, ONLY: Carea_max, Carea_min, Smidx_coef, Smidx_exp, Carea_dif
+      IMPLICIT NONE
+! Functions
+      EXTERNAL :: checkdim_param_limits, check_param_value, check_param_limits
+! Local variables
+      INTEGER :: i, j, k, check_tsta, check_solrad, num_hrus
+      REAL :: frac
+!***********************************************************************
+      check_tsta = 0
+      IF ( Temp_flag==1 .OR. Temp_flag==2 ) check_tsta = 1
+      check_solrad = 0
+      IF ( Solrad_flag==1 .OR. Solrad_flag==2 ) check_solrad = 1
+
+      ! Sanity checks for parameters
+      num_hrus = 0
+      DO j = 1, Active_hrus
+        i = Hru_route_order(j)
+
+        IF ( check_tsta==1 ) CALL checkdim_param_limits(i, 'hru_tsta', 'ntemp', Hru_tsta(i), 1, Ntemp, Inputerror_flag)
+
+        IF ( check_solrad==1 ) THEN
+          CALL check_param_value(i, 'radj_sppt', Radj_sppt(i), Inputerror_flag)
+          CALL check_param_value(i, 'radj_wppt', Radj_wppt(i), Inputerror_flag)
+        ENDIF
+
+        IF ( Use_pandata==1 ) CALL checkdim_param_limits(i, 'hru_pansta', 'nevap', Hru_pansta(i), 1, Nevap, Inputerror_flag)
+
+        IF ( Et_flag==1 ) THEN
+          CALL check_param_limits(i, 'jh_coef_hru', Jh_coef_hru(i), -99.0, 150.0, Inputerror_flag)
+          DO k = 1, 12
+            CALL check_param_limits(k, 'jh_coef', Jh_coef(i, k), -1.0, 10.0, Inputerror_flag)
+          ENDDO
+        ENDIF
+
+        DO k = 1, 12
+          IF ( Epan_coef(i,k)<0.0 ) THEN
+            PRINT *, 'ERROR, epan_coef specified < 0 for month:', k, Epan_coef(i, k)
+            Inputerror_flag = 1
+          ENDIF
+        ENDDO
+
+        CALL check_param_value(i, 'covden_win', Covden_win(i), Inputerror_flag)
+        CALL check_param_value(i, 'covden_sum', Covden_sum(i), Inputerror_flag)
+        CALL checkint_param_limits(i, 'cov_type', Cov_type(i), 0, 4, Inputerror_flag)
+
+        IF ( Hru_type(i)==2 ) THEN
+          IF ( Cov_type(i)/=0 ) THEN
+            IF ( Print_debug>-1 ) PRINT *,  'WARNING, cov_type must be 0 for lakes, reset from:', Cov_type(i), ' to 0 for HRU:', i
+            Cov_type(i) = 0
+          ENDIF
+          CYCLE
+        ENDIF
+
+        CALL check_param_value(i, 'carea_max', Carea_max(i), Inputerror_flag)
+        IF ( Sroff_flag==2 ) THEN
+          CALL check_param_value(i, 'carea_min', Carea_min(i), Inputerror_flag)
+          Carea_dif(i) = Carea_max(i) - Carea_min(i)
+        ELSE
+          CALL check_param_value(i, 'smidx_coef', Smidx_coef(i), Inputerror_flag)
+          CALL check_param_value(i, 'smidx_exp', Smidx_exp(i), Inputerror_flag)
+          frac = Smidx_coef(i)*10**(Soil_moist_max(i)*Smidx_exp(i))
+          k = 0
+          IF ( frac>2.0 ) k = 1
+          IF ( frac>Carea_max(i)*2.0 ) k = k + 2
+          IF ( k>0 ) THEN
+            num_hrus = num_hrus + 1
+            !IF ( Print_debug>-1 ) THEN
+            !  PRINT *, ' '
+            !  PRINT *, 'WARNING'
+            !  PRINT *, 'Contributing area based on smidx parameters and soil_moist_max:', frac
+            !  IF ( k==1 .OR. k==3 ) PRINT *, 'Maximum contributing area > 200%'
+            !  IF ( k>1 ) PRINT *, 'Maximum contributing area > carea_max:', Carea_max(i)
+            !  PRINT *, 'HRU:', i, '; soil_moist_max:', Soil_moist_max(i)
+            !  PRINT *, 'smidx_coef:', Smidx_coef(i), '; smidx_exp:', Smidx_exp(i)
+            !  PRINT *, 'This can make smidx parameters insensitive and carea_max very sensitive'
+            !ENDIF
+          ENDIF
+        ENDIF
+      ENDDO
+
+      IF ( num_hrus>0 .AND. Print_debug>-1 ) THEN
+        WRITE (*, '(/,A,/,9X,A,/,9X,A,I7,/,9X,A,/,9X,A,/)') &
+     &         'WARNING, maximum contributing area based on smidx coefficents and', &
+     &         'soil_moist_max are > 200% of the HRU area and/or > 2*carea_max', &
+     &         'number of HRUs for which this condition exists:', num_hrus, &
+     &         'This means the smidx parameters are insensitive and', &
+     &         'carea_max very sensitive for those HRUs'
+      ENDIF
+
+      END SUBROUTINE check_nhru_params

@@ -1,16 +1,17 @@
-/*
- *  $Id: protos.h 4215 2012-02-23 21:57:14Z rsregan $
- */
+/*+
+ * United States Geological Survey
+ *
+ * PROJECT  : Modular Modeling System (MMS)
+ * FUNCTION :
+ * COMMENT  :
+ *
+ *  $Id: protos.h 7261 2015-03-16 17:35:58Z rsregan $
+ *
+-*/
 
 /**1************* SWITCH FOR DEFINITION AND DECLARATION ***************/
 #ifndef MSYS_PROTO_H
 #define MSYS_PROTO_H
-
-/**2*********************** EXPORTED MACROS ***************************/
-
-/**3********************** EXPORTED TYPEDEFS **************************/
-
-/**4********************** EXPORTED VARIABLES *************************/
 
 /**5**************** DECLARATION EXPORTED FUNCTIONS *******************/
 
@@ -598,7 +599,7 @@ EXTERN char *read_control (char *);
 #define EXTERN extern
 #endif
 
-EXTERN char *read_params (char *, int);
+EXTERN char *read_params (char *, int, int);
 EXTERN char *read_dims (char *);
 
 /***  read_vars.c  **************************************************/

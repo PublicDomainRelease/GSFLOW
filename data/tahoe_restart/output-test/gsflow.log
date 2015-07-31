@@ -1,0 +1,3794 @@
+
+
+                           U.S. Geological Survey
+         Coupled Groundwater and Surface-water FLOW model (GSFLOW)
+                          Version 1.2.0 08/21/2015
+
+     An integration of the Precipitation-Runoff Modeling System (PRMS)
+     and the Modular Groundwater Model (MODFLOW-NWT and MODFLOW-2005)
+
+
+
+                         U.S. Geological Survey
+               Precipitation-Runoff Modeling System (PRMS)
+               Version 4.0.1 03/15/2015 Tag: 633 2015-09-11
+
+
+        Groundwater, streams, lakes and wells simulated by MODFLOW
+              Based on MODFLOW-NWT  Version: 1.11.0 08/08/2013
+                   and MODFLOW-2005 Version: 1.0.9 07/01/2014
+              Processes: GWF and OBS
+              Packages:  BAS, BCF, CHD, DE4, FHB, GAG, GHB,
+                         HFB, HUF, LAK LPF, MNW1, MNW2, NWT,
+                         PCG, GMG, SFR, SIP, UPW, UZF, WEL
+
+The following modules are available:
+
+     Process                   Modules
+--------------------------------------------------------------------------
+  Basin Definition: basin
+    Cascading Flow: cascade
+  Time Series Data: obs
+   Potet Solar Rad: soltab
+  Temperature Dist: temp_1sta, temp_laps, temp_dist2, climate_hru
+       Precip Dist: precip_1sta, precip_laps, precip_dist2,
+                    climate_hru
+Temp & Precip Dist: xyz_dist, ide_dist
+    Solar Rad Dist: ccsolrad, ddsolrad, climate_hru
+Transpiration Dist: transp_tindex, climate_hru, transp_frost
+      Potential ET: potet_hamon, potet_jh, potet_pan, climate_hru,
+                    potet_hs, potet_pt, potet_pm
+      Interception: intcp
+     Snow Dynamics: snowcomp
+    Surface Runoff: srunoff_smidx, srunoff_carea
+         Soil Zone: soilzone
+       Groundwater: gwflow
+Streamflow Routing: strmflow, strmflow_in_out, muskingum
+    Output Summary: basin_sum, subbasin, map_results, nhru_summary
+     Preprocessing: write_climate_hru, frost_date
+--------------------------------------------------------------------------
+GSFLOW Computation Order     gsflow_prms.f90, version: 7633 2015-09-11 22:17:53Z
+Basin Definition             basin.f90, version: 7588 2015-08-18 22:58:42Z
+Cascading Flow               cascade.f90, version: 7588 2015-08-18 22:58:42Z
+Common States and Fluxes     climateflow.f90, version: 7588 2015-08-18 22:58:42Z
+Potential Solar Radiation    soltab.f90, version: 7563 2015-08-04 20:04:22Z
+PRMS Set Time Variables      prms_time.f90, version: 7430 2015-06-10 21:09:20Z
+Time Series Data             obs.f90, version: 7488 2015-07-16 23:25:44Z
+Temperature Distribution     temp_laps.f90, version: 7431 2015-06-10 21:27:42Z
+Precipitation Distribution   precip_1sta.f90, version: 7431 2015-06-10 21:27:42Z
+Solar Radiation Distribution ddsolrad.f90, version: 7530 2015-07-29 22:33:42Z
+Transpiration Distribution   transp_tindex.f90, version: 7117 2015-01-06 00:28:20Z
+Potential Evapotranspiration potet_jh.f90, version: 7525 2015-07-28 19:39:43Z
+Canopy Interception          intcp.f90, version: 7588 2015-08-18 22:58:42Z
+Snow Dynamics                snowcomp.f90, version: 7563 2015-08-04 20:04:22Z
+Surface Runoff               srunoff_smidx.f90, version: 7588 2015-08-18 22:58:42Z
+Soil Zone Computations       soilzone.f90, version: 7588 2015-08-18 22:58:42Z
+GSFLOW PRMS to MODFLOW       gsflow_prms2mf.f90, version: 7562 2015-08-04 20:02:18Z
+GSFLOW MODFLOW to PRMS       gsflow_mf2prms.f90, version: 7535 2015-07-29 22:37:29Z
+GSFLOW Output Budget Summary gsflow_budget.f90, version: 7508 2015-07-23 22:15:56Z
+GSFLOW Output CSV Summary    gsflow_sum.f90, version: 7589 2015-08-19 17:03:25Z
+Output Summary               subbasin.f90, version: 7432 2015-06-10 21:50:54Z
+GSFLOW MODFLOW main          gsflow_modflow.f, version: 7595 2015-09-01 15:01:38Z
+MODFLOW UZF-NWT Package      gwf2uzf1_NWT.f, version: 7578 2015-08-11 15:14:00Z
+MODFLOW SFR-NWT Package      gwf2sfr7_NWT.f, version: 7541 2015-07-30 21:46:59Z
+MODFLOW LAK-NWT Package      gwf2lak7_NWT.f, version: 7541 2015-07-30 21:46:59Z
+
+$Id: gwf2uzf1_NWT.f 7578 2015-08-11 15:14:00Z rniswon $         
+$Id: gwf2sfr7_NWT.f 7541 2015-07-30 21:46:59Z rniswon $         
+$Id: gwf2lak7_NWT.f 7541 2015-07-30 21:46:59Z rniswon $         
+$Id: gsflow_prms.f90 7633 2015-09-11 22:17:53Z rsregan $                        
+
+Using NAME file: ../input/modflow/tahoe.nam 
+
+Using Solver Package: NWT
+
+Run start date and time (yyyy/mm/dd hh:mm:ss): 2015/09/28 14:56:27
+
+ Percentage difference between cell mapping:   0.0000000000000000     
+ Number of active cells:       14634
+
+Simulation time period: 1980/10/01 - 1984/01/30
+
+Using Control File: ./Tahoe.control
+
+Writing PRMS Water Budget File: ../output/prms/tahoe.out
+
+Simulation time period: 1980/10/01 - 1984/01/30
+
+ szconverge =  9.99999997E-07 mxsziter =         200 mnsziter =         200
+ Tolerance check for gvr_hru_pct:  5.00000000000000041E-006
+ Percent difference between GVR mapping and active model domain:  0.00000000D+00
+
+
+Water Budget print frequency is:   7
+
+
+Writing GSFLOW Water Budget File: ../output/gsflow_cont.out
+
+Writing GSFLOW CSV File: ../output/gsflow_cont.csv
+Date: 1980/10/01; Stress:  1; Step:     1; Simulation step:    1
+                  MF iterations:       49; SZ iterations:     49
+
+Date: 1980/10/02; Stress:  1; Step:     2; Simulation step:    2
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1980/10/03; Stress:  1; Step:     3; Simulation step:    3
+                  MF iterations:       19; SZ iterations:     19
+
+Date: 1980/10/04; Stress:  1; Step:     4; Simulation step:    4
+                  MF iterations:       14; SZ iterations:     14
+
+Date: 1980/10/05; Stress:  1; Step:     5; Simulation step:    5
+                  MF iterations:       12; SZ iterations:     12
+
+Date: 1980/10/06; Stress:  1; Step:     6; Simulation step:    6
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1980/10/07; Stress:  1; Step:     7; Simulation step:    7
+                  MF iterations:       12; SZ iterations:     12
+
+Date: 1980/10/08; Stress:  1; Step:     8; Simulation step:    8
+                  MF iterations:       14; SZ iterations:     14
+
+Date: 1980/10/09; Stress:  1; Step:     9; Simulation step:    9
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1980/10/10; Stress:  1; Step:    10; Simulation step:   10
+                  MF iterations:       12; SZ iterations:     12
+
+Date: 1980/10/11; Stress:  1; Step:    11; Simulation step:   11
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1980/10/12; Stress:  1; Step:    12; Simulation step:   12
+                  MF iterations:        8; SZ iterations:      8
+
+Date: 1980/10/13; Stress:  1; Step:    13; Simulation step:   13
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1980/10/14; Stress:  1; Step:    14; Simulation step:   14
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1980/10/15; Stress:  1; Step:    15; Simulation step:   15
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1980/10/16; Stress:  1; Step:    16; Simulation step:   16
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1980/10/17; Stress:  1; Step:    17; Simulation step:   17
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1980/10/18; Stress:  1; Step:    18; Simulation step:   18
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1980/10/19; Stress:  1; Step:    19; Simulation step:   19
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1980/10/20; Stress:  1; Step:    20; Simulation step:   20
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1980/10/21; Stress:  1; Step:    21; Simulation step:   21
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1980/10/22; Stress:  1; Step:    22; Simulation step:   22
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1980/10/23; Stress:  1; Step:    23; Simulation step:   23
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1980/10/24; Stress:  1; Step:    24; Simulation step:   24
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1980/10/25; Stress:  1; Step:    25; Simulation step:   25
+                  MF iterations:        2; SZ iterations:      2
+
+Date: 1980/10/26; Stress:  1; Step:    26; Simulation step:   26
+                  MF iterations:        2; SZ iterations:      2
+
+Date: 1980/10/27; Stress:  1; Step:    27; Simulation step:   27
+                  MF iterations:        2; SZ iterations:      2
+
+Date: 1980/10/28; Stress:  1; Step:    28; Simulation step:   28
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1980/10/29; Stress:  1; Step:    29; Simulation step:   29
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1980/10/30; Stress:  1; Step:    30; Simulation step:   30
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1980/10/31; Stress:  1; Step:    31; Simulation step:   31
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1980/11/01; Stress:  1; Step:    32; Simulation step:   32
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1980/11/02; Stress:  1; Step:    33; Simulation step:   33
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1980/11/03; Stress:  1; Step:    34; Simulation step:   34
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1980/11/04; Stress:  1; Step:    35; Simulation step:   35
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1980/11/05; Stress:  1; Step:    36; Simulation step:   36
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1980/11/06; Stress:  1; Step:    37; Simulation step:   37
+                  MF iterations:       15; SZ iterations:     15
+
+Date: 1980/11/07; Stress:  1; Step:    38; Simulation step:   38
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1980/11/08; Stress:  1; Step:    39; Simulation step:   39
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1980/11/09; Stress:  1; Step:    40; Simulation step:   40
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1980/11/10; Stress:  1; Step:    41; Simulation step:   41
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1980/11/11; Stress:  1; Step:    42; Simulation step:   42
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1980/11/12; Stress:  1; Step:    43; Simulation step:   43
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1980/11/13; Stress:  1; Step:    44; Simulation step:   44
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1980/11/14; Stress:  1; Step:    45; Simulation step:   45
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1980/11/15; Stress:  1; Step:    46; Simulation step:   46
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1980/11/16; Stress:  1; Step:    47; Simulation step:   47
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1980/11/17; Stress:  1; Step:    48; Simulation step:   48
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1980/11/18; Stress:  1; Step:    49; Simulation step:   49
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1980/11/19; Stress:  1; Step:    50; Simulation step:   50
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1980/11/20; Stress:  1; Step:    51; Simulation step:   51
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1980/11/21; Stress:  1; Step:    52; Simulation step:   52
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1980/11/22; Stress:  1; Step:    53; Simulation step:   53
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1980/11/23; Stress:  1; Step:    54; Simulation step:   54
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1980/11/24; Stress:  1; Step:    55; Simulation step:   55
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1980/11/25; Stress:  1; Step:    56; Simulation step:   56
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1980/11/26; Stress:  1; Step:    57; Simulation step:   57
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1980/11/27; Stress:  1; Step:    58; Simulation step:   58
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1980/11/28; Stress:  1; Step:    59; Simulation step:   59
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1980/11/29; Stress:  1; Step:    60; Simulation step:   60
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1980/11/30; Stress:  1; Step:    61; Simulation step:   61
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1980/12/01; Stress:  1; Step:    62; Simulation step:   62
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1980/12/02; Stress:  1; Step:    63; Simulation step:   63
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1980/12/03; Stress:  1; Step:    64; Simulation step:   64
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1980/12/04; Stress:  1; Step:    65; Simulation step:   65
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1980/12/05; Stress:  1; Step:    66; Simulation step:   66
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1980/12/06; Stress:  1; Step:    67; Simulation step:   67
+                  MF iterations:        8; SZ iterations:      8
+
+Date: 1980/12/07; Stress:  1; Step:    68; Simulation step:   68
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1980/12/08; Stress:  1; Step:    69; Simulation step:   69
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1980/12/09; Stress:  1; Step:    70; Simulation step:   70
+                  MF iterations:       28; SZ iterations:     28
+
+Date: 1980/12/10; Stress:  1; Step:    71; Simulation step:   71
+                  MF iterations:        2; SZ iterations:      2
+
+Date: 1980/12/11; Stress:  1; Step:    72; Simulation step:   72
+                  MF iterations:        2; SZ iterations:      2
+
+Date: 1980/12/12; Stress:  1; Step:    73; Simulation step:   73
+                  MF iterations:        2; SZ iterations:      2
+
+Date: 1980/12/13; Stress:  1; Step:    74; Simulation step:   74
+                  MF iterations:        2; SZ iterations:      2
+
+Date: 1980/12/14; Stress:  1; Step:    75; Simulation step:   75
+                  MF iterations:        2; SZ iterations:      2
+
+Date: 1980/12/15; Stress:  1; Step:    76; Simulation step:   76
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1980/12/16; Stress:  1; Step:    77; Simulation step:   77
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1980/12/17; Stress:  1; Step:    78; Simulation step:   78
+                  MF iterations:       31; SZ iterations:     31
+
+Date: 1980/12/18; Stress:  1; Step:    79; Simulation step:   79
+                  MF iterations:       20; SZ iterations:     20
+
+Date: 1980/12/19; Stress:  1; Step:    80; Simulation step:   80
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1980/12/20; Stress:  1; Step:    81; Simulation step:   81
+                  MF iterations:        8; SZ iterations:      8
+
+Date: 1980/12/21; Stress:  1; Step:    82; Simulation step:   82
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1980/12/22; Stress:  1; Step:    83; Simulation step:   83
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1980/12/23; Stress:  1; Step:    84; Simulation step:   84
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1980/12/24; Stress:  1; Step:    85; Simulation step:   85
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1980/12/25; Stress:  1; Step:    86; Simulation step:   86
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1980/12/26; Stress:  1; Step:    87; Simulation step:   87
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1980/12/27; Stress:  1; Step:    88; Simulation step:   88
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1980/12/28; Stress:  1; Step:    89; Simulation step:   89
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1980/12/29; Stress:  1; Step:    90; Simulation step:   90
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1980/12/30; Stress:  1; Step:    91; Simulation step:   91
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1980/12/31; Stress:  1; Step:    92; Simulation step:   92
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1981/01/01; Stress:  1; Step:    93; Simulation step:   93
+                  MF iterations:       46; SZ iterations:     46
+
+Date: 1981/01/02; Stress:  1; Step:    94; Simulation step:   94
+                  MF iterations:       44; SZ iterations:     44
+
+Date: 1981/01/03; Stress:  1; Step:    95; Simulation step:   95
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1981/01/04; Stress:  1; Step:    96; Simulation step:   96
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1981/01/05; Stress:  1; Step:    97; Simulation step:   97
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1981/01/06; Stress:  1; Step:    98; Simulation step:   98
+                  MF iterations:       14; SZ iterations:     14
+
+Date: 1981/01/07; Stress:  1; Step:    99; Simulation step:   99
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1981/01/08; Stress:  1; Step:   100; Simulation step:  100
+                  MF iterations:       27; SZ iterations:     27
+
+Date: 1981/01/09; Stress:  1; Step:   101; Simulation step:  101
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1981/01/10; Stress:  1; Step:   102; Simulation step:  102
+                  MF iterations:       24; SZ iterations:     24
+
+Date: 1981/01/11; Stress:  1; Step:   103; Simulation step:  103
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1981/01/12; Stress:  1; Step:   104; Simulation step:  104
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1981/01/13; Stress:  1; Step:   105; Simulation step:  105
+                  MF iterations:       30; SZ iterations:     30
+
+Date: 1981/01/14; Stress:  1; Step:   106; Simulation step:  106
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1981/01/15; Stress:  1; Step:   107; Simulation step:  107
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1981/01/16; Stress:  1; Step:   108; Simulation step:  108
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1981/01/17; Stress:  1; Step:   109; Simulation step:  109
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1981/01/18; Stress:  1; Step:   110; Simulation step:  110
+                  MF iterations:       19; SZ iterations:     19
+
+Date: 1981/01/19; Stress:  1; Step:   111; Simulation step:  111
+                  MF iterations:        8; SZ iterations:      8
+
+Date: 1981/01/20; Stress:  1; Step:   112; Simulation step:  112
+                  MF iterations:       12; SZ iterations:     12
+
+Date: 1981/01/21; Stress:  1; Step:   113; Simulation step:  113
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1981/01/22; Stress:  1; Step:   114; Simulation step:  114
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1981/01/23; Stress:  1; Step:   115; Simulation step:  115
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1981/01/24; Stress:  1; Step:   116; Simulation step:  116
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1981/01/25; Stress:  1; Step:   117; Simulation step:  117
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1981/01/26; Stress:  1; Step:   118; Simulation step:  118
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1981/01/27; Stress:  1; Step:   119; Simulation step:  119
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1981/01/28; Stress:  1; Step:   120; Simulation step:  120
+                  MF iterations:       19; SZ iterations:     19
+
+Date: 1981/01/29; Stress:  1; Step:   121; Simulation step:  121
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1981/01/30; Stress:  1; Step:   122; Simulation step:  122
+                  MF iterations:       32; SZ iterations:     32
+
+Date: 1981/01/31; Stress:  1; Step:   123; Simulation step:  123
+                  MF iterations:       20; SZ iterations:     20
+
+Date: 1981/02/01; Stress:  1; Step:   124; Simulation step:  124
+                  MF iterations:       40; SZ iterations:     40
+
+Date: 1981/02/02; Stress:  1; Step:   125; Simulation step:  125
+                  MF iterations:       22; SZ iterations:     22
+
+Date: 1981/02/03; Stress:  1; Step:   126; Simulation step:  126
+                  MF iterations:       33; SZ iterations:     33
+
+Date: 1981/02/04; Stress:  1; Step:   127; Simulation step:  127
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1981/02/05; Stress:  1; Step:   128; Simulation step:  128
+                  MF iterations:       34; SZ iterations:     34
+
+Date: 1981/02/06; Stress:  1; Step:   129; Simulation step:  129
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1981/02/07; Stress:  1; Step:   130; Simulation step:  130
+                  MF iterations:       18; SZ iterations:     18
+
+Date: 1981/02/08; Stress:  1; Step:   131; Simulation step:  131
+                  MF iterations:        2; SZ iterations:      2
+
+Date: 1981/02/09; Stress:  1; Step:   132; Simulation step:  132
+                  MF iterations:       24; SZ iterations:     24
+
+Date: 1981/02/10; Stress:  1; Step:   133; Simulation step:  133
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1981/02/11; Stress:  1; Step:   134; Simulation step:  134
+                  MF iterations:       32; SZ iterations:     32
+
+Date: 1981/02/12; Stress:  1; Step:   135; Simulation step:  135
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1981/02/13; Stress:  1; Step:   136; Simulation step:  136
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1981/02/14; Stress:  1; Step:   137; Simulation step:  137
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1981/02/15; Stress:  1; Step:   138; Simulation step:  138
+                  MF iterations:       19; SZ iterations:     19
+
+Date: 1981/02/16; Stress:  1; Step:   139; Simulation step:  139
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1981/02/17; Stress:  1; Step:   140; Simulation step:  140
+                  MF iterations:       26; SZ iterations:     26
+
+Date: 1981/02/18; Stress:  1; Step:   141; Simulation step:  141
+                  MF iterations:       93; SZ iterations:     93
+
+Date: 1981/02/19; Stress:  1; Step:   142; Simulation step:  142
+                  MF iterations:       30; SZ iterations:     30
+
+Date: 1981/02/20; Stress:  1; Step:   143; Simulation step:  143
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1981/02/21; Stress:  1; Step:   144; Simulation step:  144
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1981/02/22; Stress:  1; Step:   145; Simulation step:  145
+                  MF iterations:        8; SZ iterations:      8
+
+Date: 1981/02/23; Stress:  1; Step:   146; Simulation step:  146
+                  MF iterations:       25; SZ iterations:     25
+
+Date: 1981/02/24; Stress:  1; Step:   147; Simulation step:  147
+                  MF iterations:       16; SZ iterations:     16
+
+Date: 1981/02/25; Stress:  1; Step:   148; Simulation step:  148
+                  MF iterations:       16; SZ iterations:     16
+
+Date: 1981/02/26; Stress:  1; Step:   149; Simulation step:  149
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1981/02/27; Stress:  1; Step:   150; Simulation step:  150
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1981/02/28; Stress:  1; Step:   151; Simulation step:  151
+                  MF iterations:       19; SZ iterations:     19
+
+Date: 1981/03/01; Stress:  1; Step:   152; Simulation step:  152
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1981/03/02; Stress:  1; Step:   153; Simulation step:  153
+                  MF iterations:       21; SZ iterations:     21
+
+Date: 1981/03/03; Stress:  1; Step:   154; Simulation step:  154
+                  MF iterations:       21; SZ iterations:     21
+
+Date: 1981/03/04; Stress:  1; Step:   155; Simulation step:  155
+                  MF iterations:       16; SZ iterations:     16
+
+Date: 1981/03/05; Stress:  1; Step:   156; Simulation step:  156
+                  MF iterations:       51; SZ iterations:     51
+
+Date: 1981/03/06; Stress:  1; Step:   157; Simulation step:  157
+                  MF iterations:       18; SZ iterations:     18
+
+Date: 1981/03/07; Stress:  1; Step:   158; Simulation step:  158
+                  MF iterations:       59; SZ iterations:     59
+
+Date: 1981/03/08; Stress:  1; Step:   159; Simulation step:  159
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1981/03/09; Stress:  1; Step:   160; Simulation step:  160
+                  MF iterations:       16; SZ iterations:     16
+
+Date: 1981/03/10; Stress:  1; Step:   161; Simulation step:  161
+                  MF iterations:       27; SZ iterations:     27
+
+Date: 1981/03/11; Stress:  1; Step:   162; Simulation step:  162
+                  MF iterations:        8; SZ iterations:      8
+
+Date: 1981/03/12; Stress:  1; Step:   163; Simulation step:  163
+                  MF iterations:       28; SZ iterations:     28
+
+Date: 1981/03/13; Stress:  1; Step:   164; Simulation step:  164
+                  MF iterations:       35; SZ iterations:     35
+
+Date: 1981/03/14; Stress:  1; Step:   165; Simulation step:  165
+                  MF iterations:       41; SZ iterations:     41
+
+Date: 1981/03/15; Stress:  1; Step:   166; Simulation step:  166
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1981/03/16; Stress:  1; Step:   167; Simulation step:  167
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1981/03/17; Stress:  1; Step:   168; Simulation step:  168
+                  MF iterations:       37; SZ iterations:     37
+
+Date: 1981/03/18; Stress:  1; Step:   169; Simulation step:  169
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1981/03/19; Stress:  1; Step:   170; Simulation step:  170
+                  MF iterations:       32; SZ iterations:     32
+
+Date: 1981/03/20; Stress:  1; Step:   171; Simulation step:  171
+                  MF iterations:       20; SZ iterations:     20
+
+Date: 1981/03/21; Stress:  1; Step:   172; Simulation step:  172
+                  MF iterations:       57; SZ iterations:     57
+
+Date: 1981/03/22; Stress:  1; Step:   173; Simulation step:  173
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1981/03/23; Stress:  1; Step:   174; Simulation step:  174
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1981/03/24; Stress:  1; Step:   175; Simulation step:  175
+                  MF iterations:       41; SZ iterations:     41
+
+Date: 1981/03/25; Stress:  1; Step:   176; Simulation step:  176
+                  MF iterations:       32; SZ iterations:     32
+
+Date: 1981/03/26; Stress:  1; Step:   177; Simulation step:  177
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1981/03/27; Stress:  1; Step:   178; Simulation step:  178
+                  MF iterations:       23; SZ iterations:     23
+
+Date: 1981/03/28; Stress:  1; Step:   179; Simulation step:  179
+                  MF iterations:      130; SZ iterations:    130
+
+Date: 1981/03/29; Stress:  1; Step:   180; Simulation step:  180
+                  MF iterations:       59; SZ iterations:     59
+
+Date: 1981/03/30; Stress:  1; Step:   181; Simulation step:  181
+                  MF iterations:       23; SZ iterations:     23
+
+Date: 1981/03/31; Stress:  1; Step:   182; Simulation step:  182
+                  MF iterations:       33; SZ iterations:     33
+
+Date: 1981/04/01; Stress:  1; Step:   183; Simulation step:  183
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1981/04/02; Stress:  1; Step:   184; Simulation step:  184
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1981/04/03; Stress:  1; Step:   185; Simulation step:  185
+                  MF iterations:       54; SZ iterations:     54
+
+Date: 1981/04/04; Stress:  1; Step:   186; Simulation step:  186
+                  MF iterations:       44; SZ iterations:     44
+
+Date: 1981/04/05; Stress:  1; Step:   187; Simulation step:  187
+                  MF iterations:       30; SZ iterations:     30
+
+Date: 1981/04/06; Stress:  1; Step:   188; Simulation step:  188
+                  MF iterations:       14; SZ iterations:     14
+
+Date: 1981/04/07; Stress:  1; Step:   189; Simulation step:  189
+                  MF iterations:       30; SZ iterations:     30
+
+Date: 1981/04/08; Stress:  1; Step:   190; Simulation step:  190
+                  MF iterations:       29; SZ iterations:     29
+
+Date: 1981/04/09; Stress:  1; Step:   191; Simulation step:  191
+                  MF iterations:       45; SZ iterations:     45
+
+Date: 1981/04/10; Stress:  1; Step:   192; Simulation step:  192
+                  MF iterations:       34; SZ iterations:     34
+
+Date: 1981/04/11; Stress:  1; Step:   193; Simulation step:  193
+                  MF iterations:        8; SZ iterations:      8
+
+Date: 1981/04/12; Stress:  1; Step:   194; Simulation step:  194
+                  MF iterations:       75; SZ iterations:     75
+
+Date: 1981/04/13; Stress:  1; Step:   195; Simulation step:  195
+                  MF iterations:       15; SZ iterations:     15
+
+Date: 1981/04/14; Stress:  1; Step:   196; Simulation step:  196
+                  MF iterations:       33; SZ iterations:     33
+
+Date: 1981/04/15; Stress:  1; Step:   197; Simulation step:  197
+                  MF iterations:       21; SZ iterations:     21
+
+Date: 1981/04/16; Stress:  1; Step:   198; Simulation step:  198
+                  MF iterations:       39; SZ iterations:     39
+
+Date: 1981/04/17; Stress:  1; Step:   199; Simulation step:  199
+                  MF iterations:       43; SZ iterations:     43
+
+Date: 1981/04/18; Stress:  1; Step:   200; Simulation step:  200
+                  MF iterations:       69; SZ iterations:     69
+
+Date: 1981/04/19; Stress:  1; Step:   201; Simulation step:  201
+                  MF iterations:       27; SZ iterations:     27
+
+Date: 1981/04/20; Stress:  1; Step:   202; Simulation step:  202
+                  MF iterations:       40; SZ iterations:     40
+
+Date: 1981/04/21; Stress:  1; Step:   203; Simulation step:  203
+                  MF iterations:       52; SZ iterations:     52
+
+Date: 1981/04/22; Stress:  1; Step:   204; Simulation step:  204
+                  MF iterations:       49; SZ iterations:     49
+
+Date: 1981/04/23; Stress:  1; Step:   205; Simulation step:  205
+                  MF iterations:       27; SZ iterations:     27
+
+Date: 1981/04/24; Stress:  1; Step:   206; Simulation step:  206
+                  MF iterations:       28; SZ iterations:     28
+
+Date: 1981/04/25; Stress:  1; Step:   207; Simulation step:  207
+                  MF iterations:       33; SZ iterations:     33
+
+Date: 1981/04/26; Stress:  1; Step:   208; Simulation step:  208
+                  MF iterations:       34; SZ iterations:     34
+
+Date: 1981/04/27; Stress:  1; Step:   209; Simulation step:  209
+                  MF iterations:       42; SZ iterations:     42
+
+Date: 1981/04/28; Stress:  1; Step:   210; Simulation step:  210
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1981/04/29; Stress:  1; Step:   211; Simulation step:  211
+                  MF iterations:       43; SZ iterations:     43
+
+Date: 1981/04/30; Stress:  1; Step:   212; Simulation step:  212
+                  MF iterations:       41; SZ iterations:     41
+
+Date: 1981/05/01; Stress:  1; Step:   213; Simulation step:  213
+                  MF iterations:       48; SZ iterations:     48
+
+Date: 1981/05/02; Stress:  1; Step:   214; Simulation step:  214
+                  MF iterations:       41; SZ iterations:     41
+
+Date: 1981/05/03; Stress:  1; Step:   215; Simulation step:  215
+                  MF iterations:       36; SZ iterations:     36
+
+Date: 1981/05/04; Stress:  1; Step:   216; Simulation step:  216
+                  MF iterations:       39; SZ iterations:     39
+
+Date: 1981/05/05; Stress:  1; Step:   217; Simulation step:  217
+                  MF iterations:       37; SZ iterations:     37
+
+Date: 1981/05/06; Stress:  1; Step:   218; Simulation step:  218
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1981/05/07; Stress:  1; Step:   219; Simulation step:  219
+                  MF iterations:       76; SZ iterations:     76
+
+Date: 1981/05/08; Stress:  1; Step:   220; Simulation step:  220
+                  MF iterations:       53; SZ iterations:     53
+
+Date: 1981/05/09; Stress:  1; Step:   221; Simulation step:  221
+                  MF iterations:       25; SZ iterations:     25
+
+Date: 1981/05/10; Stress:  1; Step:   222; Simulation step:  222
+                  MF iterations:       68; SZ iterations:     68
+
+Date: 1981/05/11; Stress:  1; Step:   223; Simulation step:  223
+                  MF iterations:       39; SZ iterations:     39
+
+Date: 1981/05/12; Stress:  1; Step:   224; Simulation step:  224
+                  MF iterations:       65; SZ iterations:     65
+
+Date: 1981/05/13; Stress:  1; Step:   225; Simulation step:  225
+                  MF iterations:       36; SZ iterations:     36
+
+Date: 1981/05/14; Stress:  1; Step:   226; Simulation step:  226
+                  MF iterations:       43; SZ iterations:     43
+
+Date: 1981/05/15; Stress:  1; Step:   227; Simulation step:  227
+                  MF iterations:       64; SZ iterations:     64
+
+Date: 1981/05/16; Stress:  1; Step:   228; Simulation step:  228
+                  MF iterations:       57; SZ iterations:     57
+
+Date: 1981/05/17; Stress:  1; Step:   229; Simulation step:  229
+                  MF iterations:       48; SZ iterations:     48
+
+Date: 1981/05/18; Stress:  1; Step:   230; Simulation step:  230
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1981/05/19; Stress:  1; Step:   231; Simulation step:  231
+                  MF iterations:       33; SZ iterations:     33
+
+Date: 1981/05/20; Stress:  1; Step:   232; Simulation step:  232
+                  MF iterations:       45; SZ iterations:     45
+
+Date: 1981/05/21; Stress:  1; Step:   233; Simulation step:  233
+                  MF iterations:       60; SZ iterations:     60
+
+Date: 1981/05/22; Stress:  1; Step:   234; Simulation step:  234
+                  MF iterations:        8; SZ iterations:      8
+
+Date: 1981/05/23; Stress:  1; Step:   235; Simulation step:  235
+                  MF iterations:       41; SZ iterations:     41
+
+Date: 1981/05/24; Stress:  1; Step:   236; Simulation step:  236
+                  MF iterations:       87; SZ iterations:     87
+
+Date: 1981/05/25; Stress:  1; Step:   237; Simulation step:  237
+                  MF iterations:       48; SZ iterations:     48
+
+Date: 1981/05/26; Stress:  1; Step:   238; Simulation step:  238
+                  MF iterations:       49; SZ iterations:     49
+
+Date: 1981/05/27; Stress:  1; Step:   239; Simulation step:  239
+                  MF iterations:       44; SZ iterations:     44
+
+Date: 1981/05/28; Stress:  1; Step:   240; Simulation step:  240
+                  MF iterations:       53; SZ iterations:     53
+
+Date: 1981/05/29; Stress:  1; Step:   241; Simulation step:  241
+                  MF iterations:       37; SZ iterations:     37
+
+Date: 1981/05/30; Stress:  1; Step:   242; Simulation step:  242
+                  MF iterations:       37; SZ iterations:     37
+
+Date: 1981/05/31; Stress:  1; Step:   243; Simulation step:  243
+                  MF iterations:      112; SZ iterations:    112
+
+Date: 1981/06/01; Stress:  1; Step:   244; Simulation step:  244
+                  MF iterations:       27; SZ iterations:     27
+
+Date: 1981/06/02; Stress:  1; Step:   245; Simulation step:  245
+                  MF iterations:       61; SZ iterations:     61
+
+Date: 1981/06/03; Stress:  1; Step:   246; Simulation step:  246
+                  MF iterations:       53; SZ iterations:     53
+
+Date: 1981/06/04; Stress:  1; Step:   247; Simulation step:  247
+                  MF iterations:       61; SZ iterations:     61
+
+Date: 1981/06/05; Stress:  1; Step:   248; Simulation step:  248
+                  MF iterations:       37; SZ iterations:     37
+
+Date: 1981/06/06; Stress:  1; Step:   249; Simulation step:  249
+                  MF iterations:       43; SZ iterations:     43
+
+Date: 1981/06/07; Stress:  1; Step:   250; Simulation step:  250
+                  MF iterations:       39; SZ iterations:     39
+
+Date: 1981/06/08; Stress:  1; Step:   251; Simulation step:  251
+                  MF iterations:       54; SZ iterations:     54
+
+Date: 1981/06/09; Stress:  1; Step:   252; Simulation step:  252
+                  MF iterations:       30; SZ iterations:     30
+
+Date: 1981/06/10; Stress:  1; Step:   253; Simulation step:  253
+                  MF iterations:       19; SZ iterations:     19
+
+Date: 1981/06/11; Stress:  1; Step:   254; Simulation step:  254
+                  MF iterations:       34; SZ iterations:     34
+
+Date: 1981/06/12; Stress:  1; Step:   255; Simulation step:  255
+                  MF iterations:       14; SZ iterations:     14
+
+Date: 1981/06/13; Stress:  1; Step:   256; Simulation step:  256
+                  MF iterations:       53; SZ iterations:     53
+
+Date: 1981/06/14; Stress:  1; Step:   257; Simulation step:  257
+                  MF iterations:       19; SZ iterations:     19
+
+Date: 1981/06/15; Stress:  1; Step:   258; Simulation step:  258
+                  MF iterations:       44; SZ iterations:     44
+
+Date: 1981/06/16; Stress:  1; Step:   259; Simulation step:  259
+                  MF iterations:       35; SZ iterations:     35
+
+Date: 1981/06/17; Stress:  1; Step:   260; Simulation step:  260
+                  MF iterations:       34; SZ iterations:     34
+
+Date: 1981/06/18; Stress:  1; Step:   261; Simulation step:  261
+                  MF iterations:       14; SZ iterations:     14
+
+Date: 1981/06/19; Stress:  1; Step:   262; Simulation step:  262
+                  MF iterations:      103; SZ iterations:    103
+
+Date: 1981/06/20; Stress:  1; Step:   263; Simulation step:  263
+                  MF iterations:       37; SZ iterations:     37
+
+Date: 1981/06/21; Stress:  1; Step:   264; Simulation step:  264
+                  MF iterations:       48; SZ iterations:     48
+
+Date: 1981/06/22; Stress:  1; Step:   265; Simulation step:  265
+                  MF iterations:       35; SZ iterations:     35
+
+Date: 1981/06/23; Stress:  1; Step:   266; Simulation step:  266
+                  MF iterations:       41; SZ iterations:     41
+
+Date: 1981/06/24; Stress:  1; Step:   267; Simulation step:  267
+                  MF iterations:       37; SZ iterations:     37
+
+Date: 1981/06/25; Stress:  1; Step:   268; Simulation step:  268
+                  MF iterations:       23; SZ iterations:     23
+
+Date: 1981/06/26; Stress:  1; Step:   269; Simulation step:  269
+                  MF iterations:       35; SZ iterations:     35
+
+Date: 1981/06/27; Stress:  1; Step:   270; Simulation step:  270
+                  MF iterations:       42; SZ iterations:     42
+
+Date: 1981/06/28; Stress:  1; Step:   271; Simulation step:  271
+                  MF iterations:       52; SZ iterations:     52
+
+Date: 1981/06/29; Stress:  1; Step:   272; Simulation step:  272
+                  MF iterations:       50; SZ iterations:     50
+
+Date: 1981/06/30; Stress:  1; Step:   273; Simulation step:  273
+                  MF iterations:       59; SZ iterations:     59
+
+Date: 1981/07/01; Stress:  1; Step:   274; Simulation step:  274
+                  MF iterations:       52; SZ iterations:     52
+
+Date: 1981/07/02; Stress:  1; Step:   275; Simulation step:  275
+                  MF iterations:       37; SZ iterations:     37
+
+Date: 1981/07/03; Stress:  1; Step:   276; Simulation step:  276
+                  MF iterations:       35; SZ iterations:     35
+
+Date: 1981/07/04; Stress:  1; Step:   277; Simulation step:  277
+                  MF iterations:       31; SZ iterations:     31
+
+Date: 1981/07/05; Stress:  1; Step:   278; Simulation step:  278
+                  MF iterations:       33; SZ iterations:     33
+
+Date: 1981/07/06; Stress:  1; Step:   279; Simulation step:  279
+                  MF iterations:       22; SZ iterations:     22
+
+Date: 1981/07/07; Stress:  1; Step:   280; Simulation step:  280
+                  MF iterations:       22; SZ iterations:     22
+
+Date: 1981/07/08; Stress:  1; Step:   281; Simulation step:  281
+                  MF iterations:       29; SZ iterations:     29
+
+Date: 1981/07/09; Stress:  1; Step:   282; Simulation step:  282
+                  MF iterations:       32; SZ iterations:     32
+
+Date: 1981/07/10; Stress:  1; Step:   283; Simulation step:  283
+                  MF iterations:       44; SZ iterations:     44
+
+Date: 1981/07/11; Stress:  1; Step:   284; Simulation step:  284
+                  MF iterations:       35; SZ iterations:     35
+
+Date: 1981/07/12; Stress:  1; Step:   285; Simulation step:  285
+                  MF iterations:       33; SZ iterations:     33
+
+Date: 1981/07/13; Stress:  1; Step:   286; Simulation step:  286
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1981/07/14; Stress:  1; Step:   287; Simulation step:  287
+                  MF iterations:       48; SZ iterations:     48
+
+Date: 1981/07/15; Stress:  1; Step:   288; Simulation step:  288
+                  MF iterations:       35; SZ iterations:     35
+
+Date: 1981/07/16; Stress:  1; Step:   289; Simulation step:  289
+                  MF iterations:       48; SZ iterations:     48
+
+Date: 1981/07/17; Stress:  1; Step:   290; Simulation step:  290
+                  MF iterations:       35; SZ iterations:     35
+
+Date: 1981/07/18; Stress:  1; Step:   291; Simulation step:  291
+                  MF iterations:       35; SZ iterations:     35
+
+Date: 1981/07/19; Stress:  1; Step:   292; Simulation step:  292
+                  MF iterations:       58; SZ iterations:     58
+
+Date: 1981/07/20; Stress:  1; Step:   293; Simulation step:  293
+                  MF iterations:       52; SZ iterations:     52
+
+Date: 1981/07/21; Stress:  1; Step:   294; Simulation step:  294
+                  MF iterations:       29; SZ iterations:     29
+
+Date: 1981/07/22; Stress:  1; Step:   295; Simulation step:  295
+                  MF iterations:       53; SZ iterations:     53
+
+Date: 1981/07/23; Stress:  1; Step:   296; Simulation step:  296
+                  MF iterations:       33; SZ iterations:     33
+
+Date: 1981/07/24; Stress:  1; Step:   297; Simulation step:  297
+                  MF iterations:       55; SZ iterations:     55
+
+Date: 1981/07/25; Stress:  1; Step:   298; Simulation step:  298
+                  MF iterations:       35; SZ iterations:     35
+
+Date: 1981/07/26; Stress:  1; Step:   299; Simulation step:  299
+                  MF iterations:       43; SZ iterations:     43
+
+Date: 1981/07/27; Stress:  1; Step:   300; Simulation step:  300
+                  MF iterations:       50; SZ iterations:     50
+
+Date: 1981/07/28; Stress:  1; Step:   301; Simulation step:  301
+                  MF iterations:       27; SZ iterations:     27
+
+Date: 1981/07/29; Stress:  1; Step:   302; Simulation step:  302
+                  MF iterations:       52; SZ iterations:     52
+
+Date: 1981/07/30; Stress:  1; Step:   303; Simulation step:  303
+                  MF iterations:       35; SZ iterations:     35
+
+Date: 1981/07/31; Stress:  1; Step:   304; Simulation step:  304
+                  MF iterations:       33; SZ iterations:     33
+
+Date: 1981/08/01; Stress:  1; Step:   305; Simulation step:  305
+                  MF iterations:       35; SZ iterations:     35
+
+Date: 1981/08/02; Stress:  1; Step:   306; Simulation step:  306
+                  MF iterations:       35; SZ iterations:     35
+
+Date: 1981/08/03; Stress:  1; Step:   307; Simulation step:  307
+                  MF iterations:       43; SZ iterations:     43
+
+Date: 1981/08/04; Stress:  1; Step:   308; Simulation step:  308
+                  MF iterations:       37; SZ iterations:     37
+
+Date: 1981/08/05; Stress:  1; Step:   309; Simulation step:  309
+                  MF iterations:       37; SZ iterations:     37
+
+Date: 1981/08/06; Stress:  1; Step:   310; Simulation step:  310
+                  MF iterations:       54; SZ iterations:     54
+
+Date: 1981/08/07; Stress:  1; Step:   311; Simulation step:  311
+                  MF iterations:       37; SZ iterations:     37
+
+Date: 1981/08/08; Stress:  1; Step:   312; Simulation step:  312
+                  MF iterations:       43; SZ iterations:     43
+
+Date: 1981/08/09; Stress:  1; Step:   313; Simulation step:  313
+                  MF iterations:       55; SZ iterations:     55
+
+Date: 1981/08/10; Stress:  1; Step:   314; Simulation step:  314
+                  MF iterations:       33; SZ iterations:     33
+
+Date: 1981/08/11; Stress:  1; Step:   315; Simulation step:  315
+                  MF iterations:       45; SZ iterations:     45
+
+Date: 1981/08/12; Stress:  1; Step:   316; Simulation step:  316
+                  MF iterations:       33; SZ iterations:     33
+
+Date: 1981/08/13; Stress:  1; Step:   317; Simulation step:  317
+                  MF iterations:       41; SZ iterations:     41
+
+Date: 1981/08/14; Stress:  1; Step:   318; Simulation step:  318
+                  MF iterations:       27; SZ iterations:     27
+
+Date: 1981/08/15; Stress:  1; Step:   319; Simulation step:  319
+                  MF iterations:       35; SZ iterations:     35
+
+Date: 1981/08/16; Stress:  1; Step:   320; Simulation step:  320
+                  MF iterations:       41; SZ iterations:     41
+
+Date: 1981/08/17; Stress:  1; Step:   321; Simulation step:  321
+                  MF iterations:       48; SZ iterations:     48
+
+Date: 1981/08/18; Stress:  1; Step:   322; Simulation step:  322
+                  MF iterations:       46; SZ iterations:     46
+
+Date: 1981/08/19; Stress:  1; Step:   323; Simulation step:  323
+                  MF iterations:       50; SZ iterations:     50
+
+Date: 1981/08/20; Stress:  1; Step:   324; Simulation step:  324
+                  MF iterations:       35; SZ iterations:     35
+
+Date: 1981/08/21; Stress:  1; Step:   325; Simulation step:  325
+                  MF iterations:       31; SZ iterations:     31
+
+Date: 1981/08/22; Stress:  1; Step:   326; Simulation step:  326
+                  MF iterations:       43; SZ iterations:     43
+
+Date: 1981/08/23; Stress:  1; Step:   327; Simulation step:  327
+                  MF iterations:       35; SZ iterations:     35
+
+Date: 1981/08/24; Stress:  1; Step:   328; Simulation step:  328
+                  MF iterations:       31; SZ iterations:     31
+
+Date: 1981/08/25; Stress:  1; Step:   329; Simulation step:  329
+                  MF iterations:       45; SZ iterations:     45
+
+Date: 1981/08/26; Stress:  1; Step:   330; Simulation step:  330
+                  MF iterations:       35; SZ iterations:     35
+
+Date: 1981/08/27; Stress:  1; Step:   331; Simulation step:  331
+                  MF iterations:       31; SZ iterations:     31
+
+Date: 1981/08/28; Stress:  1; Step:   332; Simulation step:  332
+                  MF iterations:       52; SZ iterations:     52
+
+Date: 1981/08/29; Stress:  1; Step:   333; Simulation step:  333
+                  MF iterations:       35; SZ iterations:     35
+
+Date: 1981/08/30; Stress:  1; Step:   334; Simulation step:  334
+                  MF iterations:       35; SZ iterations:     35
+
+Date: 1981/08/31; Stress:  1; Step:   335; Simulation step:  335
+                  MF iterations:       33; SZ iterations:     33
+
+Date: 1981/09/01; Stress:  1; Step:   336; Simulation step:  336
+                  MF iterations:       31; SZ iterations:     31
+
+Date: 1981/09/02; Stress:  1; Step:   337; Simulation step:  337
+                  MF iterations:       28; SZ iterations:     28
+
+Date: 1981/09/03; Stress:  1; Step:   338; Simulation step:  338
+                  MF iterations:       29; SZ iterations:     29
+
+Date: 1981/09/04; Stress:  1; Step:   339; Simulation step:  339
+                  MF iterations:       29; SZ iterations:     29
+
+Date: 1981/09/05; Stress:  1; Step:   340; Simulation step:  340
+                  MF iterations:       27; SZ iterations:     27
+
+Date: 1981/09/06; Stress:  1; Step:   341; Simulation step:  341
+                  MF iterations:       25; SZ iterations:     25
+
+Date: 1981/09/07; Stress:  1; Step:   342; Simulation step:  342
+                  MF iterations:       30; SZ iterations:     30
+
+Date: 1981/09/08; Stress:  1; Step:   343; Simulation step:  343
+                  MF iterations:       29; SZ iterations:     29
+
+Date: 1981/09/09; Stress:  1; Step:   344; Simulation step:  344
+                  MF iterations:       29; SZ iterations:     29
+
+Date: 1981/09/10; Stress:  1; Step:   345; Simulation step:  345
+                  MF iterations:       25; SZ iterations:     25
+
+Date: 1981/09/11; Stress:  1; Step:   346; Simulation step:  346
+                  MF iterations:       33; SZ iterations:     33
+
+Date: 1981/09/12; Stress:  1; Step:   347; Simulation step:  347
+                  MF iterations:       23; SZ iterations:     23
+
+Date: 1981/09/13; Stress:  1; Step:   348; Simulation step:  348
+                  MF iterations:       33; SZ iterations:     33
+
+Date: 1981/09/14; Stress:  1; Step:   349; Simulation step:  349
+                  MF iterations:       28; SZ iterations:     28
+
+Date: 1981/09/15; Stress:  1; Step:   350; Simulation step:  350
+                  MF iterations:       35; SZ iterations:     35
+
+Date: 1981/09/16; Stress:  1; Step:   351; Simulation step:  351
+                  MF iterations:       28; SZ iterations:     28
+
+Date: 1981/09/17; Stress:  1; Step:   352; Simulation step:  352
+                  MF iterations:       28; SZ iterations:     28
+
+Date: 1981/09/18; Stress:  1; Step:   353; Simulation step:  353
+                  MF iterations:       30; SZ iterations:     30
+
+Date: 1981/09/19; Stress:  1; Step:   354; Simulation step:  354
+                  MF iterations:       27; SZ iterations:     27
+
+Date: 1981/09/20; Stress:  1; Step:   355; Simulation step:  355
+                  MF iterations:       28; SZ iterations:     28
+
+Date: 1981/09/21; Stress:  1; Step:   356; Simulation step:  356
+                  MF iterations:       36; SZ iterations:     36
+
+Date: 1981/09/22; Stress:  1; Step:   357; Simulation step:  357
+                  MF iterations:       28; SZ iterations:     28
+
+Date: 1981/09/23; Stress:  1; Step:   358; Simulation step:  358
+                  MF iterations:       22; SZ iterations:     22
+
+Date: 1981/09/24; Stress:  1; Step:   359; Simulation step:  359
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1981/09/25; Stress:  1; Step:   360; Simulation step:  360
+                  MF iterations:       12; SZ iterations:     12
+
+Date: 1981/09/26; Stress:  1; Step:   361; Simulation step:  361
+                  MF iterations:       15; SZ iterations:     15
+
+Date: 1981/09/27; Stress:  1; Step:   362; Simulation step:  362
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1981/09/28; Stress:  1; Step:   363; Simulation step:  363
+                  MF iterations:       16; SZ iterations:     16
+
+Date: 1981/09/29; Stress:  1; Step:   364; Simulation step:  364
+                  MF iterations:       16; SZ iterations:     16
+
+Date: 1981/09/30; Stress:  1; Step:   365; Simulation step:  365
+                  MF iterations:       25; SZ iterations:     25
+
+Date: 1981/10/01; Stress:  1; Step:   366; Simulation step:  366
+                  MF iterations:       12; SZ iterations:     12
+
+Date: 1981/10/02; Stress:  1; Step:   367; Simulation step:  367
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1981/10/03; Stress:  1; Step:   368; Simulation step:  368
+                  MF iterations:       12; SZ iterations:     12
+
+Date: 1981/10/04; Stress:  1; Step:   369; Simulation step:  369
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1981/10/05; Stress:  1; Step:   370; Simulation step:  370
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1981/10/06; Stress:  1; Step:   371; Simulation step:  371
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1981/10/07; Stress:  1; Step:   372; Simulation step:  372
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1981/10/08; Stress:  1; Step:   373; Simulation step:  373
+                  MF iterations:        2; SZ iterations:      2
+
+Date: 1981/10/09; Stress:  1; Step:   374; Simulation step:  374
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1981/10/10; Stress:  1; Step:   375; Simulation step:  375
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1981/10/11; Stress:  1; Step:   376; Simulation step:  376
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1981/10/12; Stress:  1; Step:   377; Simulation step:  377
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1981/10/13; Stress:  1; Step:   378; Simulation step:  378
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1981/10/14; Stress:  1; Step:   379; Simulation step:  379
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1981/10/15; Stress:  1; Step:   380; Simulation step:  380
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1981/10/16; Stress:  1; Step:   381; Simulation step:  381
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1981/10/17; Stress:  1; Step:   382; Simulation step:  382
+                  MF iterations:       21; SZ iterations:     21
+
+Date: 1981/10/18; Stress:  1; Step:   383; Simulation step:  383
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1981/10/19; Stress:  1; Step:   384; Simulation step:  384
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1981/10/20; Stress:  1; Step:   385; Simulation step:  385
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1981/10/21; Stress:  1; Step:   386; Simulation step:  386
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1981/10/22; Stress:  1; Step:   387; Simulation step:  387
+                  MF iterations:       35; SZ iterations:     35
+
+Date: 1981/10/23; Stress:  1; Step:   388; Simulation step:  388
+                  MF iterations:       12; SZ iterations:     12
+
+Date: 1981/10/24; Stress:  1; Step:   389; Simulation step:  389
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1981/10/25; Stress:  1; Step:   390; Simulation step:  390
+                  MF iterations:       28; SZ iterations:     28
+
+Date: 1981/10/26; Stress:  1; Step:   391; Simulation step:  391
+                  MF iterations:       53; SZ iterations:     53
+
+Date: 1981/10/27; Stress:  1; Step:   392; Simulation step:  392
+                  MF iterations:       17; SZ iterations:     17
+
+Date: 1981/10/28; Stress:  1; Step:   393; Simulation step:  393
+                  MF iterations:       18; SZ iterations:     18
+
+Date: 1981/10/29; Stress:  1; Step:   394; Simulation step:  394
+                  MF iterations:       17; SZ iterations:     17
+
+Date: 1981/10/30; Stress:  1; Step:   395; Simulation step:  395
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1981/10/31; Stress:  1; Step:   396; Simulation step:  396
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1981/11/01; Stress:  1; Step:   397; Simulation step:  397
+                  MF iterations:        8; SZ iterations:      8
+
+Date: 1981/11/02; Stress:  1; Step:   398; Simulation step:  398
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1981/11/03; Stress:  1; Step:   399; Simulation step:  399
+                  MF iterations:       28; SZ iterations:     28
+
+Date: 1981/11/04; Stress:  1; Step:   400; Simulation step:  400
+                  MF iterations:       14; SZ iterations:     14
+
+Date: 1981/11/05; Stress:  1; Step:   401; Simulation step:  401
+                  MF iterations:       15; SZ iterations:     15
+
+Date: 1981/11/06; Stress:  1; Step:   402; Simulation step:  402
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1981/11/07; Stress:  1; Step:   403; Simulation step:  403
+                  MF iterations:       14; SZ iterations:     14
+
+Date: 1981/11/08; Stress:  1; Step:   404; Simulation step:  404
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1981/11/09; Stress:  1; Step:   405; Simulation step:  405
+                  MF iterations:       12; SZ iterations:     12
+
+Date: 1981/11/10; Stress:  1; Step:   406; Simulation step:  406
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1981/11/11; Stress:  1; Step:   407; Simulation step:  407
+                  MF iterations:       14; SZ iterations:     14
+
+Date: 1981/11/12; Stress:  1; Step:   408; Simulation step:  408
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1981/11/13; Stress:  1; Step:   409; Simulation step:  409
+                  MF iterations:       69; SZ iterations:     69
+
+Date: 1981/11/14; Stress:  1; Step:   410; Simulation step:  410
+                  MF iterations:       18; SZ iterations:     18
+
+Date: 1981/11/15; Stress:  1; Step:   411; Simulation step:  411
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1981/11/16; Stress:  1; Step:   412; Simulation step:  412
+                  MF iterations:       17; SZ iterations:     17
+
+Date: 1981/11/17; Stress:  1; Step:   413; Simulation step:  413
+                  MF iterations:       23; SZ iterations:     23
+
+Date: 1981/11/18; Stress:  1; Step:   414; Simulation step:  414
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1981/11/19; Stress:  1; Step:   415; Simulation step:  415
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1981/11/20; Stress:  1; Step:   416; Simulation step:  416
+                  MF iterations:       31; SZ iterations:     31
+
+Date: 1981/11/21; Stress:  1; Step:   417; Simulation step:  417
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1981/11/22; Stress:  1; Step:   418; Simulation step:  418
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1981/11/23; Stress:  1; Step:   419; Simulation step:  419
+                  MF iterations:       17; SZ iterations:     17
+
+Date: 1981/11/24; Stress:  1; Step:   420; Simulation step:  420
+                  MF iterations:       20; SZ iterations:     20
+
+Date: 1981/11/25; Stress:  1; Step:   421; Simulation step:  421
+                  MF iterations:       12; SZ iterations:     12
+
+Date: 1981/11/26; Stress:  1; Step:   422; Simulation step:  422
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1981/11/27; Stress:  1; Step:   423; Simulation step:  423
+                  MF iterations:       12; SZ iterations:     12
+
+Date: 1981/11/28; Stress:  1; Step:   424; Simulation step:  424
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1981/11/29; Stress:  1; Step:   425; Simulation step:  425
+                  MF iterations:       19; SZ iterations:     19
+
+Date: 1981/11/30; Stress:  1; Step:   426; Simulation step:  426
+                  MF iterations:       24; SZ iterations:     24
+
+Date: 1981/12/01; Stress:  1; Step:   427; Simulation step:  427
+                  MF iterations:       28; SZ iterations:     28
+
+Date: 1981/12/02; Stress:  1; Step:   428; Simulation step:  428
+                  MF iterations:       20; SZ iterations:     20
+
+Date: 1981/12/03; Stress:  1; Step:   429; Simulation step:  429
+                  MF iterations:       23; SZ iterations:     23
+
+Date: 1981/12/04; Stress:  1; Step:   430; Simulation step:  430
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1981/12/05; Stress:  1; Step:   431; Simulation step:  431
+                  MF iterations:       28; SZ iterations:     28
+
+Date: 1981/12/06; Stress:  1; Step:   432; Simulation step:  432
+                  MF iterations:       21; SZ iterations:     21
+
+Date: 1981/12/07; Stress:  1; Step:   433; Simulation step:  433
+                  MF iterations:       21; SZ iterations:     21
+
+Date: 1981/12/08; Stress:  1; Step:   434; Simulation step:  434
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1981/12/09; Stress:  1; Step:   435; Simulation step:  435
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1981/12/10; Stress:  1; Step:   436; Simulation step:  436
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1981/12/11; Stress:  1; Step:   437; Simulation step:  437
+                  MF iterations:       12; SZ iterations:     12
+
+Date: 1981/12/12; Stress:  1; Step:   438; Simulation step:  438
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1981/12/13; Stress:  1; Step:   439; Simulation step:  439
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1981/12/14; Stress:  1; Step:   440; Simulation step:  440
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1981/12/15; Stress:  1; Step:   441; Simulation step:  441
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1981/12/16; Stress:  1; Step:   442; Simulation step:  442
+                  MF iterations:       22; SZ iterations:     22
+
+Date: 1981/12/17; Stress:  1; Step:   443; Simulation step:  443
+                  MF iterations:       57; SZ iterations:     57
+
+Date: 1981/12/18; Stress:  1; Step:   444; Simulation step:  444
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1981/12/19; Stress:  1; Step:   445; Simulation step:  445
+                  MF iterations:       19; SZ iterations:     19
+
+Date: 1981/12/20; Stress:  1; Step:   446; Simulation step:  446
+                  MF iterations:       20; SZ iterations:     20
+
+Date: 1981/12/21; Stress:  1; Step:   447; Simulation step:  447
+                  MF iterations:       25; SZ iterations:     25
+
+Date: 1981/12/22; Stress:  1; Step:   448; Simulation step:  448
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1981/12/23; Stress:  1; Step:   449; Simulation step:  449
+                  MF iterations:       14; SZ iterations:     14
+
+Date: 1981/12/24; Stress:  1; Step:   450; Simulation step:  450
+                  MF iterations:       24; SZ iterations:     24
+
+Date: 1981/12/25; Stress:  1; Step:   451; Simulation step:  451
+                  MF iterations:       34; SZ iterations:     34
+
+Date: 1981/12/26; Stress:  1; Step:   452; Simulation step:  452
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1981/12/27; Stress:  1; Step:   453; Simulation step:  453
+                  MF iterations:       23; SZ iterations:     23
+
+Date: 1981/12/28; Stress:  1; Step:   454; Simulation step:  454
+                  MF iterations:       30; SZ iterations:     30
+
+Date: 1981/12/29; Stress:  1; Step:   455; Simulation step:  455
+                  MF iterations:       18; SZ iterations:     18
+
+Date: 1981/12/30; Stress:  1; Step:   456; Simulation step:  456
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1981/12/31; Stress:  1; Step:   457; Simulation step:  457
+                  MF iterations:       28; SZ iterations:     28
+
+Date: 1982/01/01; Stress:  1; Step:   458; Simulation step:  458
+                  MF iterations:       25; SZ iterations:     25
+
+Date: 1982/01/02; Stress:  1; Step:   459; Simulation step:  459
+                  MF iterations:       30; SZ iterations:     30
+
+Date: 1982/01/03; Stress:  1; Step:   460; Simulation step:  460
+                  MF iterations:       28; SZ iterations:     28
+
+Date: 1982/01/04; Stress:  1; Step:   461; Simulation step:  461
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1982/01/05; Stress:  1; Step:   462; Simulation step:  462
+                  MF iterations:       35; SZ iterations:     35
+
+Date: 1982/01/06; Stress:  1; Step:   463; Simulation step:  463
+                  MF iterations:       38; SZ iterations:     38
+
+Date: 1982/01/07; Stress:  1; Step:   464; Simulation step:  464
+                  MF iterations:       32; SZ iterations:     32
+
+Date: 1982/01/08; Stress:  1; Step:   465; Simulation step:  465
+                  MF iterations:       47; SZ iterations:     47
+
+Date: 1982/01/09; Stress:  1; Step:   466; Simulation step:  466
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1982/01/10; Stress:  1; Step:   467; Simulation step:  467
+                  MF iterations:       34; SZ iterations:     34
+
+Date: 1982/01/11; Stress:  1; Step:   468; Simulation step:  468
+                  MF iterations:       22; SZ iterations:     22
+
+Date: 1982/01/12; Stress:  1; Step:   469; Simulation step:  469
+                  MF iterations:       33; SZ iterations:     33
+
+Date: 1982/01/13; Stress:  1; Step:   470; Simulation step:  470
+                  MF iterations:       20; SZ iterations:     20
+
+Date: 1982/01/14; Stress:  1; Step:   471; Simulation step:  471
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1982/01/15; Stress:  1; Step:   472; Simulation step:  472
+                  MF iterations:       64; SZ iterations:     64
+
+Date: 1982/01/16; Stress:  1; Step:   473; Simulation step:  473
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1982/01/17; Stress:  1; Step:   474; Simulation step:  474
+                  MF iterations:       26; SZ iterations:     26
+
+Date: 1982/01/18; Stress:  1; Step:   475; Simulation step:  475
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/01/19; Stress:  1; Step:   476; Simulation step:  476
+                  MF iterations:       44; SZ iterations:     44
+
+Date: 1982/01/20; Stress:  1; Step:   477; Simulation step:  477
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1982/01/21; Stress:  1; Step:   478; Simulation step:  478
+                  MF iterations:       35; SZ iterations:     35
+
+Date: 1982/01/22; Stress:  1; Step:   479; Simulation step:  479
+                  MF iterations:       16; SZ iterations:     16
+
+Date: 1982/01/23; Stress:  1; Step:   480; Simulation step:  480
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/01/24; Stress:  1; Step:   481; Simulation step:  481
+                  MF iterations:       28; SZ iterations:     28
+
+Date: 1982/01/25; Stress:  1; Step:   482; Simulation step:  482
+                  MF iterations:       32; SZ iterations:     32
+
+Date: 1982/01/26; Stress:  1; Step:   483; Simulation step:  483
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1982/01/27; Stress:  1; Step:   484; Simulation step:  484
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1982/01/28; Stress:  1; Step:   485; Simulation step:  485
+                  MF iterations:       24; SZ iterations:     24
+
+Date: 1982/01/29; Stress:  1; Step:   486; Simulation step:  486
+                  MF iterations:       41; SZ iterations:     41
+
+Date: 1982/01/30; Stress:  1; Step:   487; Simulation step:  487
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1982/01/31; Stress:  1; Step:   488; Simulation step:  488
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1982/02/01; Stress:  1; Step:   489; Simulation step:  489
+                  MF iterations:       28; SZ iterations:     28
+
+Date: 1982/02/02; Stress:  1; Step:   490; Simulation step:  490
+                  MF iterations:        2; SZ iterations:      2
+
+Date: 1982/02/03; Stress:  1; Step:   491; Simulation step:  491
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1982/02/04; Stress:  1; Step:   492; Simulation step:  492
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1982/02/05; Stress:  1; Step:   493; Simulation step:  493
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1982/02/06; Stress:  1; Step:   494; Simulation step:  494
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1982/02/07; Stress:  1; Step:   495; Simulation step:  495
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1982/02/08; Stress:  1; Step:   496; Simulation step:  496
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/02/09; Stress:  1; Step:   497; Simulation step:  497
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1982/02/10; Stress:  1; Step:   498; Simulation step:  498
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1982/02/11; Stress:  1; Step:   499; Simulation step:  499
+                  MF iterations:       23; SZ iterations:     23
+
+Date: 1982/02/12; Stress:  1; Step:   500; Simulation step:  500
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/02/13; Stress:  1; Step:   501; Simulation step:  501
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1982/02/14; Stress:  1; Step:   502; Simulation step:  502
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/02/15; Stress:  1; Step:   503; Simulation step:  503
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/02/16; Stress:  1; Step:   504; Simulation step:  504
+                  MF iterations:        8; SZ iterations:      8
+
+Date: 1982/02/17; Stress:  1; Step:   505; Simulation step:  505
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1982/02/18; Stress:  1; Step:   506; Simulation step:  506
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1982/02/19; Stress:  1; Step:   507; Simulation step:  507
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1982/02/20; Stress:  1; Step:   508; Simulation step:  508
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1982/02/21; Stress:  1; Step:   509; Simulation step:  509
+                  MF iterations:       24; SZ iterations:     24
+
+Date: 1982/02/22; Stress:  1; Step:   510; Simulation step:  510
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1982/02/23; Stress:  1; Step:   511; Simulation step:  511
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/02/24; Stress:  1; Step:   512; Simulation step:  512
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1982/02/25; Stress:  1; Step:   513; Simulation step:  513
+                  MF iterations:       22; SZ iterations:     22
+
+Date: 1982/02/26; Stress:  1; Step:   514; Simulation step:  514
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1982/02/27; Stress:  1; Step:   515; Simulation step:  515
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1982/02/28; Stress:  1; Step:   516; Simulation step:  516
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1982/03/01; Stress:  1; Step:   517; Simulation step:  517
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1982/03/02; Stress:  1; Step:   518; Simulation step:  518
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/03/03; Stress:  1; Step:   519; Simulation step:  519
+                  MF iterations:       12; SZ iterations:     12
+
+Date: 1982/03/04; Stress:  1; Step:   520; Simulation step:  520
+                  MF iterations:       14; SZ iterations:     14
+
+Date: 1982/03/05; Stress:  1; Step:   521; Simulation step:  521
+                  MF iterations:       14; SZ iterations:     14
+
+Date: 1982/03/06; Stress:  1; Step:   522; Simulation step:  522
+                  MF iterations:       24; SZ iterations:     24
+
+Date: 1982/03/07; Stress:  1; Step:   523; Simulation step:  523
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1982/03/08; Stress:  1; Step:   524; Simulation step:  524
+                  MF iterations:       18; SZ iterations:     18
+
+Date: 1982/03/09; Stress:  1; Step:   525; Simulation step:  525
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/03/10; Stress:  1; Step:   526; Simulation step:  526
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1982/03/11; Stress:  1; Step:   527; Simulation step:  527
+                  MF iterations:       16; SZ iterations:     16
+
+Date: 1982/03/12; Stress:  1; Step:   528; Simulation step:  528
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/03/13; Stress:  1; Step:   529; Simulation step:  529
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1982/03/14; Stress:  1; Step:   530; Simulation step:  530
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1982/03/15; Stress:  1; Step:   531; Simulation step:  531
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1982/03/16; Stress:  1; Step:   532; Simulation step:  532
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1982/03/17; Stress:  1; Step:   533; Simulation step:  533
+                  MF iterations:       26; SZ iterations:     26
+
+Date: 1982/03/18; Stress:  1; Step:   534; Simulation step:  534
+                  MF iterations:       21; SZ iterations:     21
+
+Date: 1982/03/19; Stress:  1; Step:   535; Simulation step:  535
+                  MF iterations:       47; SZ iterations:     47
+
+Date: 1982/03/20; Stress:  1; Step:   536; Simulation step:  536
+                  MF iterations:       16; SZ iterations:     16
+
+Date: 1982/03/21; Stress:  1; Step:   537; Simulation step:  537
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/03/22; Stress:  1; Step:   538; Simulation step:  538
+                  MF iterations:       22; SZ iterations:     22
+
+Date: 1982/03/23; Stress:  1; Step:   539; Simulation step:  539
+                  MF iterations:       24; SZ iterations:     24
+
+Date: 1982/03/24; Stress:  1; Step:   540; Simulation step:  540
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/03/25; Stress:  1; Step:   541; Simulation step:  541
+                  MF iterations:       25; SZ iterations:     25
+
+Date: 1982/03/26; Stress:  1; Step:   542; Simulation step:  542
+                  MF iterations:       39; SZ iterations:     39
+
+Date: 1982/03/27; Stress:  1; Step:   543; Simulation step:  543
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1982/03/28; Stress:  1; Step:   544; Simulation step:  544
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1982/03/29; Stress:  1; Step:   545; Simulation step:  545
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1982/03/30; Stress:  1; Step:   546; Simulation step:  546
+                  MF iterations:       20; SZ iterations:     20
+
+Date: 1982/03/31; Stress:  1; Step:   547; Simulation step:  547
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1982/04/01; Stress:  1; Step:   548; Simulation step:  548
+                  MF iterations:       14; SZ iterations:     14
+
+Date: 1982/04/02; Stress:  1; Step:   549; Simulation step:  549
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/04/03; Stress:  1; Step:   550; Simulation step:  550
+                  MF iterations:       17; SZ iterations:     17
+
+Date: 1982/04/04; Stress:  1; Step:   551; Simulation step:  551
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/04/05; Stress:  1; Step:   552; Simulation step:  552
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/04/06; Stress:  1; Step:   553; Simulation step:  553
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/04/07; Stress:  1; Step:   554; Simulation step:  554
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/04/08; Stress:  1; Step:   555; Simulation step:  555
+                  MF iterations:       22; SZ iterations:     22
+
+Date: 1982/04/09; Stress:  1; Step:   556; Simulation step:  556
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1982/04/10; Stress:  1; Step:   557; Simulation step:  557
+                  MF iterations:       29; SZ iterations:     29
+
+Date: 1982/04/11; Stress:  1; Step:   558; Simulation step:  558
+                  MF iterations:       32; SZ iterations:     32
+
+Date: 1982/04/12; Stress:  1; Step:   559; Simulation step:  559
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1982/04/13; Stress:  1; Step:   560; Simulation step:  560
+                  MF iterations:        2; SZ iterations:      2
+
+Date: 1982/04/14; Stress:  1; Step:   561; Simulation step:  561
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1982/04/15; Stress:  1; Step:   562; Simulation step:  562
+                  MF iterations:       45; SZ iterations:     45
+
+Date: 1982/04/16; Stress:  1; Step:   563; Simulation step:  563
+                  MF iterations:       35; SZ iterations:     35
+
+Date: 1982/04/17; Stress:  1; Step:   564; Simulation step:  564
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1982/04/18; Stress:  1; Step:   565; Simulation step:  565
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1982/04/19; Stress:  1; Step:   566; Simulation step:  566
+                  MF iterations:       15; SZ iterations:     15
+
+Date: 1982/04/20; Stress:  1; Step:   567; Simulation step:  567
+                  MF iterations:       31; SZ iterations:     31
+
+Date: 1982/04/21; Stress:  1; Step:   568; Simulation step:  568
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1982/04/22; Stress:  1; Step:   569; Simulation step:  569
+                  MF iterations:       15; SZ iterations:     15
+
+Date: 1982/04/23; Stress:  1; Step:   570; Simulation step:  570
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1982/04/24; Stress:  1; Step:   571; Simulation step:  571
+                  MF iterations:       48; SZ iterations:     48
+
+Date: 1982/04/25; Stress:  1; Step:   572; Simulation step:  572
+                  MF iterations:       17; SZ iterations:     17
+
+Date: 1982/04/26; Stress:  1; Step:   573; Simulation step:  573
+                  MF iterations:       32; SZ iterations:     32
+
+Date: 1982/04/27; Stress:  1; Step:   574; Simulation step:  574
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1982/04/28; Stress:  1; Step:   575; Simulation step:  575
+                  MF iterations:       12; SZ iterations:     12
+
+Date: 1982/04/29; Stress:  1; Step:   576; Simulation step:  576
+                  MF iterations:       19; SZ iterations:     19
+
+Date: 1982/04/30; Stress:  1; Step:   577; Simulation step:  577
+                  MF iterations:        8; SZ iterations:      8
+
+Date: 1982/05/01; Stress:  1; Step:   578; Simulation step:  578
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1982/05/02; Stress:  1; Step:   579; Simulation step:  579
+                  MF iterations:       19; SZ iterations:     19
+
+Date: 1982/05/03; Stress:  1; Step:   580; Simulation step:  580
+                  MF iterations:       24; SZ iterations:     24
+
+Date: 1982/05/04; Stress:  1; Step:   581; Simulation step:  581
+                  MF iterations:       17; SZ iterations:     17
+
+Date: 1982/05/05; Stress:  1; Step:   582; Simulation step:  582
+                  MF iterations:       16; SZ iterations:     16
+
+Date: 1982/05/06; Stress:  1; Step:   583; Simulation step:  583
+                  MF iterations:       32; SZ iterations:     32
+
+Date: 1982/05/07; Stress:  1; Step:   584; Simulation step:  584
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1982/05/08; Stress:  1; Step:   585; Simulation step:  585
+                  MF iterations:       20; SZ iterations:     20
+
+Date: 1982/05/09; Stress:  1; Step:   586; Simulation step:  586
+                  MF iterations:       52; SZ iterations:     52
+
+Date: 1982/05/10; Stress:  1; Step:   587; Simulation step:  587
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1982/05/11; Stress:  1; Step:   588; Simulation step:  588
+                  MF iterations:       18; SZ iterations:     18
+
+Date: 1982/05/12; Stress:  1; Step:   589; Simulation step:  589
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/05/13; Stress:  1; Step:   590; Simulation step:  590
+                  MF iterations:       34; SZ iterations:     34
+
+Date: 1982/05/14; Stress:  1; Step:   591; Simulation step:  591
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1982/05/15; Stress:  1; Step:   592; Simulation step:  592
+                  MF iterations:       20; SZ iterations:     20
+
+Date: 1982/05/16; Stress:  1; Step:   593; Simulation step:  593
+                  MF iterations:       30; SZ iterations:     30
+
+Date: 1982/05/17; Stress:  1; Step:   594; Simulation step:  594
+                  MF iterations:       30; SZ iterations:     30
+
+Date: 1982/05/18; Stress:  1; Step:   595; Simulation step:  595
+                  MF iterations:       77; SZ iterations:     77
+
+Date: 1982/05/19; Stress:  1; Step:   596; Simulation step:  596
+                  MF iterations:       19; SZ iterations:     19
+
+Date: 1982/05/20; Stress:  1; Step:   597; Simulation step:  597
+                  MF iterations:       23; SZ iterations:     23
+
+Date: 1982/05/21; Stress:  1; Step:   598; Simulation step:  598
+                  MF iterations:       22; SZ iterations:     22
+
+Date: 1982/05/22; Stress:  1; Step:   599; Simulation step:  599
+                  MF iterations:       29; SZ iterations:     29
+
+Date: 1982/05/23; Stress:  1; Step:   600; Simulation step:  600
+                  MF iterations:        8; SZ iterations:      8
+
+Date: 1982/05/24; Stress:  1; Step:   601; Simulation step:  601
+                  MF iterations:       43; SZ iterations:     43
+
+Date: 1982/05/25; Stress:  1; Step:   602; Simulation step:  602
+                  MF iterations:       27; SZ iterations:     27
+
+Date: 1982/05/26; Stress:  1; Step:   603; Simulation step:  603
+                  MF iterations:       44; SZ iterations:     44
+
+Date: 1982/05/27; Stress:  1; Step:   604; Simulation step:  604
+                  MF iterations:       46; SZ iterations:     46
+
+Date: 1982/05/28; Stress:  1; Step:   605; Simulation step:  605
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1982/05/29; Stress:  1; Step:   606; Simulation step:  606
+                  MF iterations:       47; SZ iterations:     47
+
+Date: 1982/05/30; Stress:  1; Step:   607; Simulation step:  607
+                  MF iterations:       28; SZ iterations:     28
+
+Date: 1982/05/31; Stress:  1; Step:   608; Simulation step:  608
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1982/06/01; Stress:  1; Step:   609; Simulation step:  609
+                  MF iterations:       35; SZ iterations:     35
+
+Date: 1982/06/02; Stress:  1; Step:   610; Simulation step:  610
+                  MF iterations:       30; SZ iterations:     30
+
+Date: 1982/06/03; Stress:  1; Step:   611; Simulation step:  611
+                  MF iterations:       40; SZ iterations:     40
+
+Date: 1982/06/04; Stress:  1; Step:   612; Simulation step:  612
+                  MF iterations:       46; SZ iterations:     46
+
+Date: 1982/06/05; Stress:  1; Step:   613; Simulation step:  613
+                  MF iterations:       33; SZ iterations:     33
+
+Date: 1982/06/06; Stress:  1; Step:   614; Simulation step:  614
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1982/06/07; Stress:  1; Step:   615; Simulation step:  615
+                  MF iterations:       29; SZ iterations:     29
+
+Date: 1982/06/08; Stress:  1; Step:   616; Simulation step:  616
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1982/06/09; Stress:  1; Step:   617; Simulation step:  617
+                  MF iterations:       31; SZ iterations:     31
+
+Date: 1982/06/10; Stress:  1; Step:   618; Simulation step:  618
+                  MF iterations:       33; SZ iterations:     33
+
+Date: 1982/06/11; Stress:  1; Step:   619; Simulation step:  619
+                  MF iterations:       38; SZ iterations:     38
+
+Date: 1982/06/12; Stress:  1; Step:   620; Simulation step:  620
+                  MF iterations:       60; SZ iterations:     60
+
+Date: 1982/06/13; Stress:  1; Step:   621; Simulation step:  621
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1982/06/14; Stress:  1; Step:   622; Simulation step:  622
+                  MF iterations:       42; SZ iterations:     42
+
+Date: 1982/06/15; Stress:  1; Step:   623; Simulation step:  623
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1982/06/16; Stress:  1; Step:   624; Simulation step:  624
+                  MF iterations:       17; SZ iterations:     17
+
+Date: 1982/06/17; Stress:  1; Step:   625; Simulation step:  625
+                  MF iterations:       34; SZ iterations:     34
+
+Date: 1982/06/18; Stress:  1; Step:   626; Simulation step:  626
+                  MF iterations:       39; SZ iterations:     39
+
+Date: 1982/06/19; Stress:  1; Step:   627; Simulation step:  627
+                  MF iterations:       17; SZ iterations:     17
+
+Date: 1982/06/20; Stress:  1; Step:   628; Simulation step:  628
+                  MF iterations:       17; SZ iterations:     17
+
+Date: 1982/06/21; Stress:  1; Step:   629; Simulation step:  629
+                  MF iterations:       41; SZ iterations:     41
+
+Date: 1982/06/22; Stress:  1; Step:   630; Simulation step:  630
+                  MF iterations:       36; SZ iterations:     36
+
+Date: 1982/06/23; Stress:  1; Step:   631; Simulation step:  631
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1982/06/24; Stress:  1; Step:   632; Simulation step:  632
+                  MF iterations:       16; SZ iterations:     16
+
+Date: 1982/06/25; Stress:  1; Step:   633; Simulation step:  633
+                  MF iterations:       14; SZ iterations:     14
+
+Date: 1982/06/26; Stress:  1; Step:   634; Simulation step:  634
+                  MF iterations:       48; SZ iterations:     48
+
+Date: 1982/06/27; Stress:  1; Step:   635; Simulation step:  635
+                  MF iterations:       16; SZ iterations:     16
+
+Date: 1982/06/28; Stress:  1; Step:   636; Simulation step:  636
+                  MF iterations:       55; SZ iterations:     55
+
+Date: 1982/06/29; Stress:  1; Step:   637; Simulation step:  637
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1982/06/30; Stress:  1; Step:   638; Simulation step:  638
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1982/07/01; Stress:  1; Step:   639; Simulation step:  639
+                  MF iterations:       48; SZ iterations:     48
+
+Date: 1982/07/02; Stress:  1; Step:   640; Simulation step:  640
+                  MF iterations:       55; SZ iterations:     55
+
+Date: 1982/07/03; Stress:  1; Step:   641; Simulation step:  641
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1982/07/04; Stress:  1; Step:   642; Simulation step:  642
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1982/07/05; Stress:  1; Step:   643; Simulation step:  643
+                  MF iterations:       53; SZ iterations:     53
+
+Date: 1982/07/06; Stress:  1; Step:   644; Simulation step:  644
+                  MF iterations:       17; SZ iterations:     17
+
+Date: 1982/07/07; Stress:  1; Step:   645; Simulation step:  645
+                  MF iterations:       69; SZ iterations:     69
+
+Date: 1982/07/08; Stress:  1; Step:   646; Simulation step:  646
+                  MF iterations:       20; SZ iterations:     20
+
+Date: 1982/07/09; Stress:  1; Step:   647; Simulation step:  647
+                  MF iterations:       14; SZ iterations:     14
+
+Date: 1982/07/10; Stress:  1; Step:   648; Simulation step:  648
+                  MF iterations:       46; SZ iterations:     46
+
+Date: 1982/07/11; Stress:  1; Step:   649; Simulation step:  649
+                  MF iterations:       67; SZ iterations:     67
+
+Date: 1982/07/12; Stress:  1; Step:   650; Simulation step:  650
+                  MF iterations:       17; SZ iterations:     17
+
+Date: 1982/07/13; Stress:  1; Step:   651; Simulation step:  651
+                  MF iterations:       44; SZ iterations:     44
+
+Date: 1982/07/14; Stress:  1; Step:   652; Simulation step:  652
+                  MF iterations:       19; SZ iterations:     19
+
+Date: 1982/07/15; Stress:  1; Step:   653; Simulation step:  653
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1982/07/16; Stress:  1; Step:   654; Simulation step:  654
+                  MF iterations:       19; SZ iterations:     19
+
+Date: 1982/07/17; Stress:  1; Step:   655; Simulation step:  655
+                  MF iterations:       39; SZ iterations:     39
+
+Date: 1982/07/18; Stress:  1; Step:   656; Simulation step:  656
+                  MF iterations:       52; SZ iterations:     52
+
+Date: 1982/07/19; Stress:  1; Step:   657; Simulation step:  657
+                  MF iterations:       20; SZ iterations:     20
+
+Date: 1982/07/20; Stress:  1; Step:   658; Simulation step:  658
+                  MF iterations:       32; SZ iterations:     32
+
+Date: 1982/07/21; Stress:  1; Step:   659; Simulation step:  659
+                  MF iterations:       54; SZ iterations:     54
+
+Date: 1982/07/22; Stress:  1; Step:   660; Simulation step:  660
+                  MF iterations:       32; SZ iterations:     32
+
+Date: 1982/07/23; Stress:  1; Step:   661; Simulation step:  661
+                  MF iterations:       39; SZ iterations:     39
+
+Date: 1982/07/24; Stress:  1; Step:   662; Simulation step:  662
+                  MF iterations:       50; SZ iterations:     50
+
+Date: 1982/07/25; Stress:  1; Step:   663; Simulation step:  663
+                  MF iterations:       26; SZ iterations:     26
+
+Date: 1982/07/26; Stress:  1; Step:   664; Simulation step:  664
+                  MF iterations:       14; SZ iterations:     14
+
+Date: 1982/07/27; Stress:  1; Step:   665; Simulation step:  665
+                  MF iterations:       29; SZ iterations:     29
+
+Date: 1982/07/28; Stress:  1; Step:   666; Simulation step:  666
+                  MF iterations:       34; SZ iterations:     34
+
+Date: 1982/07/29; Stress:  1; Step:   667; Simulation step:  667
+                  MF iterations:       27; SZ iterations:     27
+
+Date: 1982/07/30; Stress:  1; Step:   668; Simulation step:  668
+                  MF iterations:       23; SZ iterations:     23
+
+Date: 1982/07/31; Stress:  1; Step:   669; Simulation step:  669
+                  MF iterations:       31; SZ iterations:     31
+
+Date: 1982/08/01; Stress:  1; Step:   670; Simulation step:  670
+                  MF iterations:       73; SZ iterations:     73
+
+Date: 1982/08/02; Stress:  1; Step:   671; Simulation step:  671
+                  MF iterations:       12; SZ iterations:     12
+
+Date: 1982/08/03; Stress:  1; Step:   672; Simulation step:  672
+                  MF iterations:       19; SZ iterations:     19
+
+Date: 1982/08/04; Stress:  1; Step:   673; Simulation step:  673
+                  MF iterations:       32; SZ iterations:     32
+
+Date: 1982/08/05; Stress:  1; Step:   674; Simulation step:  674
+                  MF iterations:       15; SZ iterations:     15
+
+Date: 1982/08/06; Stress:  1; Step:   675; Simulation step:  675
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1982/08/07; Stress:  1; Step:   676; Simulation step:  676
+                  MF iterations:       26; SZ iterations:     26
+
+Date: 1982/08/08; Stress:  1; Step:   677; Simulation step:  677
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1982/08/09; Stress:  1; Step:   678; Simulation step:  678
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1982/08/10; Stress:  1; Step:   679; Simulation step:  679
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1982/08/11; Stress:  1; Step:   680; Simulation step:  680
+                  MF iterations:       14; SZ iterations:     14
+
+Date: 1982/08/12; Stress:  1; Step:   681; Simulation step:  681
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1982/08/13; Stress:  1; Step:   682; Simulation step:  682
+                  MF iterations:       23; SZ iterations:     23
+
+Date: 1982/08/14; Stress:  1; Step:   683; Simulation step:  683
+                  MF iterations:       14; SZ iterations:     14
+
+Date: 1982/08/15; Stress:  1; Step:   684; Simulation step:  684
+                  MF iterations:       19; SZ iterations:     19
+
+Date: 1982/08/16; Stress:  1; Step:   685; Simulation step:  685
+                  MF iterations:       19; SZ iterations:     19
+
+Date: 1982/08/17; Stress:  1; Step:   686; Simulation step:  686
+                  MF iterations:       31; SZ iterations:     31
+
+Date: 1982/08/18; Stress:  1; Step:   687; Simulation step:  687
+                  MF iterations:       14; SZ iterations:     14
+
+Date: 1982/08/19; Stress:  1; Step:   688; Simulation step:  688
+                  MF iterations:       16; SZ iterations:     16
+
+Date: 1982/08/20; Stress:  1; Step:   689; Simulation step:  689
+                  MF iterations:       25; SZ iterations:     25
+
+Date: 1982/08/21; Stress:  1; Step:   690; Simulation step:  690
+                  MF iterations:       32; SZ iterations:     32
+
+Date: 1982/08/22; Stress:  1; Step:   691; Simulation step:  691
+                  MF iterations:       35; SZ iterations:     35
+
+Date: 1982/08/23; Stress:  1; Step:   692; Simulation step:  692
+                  MF iterations:       33; SZ iterations:     33
+
+Date: 1982/08/24; Stress:  1; Step:   693; Simulation step:  693
+                  MF iterations:       35; SZ iterations:     35
+
+Date: 1982/08/25; Stress:  1; Step:   694; Simulation step:  694
+                  MF iterations:       29; SZ iterations:     29
+
+Date: 1982/08/26; Stress:  1; Step:   695; Simulation step:  695
+                  MF iterations:       25; SZ iterations:     25
+
+Date: 1982/08/27; Stress:  1; Step:   696; Simulation step:  696
+                  MF iterations:       33; SZ iterations:     33
+
+Date: 1982/08/28; Stress:  1; Step:   697; Simulation step:  697
+                  MF iterations:       31; SZ iterations:     31
+
+Date: 1982/08/29; Stress:  1; Step:   698; Simulation step:  698
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1982/08/30; Stress:  1; Step:   699; Simulation step:  699
+                  MF iterations:       28; SZ iterations:     28
+
+Date: 1982/08/31; Stress:  1; Step:   700; Simulation step:  700
+                  MF iterations:       30; SZ iterations:     30
+
+Date: 1982/09/01; Stress:  1; Step:   701; Simulation step:  701
+                  MF iterations:       26; SZ iterations:     26
+
+Date: 1982/09/02; Stress:  1; Step:   702; Simulation step:  702
+                  MF iterations:       22; SZ iterations:     22
+
+Date: 1982/09/03; Stress:  1; Step:   703; Simulation step:  703
+                  MF iterations:       16; SZ iterations:     16
+
+Date: 1982/09/04; Stress:  1; Step:   704; Simulation step:  704
+                  MF iterations:       26; SZ iterations:     26
+
+Date: 1982/09/05; Stress:  1; Step:   705; Simulation step:  705
+                  MF iterations:       28; SZ iterations:     28
+
+Date: 1982/09/06; Stress:  1; Step:   706; Simulation step:  706
+                  MF iterations:       29; SZ iterations:     29
+
+Date: 1982/09/07; Stress:  1; Step:   707; Simulation step:  707
+                  MF iterations:       29; SZ iterations:     29
+
+Date: 1982/09/08; Stress:  1; Step:   708; Simulation step:  708
+                  MF iterations:       26; SZ iterations:     26
+
+Date: 1982/09/09; Stress:  1; Step:   709; Simulation step:  709
+                  MF iterations:       16; SZ iterations:     16
+
+Date: 1982/09/10; Stress:  1; Step:   710; Simulation step:  710
+                  MF iterations:       26; SZ iterations:     26
+
+Date: 1982/09/11; Stress:  1; Step:   711; Simulation step:  711
+                  MF iterations:       22; SZ iterations:     22
+
+Date: 1982/09/12; Stress:  1; Step:   712; Simulation step:  712
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1982/09/13; Stress:  1; Step:   713; Simulation step:  713
+                  MF iterations:       16; SZ iterations:     16
+
+Date: 1982/09/14; Stress:  1; Step:   714; Simulation step:  714
+                  MF iterations:       15; SZ iterations:     15
+
+Date: 1982/09/15; Stress:  1; Step:   715; Simulation step:  715
+                  MF iterations:       17; SZ iterations:     17
+
+Date: 1982/09/16; Stress:  1; Step:   716; Simulation step:  716
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1982/09/17; Stress:  1; Step:   717; Simulation step:  717
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1982/09/18; Stress:  1; Step:   718; Simulation step:  718
+                  MF iterations:        8; SZ iterations:      8
+
+Date: 1982/09/19; Stress:  1; Step:   719; Simulation step:  719
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1982/09/20; Stress:  1; Step:   720; Simulation step:  720
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1982/09/21; Stress:  1; Step:   721; Simulation step:  721
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1982/09/22; Stress:  1; Step:   722; Simulation step:  722
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1982/09/23; Stress:  1; Step:   723; Simulation step:  723
+                  MF iterations:       20; SZ iterations:     20
+
+Date: 1982/09/24; Stress:  1; Step:   724; Simulation step:  724
+                  MF iterations:       20; SZ iterations:     20
+
+Date: 1982/09/25; Stress:  1; Step:   725; Simulation step:  725
+                  MF iterations:       15; SZ iterations:     15
+
+Date: 1982/09/26; Stress:  1; Step:   726; Simulation step:  726
+                  MF iterations:       20; SZ iterations:     20
+
+Date: 1982/09/27; Stress:  1; Step:   727; Simulation step:  727
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1982/09/28; Stress:  1; Step:   728; Simulation step:  728
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1982/09/29; Stress:  1; Step:   729; Simulation step:  729
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1982/09/30; Stress:  1; Step:   730; Simulation step:  730
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1982/10/01; Stress:  1; Step:   731; Simulation step:  731
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1982/10/02; Stress:  1; Step:   732; Simulation step:  732
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1982/10/03; Stress:  1; Step:   733; Simulation step:  733
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1982/10/04; Stress:  1; Step:   734; Simulation step:  734
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1982/10/05; Stress:  1; Step:   735; Simulation step:  735
+                  MF iterations:        2; SZ iterations:      2
+
+Date: 1982/10/06; Stress:  1; Step:   736; Simulation step:  736
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1982/10/07; Stress:  1; Step:   737; Simulation step:  737
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1982/10/08; Stress:  1; Step:   738; Simulation step:  738
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1982/10/09; Stress:  1; Step:   739; Simulation step:  739
+                  MF iterations:        8; SZ iterations:      8
+
+Date: 1982/10/10; Stress:  1; Step:   740; Simulation step:  740
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1982/10/11; Stress:  1; Step:   741; Simulation step:  741
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/10/12; Stress:  1; Step:   742; Simulation step:  742
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1982/10/13; Stress:  1; Step:   743; Simulation step:  743
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1982/10/14; Stress:  1; Step:   744; Simulation step:  744
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/10/15; Stress:  1; Step:   745; Simulation step:  745
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1982/10/16; Stress:  1; Step:   746; Simulation step:  746
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1982/10/17; Stress:  1; Step:   747; Simulation step:  747
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1982/10/18; Stress:  1; Step:   748; Simulation step:  748
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1982/10/19; Stress:  1; Step:   749; Simulation step:  749
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1982/10/20; Stress:  1; Step:   750; Simulation step:  750
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/10/21; Stress:  1; Step:   751; Simulation step:  751
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1982/10/22; Stress:  1; Step:   752; Simulation step:  752
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1982/10/23; Stress:  1; Step:   753; Simulation step:  753
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1982/10/24; Stress:  1; Step:   754; Simulation step:  754
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1982/10/25; Stress:  1; Step:   755; Simulation step:  755
+                  MF iterations:       18; SZ iterations:     18
+
+Date: 1982/10/26; Stress:  1; Step:   756; Simulation step:  756
+                  MF iterations:       21; SZ iterations:     21
+
+Date: 1982/10/27; Stress:  1; Step:   757; Simulation step:  757
+                  MF iterations:        8; SZ iterations:      8
+
+Date: 1982/10/28; Stress:  1; Step:   758; Simulation step:  758
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1982/10/29; Stress:  1; Step:   759; Simulation step:  759
+                  MF iterations:       17; SZ iterations:     17
+
+Date: 1982/10/30; Stress:  1; Step:   760; Simulation step:  760
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1982/10/31; Stress:  1; Step:   761; Simulation step:  761
+                  MF iterations:       20; SZ iterations:     20
+
+Date: 1982/11/01; Stress:  1; Step:   762; Simulation step:  762
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1982/11/02; Stress:  1; Step:   763; Simulation step:  763
+                  MF iterations:       14; SZ iterations:     14
+
+Date: 1982/11/03; Stress:  1; Step:   764; Simulation step:  764
+                  MF iterations:       17; SZ iterations:     17
+
+Date: 1982/11/04; Stress:  1; Step:   765; Simulation step:  765
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1982/11/05; Stress:  1; Step:   766; Simulation step:  766
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1982/11/06; Stress:  1; Step:   767; Simulation step:  767
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/11/07; Stress:  1; Step:   768; Simulation step:  768
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1982/11/08; Stress:  1; Step:   769; Simulation step:  769
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/11/09; Stress:  1; Step:   770; Simulation step:  770
+                  MF iterations:       22; SZ iterations:     22
+
+Date: 1982/11/10; Stress:  1; Step:   771; Simulation step:  771
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1982/11/11; Stress:  1; Step:   772; Simulation step:  772
+                  MF iterations:       21; SZ iterations:     21
+
+Date: 1982/11/12; Stress:  1; Step:   773; Simulation step:  773
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1982/11/13; Stress:  1; Step:   774; Simulation step:  774
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/11/14; Stress:  1; Step:   775; Simulation step:  775
+                  MF iterations:        2; SZ iterations:      2
+
+Date: 1982/11/15; Stress:  1; Step:   776; Simulation step:  776
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1982/11/16; Stress:  1; Step:   777; Simulation step:  777
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1982/11/17; Stress:  1; Step:   778; Simulation step:  778
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/11/18; Stress:  1; Step:   779; Simulation step:  779
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1982/11/19; Stress:  1; Step:   780; Simulation step:  780
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/11/20; Stress:  1; Step:   781; Simulation step:  781
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/11/21; Stress:  1; Step:   782; Simulation step:  782
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/11/22; Stress:  1; Step:   783; Simulation step:  783
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/11/23; Stress:  1; Step:   784; Simulation step:  784
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1982/11/24; Stress:  1; Step:   785; Simulation step:  785
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/11/25; Stress:  1; Step:   786; Simulation step:  786
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/11/26; Stress:  1; Step:   787; Simulation step:  787
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1982/11/27; Stress:  1; Step:   788; Simulation step:  788
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1982/11/28; Stress:  1; Step:   789; Simulation step:  789
+                  MF iterations:        2; SZ iterations:      2
+
+Date: 1982/11/29; Stress:  1; Step:   790; Simulation step:  790
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1982/11/30; Stress:  1; Step:   791; Simulation step:  791
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1982/12/01; Stress:  1; Step:   792; Simulation step:  792
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1982/12/02; Stress:  1; Step:   793; Simulation step:  793
+                  MF iterations:       27; SZ iterations:     27
+
+Date: 1982/12/03; Stress:  1; Step:   794; Simulation step:  794
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/12/04; Stress:  1; Step:   795; Simulation step:  795
+                  MF iterations:       14; SZ iterations:     14
+
+Date: 1982/12/05; Stress:  1; Step:   796; Simulation step:  796
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1982/12/06; Stress:  1; Step:   797; Simulation step:  797
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1982/12/07; Stress:  1; Step:   798; Simulation step:  798
+                  MF iterations:       12; SZ iterations:     12
+
+Date: 1982/12/08; Stress:  1; Step:   799; Simulation step:  799
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/12/09; Stress:  1; Step:   800; Simulation step:  800
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/12/10; Stress:  1; Step:   801; Simulation step:  801
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/12/11; Stress:  1; Step:   802; Simulation step:  802
+                  MF iterations:        8; SZ iterations:      8
+
+Date: 1982/12/12; Stress:  1; Step:   803; Simulation step:  803
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1982/12/13; Stress:  1; Step:   804; Simulation step:  804
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1982/12/14; Stress:  1; Step:   805; Simulation step:  805
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1982/12/15; Stress:  1; Step:   806; Simulation step:  806
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/12/16; Stress:  1; Step:   807; Simulation step:  807
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/12/17; Stress:  1; Step:   808; Simulation step:  808
+                  MF iterations:       12; SZ iterations:     12
+
+Date: 1982/12/18; Stress:  1; Step:   809; Simulation step:  809
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1982/12/19; Stress:  1; Step:   810; Simulation step:  810
+                  MF iterations:        8; SZ iterations:      8
+
+Date: 1982/12/20; Stress:  1; Step:   811; Simulation step:  811
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/12/21; Stress:  1; Step:   812; Simulation step:  812
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1982/12/22; Stress:  1; Step:   813; Simulation step:  813
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/12/23; Stress:  1; Step:   814; Simulation step:  814
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/12/24; Stress:  1; Step:   815; Simulation step:  815
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/12/25; Stress:  1; Step:   816; Simulation step:  816
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1982/12/26; Stress:  1; Step:   817; Simulation step:  817
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/12/27; Stress:  1; Step:   818; Simulation step:  818
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/12/28; Stress:  1; Step:   819; Simulation step:  819
+                  MF iterations:        2; SZ iterations:      2
+
+Date: 1982/12/29; Stress:  1; Step:   820; Simulation step:  820
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/12/30; Stress:  1; Step:   821; Simulation step:  821
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1982/12/31; Stress:  1; Step:   822; Simulation step:  822
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1983/01/01; Stress:  1; Step:   823; Simulation step:  823
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1983/01/02; Stress:  1; Step:   824; Simulation step:  824
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/01/03; Stress:  1; Step:   825; Simulation step:  825
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1983/01/04; Stress:  1; Step:   826; Simulation step:  826
+                  MF iterations:        8; SZ iterations:      8
+
+Date: 1983/01/05; Stress:  1; Step:   827; Simulation step:  827
+                  MF iterations:       15; SZ iterations:     15
+
+Date: 1983/01/06; Stress:  1; Step:   828; Simulation step:  828
+                  MF iterations:       16; SZ iterations:     16
+
+Date: 1983/01/07; Stress:  1; Step:   829; Simulation step:  829
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/01/08; Stress:  1; Step:   830; Simulation step:  830
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/01/09; Stress:  1; Step:   831; Simulation step:  831
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/01/10; Stress:  1; Step:   832; Simulation step:  832
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1983/01/11; Stress:  1; Step:   833; Simulation step:  833
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1983/01/12; Stress:  1; Step:   834; Simulation step:  834
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/01/13; Stress:  1; Step:   835; Simulation step:  835
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1983/01/14; Stress:  1; Step:   836; Simulation step:  836
+                  MF iterations:        2; SZ iterations:      2
+
+Date: 1983/01/15; Stress:  1; Step:   837; Simulation step:  837
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1983/01/16; Stress:  1; Step:   838; Simulation step:  838
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/01/17; Stress:  1; Step:   839; Simulation step:  839
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/01/18; Stress:  1; Step:   840; Simulation step:  840
+                  MF iterations:        2; SZ iterations:      2
+
+Date: 1983/01/19; Stress:  1; Step:   841; Simulation step:  841
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/01/20; Stress:  1; Step:   842; Simulation step:  842
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/01/21; Stress:  1; Step:   843; Simulation step:  843
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/01/22; Stress:  1; Step:   844; Simulation step:  844
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1983/01/23; Stress:  1; Step:   845; Simulation step:  845
+                  MF iterations:       18; SZ iterations:     18
+
+Date: 1983/01/24; Stress:  1; Step:   846; Simulation step:  846
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/01/25; Stress:  1; Step:   847; Simulation step:  847
+                  MF iterations:        2; SZ iterations:      2
+
+Date: 1983/01/26; Stress:  1; Step:   848; Simulation step:  848
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/01/27; Stress:  1; Step:   849; Simulation step:  849
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/01/28; Stress:  1; Step:   850; Simulation step:  850
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1983/01/29; Stress:  1; Step:   851; Simulation step:  851
+                  MF iterations:        2; SZ iterations:      2
+
+Date: 1983/01/30; Stress:  1; Step:   852; Simulation step:  852
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1983/01/31; Stress:  1; Step:   853; Simulation step:  853
+                  MF iterations:       12; SZ iterations:     12
+
+Date: 1983/02/01; Stress:  1; Step:   854; Simulation step:  854
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1983/02/02; Stress:  1; Step:   855; Simulation step:  855
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1983/02/03; Stress:  1; Step:   856; Simulation step:  856
+                  MF iterations:       16; SZ iterations:     16
+
+Date: 1983/02/04; Stress:  1; Step:   857; Simulation step:  857
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1983/02/05; Stress:  1; Step:   858; Simulation step:  858
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1983/02/06; Stress:  1; Step:   859; Simulation step:  859
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1983/02/07; Stress:  1; Step:   860; Simulation step:  860
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/02/08; Stress:  1; Step:   861; Simulation step:  861
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1983/02/09; Stress:  1; Step:   862; Simulation step:  862
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1983/02/10; Stress:  1; Step:   863; Simulation step:  863
+                  MF iterations:        2; SZ iterations:      2
+
+Date: 1983/02/11; Stress:  1; Step:   864; Simulation step:  864
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/02/12; Stress:  1; Step:   865; Simulation step:  865
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1983/02/13; Stress:  1; Step:   866; Simulation step:  866
+                  MF iterations:       27; SZ iterations:     27
+
+Date: 1983/02/14; Stress:  1; Step:   867; Simulation step:  867
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1983/02/15; Stress:  1; Step:   868; Simulation step:  868
+                  MF iterations:       17; SZ iterations:     17
+
+Date: 1983/02/16; Stress:  1; Step:   869; Simulation step:  869
+                  MF iterations:       32; SZ iterations:     32
+
+Date: 1983/02/17; Stress:  1; Step:   870; Simulation step:  870
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/02/18; Stress:  1; Step:   871; Simulation step:  871
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1983/02/19; Stress:  1; Step:   872; Simulation step:  872
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1983/02/20; Stress:  1; Step:   873; Simulation step:  873
+                  MF iterations:        2; SZ iterations:      2
+
+Date: 1983/02/21; Stress:  1; Step:   874; Simulation step:  874
+                  MF iterations:       26; SZ iterations:     26
+
+Date: 1983/02/22; Stress:  1; Step:   875; Simulation step:  875
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1983/02/23; Stress:  1; Step:   876; Simulation step:  876
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/02/24; Stress:  1; Step:   877; Simulation step:  877
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1983/02/25; Stress:  1; Step:   878; Simulation step:  878
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/02/26; Stress:  1; Step:   879; Simulation step:  879
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/02/27; Stress:  1; Step:   880; Simulation step:  880
+                  MF iterations:       15; SZ iterations:     15
+
+Date: 1983/02/28; Stress:  1; Step:   881; Simulation step:  881
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1983/03/01; Stress:  1; Step:   882; Simulation step:  882
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1983/03/02; Stress:  1; Step:   883; Simulation step:  883
+                  MF iterations:       16; SZ iterations:     16
+
+Date: 1983/03/03; Stress:  1; Step:   884; Simulation step:  884
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1983/03/04; Stress:  1; Step:   885; Simulation step:  885
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1983/03/05; Stress:  1; Step:   886; Simulation step:  886
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1983/03/06; Stress:  1; Step:   887; Simulation step:  887
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/03/07; Stress:  1; Step:   888; Simulation step:  888
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/03/08; Stress:  1; Step:   889; Simulation step:  889
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1983/03/09; Stress:  1; Step:   890; Simulation step:  890
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/03/10; Stress:  1; Step:   891; Simulation step:  891
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1983/03/11; Stress:  1; Step:   892; Simulation step:  892
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1983/03/12; Stress:  1; Step:   893; Simulation step:  893
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1983/03/13; Stress:  1; Step:   894; Simulation step:  894
+                  MF iterations:       29; SZ iterations:     29
+
+Date: 1983/03/14; Stress:  1; Step:   895; Simulation step:  895
+                  MF iterations:        8; SZ iterations:      8
+
+Date: 1983/03/15; Stress:  1; Step:   896; Simulation step:  896
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1983/03/16; Stress:  1; Step:   897; Simulation step:  897
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1983/03/17; Stress:  1; Step:   898; Simulation step:  898
+                  MF iterations:       23; SZ iterations:     23
+
+Date: 1983/03/18; Stress:  1; Step:   899; Simulation step:  899
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1983/03/19; Stress:  1; Step:   900; Simulation step:  900
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1983/03/20; Stress:  1; Step:   901; Simulation step:  901
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1983/03/21; Stress:  1; Step:   902; Simulation step:  902
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1983/03/22; Stress:  1; Step:   903; Simulation step:  903
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1983/03/23; Stress:  1; Step:   904; Simulation step:  904
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1983/03/24; Stress:  1; Step:   905; Simulation step:  905
+                  MF iterations:        2; SZ iterations:      2
+
+Date: 1983/03/25; Stress:  1; Step:   906; Simulation step:  906
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1983/03/26; Stress:  1; Step:   907; Simulation step:  907
+                  MF iterations:        2; SZ iterations:      2
+
+Date: 1983/03/27; Stress:  1; Step:   908; Simulation step:  908
+                  MF iterations:       20; SZ iterations:     20
+
+Date: 1983/03/28; Stress:  1; Step:   909; Simulation step:  909
+                  MF iterations:       15; SZ iterations:     15
+
+Date: 1983/03/29; Stress:  1; Step:   910; Simulation step:  910
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1983/03/30; Stress:  1; Step:   911; Simulation step:  911
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/03/31; Stress:  1; Step:   912; Simulation step:  912
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1983/04/01; Stress:  1; Step:   913; Simulation step:  913
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1983/04/02; Stress:  1; Step:   914; Simulation step:  914
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1983/04/03; Stress:  1; Step:   915; Simulation step:  915
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1983/04/04; Stress:  1; Step:   916; Simulation step:  916
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1983/04/05; Stress:  1; Step:   917; Simulation step:  917
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1983/04/06; Stress:  1; Step:   918; Simulation step:  918
+                  MF iterations:        2; SZ iterations:      2
+
+Date: 1983/04/07; Stress:  1; Step:   919; Simulation step:  919
+                  MF iterations:       34; SZ iterations:     34
+
+Date: 1983/04/08; Stress:  1; Step:   920; Simulation step:  920
+                  MF iterations:       37; SZ iterations:     37
+
+Date: 1983/04/09; Stress:  1; Step:   921; Simulation step:  921
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1983/04/10; Stress:  1; Step:   922; Simulation step:  922
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/04/11; Stress:  1; Step:   923; Simulation step:  923
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/04/12; Stress:  1; Step:   924; Simulation step:  924
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/04/13; Stress:  1; Step:   925; Simulation step:  925
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1983/04/14; Stress:  1; Step:   926; Simulation step:  926
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1983/04/15; Stress:  1; Step:   927; Simulation step:  927
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1983/04/16; Stress:  1; Step:   928; Simulation step:  928
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1983/04/17; Stress:  1; Step:   929; Simulation step:  929
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/04/18; Stress:  1; Step:   930; Simulation step:  930
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1983/04/19; Stress:  1; Step:   931; Simulation step:  931
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1983/04/20; Stress:  1; Step:   932; Simulation step:  932
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1983/04/21; Stress:  1; Step:   933; Simulation step:  933
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1983/04/22; Stress:  1; Step:   934; Simulation step:  934
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1983/04/23; Stress:  1; Step:   935; Simulation step:  935
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1983/04/24; Stress:  1; Step:   936; Simulation step:  936
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1983/04/25; Stress:  1; Step:   937; Simulation step:  937
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/04/26; Stress:  1; Step:   938; Simulation step:  938
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/04/27; Stress:  1; Step:   939; Simulation step:  939
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/04/28; Stress:  1; Step:   940; Simulation step:  940
+                  MF iterations:        2; SZ iterations:      2
+
+Date: 1983/04/29; Stress:  1; Step:   941; Simulation step:  941
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1983/04/30; Stress:  1; Step:   942; Simulation step:  942
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1983/05/01; Stress:  1; Step:   943; Simulation step:  943
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1983/05/02; Stress:  1; Step:   944; Simulation step:  944
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1983/05/03; Stress:  1; Step:   945; Simulation step:  945
+                  MF iterations:       15; SZ iterations:     15
+
+Date: 1983/05/04; Stress:  1; Step:   946; Simulation step:  946
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1983/05/05; Stress:  1; Step:   947; Simulation step:  947
+                  MF iterations:       16; SZ iterations:     16
+
+Date: 1983/05/06; Stress:  1; Step:   948; Simulation step:  948
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1983/05/07; Stress:  1; Step:   949; Simulation step:  949
+                  MF iterations:       20; SZ iterations:     20
+
+Date: 1983/05/08; Stress:  1; Step:   950; Simulation step:  950
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1983/05/09; Stress:  1; Step:   951; Simulation step:  951
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1983/05/10; Stress:  1; Step:   952; Simulation step:  952
+                  MF iterations:        8; SZ iterations:      8
+
+Date: 1983/05/11; Stress:  1; Step:   953; Simulation step:  953
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1983/05/12; Stress:  1; Step:   954; Simulation step:  954
+                  MF iterations:       23; SZ iterations:     23
+
+Date: 1983/05/13; Stress:  1; Step:   955; Simulation step:  955
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1983/05/14; Stress:  1; Step:   956; Simulation step:  956
+                  MF iterations:       19; SZ iterations:     19
+
+Date: 1983/05/15; Stress:  1; Step:   957; Simulation step:  957
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1983/05/16; Stress:  1; Step:   958; Simulation step:  958
+                  MF iterations:       17; SZ iterations:     17
+
+Date: 1983/05/17; Stress:  1; Step:   959; Simulation step:  959
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1983/05/18; Stress:  1; Step:   960; Simulation step:  960
+                  MF iterations:       17; SZ iterations:     17
+
+Date: 1983/05/19; Stress:  1; Step:   961; Simulation step:  961
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1983/05/20; Stress:  1; Step:   962; Simulation step:  962
+                  MF iterations:       15; SZ iterations:     15
+
+Date: 1983/05/21; Stress:  1; Step:   963; Simulation step:  963
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1983/05/22; Stress:  1; Step:   964; Simulation step:  964
+                  MF iterations:       19; SZ iterations:     19
+
+Date: 1983/05/23; Stress:  1; Step:   965; Simulation step:  965
+                  MF iterations:       15; SZ iterations:     15
+
+Date: 1983/05/24; Stress:  1; Step:   966; Simulation step:  966
+                  MF iterations:       41; SZ iterations:     41
+
+Date: 1983/05/25; Stress:  1; Step:   967; Simulation step:  967
+                  MF iterations:       20; SZ iterations:     20
+
+Date: 1983/05/26; Stress:  1; Step:   968; Simulation step:  968
+                  MF iterations:       24; SZ iterations:     24
+
+Date: 1983/05/27; Stress:  1; Step:   969; Simulation step:  969
+                  MF iterations:       21; SZ iterations:     21
+
+Date: 1983/05/28; Stress:  1; Step:   970; Simulation step:  970
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1983/05/29; Stress:  1; Step:   971; Simulation step:  971
+                  MF iterations:       21; SZ iterations:     21
+
+Date: 1983/05/30; Stress:  1; Step:   972; Simulation step:  972
+                  MF iterations:       23; SZ iterations:     23
+
+Date: 1983/05/31; Stress:  1; Step:   973; Simulation step:  973
+                  MF iterations:       28; SZ iterations:     28
+
+Date: 1983/06/01; Stress:  1; Step:   974; Simulation step:  974
+                  MF iterations:       31; SZ iterations:     31
+
+Date: 1983/06/02; Stress:  1; Step:   975; Simulation step:  975
+                  MF iterations:       27; SZ iterations:     27
+
+Date: 1983/06/03; Stress:  1; Step:   976; Simulation step:  976
+                  MF iterations:       17; SZ iterations:     17
+
+Date: 1983/06/04; Stress:  1; Step:   977; Simulation step:  977
+                  MF iterations:       37; SZ iterations:     37
+
+Date: 1983/06/05; Stress:  1; Step:   978; Simulation step:  978
+                  MF iterations:       37; SZ iterations:     37
+
+Date: 1983/06/06; Stress:  1; Step:   979; Simulation step:  979
+                  MF iterations:       19; SZ iterations:     19
+
+Date: 1983/06/07; Stress:  1; Step:   980; Simulation step:  980
+                  MF iterations:       19; SZ iterations:     19
+
+Date: 1983/06/08; Stress:  1; Step:   981; Simulation step:  981
+                  MF iterations:       26; SZ iterations:     26
+
+Date: 1983/06/09; Stress:  1; Step:   982; Simulation step:  982
+                  MF iterations:       12; SZ iterations:     12
+
+Date: 1983/06/10; Stress:  1; Step:   983; Simulation step:  983
+                  MF iterations:        8; SZ iterations:      8
+
+Date: 1983/06/11; Stress:  1; Step:   984; Simulation step:  984
+                  MF iterations:       25; SZ iterations:     25
+
+Date: 1983/06/12; Stress:  1; Step:   985; Simulation step:  985
+                  MF iterations:       20; SZ iterations:     20
+
+Date: 1983/06/13; Stress:  1; Step:   986; Simulation step:  986
+                  MF iterations:        8; SZ iterations:      8
+
+Date: 1983/06/14; Stress:  1; Step:   987; Simulation step:  987
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1983/06/15; Stress:  1; Step:   988; Simulation step:  988
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1983/06/16; Stress:  1; Step:   989; Simulation step:  989
+                  MF iterations:       30; SZ iterations:     30
+
+Date: 1983/06/17; Stress:  1; Step:   990; Simulation step:  990
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1983/06/18; Stress:  1; Step:   991; Simulation step:  991
+                  MF iterations:       19; SZ iterations:     19
+
+Date: 1983/06/19; Stress:  1; Step:   992; Simulation step:  992
+                  MF iterations:       39; SZ iterations:     39
+
+Date: 1983/06/20; Stress:  1; Step:   993; Simulation step:  993
+                  MF iterations:       46; SZ iterations:     46
+
+Date: 1983/06/21; Stress:  1; Step:   994; Simulation step:  994
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1983/06/22; Stress:  1; Step:   995; Simulation step:  995
+                  MF iterations:       36; SZ iterations:     36
+
+Date: 1983/06/23; Stress:  1; Step:   996; Simulation step:  996
+                  MF iterations:       43; SZ iterations:     43
+
+Date: 1983/06/24; Stress:  1; Step:   997; Simulation step:  997
+                  MF iterations:       33; SZ iterations:     33
+
+Date: 1983/06/25; Stress:  1; Step:   998; Simulation step:  998
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1983/06/26; Stress:  1; Step:   999; Simulation step:  999
+                  MF iterations:       14; SZ iterations:     14
+
+Date: 1983/06/27; Stress:  1; Step:  1000; Simulation step: 1000
+                  MF iterations:       27; SZ iterations:     27
+
+Date: 1983/06/28; Stress:  1; Step:  1001; Simulation step: 1001
+                  MF iterations:       19; SZ iterations:     19
+
+Date: 1983/06/29; Stress:  1; Step:  1002; Simulation step: 1002
+                  MF iterations:       25; SZ iterations:     25
+
+Date: 1983/06/30; Stress:  1; Step:  1003; Simulation step: 1003
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1983/07/01; Stress:  1; Step:  1004; Simulation step: 1004
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1983/07/02; Stress:  1; Step:  1005; Simulation step: 1005
+                  MF iterations:       21; SZ iterations:     21
+
+Date: 1983/07/03; Stress:  1; Step:  1006; Simulation step: 1006
+                  MF iterations:       20; SZ iterations:     20
+
+Date: 1983/07/04; Stress:  1; Step:  1007; Simulation step: 1007
+                  MF iterations:       20; SZ iterations:     20
+
+Date: 1983/07/05; Stress:  1; Step:  1008; Simulation step: 1008
+                  MF iterations:       14; SZ iterations:     14
+
+Date: 1983/07/06; Stress:  1; Step:  1009; Simulation step: 1009
+                  MF iterations:       41; SZ iterations:     41
+
+Date: 1983/07/07; Stress:  1; Step:  1010; Simulation step: 1010
+                  MF iterations:       17; SZ iterations:     17
+
+Date: 1983/07/08; Stress:  1; Step:  1011; Simulation step: 1011
+                  MF iterations:       18; SZ iterations:     18
+
+Date: 1983/07/09; Stress:  1; Step:  1012; Simulation step: 1012
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1983/07/10; Stress:  1; Step:  1013; Simulation step: 1013
+                  MF iterations:       17; SZ iterations:     17
+
+Date: 1983/07/11; Stress:  1; Step:  1014; Simulation step: 1014
+                  MF iterations:       15; SZ iterations:     15
+
+Date: 1983/07/12; Stress:  1; Step:  1015; Simulation step: 1015
+                  MF iterations:       24; SZ iterations:     24
+
+Date: 1983/07/13; Stress:  1; Step:  1016; Simulation step: 1016
+                  MF iterations:       15; SZ iterations:     15
+
+Date: 1983/07/14; Stress:  1; Step:  1017; Simulation step: 1017
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1983/07/15; Stress:  1; Step:  1018; Simulation step: 1018
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1983/07/16; Stress:  1; Step:  1019; Simulation step: 1019
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1983/07/17; Stress:  1; Step:  1020; Simulation step: 1020
+                  MF iterations:       20; SZ iterations:     20
+
+Date: 1983/07/18; Stress:  1; Step:  1021; Simulation step: 1021
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1983/07/19; Stress:  1; Step:  1022; Simulation step: 1022
+                  MF iterations:       58; SZ iterations:     58
+
+Date: 1983/07/20; Stress:  1; Step:  1023; Simulation step: 1023
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1983/07/21; Stress:  1; Step:  1024; Simulation step: 1024
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1983/07/22; Stress:  1; Step:  1025; Simulation step: 1025
+                  MF iterations:       30; SZ iterations:     30
+
+Date: 1983/07/23; Stress:  1; Step:  1026; Simulation step: 1026
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1983/07/24; Stress:  1; Step:  1027; Simulation step: 1027
+                  MF iterations:       17; SZ iterations:     17
+
+Date: 1983/07/25; Stress:  1; Step:  1028; Simulation step: 1028
+                  MF iterations:       21; SZ iterations:     21
+
+Date: 1983/07/26; Stress:  1; Step:  1029; Simulation step: 1029
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1983/07/27; Stress:  1; Step:  1030; Simulation step: 1030
+                  MF iterations:       25; SZ iterations:     25
+
+Date: 1983/07/28; Stress:  1; Step:  1031; Simulation step: 1031
+                  MF iterations:       14; SZ iterations:     14
+
+Date: 1983/07/29; Stress:  1; Step:  1032; Simulation step: 1032
+                  MF iterations:       33; SZ iterations:     33
+
+Date: 1983/07/30; Stress:  1; Step:  1033; Simulation step: 1033
+                  MF iterations:       28; SZ iterations:     28
+
+Date: 1983/07/31; Stress:  1; Step:  1034; Simulation step: 1034
+                  MF iterations:       25; SZ iterations:     25
+
+Date: 1983/08/01; Stress:  1; Step:  1035; Simulation step: 1035
+                  MF iterations:       23; SZ iterations:     23
+
+Date: 1983/08/02; Stress:  1; Step:  1036; Simulation step: 1036
+                  MF iterations:       23; SZ iterations:     23
+
+Date: 1983/08/03; Stress:  1; Step:  1037; Simulation step: 1037
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1983/08/04; Stress:  1; Step:  1038; Simulation step: 1038
+                  MF iterations:       20; SZ iterations:     20
+
+Date: 1983/08/05; Stress:  1; Step:  1039; Simulation step: 1039
+                  MF iterations:       22; SZ iterations:     22
+
+Date: 1983/08/06; Stress:  1; Step:  1040; Simulation step: 1040
+                  MF iterations:       16; SZ iterations:     16
+
+Date: 1983/08/07; Stress:  1; Step:  1041; Simulation step: 1041
+                  MF iterations:       16; SZ iterations:     16
+
+Date: 1983/08/08; Stress:  1; Step:  1042; Simulation step: 1042
+                  MF iterations:       19; SZ iterations:     19
+
+Date: 1983/08/09; Stress:  1; Step:  1043; Simulation step: 1043
+                  MF iterations:       14; SZ iterations:     14
+
+Date: 1983/08/10; Stress:  1; Step:  1044; Simulation step: 1044
+                  MF iterations:       25; SZ iterations:     25
+
+Date: 1983/08/11; Stress:  1; Step:  1045; Simulation step: 1045
+                  MF iterations:       36; SZ iterations:     36
+
+Date: 1983/08/12; Stress:  1; Step:  1046; Simulation step: 1046
+                  MF iterations:       19; SZ iterations:     19
+
+Date: 1983/08/13; Stress:  1; Step:  1047; Simulation step: 1047
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1983/08/14; Stress:  1; Step:  1048; Simulation step: 1048
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1983/08/15; Stress:  1; Step:  1049; Simulation step: 1049
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1983/08/16; Stress:  1; Step:  1050; Simulation step: 1050
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1983/08/17; Stress:  1; Step:  1051; Simulation step: 1051
+                  MF iterations:       23; SZ iterations:     23
+
+Date: 1983/08/18; Stress:  1; Step:  1052; Simulation step: 1052
+                  MF iterations:       25; SZ iterations:     25
+
+Date: 1983/08/19; Stress:  1; Step:  1053; Simulation step: 1053
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1983/08/20; Stress:  1; Step:  1054; Simulation step: 1054
+                  MF iterations:       18; SZ iterations:     18
+
+Date: 1983/08/21; Stress:  1; Step:  1055; Simulation step: 1055
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1983/08/22; Stress:  1; Step:  1056; Simulation step: 1056
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1983/08/23; Stress:  1; Step:  1057; Simulation step: 1057
+                  MF iterations:       29; SZ iterations:     29
+
+Date: 1983/08/24; Stress:  1; Step:  1058; Simulation step: 1058
+                  MF iterations:       18; SZ iterations:     18
+
+Date: 1983/08/25; Stress:  1; Step:  1059; Simulation step: 1059
+                  MF iterations:       27; SZ iterations:     27
+
+Date: 1983/08/26; Stress:  1; Step:  1060; Simulation step: 1060
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1983/08/27; Stress:  1; Step:  1061; Simulation step: 1061
+                  MF iterations:       23; SZ iterations:     23
+
+Date: 1983/08/28; Stress:  1; Step:  1062; Simulation step: 1062
+                  MF iterations:       26; SZ iterations:     26
+
+Date: 1983/08/29; Stress:  1; Step:  1063; Simulation step: 1063
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/08/30; Stress:  1; Step:  1064; Simulation step: 1064
+                  MF iterations:       14; SZ iterations:     14
+
+Date: 1983/08/31; Stress:  1; Step:  1065; Simulation step: 1065
+                  MF iterations:       22; SZ iterations:     22
+
+Date: 1983/09/01; Stress:  1; Step:  1066; Simulation step: 1066
+                  MF iterations:       16; SZ iterations:     16
+
+Date: 1983/09/02; Stress:  1; Step:  1067; Simulation step: 1067
+                  MF iterations:       16; SZ iterations:     16
+
+Date: 1983/09/03; Stress:  1; Step:  1068; Simulation step: 1068
+                  MF iterations:       14; SZ iterations:     14
+
+Date: 1983/09/04; Stress:  1; Step:  1069; Simulation step: 1069
+                  MF iterations:       14; SZ iterations:     14
+
+Date: 1983/09/05; Stress:  1; Step:  1070; Simulation step: 1070
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1983/09/06; Stress:  1; Step:  1071; Simulation step: 1071
+                  MF iterations:       23; SZ iterations:     23
+
+Date: 1983/09/07; Stress:  1; Step:  1072; Simulation step: 1072
+                  MF iterations:       28; SZ iterations:     28
+
+Date: 1983/09/08; Stress:  1; Step:  1073; Simulation step: 1073
+                  MF iterations:       28; SZ iterations:     28
+
+Date: 1983/09/09; Stress:  1; Step:  1074; Simulation step: 1074
+                  MF iterations:       12; SZ iterations:     12
+
+Date: 1983/09/10; Stress:  1; Step:  1075; Simulation step: 1075
+                  MF iterations:       25; SZ iterations:     25
+
+Date: 1983/09/11; Stress:  1; Step:  1076; Simulation step: 1076
+                  MF iterations:       23; SZ iterations:     23
+
+Date: 1983/09/12; Stress:  1; Step:  1077; Simulation step: 1077
+                  MF iterations:       26; SZ iterations:     26
+
+Date: 1983/09/13; Stress:  1; Step:  1078; Simulation step: 1078
+                  MF iterations:       26; SZ iterations:     26
+
+Date: 1983/09/14; Stress:  1; Step:  1079; Simulation step: 1079
+                  MF iterations:       26; SZ iterations:     26
+
+Date: 1983/09/15; Stress:  1; Step:  1080; Simulation step: 1080
+                  MF iterations:       19; SZ iterations:     19
+
+Date: 1983/09/16; Stress:  1; Step:  1081; Simulation step: 1081
+                  MF iterations:       25; SZ iterations:     25
+
+Date: 1983/09/17; Stress:  1; Step:  1082; Simulation step: 1082
+                  MF iterations:       28; SZ iterations:     28
+
+Date: 1983/09/18; Stress:  1; Step:  1083; Simulation step: 1083
+                  MF iterations:       14; SZ iterations:     14
+
+Date: 1983/09/19; Stress:  1; Step:  1084; Simulation step: 1084
+                  MF iterations:       56; SZ iterations:     56
+
+Date: 1983/09/20; Stress:  1; Step:  1085; Simulation step: 1085
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1983/09/21; Stress:  1; Step:  1086; Simulation step: 1086
+                  MF iterations:       12; SZ iterations:     12
+
+Date: 1983/09/22; Stress:  1; Step:  1087; Simulation step: 1087
+                  MF iterations:       19; SZ iterations:     19
+
+Date: 1983/09/23; Stress:  1; Step:  1088; Simulation step: 1088
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1983/09/24; Stress:  1; Step:  1089; Simulation step: 1089
+                  MF iterations:        8; SZ iterations:      8
+
+Date: 1983/09/25; Stress:  1; Step:  1090; Simulation step: 1090
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1983/09/26; Stress:  1; Step:  1091; Simulation step: 1091
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1983/09/27; Stress:  1; Step:  1092; Simulation step: 1092
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1983/09/28; Stress:  1; Step:  1093; Simulation step: 1093
+                  MF iterations:       14; SZ iterations:     14
+
+Date: 1983/09/29; Stress:  1; Step:  1094; Simulation step: 1094
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/09/30; Stress:  1; Step:  1095; Simulation step: 1095
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/10/01; Stress:  1; Step:  1096; Simulation step: 1096
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1983/10/02; Stress:  1; Step:  1097; Simulation step: 1097
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1983/10/03; Stress:  1; Step:  1098; Simulation step: 1098
+                  MF iterations:        8; SZ iterations:      8
+
+Date: 1983/10/04; Stress:  1; Step:  1099; Simulation step: 1099
+                  MF iterations:        8; SZ iterations:      8
+
+Date: 1983/10/05; Stress:  1; Step:  1100; Simulation step: 1100
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1983/10/06; Stress:  1; Step:  1101; Simulation step: 1101
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1983/10/07; Stress:  1; Step:  1102; Simulation step: 1102
+                  MF iterations:       14; SZ iterations:     14
+
+Date: 1983/10/08; Stress:  1; Step:  1103; Simulation step: 1103
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1983/10/09; Stress:  1; Step:  1104; Simulation step: 1104
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1983/10/10; Stress:  1; Step:  1105; Simulation step: 1105
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1983/10/11; Stress:  1; Step:  1106; Simulation step: 1106
+                  MF iterations:       12; SZ iterations:     12
+
+Date: 1983/10/12; Stress:  1; Step:  1107; Simulation step: 1107
+                  MF iterations:       12; SZ iterations:     12
+
+Date: 1983/10/13; Stress:  1; Step:  1108; Simulation step: 1108
+                  MF iterations:       14; SZ iterations:     14
+
+Date: 1983/10/14; Stress:  1; Step:  1109; Simulation step: 1109
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1983/10/15; Stress:  1; Step:  1110; Simulation step: 1110
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1983/10/16; Stress:  1; Step:  1111; Simulation step: 1111
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1983/10/17; Stress:  1; Step:  1112; Simulation step: 1112
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1983/10/18; Stress:  1; Step:  1113; Simulation step: 1113
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1983/10/19; Stress:  1; Step:  1114; Simulation step: 1114
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1983/10/20; Stress:  1; Step:  1115; Simulation step: 1115
+                  MF iterations:       18; SZ iterations:     18
+
+Date: 1983/10/21; Stress:  1; Step:  1116; Simulation step: 1116
+                  MF iterations:       19; SZ iterations:     19
+
+Date: 1983/10/22; Stress:  1; Step:  1117; Simulation step: 1117
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1983/10/23; Stress:  1; Step:  1118; Simulation step: 1118
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1983/10/24; Stress:  1; Step:  1119; Simulation step: 1119
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1983/10/25; Stress:  1; Step:  1120; Simulation step: 1120
+                  MF iterations:       12; SZ iterations:     12
+
+Date: 1983/10/26; Stress:  1; Step:  1121; Simulation step: 1121
+                  MF iterations:       12; SZ iterations:     12
+
+Date: 1983/10/27; Stress:  1; Step:  1122; Simulation step: 1122
+                  MF iterations:       12; SZ iterations:     12
+
+Date: 1983/10/28; Stress:  1; Step:  1123; Simulation step: 1123
+                  MF iterations:       12; SZ iterations:     12
+
+Date: 1983/10/29; Stress:  1; Step:  1124; Simulation step: 1124
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1983/10/30; Stress:  1; Step:  1125; Simulation step: 1125
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1983/10/31; Stress:  1; Step:  1126; Simulation step: 1126
+                  MF iterations:       15; SZ iterations:     15
+
+Date: 1983/11/01; Stress:  1; Step:  1127; Simulation step: 1127
+                  MF iterations:       17; SZ iterations:     17
+
+Date: 1983/11/02; Stress:  1; Step:  1128; Simulation step: 1128
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1983/11/03; Stress:  1; Step:  1129; Simulation step: 1129
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1983/11/04; Stress:  1; Step:  1130; Simulation step: 1130
+                  MF iterations:       17; SZ iterations:     17
+
+Date: 1983/11/05; Stress:  1; Step:  1131; Simulation step: 1131
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1983/11/06; Stress:  1; Step:  1132; Simulation step: 1132
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1983/11/07; Stress:  1; Step:  1133; Simulation step: 1133
+                  MF iterations:        8; SZ iterations:      8
+
+Date: 1983/11/08; Stress:  1; Step:  1134; Simulation step: 1134
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1983/11/09; Stress:  1; Step:  1135; Simulation step: 1135
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1983/11/10; Stress:  1; Step:  1136; Simulation step: 1136
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1983/11/11; Stress:  1; Step:  1137; Simulation step: 1137
+                  MF iterations:       16; SZ iterations:     16
+
+Date: 1983/11/12; Stress:  1; Step:  1138; Simulation step: 1138
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/11/13; Stress:  1; Step:  1139; Simulation step: 1139
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1983/11/14; Stress:  1; Step:  1140; Simulation step: 1140
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1983/11/15; Stress:  1; Step:  1141; Simulation step: 1141
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1983/11/16; Stress:  1; Step:  1142; Simulation step: 1142
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1983/11/17; Stress:  1; Step:  1143; Simulation step: 1143
+                  MF iterations:       15; SZ iterations:     15
+
+Date: 1983/11/18; Stress:  1; Step:  1144; Simulation step: 1144
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1983/11/19; Stress:  1; Step:  1145; Simulation step: 1145
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/11/20; Stress:  1; Step:  1146; Simulation step: 1146
+                  MF iterations:        8; SZ iterations:      8
+
+Date: 1983/11/21; Stress:  1; Step:  1147; Simulation step: 1147
+                  MF iterations:        8; SZ iterations:      8
+
+Date: 1983/11/22; Stress:  1; Step:  1148; Simulation step: 1148
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1983/11/23; Stress:  1; Step:  1149; Simulation step: 1149
+                  MF iterations:       12; SZ iterations:     12
+
+Date: 1983/11/24; Stress:  1; Step:  1150; Simulation step: 1150
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1983/11/25; Stress:  1; Step:  1151; Simulation step: 1151
+                  MF iterations:        2; SZ iterations:      2
+
+Date: 1983/11/26; Stress:  1; Step:  1152; Simulation step: 1152
+                  MF iterations:        8; SZ iterations:      8
+
+Date: 1983/11/27; Stress:  1; Step:  1153; Simulation step: 1153
+                  MF iterations:       12; SZ iterations:     12
+
+Date: 1983/11/28; Stress:  1; Step:  1154; Simulation step: 1154
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/11/29; Stress:  1; Step:  1155; Simulation step: 1155
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1983/11/30; Stress:  1; Step:  1156; Simulation step: 1156
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1983/12/01; Stress:  1; Step:  1157; Simulation step: 1157
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1983/12/02; Stress:  1; Step:  1158; Simulation step: 1158
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1983/12/03; Stress:  1; Step:  1159; Simulation step: 1159
+                  MF iterations:        2; SZ iterations:      2
+
+Date: 1983/12/04; Stress:  1; Step:  1160; Simulation step: 1160
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1983/12/05; Stress:  1; Step:  1161; Simulation step: 1161
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/12/06; Stress:  1; Step:  1162; Simulation step: 1162
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/12/07; Stress:  1; Step:  1163; Simulation step: 1163
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/12/08; Stress:  1; Step:  1164; Simulation step: 1164
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1983/12/09; Stress:  1; Step:  1165; Simulation step: 1165
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1983/12/10; Stress:  1; Step:  1166; Simulation step: 1166
+                  MF iterations:        2; SZ iterations:      2
+
+Date: 1983/12/11; Stress:  1; Step:  1167; Simulation step: 1167
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1983/12/12; Stress:  1; Step:  1168; Simulation step: 1168
+                  MF iterations:        8; SZ iterations:      8
+
+Date: 1983/12/13; Stress:  1; Step:  1169; Simulation step: 1169
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1983/12/14; Stress:  1; Step:  1170; Simulation step: 1170
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1983/12/15; Stress:  1; Step:  1171; Simulation step: 1171
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/12/16; Stress:  1; Step:  1172; Simulation step: 1172
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1983/12/17; Stress:  1; Step:  1173; Simulation step: 1173
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1983/12/18; Stress:  1; Step:  1174; Simulation step: 1174
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1983/12/19; Stress:  1; Step:  1175; Simulation step: 1175
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1983/12/20; Stress:  1; Step:  1176; Simulation step: 1176
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/12/21; Stress:  1; Step:  1177; Simulation step: 1177
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1983/12/22; Stress:  1; Step:  1178; Simulation step: 1178
+                  MF iterations:       20; SZ iterations:     20
+
+Date: 1983/12/23; Stress:  1; Step:  1179; Simulation step: 1179
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1983/12/24; Stress:  1; Step:  1180; Simulation step: 1180
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1983/12/25; Stress:  1; Step:  1181; Simulation step: 1181
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1983/12/26; Stress:  1; Step:  1182; Simulation step: 1182
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1983/12/27; Stress:  1; Step:  1183; Simulation step: 1183
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/12/28; Stress:  1; Step:  1184; Simulation step: 1184
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1983/12/29; Stress:  1; Step:  1185; Simulation step: 1185
+                  MF iterations:        8; SZ iterations:      8
+
+Date: 1983/12/30; Stress:  1; Step:  1186; Simulation step: 1186
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1983/12/31; Stress:  1; Step:  1187; Simulation step: 1187
+                  MF iterations:        8; SZ iterations:      8
+
+Date: 1984/01/01; Stress:  1; Step:  1188; Simulation step: 1188
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1984/01/02; Stress:  1; Step:  1189; Simulation step: 1189
+                  MF iterations:       13; SZ iterations:     13
+
+Date: 1984/01/03; Stress:  1; Step:  1190; Simulation step: 1190
+                  MF iterations:       17; SZ iterations:     17
+
+Date: 1984/01/04; Stress:  1; Step:  1191; Simulation step: 1191
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1984/01/05; Stress:  1; Step:  1192; Simulation step: 1192
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1984/01/06; Stress:  1; Step:  1193; Simulation step: 1193
+                  MF iterations:       22; SZ iterations:     22
+
+Date: 1984/01/07; Stress:  1; Step:  1194; Simulation step: 1194
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1984/01/08; Stress:  1; Step:  1195; Simulation step: 1195
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1984/01/09; Stress:  1; Step:  1196; Simulation step: 1196
+                  MF iterations:       18; SZ iterations:     18
+
+Date: 1984/01/10; Stress:  1; Step:  1197; Simulation step: 1197
+                  MF iterations:       11; SZ iterations:     11
+
+Date: 1984/01/11; Stress:  1; Step:  1198; Simulation step: 1198
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1984/01/12; Stress:  1; Step:  1199; Simulation step: 1199
+                  MF iterations:        9; SZ iterations:      9
+
+Date: 1984/01/13; Stress:  1; Step:  1200; Simulation step: 1200
+                  MF iterations:       22; SZ iterations:     22
+
+Date: 1984/01/14; Stress:  1; Step:  1201; Simulation step: 1201
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1984/01/15; Stress:  1; Step:  1202; Simulation step: 1202
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1984/01/16; Stress:  1; Step:  1203; Simulation step: 1203
+                  MF iterations:        8; SZ iterations:      8
+
+Date: 1984/01/17; Stress:  1; Step:  1204; Simulation step: 1204
+                  MF iterations:        2; SZ iterations:      2
+
+Date: 1984/01/18; Stress:  1; Step:  1205; Simulation step: 1205
+                  MF iterations:        6; SZ iterations:      6
+
+Date: 1984/01/19; Stress:  1; Step:  1206; Simulation step: 1206
+                  MF iterations:        2; SZ iterations:      2
+
+Date: 1984/01/20; Stress:  1; Step:  1207; Simulation step: 1207
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1984/01/21; Stress:  1; Step:  1208; Simulation step: 1208
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1984/01/22; Stress:  1; Step:  1209; Simulation step: 1209
+                  MF iterations:       12; SZ iterations:     12
+
+Date: 1984/01/23; Stress:  1; Step:  1210; Simulation step: 1210
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1984/01/24; Stress:  1; Step:  1211; Simulation step: 1211
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1984/01/25; Stress:  1; Step:  1212; Simulation step: 1212
+                  MF iterations:        7; SZ iterations:      7
+
+Date: 1984/01/26; Stress:  1; Step:  1213; Simulation step: 1213
+                  MF iterations:        5; SZ iterations:      5
+
+Date: 1984/01/27; Stress:  1; Step:  1214; Simulation step: 1214
+                  MF iterations:       10; SZ iterations:     10
+
+Date: 1984/01/28; Stress:  1; Step:  1215; Simulation step: 1215
+                  MF iterations:        3; SZ iterations:      3
+
+Date: 1984/01/29; Stress:  1; Step:  1216; Simulation step: 1216
+                  MF iterations:        4; SZ iterations:      4
+
+Date: 1984/01/30; Stress:  1; Step:  1217; Simulation step: 1217
+                  MF iterations:       11; SZ iterations:     11
+
+
+
+
+ Run end date and time (yyyy/mm/dd hh:mm:ss): 2015/09/28 16:37:16
+
+ Elapsed run time:  1 Hours, 40 Minutes, 49 Seconds
+
+ Number of time steps:   1217;  Number of non-convergence:   0
+ MF iterations:         21836;  SZ iterations:           21836
+ Average MF iterations: 17.94;  Average SZ iterations:   17.94
+ Maximum MF iterations:   130;  Maximum SZ iterations:     130
+
+MF iteration distribution:      0   31   82  117   87   54   40   33   43   36
+                               37   30   54   32   19   25   25   14   28   25
+                               13   17   20   11   18   15   16   25   16   15
+                               13   15   21   11   27    6   14    2    9    3
+                               12    3   10    8    5    6    3   10    3    4
+                                1    8    7    4    4    1    3    2    3    2
+                                2    0    0    2    1    0    1    1    3    0
+                                0    0    1    0    1    1    1    0    0    5
+
+
+
+SZ computation distribution:    0   31   82  117   87   54   40   33   43   36
+                               37   30   54   32   19   25   25   14   28   25
+                               13   17   20   11   18   15   16   25   16   15
+                               13   15   21   11   27    6   14    2    9    3
+                               12    3   10    8    5    6    3   10    3    4
+                                1    8    7    4    4    1    3    2    3    2
+                                2    0    0    2    1    0    1    1    3    0
+                                0    0    1    0    1    1    1    0    0    5
+
+
+
+  Normal termination of simulation

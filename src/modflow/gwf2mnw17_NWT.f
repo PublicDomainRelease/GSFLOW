@@ -37,10 +37,9 @@ C
 c-------------------------------------------------------------------------
 c
       SUBROUTINE GWF2MNW17AR(In, Iusip, Iude4, Iunwt, Iusor, Iupcg, 
-     +                      Iulmg, Iugmg, Fname, Igrid)
+     +                      Iulmg, Iugmg, Iupcgn, Fname, Igrid)
 !rgn------REVISION NUMBER CHANGED TO BE CONSISTENT WITH NWT RELEASE
-!rgn------NEW VERSION NUMBER 1.0.5:  April 5, 2012
-C     VERSION 20020819 KJH
+!rgn------NEW VERSION NUMBER 1.0.9:  July 1, 2014
 c
 c----- MNW by K.J. Halford        1/31/98
 c     ******************************************************************
@@ -55,6 +54,7 @@ c     ------------------------------------------------------------------
       USE DE4MODULE,ONLY:HCLOSEDE4
       USE PCGMODULE,ONLY:HCLOSEPCG
       USE GMGMODULE,ONLY:HCLOSEGMG
+!gsf  USE PCGN,ONLY:HCLOSEPCGN
       USE GWFNWTMODULE,ONLY:Tol
       IMPLICIT NONE
 c     ------------------------------------------------------------------
@@ -65,7 +65,7 @@ c     ------------------------------------------------------------------
 c     Arguments
 c     ------------------------------------------------------------------
       INTEGER :: In, Iusip, Iude4, Iusor, Iupcg, Iulmg, Iugmg, 
-     +           Iunwt, Igrid
+     +           Iunwt, Igrid, Iupcgn
       CHARACTER(LEN=200) :: Fname                 !!08/19/02KJH-MODIFIED
 c     ------------------------------------------------------------------
 c     Local Variables
@@ -257,6 +257,7 @@ C-------SET SMALL DEPENDING ON CLOSURE CRITERIA OF THE SOLVER
       IF ( Iupcg.NE.0 ) SMALL = HCLOSEPCG
       IF ( Iulmg.NE.0 ) SMALL = 0.0D0  !LMG SETS HCLOSE TO ZERO
       IF ( Iugmg.NE.0 ) SMALL = HCLOSEGMG
+!gsf  IF ( Iupcgn.NE.0 ) SMALL = HCLOSEPCGN
       IF ( Iunwt.NE.0 ) SMALL = TOL
 c
 c-----SAVE POINTERS FOR GRID AND RETURN

@@ -116,7 +116,7 @@ C
         IF(KITER .EQ. 1) THEN
           WRITE(IUNITMHC,98)KPER,KSTP
  98       FORMAT('"Maximum head changes for Stress Period ',I5,
-     1         ', Time Step ',I5,'"')
+     1         ', Time Step',I6,'"') !gsf
           WRITE(IUNITMHC,99)
  99       FORMAT('Iteration,Max_chg,Layer,Row,Column,Damp,',
      1         'Hprev,Hcurr')

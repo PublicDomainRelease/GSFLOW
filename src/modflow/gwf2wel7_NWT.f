@@ -63,8 +63,8 @@ C2------CELL-BY-CELL FLOW TERMS.
       IF(IWELCB.GT.0) WRITE(IOUT,8) IWELCB
     8 FORMAT(1X,'CELL-BY-CELL FLOWS WILL BE SAVED ON UNIT ',I4)
     9 FORMAT(1X,'NEGATIVE PUMPING RATES WILL BE REDUCED IF HEAD '/
-     +       ' FALLS WITHIN THE INTERVAL PSIRAMP TIMES THE CELL '/
-     +       ' THICKNESS. THE VALUE SPECIFIED FOR PHISRAMP IS ',E12.5,/
+     +       ' FALLS WITHIN THE INTERVAL PHIRAMP TIMES THE CELL '/
+     +       ' THICKNESS. THE VALUE SPECIFIED FOR PHIRAMP IS ',E12.5,/
      +       ' WELLS WITH REDUCED PUMPING WILL BE '
      +       'REPORTED TO FILE UNIT NUMBER',I5)
 C
@@ -249,8 +249,10 @@ C     ******************************************************************
 C
 C        SPECIFICATIONS:
 C     ------------------------------------------------------------------
-      USE GLOBAL,       ONLY:IBOUND,RHS,HCOF,LBOTM,BOTM,HNEW,IOUT
-      USE GWFWELMODULE, ONLY:NWELLS,WELL,PSIRAMP
+      USE GLOBAL,       ONLY:IBOUND,RHS,LBOTM,BOTM,HNEW
+!!      USE GLOBAL,       ONLY:IBOUND,RHS,HCOF,LBOTM,BOTM,HNEW,IOUT
+      USE GWFWELMODULE, ONLY:NWELLS,WELL
+!!      USE GWFWELMODULE, ONLY:NWELLS,WELL,PSIRAMP
       USE GWFNWTMODULE, ONLY: A, IA, Heps, Icell
       USE GWFUPWMODULE, ONLY: LAYTYPUPW
 !External function interface
@@ -318,8 +320,10 @@ C     ------------------------------------------------------------------
      1                      HNEW
       USE GWFBASMODULE,ONLY:MSUM,ICBCFL,IAUXSV,DELT,PERTIM,TOTIM,
      1                      VBVL,VBNM
-      USE GWFWELMODULE,ONLY:NWELLS,IWELCB,WELL,NWELVL,WELAUX,PSIRAMP,
+      USE GWFWELMODULE,ONLY:NWELLS,IWELCB,WELL,NWELVL,WELAUX,
      1                      IUNITRAMP,IPRWEL
+!!      USE GWFWELMODULE,ONLY:NWELLS,IWELCB,WELL,NWELVL,WELAUX,PSIRAMP,
+!!     1                      IUNITRAMP,IPRWEL
       USE GWFUPWMODULE, ONLY: LAYTYPUPW
 !External function interface
       INTERFACE 
@@ -345,7 +349,7 @@ C1------BUDGET FLAG.
       RATIN=ZERO
       RATOUT=ZERO
       IBD=0
-      Qp = 0.0
+      Qp = 1.0
       IF(IWELCB.LT.0 .AND. ICBCFL.NE.0) IBD=-1
       IF(IWELCB.GT.0) IBD=ICBCFL
       IBDLBL=0
@@ -378,15 +382,15 @@ C5A-----GET LAYER, ROW & COLUMN OF CELL CONTAINING WELL.
       IL=WELL(1,L)
       Q=ZERO
 C
-C5B-----IF THE CELL IS NO-FLOW OR CONSTANT HEAD, IGNORE IT.
-      IF(IBOUND(IC,IR,IL).LE.0)GO TO 99
-C
 C5C-----GET FLOW RATE FROM WELL LIST.
       Q=WELL(4,L)
       QSAVE = Q
       bbot = Botm(IC, IR, Lbotm(IL))
       ttop = Botm(IC, IR, Lbotm(IL)-1)
       Hh = HNEW(ic,ir,il)
+C
+C5B-----IF THE CELL IS NO-FLOW OR CONSTANT HEAD, IGNORE IT.
+      IF(IBOUND(IC,IR,IL).LE.0)GO TO 99
       IF ( Q.LT.zero  .AND. Iunitnwt.NE.0) THEN
         IF ( LAYTYPUPW(il).GT.0 ) THEN
           Qp = smooth3(Hh,Ttop,Bbot,dQp)
@@ -398,7 +402,7 @@ C
 C5D-----PRINT FLOW RATE IF REQUESTED.
       IF(IBD.LT.0) THEN
          IF(IBDLBL.EQ.0) WRITE(IOUT,61) TEXT,KPER,KSTP
-   61    FORMAT(1X,/1X,A,'   PERIOD ',I4,'   STEP ',I3)
+   61    FORMAT(1X,/1X,A,'   PERIOD ',I4,'   STEP',I6) !gsf
          WRITE(IOUT,62) L,IL,IR,IC,Q
    62    FORMAT(1X,'WELL ',I6,'   LAYER ',I3,'   ROW ',I5,'   COL ',I5,
      1       '   RATE ',1PG15.6)
@@ -436,7 +440,7 @@ C5I-----COPY FLOW TO WELL LIST.
         iw1 = iw1 + 1
       END IF
   300 FORMAT(' WELLS WITH REDUCED PUMPING FOR STRESS PERIOD ',I5,
-     1      ' TIME STEP ',I5)
+     1      ' TIME STEP',I6) !gsf
   400 FORMAT('   LAY   ROW   COL         APPL.Q          ACT.Q',
      1       '        GW-HEAD       CELL-BOT')
   500 FORMAT(3I6,4E15.6)

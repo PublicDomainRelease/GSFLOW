@@ -2,72 +2,10 @@
  * United States Geological Survey
  *
  * PROJECT  : Modular Modeling System (MMS)
- * NAME     : alloc_space.c
- * AUTHOR   : Mike Dixon CADSWES March 1990
- * DATE     : Thu 20 Oct 1994
- * FUNCTION : alloc_space.c
+ * FUNCTION : alloc_space
  * COMMENT  : allocates space for variables
- * REF      :
- * REVIEW   :
- * PR NRS   :
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
- *
- *  $Revision: 4870 $
- *       $Log: alloc_space.c,v $
- *       Revision 1.19  1996/04/29 16:22:56  markstro
- *       Unknown
- *
- * Revision 1.18  1996/04/09  21:04:00  markstro
- * (1) Work on control files
- * (2) Runtime graphs
- *
- * Revision 1.17  1996/02/26  14:50:56  markstro
- * Some sensitivity work.
- *
- * Revision 1.16  1996/02/19  19:59:26  markstro
- * Now lints pretty clean
- *
- *       Revision 1.15  1994/11/23 20:12:40  markstro
- *       More malloc_dbg changes
- *
- * Revision 1.14  1994/11/22  17:19:08  markstro
- * (1) Cleaned up dimensions and parameters.
- * (2) Some changes due to use of malloc_dbg.
- *
- * Revision 1.13  1994/11/08  16:17:15  markstro
- * (1) More proto type fine tuning
- * (2) fixed up data file reading
- *
- * Revision 1.12  1994/10/24  14:18:07  markstro
- * (1)  Integration of CADSWES's work on GIS.
- * (2)  Prototypes were added to the files referenced in "mms_proto.h".
- *
- * Revision 1.11  1994/09/30  14:53:50  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.10  1994/03/07  21:19:57  markstro
- * Changes from TERRA
- *
- * Unknown
- *
- * Revision 1.8  1994/02/01  18:49:38  markstro
- * Made the declaration of read vars dynamic -- no more MAXREADVARS
- *
- * Revision 1.7  1994/02/01  18:35:01  markstro
- * Made the declaration of controls dynamic -- no more MAXCONTROLS
- *
- * Revision 1.6  1994/02/01  18:11:04  markstro
- * Made the declaration of dimensions dynamic -- no more MAXDIMENS
- *
- * Revision 1.5  1994/02/01  17:41:24  markstro
- * Made the declaration of parameters dynamic -- no more MAXPARAMS
- *
- * Revision 1.4  1994/02/01  17:14:06  markstro
- * Made the declaration of variables dynamic -- no more MAXVARS
- *
- * Revision 1.3  1994/01/31  20:15:54  markstro
- * Make sure that all source files have CVS log.
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
 -*/
 
@@ -76,15 +14,6 @@
 #include <string.h>
 #include "mms.h"
 
-/**2************************* LOCAL MACROS ****************************/
-
-/**3************************ LOCAL TYPEDEFS ***************************/
-
-/**4***************** DECLARATION LOCAL FUNCTIONS *********************/
-
-/**5*********************** LOCAL VARIABLES ***************************/
-
-/**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
 /*--------------------------------------------------------------------*\
  | FUNCTION     : alloc_space
  | COMMENT		:
@@ -112,7 +41,7 @@ void alloc_space (void) {
    * default dimension "one"
    */
 
-  decldim ("one", 1, 1, "Default dimension with value 1");
+  decldim ("one", 1, 1, "Dimension of scalar parameters and variables");
 
   /*
    * space for the public variable pointer array
@@ -164,60 +93,15 @@ void alloc_space (void) {
 	Mdatainfo = strdup ("Default case");
 }
 
-/**7****************** LOCAL FUNCTION DEFINITIONS *********************/
-
-/**8************************** TEST DRIVER ****************************/
-
 /*+
  * United States Geological Survey
  *
  * PROJECT  : Modular Modeling System (MMS)
- * NAME     : batch_run.c
- * AUTHOR   : Steve Markstrom (markstro)
- * DATE     : Thu 18 May 2005
  * FUNCTION : batch_run
  * COMMENT  : runs the MMS time loop
- * REF      :
- * REVIEW   :
- * PR NRS   :
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
-   $Revision: 4870 $
-        $Log: batch_run.c,v $
-        Revision 1.10  2000/02/18 18:27:03  markstro
-        Made previous Julian time a global.  It is set to -1.0 before the run
-        so that read_line knows to recalculate it.
-
-        Revision 1.9  1999/12/07 21:10:42  markstro
-        More nstep and init_var stuff
-
-        Revision 1.8  1999/10/22 17:14:35  markstro
-        Added private variables
-
-        Revision 1.7  1997/04/18 16:44:09  markstro
-        (1)  Commented out errno problem with opening files from fortran.
-        (2)  Put in checks for saving parameter file when loading new one.
-        (3)  Changes to runcontrol.c and timing.c unknown
-
-        Revision 1.6  1996/09/12 23:36:26  msbrewer
-        Added printf line to print "writing year" to screen.
-
-        Revision 1.5  1996/06/28 19:32:20  markstro
-        (1) Fixed 3d control window.
-        (2) Fixed stats.
-
- * Revision 1.4  1996/06/24  20:45:58  markstro
- * put rdb stuff into batch mode
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
-        Revision 1.3  1996/05/24 17:59:55  markstro
-        plot_widget curve data structure malloc fix
-
-        Revision 1.2  1996/02/19 19:59:28  markstro
-        Now lints pretty clean
-
-        Revision 1.1  1995/05/25 15:26:30  markstro
-        Initial version
-
 -*/
 
 /**1************************ INCLUDE FILES ****************************/
@@ -228,22 +112,14 @@ void alloc_space (void) {
 #include <errno.h>
 #include "mms.h"
 
-/**2************************* LOCAL MACROS ****************************/
-
-/**3************************ LOCAL TYPEDEFS ***************************/
-
 /**4***************** DECLARATION LOCAL FUNCTIONS *********************/
 extern int call_modules (char *);
 extern char *single_run_pre_init (void);
 extern char *single_run_post_init (void);
 extern char *single_run_pre_run (void);
 extern char *single_run_post_run (void);
-extern char *single_run_pre_cleanup (void);
 extern char *single_run_post_cleanup (void);
 
-/**5*********************** LOCAL VARIABLES ***************************/
-
-/**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
 /*--------------------------------------------------------------------*\
  | FUNCTION     : BATCH_run
  | COMMENT      :
@@ -275,7 +151,6 @@ int BATCH_run (void) {
 */
 
    M_stop_run = 0;
-   MuserFiles = 1;
    Mprevjt = -1.0;
 
    while(!endofdata) {
@@ -301,7 +176,7 @@ int BATCH_run (void) {
       }
    }
 
-   ret = single_run_pre_cleanup ();
+   ret = single_run_post_cleanup ();
    if (ret) return(1);
 
 /*
@@ -313,178 +188,20 @@ int BATCH_run (void) {
        return(1);
    }
 
-   ret = single_run_post_cleanup ();
-   if (ret) return(1);
-
    return(0);
 }
 
-/**7****************** LOCAL FUNCTION DEFINITIONS *********************/
-
-/**8************************** TEST DRIVER ****************************/
 /*+
  * United States Geological Survey
  *
  * PROJECT  : Modular Modeling System (MMS)
- * NAME     : single_run.c
- * AUTHOR   : Mike Dixon
- *            edited April 1991 - Jim Brannon
- *            August 1991 -Pedro Restrepo
- * DATE     : June March 1990
- * FUNCTION :
+ * FUNCTION : batch_run_functions
  * COMMENT  :
- * REF      :
- * REVIEW   :
- * PR NRS   :
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
-   $Revision: 4870 $
-        $Log: single_run.c,v $
-        Revision 1.47  2006/11/27 14:30:50  rsregan
-	changed GIS file to animation (ani) file
-
-        Revision 1.46  2000/08/01 14:30:50  markstro
-        Time steps coming out of storms
-
-        Revision 1.45  2000/04/19 15:59:17  markstro
-        Fixed init var stuff
-
-        Revision 1.44  2000/03/07 18:35:13  markstro
-        Fixed Mnstep reset for subsequent runs.
-
-        Revision 1.43  2000/02/22 17:10:22  markstro
-        Fixed the GIS output file stuff.
-
-        Revision 1.42  2000/02/18 18:27:08  markstro
-        Made previous Julian time a global.  It is set to -1.0 before the run
-        so that read_line knows to recalculate it.
-
-        Revision 1.41  1999/12/07 21:10:43  markstro
-        More nstep and init_var stuff
-
-        Revision 1.40  1998/01/07 18:22:51  markstro
-        Set precision of arc view GIS output files to 2 decimal places.
-
-        Revision 1.39  1997/12/12 18:03:12  markstro
-        Unknown
-
-        Revision 1.38  1997/11/13 17:13:36  markstro
-        unknown
-
-        Revision 1.37  1996/10/10 13:26:47  markstro
-        (1) Work on Rosenbrock
-        (2) Bug in fix dimension size
-
-        Revision 1.36  1996/06/28 19:32:32  markstro
-        (1) Fixed 3d control window.
-        (2) Fixed stats.
-
- * Revision 1.35  1996/05/24  17:59:58  markstro
- * plot_widget curve data structure malloc fix
- *
-        Revision 1.34  1996/05/14 02:42:08  msbrewer
-        Cleaned up cvs conflicts. Bug fixes in dump_to_db.
-
- *
- * Revision 1.32  1996/03/26  22:31:11  markstro
- * Work on GIS displayer.
- *
- * Revision 1.31  1996/03/14  21:11:21  markstro
- * Added runtime xmgr
- *
- * Revision 1.30  1996/02/19  20:01:10  markstro
- * Now lints pretty clean
- *
-        Revision 1.29  1996/01/23 18:44:25  markstro
-        Fixes for HP compiler
-
- * Revision 1.28  1995/11/24  14:35:50  markstro
- * Initial Purify work.
- * This is the version for Watershed Systems Modeling class 11/27 - 12/1, 1995
- *
- * Revision 1.27  1995/06/21  18:07:28  markstro
- * Scenario stuff
- *
- * Revision 1.26  1995/06/08  18:01:55  markstro
- * (1)  Fixed info window
- * (2)  Changed b functions to mem functions for solaris compatibility
- * (3)  Fixed default values in spreadsheet help
- *
- * Revision 1.25  1994/12/21  21:36:28  markstro
- * (1) Fixed ESP to work with multiple data files.
- * (2) Fixed Optimization to work with multiple data files.
- * (3) Fixed Sensitivity to work with multiple data files.
- *
- * Revision 1.24  1994/12/15  19:12:32  markstro
- * Changes for Christoph:  (1) More work on setting data file labels;
- * and (2) Fixed problems with empty display variable lists.
- *
- * Revision 1.23  1994/11/22  17:20:32  markstro
- * (1) Cleaned up dimensions and parameters.
- * (2) Some changes due to use of malloc_dbg.
- *
- * Revision 1.22  1994/11/10  23:26:49  markstro
- * (1)  Some memory fixes -- results of malloc_dbg.
- * (2)  More stuff removed from set menu.
- *
- * Revision 1.21  1994/11/09  22:10:51  markstro
- * GIS stuff out
- *
- * Revision 1.20  1994/11/08  16:17:47  markstro
- * (1) More proto type fine tuning
- * (2) fixed up data file reading
- *
- * Revision 1.19  1994/10/24  20:48:50  markstro
- * Hacked out the old text interface.
- *
- * Revision 1.18  1994/10/24  14:19:05  markstro
- * (1)  Integration of CADSWES's work on GIS.
- * (2)  Prototypes were added to the files referenced in "mms_proto.h".
- *
- * Revision 1.17  1994/09/30  14:55:18  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.16  1994/08/31  21:50:47  markstro
- * Unknown
- *
- * Revision 1.15  1994/08/02  17:46:43  markstro
- * Split data file capabilities
- *
- * Revision 1.14  1994/07/07  14:23:59  markstro
- * DG fixes
- *
- * Revision 1.13  1994/06/29  22:29:39  markstro
- * DG fixes
- *
- * Revision 1.12  1994/06/21  20:20:38  markstro
- * More work on taking the module name out of the DB keyword.
- *
- * Revision 1.11  1994/06/16  16:47:19  markstro
- * Worked over runcontrol.c
- *
- * Revision 1.10  1994/05/18  17:16:09  markstro
- * TERRA changed mhms to mms
- *
- * Revision 1.9  1994/05/11  14:29:41  markstro
- * Changes from TERRA
- *
- * Revision 1.8  1994/04/07  15:14:40  markstro
- * Work on autoconf system.
- * Cleaned up menu_bar variable.
- *
- * Revision 1.7  1994/03/25  22:06:50  markstro
- * TERRA chanages that use xmgr.
- *
- * Revision 1.6  1994/03/23  20:05:39  markstro
- * Changes from TERRA
- *
- * Revision 1.5  1994/03/11  21:16:44  markstro
- * Got rid of client_data data types.
- *
- * Revision 1.4  1994/01/31  20:17:30  markstro
- * Make sure that all source files have CVS log.
 -*/
+
 /**1************************ INCLUDE FILES ****************************/
 #include <stdlib.h>
 #include <stdio.h>
@@ -494,33 +211,24 @@ int BATCH_run (void) {
 #include <sys/stat.h>
 #include "mms.h"
 
-/**2************************* LOCAL MACROS ****************************/
-
-/**3************************ LOCAL TYPEDEFS ***************************/
-
-/**4***************** DECLARATION LOCAL FUNCTIONS *********************/
-
 /**5*********************** LOCAL VARIABLES ***************************/
   static FILE *statvar_file;
   static FILE **ani_out_files;
   static long nstatVars, naniVars;
   static char **statVar_names, **statVar_element;
   static char **aniVar_names;
-  static char statvar_path[MAXDATALNLEN];
-  static char ani_path[MAXDATALNLEN];
-  static char output_path[MAXDATALNLEN];
+  static char statvar_path[MAXPATHLEN];
+  static char ani_path[MAXPATHLEN];
   static char buf[256];
-  static long i, j, init_flag, stats_flag, ani_out_flag;
+  static long i, j, stats_flag, ani_out_flag;
   static char  *err_message, *c;
   static char   err[256];
   static int       started;
   static PUBVAR    **ani_out_vars, *var;
   static DIMEN **ani_out_dims, *dim;
+  static DIMEN *nhrudim, *ngwdim, *nssrdim, *foobar;
   static FILE **ani_var_files;
   static int num_ani_dims, found, k;
-  static char *pathname, *endptr;
-  static FILE *var_file;
-  static char line[MAXDATALNLEN];
   static DATETIME start_of_data, end_of_data;
 
 /**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
@@ -664,14 +372,26 @@ char *single_run_pre_init () {
 **  List of unique ANIMATION dimensions.
 */
     num_ani_dims = 0;
+    nhrudim = dim_addr("nhru");
+    ngwdim = dim_addr("ngw");
+    nssrdim = dim_addr("nssr");
     for (i = 0; i < naniVars; i++) {
        found = FALSE;
-       for (j = 0; j < num_ani_dims; j++)
-          if (ani_out_vars[i]->dimen[0] == ani_out_dims[j])
+       
+/* Reset ngw and nssr dimensions to nhru for the purposes of the animation file.*/
+       foobar = ani_out_vars[i]->dimen[0];
+       if (foobar == ngwdim || foobar == nssrdim) {
+          foobar = nhrudim;
+       }
+
+       for (j = 0; j < num_ani_dims; j++) {
+          if (foobar == ani_out_dims[j]) {
              found = TRUE;
+          }
+       }
 
        if (!found) {
-          ani_out_dims[j] = ani_out_vars[i]->dimen[0];
+          ani_out_dims[j] = foobar;
           num_ani_dims++;
        }
     }
@@ -689,7 +409,7 @@ char *single_run_pre_init () {
        }
 
        fprintf (ani_out_files[i], "#\n# Begin DBF\n");
-       fprintf (ani_out_files[i], "# timestamp,#FIELD_ISODATETIME,19,0\n");
+       fprintf (ani_out_files[i], "# timestamp,#FIELD_ISODATE,10,0\n");
        fprintf (ani_out_files[i], "# %s,#FIELD_DECIMAL,10,2\n", ani_out_dims[i]->name);
     }
 
@@ -697,8 +417,14 @@ char *single_run_pre_init () {
 **  Map each variable to a file.
 */
     for (i = 0; i < naniVars; i++) {
+/* Reset ngw and nssr dimensions to nhru for the purposes of the animation file.*/
+       foobar = ani_out_vars[i]->dimen[0];
+       if (foobar == ngwdim || foobar == nssrdim) {
+          foobar = nhrudim;
+       }
+
        for (j = 0; j < num_ani_dims; j++) {
-          if (ani_out_vars[i]->dimen[0] == ani_out_dims[j]) {
+          if (foobar == ani_out_dims[j]) {
              ani_var_files[i] = ani_out_files[j];
           }
        }
@@ -732,7 +458,7 @@ char *single_run_pre_init () {
 **  Write variable size line
 */
     for (i = 0; i < num_ani_dims; i++) {
-       fprintf (ani_out_files[i], "19d	10n");
+       fprintf (ani_out_files[i], "10d	10n");
     }
 
     for (i = 0; i < naniVars; i++) {
@@ -745,64 +471,14 @@ char *single_run_pre_init () {
   }
 
 /*
-* Open output file
-*/
-  (void)sprintf(output_path, "%s", *control_svar("model_output_file"));
-
-  if ((Moutfile = fopen(output_path, "w")) == NULL) {
-    (void)sprintf (err, "single_run: Could not open '%s'", output_path);
-    return (err);
-  }
-
-/*
-** Read the last nstep from the var init file if there is one
-*/
-  init_flag = *control_lvar("init_vars_from_file");
-
-   if (init_flag) {
-/*
-* get var name, open file
-*/
-      pathname = strdup (*control_svar("var_init_file"));
-
-      if ((var_file = fopen (pathname, "r")) == NULL) {
-         (void)fprintf(stderr, "WARNING - read_vars - cannot open file '%s'\n",
-                       pathname);
-/*
-         ufree(pathname);
-*/
-         return("WARNING - read_vars - cannot open file");
-      }
-
-/*
-* read in run info string
-*/
-      if (fgets(line, MAXDATALNLEN, var_file) == NULL) {
-         fclose(var_file);
-         return("WARNING - read_vars - no run info string");
-      }
-
-/*
-* read in last nstep
-*/
-      if (fgets(line, MAXDATALNLEN, var_file) == NULL) {
-         fclose(var_file);
-         return("WARNING - read_vars - no last nstep");
-      }
-
-      Mnsteps = strtol(&(line[11]), &endptr, 10);
-      fclose(var_file);
-  } else {
-/*
 **  set initial values of nsteps global variable if they
 **  don't come from the var init file
 */
     Mnsteps = 0;
-  }
+
 /*
 * initialize modules
 */
-  MuserFiles = 1;
 
   errno = 0;
   return(NULL);
@@ -817,50 +493,13 @@ char *single_run_pre_init () {
 \*--------------------------------------------------------------------*/
 char *single_run_post_init () {
 
-/*  DANGER -- commented out until we can figure out why errno
- *  **            always indicates an error with the sun fortran
- *  **            compiler.
-
-    if (errno) {
-        return ("single_run - module initialization");
-        perror (" ");
-	return;
-    }
-*/
-
-
-/* print initial debug information (start and end dates
-*/
-/*
-  initialDebugInfo();
-*/
-
-/*
-    if (errno) {
-        return ("single_run - initializing output tools");
-        perror (" ");
-	return;
-    }
-*/
-
   initializeRuntimeGraphs();
 
-/*
-* if required, initialize vars from file
-*/
-  init_flag = *control_lvar("init_vars_from_file");
-
-  if(init_flag) {
-    read_vars(*control_svar("var_init_file"));
-  } else {
 /*
 **  set initial values of nsteps global variable if they
 **  don't come from the var init file
 */
     Mnsteps = 0;
-  }
-
-  //printf ("Mnsteps = %ld\n", Mnsteps);
 
   started = FALSE;
 
@@ -875,48 +514,8 @@ char *single_run_post_init () {
  | RESTRICTIONS :
 \*--------------------------------------------------------------------*/
 char *single_run_pre_run () {
-	/*
-	static char nameToCheck[256], path[256];
-	struct stat stbuf;
-	char	*err;
-	*/
 
 	started = TRUE;
-
-
-/*
-*  print debug  information
-*/
-/*
-      runDebugInfo();
-*/
-	/* DANGER markstro commenting out this hardwired dynamic parameter stuff
-	 * Not sure how this got in here.
-	 
-	  strncpy (path, "C:\\markstro\\development\\prms\\dynamic_param_test\\input\\parameters\\imperv_area\\", 256);
-	  sprintf (nameToCheck, "%s%4ld%02ld%02ld%s", path, Mnowtime->year, Mnowtime->month, Mnowtime->day, '\0');
-
-
-	if (stat (nameToCheck, &stbuf) != -1) {
-		if (stbuf.st_size) {
-			printf ("single_run_pre_run: found %s\n", nameToCheck);
-
-			err = read_params (nameToCheck, 1);
-			if (err) {
-				(void)fprintf (stderr,"single_run_pre_run:  %s\n", err);
-				return (err);
-			}
-
-			updateparam ("hru_percent_imperv");
-
-		} else {
-			printf ("single_run_pre_run: found but empty %s\n", nameToCheck);
-
-		}
-	} else {
-		//printf ("single_run_pre_run: did not find %s\n", nameToCheck);
-	}
-*/
 
 	errno = 0;
 	return (NULL);
@@ -930,14 +529,6 @@ char *single_run_pre_run () {
  | RESTRICTIONS :
 \*--------------------------------------------------------------------*/
 char *single_run_post_run () {
-/*
-  if (errno) {
-
-                sprintf (err, "single_run: call to run modules\nLast time step run: %d %d %d %d %d %f\nerrno = %d\n", Mnowtime->year, Mnowtime->month, Mnowtime->day, Mnowtime->hour, Mnowtime->min, Mnowtime->sec, errno);
-                perror (err);
-                return (err);
-            }
-*/
 
       if (stats_flag)
          write_vstats (statvar_file);
@@ -957,34 +548,41 @@ char *single_run_post_run () {
 /*
 **  Write the current time stamp to the dimension file.
 */
-            fprintf (ani_out_files[i], "%4ld-%02ld-%02ld:%02ld:%02ld:%02ld\t%10ld",
+            fprintf (ani_out_files[i], "%4ld-%02ld-%02ld %10ld",
                      Mnowtime->year,
-                     Mnowtime->month, Mnowtime->day, Mnowtime->hour,
-                     Mnowtime->min, Mnowtime->sec, j + 1);
+                     Mnowtime->month, Mnowtime->day, j + 1);
 
 /*
 **  Write the variable values to the dimension file.
 */
                for (k = 0; k < naniVars; k++) {
                   var = ani_out_vars[k];
-                  if (var->dimen[0] == dim) {
+/*                  if (var->dimen[0] == dim) {
+*/
                      switch (var->type) {
                         case M_DOUBLE:
-                           fprintf (ani_var_files[k], "\t%10.3e",
+                           fprintf (ani_var_files[k], " %10.3e",
                                     *((double *) var->value + j));
                            break;
 
                         case M_FLOAT:
-                           fprintf (ani_var_files[k], "\t%14.6e",
+/*                           fprintf (ani_var_files[k], "\t%14.6e",
+*/
+                           fprintf (ani_var_files[k], " %10.3e",
                                     *((float *) var->value + j));
                            break;
 
                         case M_LONG:
+// markstro test
+//                           fprintf (ani_var_files[i], "\t%10ld",
+//                                    *((long *) var->value + j));
                            fprintf (ani_var_files[i], "\t%10ld",
-                                    *((long *) var->value + j));
+                                    *((int *) var->value + j));
                            break;
                      }
+/*
                   }
+*/
                }
                fprintf (ani_out_files[i], "\n");
             }
@@ -1048,34 +646,13 @@ char *single_run_post_cleanup () {
       for (i = 0; i < num_ani_dims; i++)
          fclose (ani_out_files[i]);
 
-/*
-      free (ani_out_files);
-*/
    }
-
-  fclose(Moutfile);
 
   closeRuntimeGraphs();
 
   if (!started) {
     return ("Run period outside of data in file.");
   }
-
-/*
-* compute statistics
-*/
-
-/*
-  if (stats_flag)
-      if (stats())
-          return ("Problem with statistics.");
-*/
-
-/*
-* if required, save vars to file
-*/
-  if (*control_lvar("save_vars_to_file"))
-    save_vars (*control_svar("var_save_file"));
 
 /*
 * if required, save vars to file
@@ -1086,40 +663,14 @@ char *single_run_post_cleanup () {
 
    return (NULL);
 }
-
-/**7****************** LOCAL FUNCTION DEFINITIONS *********************/
-
-/**8************************** TEST DRIVER ****************************/
-
 /*+
  * United States Geological Survey
  *
- * PROJECT  : BMAT
- * NAME     : build_lists.c
- * AUTHOR   : Steve Markstrom (markstro)
- * DATE     : Wed 04 Jan 1995
- * FUNCTION :
+ * PROJECT  : Modular Modeling System (MMS)
+ * FUNCTION : build_lists
  * COMMENT  :
- * REF      :
- * REVIEW   :
- * PR NRS   :
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
- *
-   $Revision: 4870 $
-        $Log: build_lists.c,v $
-        Revision 1.4  1996/04/09 21:04:02  markstro
-        (1) Work on control files
-        (2) Runtime graphs
-
- * Revision 1.3  1996/02/19  19:59:30  markstro
- * Now lints pretty clean
- *
-        Revision 1.2  1996/01/23 18:44:08  markstro
-        Fixes for HP compiler
-
- * Revision 1.1  1996/01/23  16:49:35  markstro
- * Initial version
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
 -*/
 
@@ -1135,13 +686,6 @@ char *single_run_post_cleanup () {
 #define INPUT  1
 #define OUTPUT  2
 
-/**3************************ LOCAL TYPEDEFS ***************************/
-
-/**4***************** DECLARATION LOCAL FUNCTIONS *********************/
-
-/**5*********************** LOCAL data ***************************/
-
-/**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
 /*--------------------------------------------------------------------*\
  | FUNCTION     : ALLOC_list
  | COMMENT      :
@@ -1221,62 +765,14 @@ void ADD_to_list (LIST *list, void *itm) {
 	list->itm[list->count++] = itm;
 }
 
-/**7****************** LOCAL FUNCTION DEFINITIONS *********************/
-
-/**8************************** TEST DRIVER ****************************/
-
 /*+
  * United States Geological Survey
  *
- * PROJECT  : Modular Modelling System (MMS)
- * NAME     : check_vars.c
- * AUTHOR   : Steve Markstrom (markstro)
- * DATE     : Thu 16 Dec 1993
- * FUNCTION :
+ * PROJECT  : Modular Modeling System (MMS)
+ * FUNCTION : check_vars
  * COMMENT  :
- * REF      :
- * REVIEW   :
- * PR NRS   :
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
- *
-   $Revision: 4870 $
-        Revision 1.12  2006/11/27  rsregan
-	change gis to ani
-
-        $Log: check_vars.c,v $
-        Revision 1.11  1997/11/13 17:13:28  markstro
-        unknown
-
-        Revision 1.10  1996/02/19 19:59:33  markstro
-        Now lints pretty clean
-
-        Revision 1.9  1994/12/15 19:12:30  markstro
-        Changes for Christoph:  (1) More work on setting data file labels;
-        and (2) Fixed problems with empty display variable lists.
-
- * Revision 1.8  1994/11/08  16:17:16  markstro
- * (1) More proto type fine tuning
- * (2) fixed up data file reading
- *
- * Revision 1.7  1994/10/24  14:18:09  markstro
- * (1)  Integration of CADSWES's work on GIS.
- * (2)  Prototypes were added to the files referenced in "mms_proto.h".
- *
- * Revision 1.6  1994/09/30  14:53:52  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.5  1994/07/07  14:23:53  markstro
- * DG fixes
- *
- * Revision 1.4  1994/06/21  20:20:20  markstro
- * More work on taking the module name out of the DB keyword.
- *
- * Revision 1.3  1994/05/11  14:29:30  markstro
- * Changes from TERRA
- *
- * Revision 1.2  1994/01/31  20:15:57  markstro
- * Make sure that all source files have CVS log.
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
 -*/
 
@@ -1284,16 +780,6 @@ void ADD_to_list (LIST *list, void *itm) {
 #define CHECK_VARS_C
 #include <string.h>
 #include "mms.h"
-
-/**2************************* LOCAL MACROS ****************************/
-
-/**3************************ LOCAL TYPEDEFS ***************************/
-
-/**4***************** DECLARATION LOCAL FUNCTIONS *********************/
-
-/**5*********************** LOCAL VARIABLES ***************************/
-
-/**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
 
 /*--------------------------------------------------------------------*\
  | FUNCTION     : CHECK_stat_vars
@@ -1344,7 +830,7 @@ char * CHECK_disp_vars (void) {
        static char	err_message[256];
 	int		status = 0;
 	int		i, j;
-	char	buf[MAXDATALNLEN], buf0[MAXDATALNLEN], buf1[MAXDATALNLEN], buf2[MAXDATALNLEN];
+	char	buf[MAXVARLEN], buf0[MAXVARLEN], buf1[MAXVARLEN], buf2[MAXVARLEN];
 	char	*dv_name, *dv_index, *ptr;
 
 	for (i = 0; i < *(control_lvar ("ndispGraphs")); i++) {
@@ -1371,7 +857,6 @@ char * CHECK_disp_vars (void) {
 	else
 		return (NULL);
 }
-
 
 /*--------------------------------------------------------------------*\
  | FUNCTION     : CHECK_ani_vars
@@ -1440,41 +925,17 @@ char *CHECK_map_vars (void) {
     else
         return (NULL);
 }
-/**7****************** LOCAL FUNCTION DEFINITIONS *********************/
-
-/**8************************** TEST DRIVER ****************************/
 
 /*+
  * United States Geological Survey
  *
  * PROJECT  : Modular Modeling System (MMS)
- * NAME     : control_addr.c
- * AUTHOR   : CADSWES
- * DATE     : Mon 08 Apr 1996
- * FUNCTION :
- * COMMENT  :
+ * FUNCTION : control_addr
  * returns a pointer to a CONTROL struct which contains the given key
  * returns NULL if key not found
- * REF      :
- * REVIEW   :
- * PR NRS   :
+ * COMMENT  :
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
- *
-   $Revision: 4870 $
-        $Log: control_addr.c,v $
-        Revision 1.5  1996/04/09 21:04:03  markstro
-        (1) Work on control files
-        (2) Runtime graphs
-
- * Revision 1.4  1996/02/19  19:59:34  markstro
- * Now lints pretty clean
- *
-        Revision 1.3  1994/09/30 14:53:53  markstro
-        Initial work on function prototypes.
-
- * Revision 1.2  1994/01/31  20:15:58  markstro
- * Make sure that all source files have CVS log.
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
 -*/
 
@@ -1484,11 +945,6 @@ char *CHECK_map_vars (void) {
 #include <string.h>
 #include "mms.h"
 
-/**2************************* LOCAL MACROS ****************************/
-
-/**3************************ LOCAL TYPEDEFS ***************************/
-
-/**4***************** DECLARATION LOCAL FUNCTIONS *********************/
 /*--------------------------------------------------------------------*\
  | FUNCTION     : control_addr
  | COMMENT		:
@@ -1510,47 +966,23 @@ CONTROL *control_addr (char *key) {
 	return (NULL);
 }
 
-/**7****************** LOCAL FUNCTION DEFINITIONS *********************/
+/*+
+ * United States Geological Survey
+ *
+ * PROJECT  : Modular Modeling System (MMS)
+ * FUNCTION : control_array - generic, returns (char *) as a generic pointer
+ *            control_larray - returns long *
+ *            control_farray - returns float *
+ *            control_darray - returns double *
+ *            control_sarray - returns char ** - string
+ *            These return pointers to particular elements in a control array.
+ * COMMENT  : control_array routines
+ *
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
+ *
+-*/
 
-/**8************************** TEST DRIVER ****************************/
-
-/*************************************************************************
- * control_array routines
- *
- * These return pointers to particular elements
- * in a control array.
- *
- * control_array - generic, returns (char *) as a generic pointer
- * control_larray - returns long *
- * control_farray - returns float *
- * control_darray - returns double *
- * control_sarray - returns char ** - string
-
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
- *
-   $Revision: 4870 $
-        $Log: control_array.c,v $
-        Revision 1.7  1996/02/19 19:59:35  markstro
-        Now lints pretty clean
-
-        Revision 1.6  1995/02/01 17:47:16  markstro
-        Addition of Rosenbrock optimization.  Start of sensitivity.  Many bug fixes.
-
- * Revision 1.5  1994/11/22  17:19:11  markstro
- * (1) Cleaned up dimensions and parameters.
- * (2) Some changes due to use of malloc_dbg.
- *
- * Revision 1.4  1994/11/08  16:17:17  markstro
- * (1) More proto type fine tuning
- * (2) fixed up data file reading
- *
- * Revision 1.3  1994/09/30  14:53:54  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.2  1994/01/31  20:15:59  markstro
- * Make sure that all source files have CVS log.
- *
- *************************************************************************/
+/**1************************ INCLUDE FILES ****************************/
 #define CONTROL_ARRAY_C
 #include <stdlib.h>
 #include "mms.h"
@@ -1651,38 +1083,23 @@ double *control_darray (char *key, long ind) {
 char *control_sarray (char *key, long ind) {
   return control_array(key, ind);
 }
-/*************************************************************************
- * control_var.c : returns pointers to various control array entries
+/*+
+ * United States Geological Survey
  *
- * control_var - generic, returns (char *) as a generic pointer
- * control_lvar - returns long *
- * control_fvar - returns float *
- * control_dvar - returns double *
- * control_svar - returns char ** - string
+ * PROJECT  : Modular Modeling System (MMS)
+ * FUNCTION : control_var - generic, returns (char *) as a generic pointer
+ *            control_lvar - returns long *
+ *            control_fvar - returns float *
+ *            control_dvar - returns double *
+ *            control_svar - returns char ** - string
+ *            returns pointers to various control array entries
+ * COMMENT  :
+ *
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
+ *
+-*/
 
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
- *
-   $Revision: 4870 $
-        $Log: control_var.c,v $
-        Revision 1.6  1996/02/19 19:59:36  markstro
-        Now lints pretty clean
-
-        Revision 1.5  1994/11/22 17:19:13  markstro
-        (1) Cleaned up dimensions and parameters.
-        (2) Some changes due to use of malloc_dbg.
-
- * Revision 1.4  1994/11/08  16:17:18  markstro
- * (1) More proto type fine tuning
- * (2) fixed up data file reading
- *
- * Revision 1.3  1994/09/30  14:53:55  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.2  1994/01/31  20:16:00  markstro
- * Make sure that all source files have CVS log.
- *
- *************************************************************************/
-
+/**1************************ INCLUDE FILES ****************************/
 #define CONTROL_VAR_C
 #include <stdio.h>
 #include <stdlib.h>
@@ -1706,7 +1123,6 @@ char *control_var (char *key) {
 	    "ERROR - control_var - key '%s' not found.\n", key);
     exit(1);
   }
-
   return (char *) control->start_ptr;
 
 }
@@ -1754,6 +1170,7 @@ double *control_dvar (char *key) {
 char **control_svar (char *key) {
   return ((char **) control_var(key));
 }
+
 /*--------------------------------------------------------------------*\
  | FUNCTION     : control_string_
  | COMMENT		: called from fortran
@@ -1772,8 +1189,6 @@ long control_string_ (char *retval, char *tag, ftnlen len, ftnlen tlen) {
 	strncpy (retval, *control_svar(foo), len);
 	return 0;
 }
-
-
 
 /*--------------------------------------------------------------------*\
  | FUNCTION     : control_string_array_
@@ -1814,54 +1229,56 @@ long control_integer_ (int *retval, char *key, ftnlen len) {
 	*retval = *control_var(foo);
 	return 0;
 }
+
+/*--------------------------------------------------------------------*\
+ | FUNCTION     : control_integer_array_
+ | COMMENT		: called from fortran
+ | PARAMETERS   :
+ | RETURN VALUE : 
+ | RESTRICTIONS :
+\*--------------------------------------------------------------------*/
+long control_integer_array_ (int *retval, int *index, char *key, ftnlen tlen) {
+	char *foo;
+	long intVal;
+    long *longs;
+    int i;
+
+	foo = (char *) umalloc(tlen + 1);
+	strncpy(foo, key, tlen);
+	foo[tlen] = '\0';
+
+    longs = (long *) control_var(foo);
+    i = *index - 1;
+	intVal = *(longs+i);
+	*retval = (int)intVal;
+	return 0;
+}
+
+/*--------------------------------------------------------------------*\
+| FUNCTION     : control_file_name_
+| COMMENT		: called from fortran
+| PARAMETERS   :
+| RETURN VALUE :
+| RESTRICTIONS :
+\*--------------------------------------------------------------------*/
+long control_file_name_(char *retval, ftnlen tlen) {
+	char *foo;
+	foo = (char *)umalloc(tlen + 1);
+	strncpy(foo, MAltContFile, tlen);
+	foo[tlen] = '\0';
+	memset(retval, ' ', tlen);
+	strncpy(retval, foo, tlen);
+	return 0;
+}
 /*+
  * United States Geological Survey
  *
  * PROJECT  : Modular Modeling System (MMS)
- * NAME     : create_vstats.c
- * AUTHOR   : CADSWES
- * DATE     : Thu 20 Oct 1994
  * FUNCTION : create_vstats
  * COMMENT  : create linked list for stats variables
- * REF      :
- * REVIEW   :
- * PR NRS   :
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
-   $Revision: 4870 $
-        $Log: create_vstats.c,v $
-        Revision 1.10  1996/06/28 19:32:22  markstro
-        (1) Fixed 3d control window.
-        (2) Fixed stats.
-
- * Revision 1.9  1996/02/19  19:59:41  markstro
- * Now lints pretty clean
- *
-        Revision 1.8  1995/05/25 14:26:23  markstro
-        (1) Added batch mode
-        (2) Replaced "b" functions with "mem" versions
-
- * Revision 1.7  1994/11/22  17:19:17  markstro
- * (1) Cleaned up dimensions and parameters.
- * (2) Some changes due to use of malloc_dbg.
- *
- * Revision 1.6  1994/11/08  16:17:20  markstro
- * (1) More proto type fine tuning
- * (2) fixed up data file reading
- *
- * Revision 1.5  1994/10/24  14:18:13  markstro
- * (1)  Integration of CADSWES's work on GIS.
- * (2)  Prototypes were added to the files referenced in "mms_proto.h".
- *
- * Revision 1.4  1994/09/30  14:53:59  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.3  1994/06/21  20:20:23  markstro
- * More work on taking the module name out of the DB keyword.
- *
- * Revision 1.2  1994/01/31  20:16:04  markstro
- * Make sure that all source files have CVS log.
 -*/
 
 /**1************************ INCLUDE FILES ****************************/
@@ -1871,15 +1288,6 @@ long control_integer_ (int *retval, char *key, ftnlen len) {
 #include <stdlib.h>
 #include "mms.h"
 
-/**2************************* LOCAL MACROS ****************************/
-
-/**3************************ LOCAL TYPEDEFS ***************************/
-
-/**4***************** DECLARATION LOCAL FUNCTIONS *********************/
-
-/**5*********************** LOCAL VARIABLES ***************************/
-
-/**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
 /*--------------------------------------------------------------------*\
  | FUNCTION     : create_vstats
  | COMMENT		:
@@ -1923,10 +1331,11 @@ void create_vstats (void) {
 
 		if (curr_stat_list == NULL) {
 			curr_stat_list = (STAT_LIST_TYPE *)umalloc(sizeof(STAT_LIST_TYPE));
+			curr_stat_list->key = (char *) umalloc(max_data_ln_len * sizeof(char));
 			Mfirst_stat_list = curr_stat_list;
 		} else {
-			curr_stat_list->next =
-				(STAT_LIST_TYPE *)umalloc(sizeof(STAT_LIST_TYPE));
+			curr_stat_list->next =(STAT_LIST_TYPE *)umalloc(sizeof(STAT_LIST_TYPE));
+			curr_stat_list->next->key = (char *) umalloc(max_data_ln_len * sizeof(char));
 			curr_stat_list = curr_stat_list->next;
 		}
 
@@ -1949,62 +1358,14 @@ void create_vstats (void) {
 	}
 }
 
-/**7****************** LOCAL FUNCTION DEFINITIONS *********************/
-
-/**8************************** TEST DRIVER ****************************/
 /*+
  * United States Geological Survey
  *
  * PROJECT  : Modular Modeling System (MMS)
- * NAME     : decl_control.c
- * AUTHOR   :
- * DATE     :
  * FUNCTION : decl_control
  * COMMENT  : initializes a module variable entry in the memory database
- * REF      :
- * REVIEW   :
- * PR NRS   :
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
- *
-   $Revision: 4870 $
-        $Log: decl_control.c,v $
-        Revision 1.12  1996/04/09 21:04:05  markstro
-        (1) Work on control files
-        (2) Runtime graphs
-
- * Revision 1.11  1996/02/19  19:59:46  markstro
- * Now lints pretty clean
- *
-        Revision 1.10  1994/11/23 20:12:44  markstro
-        More malloc_dbg changes
-
- * Revision 1.9  1994/11/22  17:19:23  markstro
- * (1) Cleaned up dimensions and parameters.
- * (2) Some changes due to use of malloc_dbg.
- *
- * Revision 1.8  1994/11/08  16:17:24  markstro
- * (1) More proto type fine tuning
- * (2) fixed up data file reading
- *
- * Revision 1.7  1994/10/24  14:18:16  markstro
- * (1)  Integration of CADSWES's work on GIS.
- * (2)  Prototypes were added to the files referenced in "mms_proto.h".
- *
- * Revision 1.6  1994/09/30  14:54:05  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.5  1994/08/31  21:50:27  markstro
- * Unknown
- *
- * Revision 1.4  1994/02/01  21:17:10  markstro
- * Unknown
- *
- * Revision 1.3  1994/02/01  18:35:03  markstro
- * Made the declaration of controls dynamic -- no more MAXCONTROLS
- *
- * Revision 1.2  1994/01/31  20:16:07  markstro
- * Make sure that all source files have CVS log.
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
 -*/
 
@@ -2017,15 +1378,6 @@ void create_vstats (void) {
 
 /**************************************************************************/
 
-/**2************************* LOCAL MACROS ****************************/
-
-/**3************************ LOCAL TYPEDEFS ***************************/
-
-/**4***************** DECLARATION LOCAL FUNCTIONS *********************/
-
-/**5*********************** LOCAL VARIABLES ***************************/
-
-/**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
 /*--------------------------------------------------------------------*\
  | FUNCTION     : add_control
  | COMMENT		: This allocates a control structure and adds it to the
@@ -2199,72 +1551,18 @@ void decl_control_ (char *ckey, ftnint *ctype, ftnint *csize, void *value, ftnle
 	decl_control(key, type, size, value);
 	return;
 }
-/**7****************** LOCAL FUNCTION DEFINITIONS *********************/
-
-/**8************************** TEST DRIVER ****************************/
 /*+
  * United States Geological Survey
  *
  * PROJECT  : Modular Modeling System (MMS)
- * NAME     : decldim.c
- * AUTHOR   : CADSWES; modified by Steve Markstrom (markstro)
- * DATE     : 
  * FUNCTION : decldim() to be called from C
  *            decldim_() to be called from Fortran
  *            declfix() to be called from C
  *            declfix_() to be called from Fortran
  * COMMENT  : initializes an entry in the dimension database
- * REF      :
- * REVIEW   :
- * PR NRS   :
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
-   $Revision: 4870 $
-        $Log: decldim.c,v $
-        Revision 1.13  1996/09/10 16:25:21  markstro
-        Unknown
-
- * Revision 1.12  1996/04/29  16:22:59  markstro
- * Unknown
- *
- * Revision 1.11  1996/02/19  19:59:48  markstro
- * Now lints pretty clean
- *
-        Revision 1.10  1994/11/23 20:12:45  markstro
-        More malloc_dbg changes
-
- * Revision 1.9  1994/11/22  17:19:24  markstro
- * (1) Cleaned up dimensions and parameters.
- * (2) Some changes due to use of malloc_dbg.
- *
- * Revision 1.8  1994/10/24  14:18:17  markstro
- * (1)  Integration of CADSWES's work on GIS.
- * (2)  Prototypes were added to the files referenced in "mms_proto.h".
- *
- * Revision 1.7  1994/09/30  14:54:07  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.6  1994/09/15  17:22:43  markstro
- * Added the call declfix to the system for declaring fixed dimensions.
- *
- * Revision 1.5  1994/09/09  14:56:23  markstro
- * (1)  Fixed up main edit menu.
- * (2)  Added a "notes" field to dimension indicies
- * (3)  A little more Rosenbrock work.
- * (4)  Fixed the list selector -- changed button names & first item
- *      selected by default.
- * (5)  Modified spread sheet help to be able to display dimension notes
- * (6)  Ran some source through "cb"
- *
- * Revision 1.4  1994/02/01  21:17:11  markstro
- * Unknown
- *
- * Revision 1.3  1994/02/01  18:11:05  markstro
- * Made the declaration of dimensions dynamic -- no more MAXDIMENS
- *
- * Revision 1.2  1994/01/31  20:16:08  markstro
- * Make sure that all source files have CVS log.
 -*/
 
 /**1************************ INCLUDE FILES ****************************/
@@ -2272,14 +1570,6 @@ void decl_control_ (char *ckey, ftnint *ctype, ftnint *csize, void *value, ftnle
 #include <stdio.h>
 #include <string.h>
 #include "mms.h"
-
-/**2************************* LOCAL MACROS ****************************/
-
-/**3************************ LOCAL TYPEDEFS ***************************/
-
-/**4***************** DECLARATION LOCAL FUNCTIONS *********************/
-
-/**5*********************** LOCAL VARIABLES ***************************/
 
 /**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
 /*--------------------------------------------------------------------*\
@@ -2319,16 +1609,7 @@ long decldim_ (char *dname, ftnint *dval, ftnint *dmax, char *ddescr, ftnlen nam
 
 	retval = decldim(name, value, max, descr);
 
-/*
-* free up strings 
-*/
-
-/*
-	ufree(name);
-	ufree(descr);
-*/
 	return(retval);
-
 }
 
 /*--------------------------------------------------------------------*\
@@ -2344,7 +1625,6 @@ long decldim (char *name, long value, long max, char *descr) {
 /*
 * check that name does not already exist
 */
-
 
 	dim = dim_addr(name);
    if (dim != NULL) {
@@ -2439,43 +1719,13 @@ long declfix_ (char *dname, ftnint *dval, ftnint *dmax, char *ddescr, ftnlen nam
 
 	return (ret);
 }
-
 /*--------------------------------------------------------------------*\
- | FUNCTION     : declmodule
- | COMMENT		: Called from C to set the version id for the module.
+ | FUNCTION     : getmodule
+ | COMMENT		:
  | PARAMETERS   :
  | RETURN VALUE : 
  | RESTRICTIONS :
 \*--------------------------------------------------------------------*/
-long declmodule (char *mod_name, char * modType, char *id) {
-	char *foo, *cp;
-
-	printf ("%s %s, version: %s\n", modType, mod_name, id);
-
-	foo = strdup (id);
-	foo = foo + 5;
-	cp = strchr (foo, '.');
-	if (cp != NULL) {
-		*cp = '\0';
-	}
-	
-	current_module = (MODULE_DATA *) umalloc (sizeof(MODULE_DATA));
-	current_module->name = strdup (mod_name);
-	current_module->version = strdup (id);
-	current_module->params = ALLOC_list ("params", 0, 100);
-	current_module->vars = ALLOC_list ("vars", 0, 100);
-
-    ADD_to_list (module_db, current_module);
-
-	return 0;
-}
-///*--------------------------------------------------------------------*\
-// | FUNCTION     : getmodule
-// | COMMENT		:
-// | PARAMETERS   :
-// | RETURN VALUE : 
-// | RESTRICTIONS :
-//\*--------------------------------------------------------------------*/
 //MODULE_DATA * getmodule (char *key) { 
 //	MODULE_DATA *module;
 //	long i;
@@ -2490,132 +1740,16 @@ long declmodule (char *mod_name, char * modType, char *id) {
 //	/* if no match found, return null */
 //	return NULL;
 //}
-
-/*--------------------------------------------------------------------*\
- | FUNCTION     : declmodule_
- | COMMENT		: called from Fortran to set the version id for the module.
- | PARAMETERS   :
- | RETURN VALUE : 
- | RESTRICTIONS :
-\*--------------------------------------------------------------------*/
-long declmodule_ (char *mn, char *mt, char *id, ftnlen mnlen , ftnlen mtlen , ftnlen idlen) {
-	char *id_foo;
-	char *mt_foo;
-	char *mn_foo;
-
-/*
-* copy args to new strings, and terminate correctly
-*/
-	id_foo = (char *) umalloc(idlen + 1);
-	strncpy(id_foo, id, idlen);
-	id_foo[idlen] = '\0';
-
-	mt_foo = (char *) umalloc(mtlen + 1);
-	strncpy(mt_foo, mt, mtlen);
-	mt_foo[mtlen] = '\0';
-
-	mn_foo = (char *) umalloc(mnlen + 1);
-	strncpy(mn_foo, mn, mnlen);
-	mn_foo[mnlen] = '\0';
-
-	declmodule (mn_foo, mt_foo, id_foo);
-	return 0;
-}
-
-/**7****************** LOCAL FUNCTION DEFINITIONS *********************/
-
-/**8************************** TEST DRIVER ****************************/
-
 /*+
  * United States Geological Survey
  *
  * PROJECT  : Modular Modeling System (MMS)
- * NAME     : declparam.c
- * AUTHOR   : CADSWES
- * DATE     : 
- * FUNCTION :
+ * FUNCTION : declparam() to be called from C
+ *            declparam_() to be called from Fortran
+ *            Returns 0 if successful, 1 otherwise.
  * COMMENT  : initializes a module variable entry in the memory database
  *
- *      There are 2 functions: declparam() to be called from C
- *                             declparam_() to be called from Fortran
- *
- *      Returns 0 if successful, 1 otherwise.
- * REF      :
- * REVIEW   :
- * PR NRS   :
- *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
- *
-   $Revision: 4870 $
-        $Log: declparam.c,v $
-        Revision 1.21  2001/05/04 20:58:22  markstro
-        Added the xml print file
-
-        Revision 1.20  1996/09/10 16:25:22  markstro
-        Unknown
-
- * Revision 1.19  1996/02/19  19:59:50  markstro
- * Now lints pretty clean
- *
-        Revision 1.18  1995/06/08 18:01:49  markstro
-        (1)  Fixed info window
-        (2)  Changed b functions to mem functions for solaris compatibility
-        (3)  Fixed default values in spreadsheet help
-
- * Revision 1.17  1995/03/20  22:44:35  markstro
- * DG changes
- *
- * Revision 1.16  1995/02/10  23:58:25  markstro
- * Bug fixes for class
- *
- * Revision 1.15  1995/02/01  17:47:21  markstro
- * Addition of Rosenbrock optimization.  Start of sensitivity.  Many bug fixes.
- *
- * Revision 1.14  1994/11/25  18:13:40  markstro
- * unknown
- *
- * Revision 1.13  1994/11/22  17:19:25  markstro
- * (1) Cleaned up dimensions and parameters.
- * (2) Some changes due to use of malloc_dbg.
- *
- * Revision 1.12  1994/10/24  14:18:18  markstro
- * (1)  Integration of CADSWES's work on GIS.
- * (2)  Prototypes were added to the files referenced in "mms_proto.h".
- *
- * Revision 1.11  1994/10/13  17:53:35  markstro
- * (1) Added annotation to parameter values through the spreadsheet
- * (2) Included <string.h> in a few more files that needed it.
- *
- * Revision 1.10  1994/09/30  14:54:08  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.9  1994/09/20  21:58:43  markstro
- * Got rid of some compiler warnings
- *
- * Revision 1.8  1994/09/13  16:23:13  markstro
- * Added "bounded" check to parameter db verification.
- *
- * Revision 1.7  1994/09/13  15:20:21  markstro
- * (1) Check to make sure that parameters being declared are consistent wit
- *     parameters already declared.
- * (2) Ran through cb and put in headers.
- *
- * Revision 1.6  1994/06/16  16:47:06  markstro
- * Worked over runcontrol.c
- *
- * Revision 1.5  1994/06/13  18:40:27  markstro
- * When there are declarations of the same parameter from different modules
- * there is no longer an error message.  The modules now just use the same
- * entry in the parameter DB.
- *
- * Revision 1.4  1994/02/01  21:17:12  markstro
- * Unknown
- *
- * Revision 1.3  1994/02/01  17:41:25  markstro
- * Made the declaration of parameters dynamic -- no more MAXPARAMS
- *
- * Revision 1.2  1994/01/31  20:16:09  markstro
- * Make sure that all source files have CVS log.
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
 -*/
 
@@ -2625,10 +1759,6 @@ long declmodule_ (char *mn, char *mt, char *id, ftnlen mnlen , ftnlen mtlen , ft
 #include <stdio.h>
 #include <string.h>
 #include "mms.h"
-
-/**2************************* LOCAL MACROS ****************************/
-
-/**3************************ LOCAL TYPEDEFS ***************************/
 
 /**4***************** DECLARATION LOCAL FUNCTIONS *********************/
 static int CHECK_param_in_db (char *, char *, char *, int,
@@ -2752,12 +1882,8 @@ long declparam_u (char *module, char *name, char *dimen, char *type, char *value
 
 	param->references[param->num_references++] = var;
 
-	//((float *)(var))[0] = 1234.5;
-	//((float *)(var))[1] = 234.5;
-
 	return 0;
 }
-
 
 /*--------------------------------------------------------------------*\
  | FUNCTION     : declparam_
@@ -2827,23 +1953,7 @@ long declparam_ (char *mname, char *pname, char *pdimen, char *ptype,
 	retval = declparam(module, name, dimen, type, value,
 	    minimum, maximum, descr, help, units);
 
-/*
-* free up strings 
-*/
-
-//      ufree(module);
-//      ufree(name);
-//      ufree(dimen);
-//      ufree(type);
-//      ufree(value);
-//      ufree(minimum);
-//      ufree(maximum);
-//      ufree(descr);
-//      ufree(help);
-//      ufree(units);
-
 	return(retval);
-
 }
 
 /*--------------------------------------------------------------------*\
@@ -2887,13 +1997,6 @@ long declparam (char *module, char *name, char *dimen, char *type, char *value,
 	if (!(var_type = VAR_type (type)))
 		return (0);
 
-//Not sure why this stuff is needed. Don't seem to be using it
-	//// DANGER - markstro - this overrides the module name that is passed in
-	//// from the module and replaces it with the name of the last module that
-	//// called declmodule
-	//module = current_module->name;
-	//ADD_to_list (current_module->params, pkey);
-
 	if (CHECK_param_in_db (pkey, module, dimen, var_type, value,
 									minimum, maximum, descr, help, units)) {
 		return (0);
@@ -2932,6 +2035,11 @@ long declparam (char *module, char *name, char *dimen, char *type, char *value,
 /*
 * determine dimensions
 */
+	if (dimen == NULL) { // If dimen is NULL then this is a mapping parameter declared by read_params and not any module.  Most of the information is unknown so return.
+		sort_params();
+		return(0);
+	}
+
 	tmpdimen = strdup (dimen);
 	token = strtok (tmpdimen, ",");
 
@@ -2959,7 +2067,6 @@ long declparam (char *module, char *name, char *dimen, char *type, char *value,
 		param->dimen[i++] = dim_addr (token);
 		token = strtok ((char *) NULL, ",");
 	}
-//      ufree (tmpdimen);
 
 /*
 * check to see if the parameter values are to be bounded by a dimension.
@@ -3027,9 +2134,9 @@ long declparam (char *module, char *name, char *dimen, char *type, char *value,
 /*
 **	Set up the pointers to the description strings.
 */
-	param->value_desc = (char **)umalloc (param->size * sizeof (char *));
-	for (i = 0; i < param->size; i++)
-		param->value_desc[i] = NULL;
+//	param->value_desc = (char **)umalloc (param->size * sizeof (char *));
+//	for (i = 0; i < param->size; i++)
+//		param->value_desc[i] = NULL;
 
 	sort_params();
 	return(0);
@@ -3150,9 +2257,6 @@ long declparam_p (char *module, char *name, char *dimen, char *type, char *value
 
 	param->references[param->num_references++] = var;
 
-	//((float *)(var))[0] = 1234.5;
-	//((float *)(var))[1] = 234.5;
-
 	return 0;
 }
 
@@ -3265,67 +2369,20 @@ static int VAR_type (char *type) {
 	(void)fprintf(stderr, "ERROR - declparam - type '%s' is illegal.\n", type);
 		return (0);
 }
+/*+
+ * United States Geological Survey
+ *
+ * PROJECT  : Modular Modeling System (MMS)
+ * FUNCTION : declvar() to be called from C
+ *            declvar_() to be called from Fortran
+ *            Returns 0 if successful, 1 otherwise.
+ * COMMENT  : initializes a module variable entry in the memory database
+ *
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
+ *
+-*/
 
-/**8************************** TEST DRIVER ****************************/
-
-/**************************************************************************
- * declvar.c: initializes a module variable entry in the memory database
- *
- * There are 2 functions: declvar() to be called from C
- *                        declvar_() to be called from Fortran
- *
- * Returns 0 if successful, 1 otherwise.
-
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
- *
-   $Revision: 4870 $
-        $Log: declvar.c,v $
-        Revision 1.17  1999/10/22 17:14:35  markstro
-        Added private variables
-
-        Revision 1.16  1996/02/19 19:59:51  markstro
-        Now lints pretty clean
-
-        Revision 1.15  1995/11/25 02:42:12  markstro
-        Reading unit vs. daily data files.
-
- * Revision 1.14  1994/11/23  20:12:46  markstro
- * More malloc_dbg changes
- *
- * Revision 1.13  1994/11/22  17:19:26  markstro
- * (1) Cleaned up dimensions and parameters.
- * (2) Some changes due to use of malloc_dbg.
- *
- * Revision 1.12  1994/11/08  16:17:26  markstro
- * (1) More proto type fine tuning
- * (2) fixed up data file reading
- *
- * Revision 1.11  1994/10/24  14:18:20  markstro
- * (1)  Integration of CADSWES's work on GIS.
- * (2)  Prototypes were added to the files referenced in "mms_proto.h".
- *
- * Revision 1.10  1994/09/30  14:54:09  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.9  1994/06/21  20:20:24  markstro
- * More work on taking the module name out of the DB keyword.
- *
- * Revision 1.8  1994/06/16  16:47:07  markstro
- * Worked over runcontrol.c
- *
- * Revision 1.7  1994/02/01  21:17:13  markstro
- * Unknown
- *
- * Revision 1.6  1994/02/01  17:41:26  markstro
- * Made the declaration of parameters dynamic -- no more MAXPARAMS
- *
- * Revision 1.5  1994/02/01  17:14:07  markstro
- * Made the declaration of variables dynamic -- no more MAXVARS
- *
- * Revision 1.4  1994/01/31  20:16:10  markstro
- * Make sure that all source files have CVS log.
- *
- **************************************************************************/
+/**1************************ INCLUDE FILES ****************************/
 #define DECLVAR_C
 #include <stdio.h>
 #include <string.h>
@@ -3389,17 +2446,6 @@ long declvar_ (char *mname, char *vname, char *vdimen, ftnint *maxsizeptr,
 
   retval = declvar(module, name, dimen, maxsize, type, help, units, value);
 
-  /*
-   * free up allocated strings
-   */
-
-//ufree(module);
-//ufree(name);
-//ufree(dimen);
-//ufree(type);
-//ufree(help);
-//ufree(units);
-
   return(retval);
 
 }
@@ -3421,7 +2467,6 @@ long declvar (char *module, char *name, char *dimen, long maxsize, char *type,
   long i, size;
 
   PUBVAR **vars, *var;
-  //MODULE_DATA *mod_data;
 
   /*
    * realloc if too large
@@ -3438,11 +2483,6 @@ long declvar (char *module, char *name, char *dimen, long maxsize, char *type,
    */
 
   vkey = strdup (name);
-/*
-  vkey = (char *)umalloc (strlen(name));
-  (void)strcpy(vkey, module);
-  strcat(strcat(vkey, "."), name);
-*/
 
   if (var_addr(vkey) != NULL) {
 	  if (print_mode) {
@@ -3452,11 +2492,6 @@ long declvar (char *module, char *name, char *dimen, long maxsize, char *type,
 	      "ERROR - declvar - key '%s' already exists.\n", vkey);
               return(1); }
   }
-
-// Not sure why this stuff is needed, so I commented it out.
-
-	//mod_data = getmodule(module);
-	//ADD_to_list (mod_data->vars, vkey);
 
   /*
    * convert fortran types to C equivalents
@@ -3543,8 +2578,6 @@ long declvar (char *module, char *name, char *dimen, long maxsize, char *type,
     token = strtok ((char *) NULL, ",");
     i++;
   }
-
-//ufree(tmpdimen);
 
   /*
    * get the size of the variable
@@ -3643,9 +2676,6 @@ long declpri_ (char *vname, ftnint *maxsizeptr,
   /*
    * free up allocated strings
    */
-
-//ufree(name);
-//ufree(type);
 
   return(retval);
 
@@ -3757,42 +2787,20 @@ long declpri (char *name, long size, char *type, char *value) {
    return(0);
 }
 
-/**************************************************************************
- * dim_addr.c: 
+/*+
+ * United States Geological Survey
  *
- * returns a pointer to a DIMEN struct which contains the given name
- * returns NULL if name not found
+ * PROJECT  : Modular Modeling System (MMS)
+ * FUNCTION : dim_addr
+ *            returns a pointer to a DIMEN struct which contains the given name
+ *            returns NULL if name not found
+ * COMMENT  :
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
-   $Revision: 4870 $
-        $Log: dim_addr.c,v $
-        Revision 1.7  1996/04/29 16:23:00  markstro
-        Unknown
+-*/
 
- * Revision 1.6  1996/02/19  19:59:52  markstro
- * Now lints pretty clean
- *
-        Revision 1.5  1994/11/22 17:19:28  markstro
-        (1) Cleaned up dimensions and parameters.
-        (2) Some changes due to use of malloc_dbg.
-
- * Revision 1.4  1994/09/30  14:54:11  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.3  1994/09/09  14:56:24  markstro
- * (1)  Fixed up main edit menu.
- * (2)  Added a "notes" field to dimension indicies
- * (3)  A little more Rosenbrock work.
- * (4)  Fixed the list selector -- changed button names & first item
- *      selected by default.
- * (5)  Modified spread sheet help to be able to display dimension notes
- * (6)  Ran some source through "cb"
- *
- * Revision 1.2  1994/01/31  20:16:13  markstro
- * Make sure that all source files have CVS log.
- *
- **************************************************************************/
+/**1************************ INCLUDE FILES ****************************/
 #define DIM_ADDR_C
 #include <stdio.h>
 #include <string.h>
@@ -3838,343 +2846,16 @@ char *dim_notes (char *ch_ptr) {
 
 	return (NULL);
 }
+
 /*+
  * United States Geological Survey
  *
  * PROJECT  : Modular Modeling System (MMS)
- * NAME     : dprint.c
- * AUTHOR   : Mike Dixon CADSWES CU August 1990
- * DATE     : Thu 20 Oct 1994
- * FUNCTION : dprint
- * COMMENT  : The following is a series of utility routines for printing
- *  to stderr from either Fortran or C modules. If the current debug level
- *  (Mdebuglevel) equals or exceeds that passed in the call, the
- *  print is performed.
- * 'dlevel' is the debug level passed by the print call
- * REF      :
- * REVIEW   :
- * PR NRS   :
- *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
- *
-   $Revision: 4870 $
-        $Log: dprint.c,v $
-        Revision 1.5  1996/02/19 19:59:54  markstro
-        Now lints pretty clean
-
-        Revision 1.4  1994/11/22 17:19:30  markstro
-        (1) Cleaned up dimensions and parameters.
-        (2) Some changes due to use of malloc_dbg.
-
- * Revision 1.3  1994/10/24  14:18:21  markstro
- * (1)  Integration of CADSWES's work on GIS.
- * (2)  Prototypes were added to the files referenced in "mms_proto.h".
- *
- * Revision 1.2  1994/01/31  20:16:16  markstro
- * Make sure that all source files have CVS log.
--*/
-
-/**1************************ INCLUDE FILES ****************************/
-
-//#define DPRINT_C
-//#include <string.h>
-//#include "mms.h"
-//
-///**2************************* LOCAL MACROS ****************************/
-//
-///**3************************ LOCAL TYPEDEFS ***************************/
-//
-///**4***************** DECLARATION LOCAL FUNCTIONS *********************/
-//
-///**5*********************** LOCAL VARIABLES ***************************/
-//
-///**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
-///*--------------------------------------------------------------------*\
-// | FUNCTION     : dpstr
-// | COMMENT		: print string
-// | dpstr_ is called from Fortran as 'call dpstr(string, dlevel)'
-// | dpstr is called from C as 'dpstr(string, dlevel)
-// | PARAMETERS   :
-// | RETURN VALUE : 
-// | RESTRICTIONS :
-//\*--------------------------------------------------------------------*/
-//void dpstr_ (char *str, ftnint *dlevel, ftnlen stringlen) {
-//
-//  char *string;
-//
-//  /*
-//   * act only if the current debug level equals or exceeds
-//   * that specified in the print
-//   */
-//
-//  if(*dlevel > Mdebuglevel)
-//    return;
-//
-//  /*
-//   * copy string to new string
-//   */
-//
-//  string = (char *) umalloc(stringlen + 1);
-//  strncpy(string, str, stringlen);
-//  string[stringlen] = '\0';
-//
-//  (void)fprintf(stderr, "%s\n", string);
-//  
-//  ufree(string);
-//
-//}
-//
-///*--------------------------------------------------------------------*\
-// | FUNCTION     : dpstr
-// | COMMENT		:
-// | PARAMETERS   :
-// | RETURN VALUE : 
-// | RESTRICTIONS :
-//\*--------------------------------------------------------------------*/
-//void dpstr (char *string, long dlevel) {
-//
-//  if(dlevel > Mdebuglevel)
-//    return;
-//
-//  (void)fprintf(stderr, "%s\n", string);
-//
-//}
-//
-///*--------------------------------------------------------------------*\
-// | FUNCTION     : dpint4_
-// | COMMENT		: The fortran call is:
-// |     call dpint4(string, array, n, dlevel)
-// | PARAMETERS   :
-// |     where 'string' is a string,
-// |           'array' is the INTEGER*4 of long array or scalar to be printed
-// |           'n' is the number of values in the array, 1 if a scalar.
-// |           'dlevel' is the debug level
-// | RETURN VALUE : 
-// | RESTRICTIONS :
-//\*--------------------------------------------------------------------*/
-//void dpint4_ (char *str, ftnint *array, ftnint *n, ftnint *dlevel, ftnlen stringlen) {
-//
-//  char *string;
-//  int i;
-//
-//  if(*dlevel > Mdebuglevel)
-//    return;
-//
-//  /*
-//   * copy string to new string
-//   */
-//
-//  string = (char *) umalloc(stringlen + 1);
-//  strncpy(string, str, stringlen);
-//  string[stringlen] = '\0';
-//
-//  (void)fprintf(stderr, "%s ",string);
-//
-//  for (i=0; i < *n; i++)
-///*
-//    (void)fprintf(stderr, " %ld",array[i]);
-//*/
-//    (void)fprintf(stderr, " %d",array[i]);
-//
-//  (void)fprintf(stderr, "\n");
-//
-//}
-//
-///*--------------------------------------------------------------------*\
-// | FUNCTION     : dplong
-// | COMMENT		: print long from C The C call is
-// |     dplong(string, array, n, dlevel)
-// | PARAMETERS   :where 'string' is a string,
-// |           'array' is the INTEGER*4 of long array or scalar to be printed
-// |           'n' is the number of values in the array, 1 if a scalar.
-// |           'dlevel' is the debug level
-// | RETURN VALUE : 
-// | RESTRICTIONS :
-//\*--------------------------------------------------------------------*/
-//void dplong (char *string, long *array, long n, long dlevel) {
-//
-//  int i;
-//
-//  if(dlevel > Mdebuglevel)
-//    return;
-//
-//  (void)fprintf(stderr, "%s ",string);
-//
-//  for (i=0; i < n; i++)
-//    (void)fprintf(stderr, " %ld", array[i]);
-//
-//  (void)fprintf(stderr, "\n");
-//
-//}
-
-/*--------------------------------------------------------------------*\
- | FUNCTION     : dpreal_
- | COMMENT		: print real array from Fortran
- | The fortran call is:
- |     call dpreal(string, array, n, dlevel)
- | PARAMETERS   : 'string' is a string,
- *           'array' is the REAL or float array or scalar to be printed
- *           'n' is the number of values in the array, 1 if a scalar.
- *           'dlevel' is the debug level
- | RETURN VALUE : 
- | RESTRICTIONS :
-\*--------------------------------------------------------------------*/
-//void dpreal_ (char *str, float *array, ftnint *n, ftnint *dlevel, ftnlen stringlen) {
-//  char *string;
-//  int i;
-//
-//  if(*dlevel > Mdebuglevel)
-//    return;
-//
-//  /*
-//   * copy string to new string
-//   */
-//
-//  string = (char *) umalloc(stringlen + 1);
-//  strncpy(string, str, stringlen);
-//  string[stringlen] = '\0';
-//
-//  (void)fprintf(stderr, "%s ",string);
-//
-//  for (i=0; i < *n; i++)
-//    (void)fprintf(stderr, " %10g", array[i]);
-//
-//  (void)fprintf(stderr, "\n");
-//}
-//
-///*--------------------------------------------------------------------*\
-// | FUNCTION     : dpfloat
-// | COMMENT		: print float array from C 
-// |   The C call is:
-// |     dpfloat(string, array, n, dlevel)
-// | PARAMETERS   : where 'string' is a string,
-// |           'array' is the REAL or float array or scalar to be printed
-// |           'n' is the number of values in the array, 1 if a scalar.
-// |           'dlevel' is the debug level
-// | RETURN VALUE : 
-// | RESTRICTIONS :
-//\*--------------------------------------------------------------------*/
-//void dpfloat (char *string, float *array, long n, long dlevel) {
-//  int i;
-//
-//  if(dlevel > Mdebuglevel)
-//    return;
-//
-//  (void)fprintf(stderr, "%s ",string);
-//
-//  for (i=0; i < n; i++)
-//    (void)fprintf(stderr, " %10g", array[i]);
-//
-//  (void)fprintf(stderr, "\n");
-//
-//}
-//
-///*--------------------------------------------------------------------*\
-// | FUNCTION     : dpdble_
-// | COMMENT		: print double precision array from Fortran
-// |  The fortran call is:
-// |     call dpdble (string, array, n, dlevel)
-// | PARAMETERS   : 'string' is a string,
-// |           'array' is the double precision array or scalar to be printed
-// |           'n' is the number of values in the array, 1 if a scalar.
-// |           'dlevel' is the debug level
-// | RETURN VALUE : 
-// | RESTRICTIONS :
-//\*--------------------------------------------------------------------*/
-//void dpdble_ (char *str, double *array, ftnint *n, ftnint *dlevel, ftnlen stringlen) {
-//
-//  char *string;
-//  int i;
-//
-//  if(*dlevel > Mdebuglevel)
-//    return;
-//
-//  /*
-//   * copy string to new string
-//   */
-//
-//  string = (char *) umalloc(stringlen + 1);
-//  strncpy(string, str, stringlen);
-//  string[stringlen] = '\0';
-//
-//  (void)fprintf(stderr, "%s ",string);
-//
-//  for (i=0; i < *n; i++)
-//    (void)fprintf(stderr, " %10lg", array[i]);
-//
-//  (void)fprintf(stderr, "\n");
-//
-//}
-//
-///*--------------------------------------------------------------------*\
-// | FUNCTION     : dpdble
-// | COMMENT		: print double array from C
-// | The fortran call is:
-// |     call dpdble(string, array, n, dlevel)
-// | PARAMETERS   : 'string' is a string,
-// |           'array' is the double precision array or scalar to be printed
-// |           'n' is the number of values in the array, 1 if a scalar.
-// |           'dlevel' is the debug level
-// | RETURN VALUE : 
-// | RESTRICTIONS :
-//\*--------------------------------------------------------------------*/
-//void dpdble (char *string, double *array, long n, long dlevel) {
-//
-//  int i;
-//
-//  if(dlevel > Mdebuglevel)
-//    return;
-//
-//  (void)fprintf(stderr, "%s ",string);
-//
-//  for (i=0; i < n; i++)
-//    (void)fprintf(stderr, " %10lg", array[i]);
-//
-//  (void)fprintf(stderr, "\n");
-//
-//}
-//
-///**7****************** LOCAL FUNCTION DEFINITIONS *********************/
-//
-///**8************************** TEST DRIVER ****************************/
-//
-/*+
- * United States Geological Survey
- *
- * PROJECT  : Modular Modeling System (MMS)
- * NAME     : free_vstats.c
- * AUTHOR   : CADSWES
- * DATE     : 
  * FUNCTION : free_vstats
  * COMMENT  : free linked list for stats variables
- * REF      :
- * REVIEW   :
- * PR NRS   :
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
-   $Revision: 4870 $
-        $Log: free_vstats.c,v $
-        Revision 1.7  1996/06/28 19:32:23  markstro
-        (1) Fixed 3d control window.
-        (2) Fixed stats.
-
- * Revision 1.6  1996/02/19  20:00:00  markstro
- * Now lints pretty clean
- *
-        Revision 1.5  1995/05/25 14:26:29  markstro
-        (1) Added batch mode
-        (2) Replaced "b" functions with "mem" versions
-
- * Revision 1.4  1994/10/24  14:18:25  markstro
- * (1)  Integration of CADSWES's work on GIS.
- * (2)  Prototypes were added to the files referenced in "mms_proto.h".
- *
- * Revision 1.3  1994/09/30  14:54:17  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.2  1994/01/31  20:16:23  markstro
- * Make sure that all source files have CVS log.
 -*/
 
 /**1************************ INCLUDE FILES ****************************/
@@ -4182,14 +2863,6 @@ char *dim_notes (char *ch_ptr) {
 #include <stdio.h>
 #include <string.h>
 #include "mms.h"
-
-/**2************************* LOCAL MACROS ****************************/
-
-/**3************************ LOCAL TYPEDEFS ***************************/
-
-/**4***************** DECLARATION LOCAL FUNCTIONS *********************/
-
-/**5*********************** LOCAL VARIABLES ***************************/
 
 /**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
 /*--------------------------------------------------------------------*\
@@ -4212,70 +2885,20 @@ void free_vstats (void) {
     while (curr_stat_list->next != NULL) {
       	prev_stat_list = curr_stat_list;
 		curr_stat_list = prev_stat_list->next;
-//    	ufree((char *)prev_stat_list);
     }
-//      ufree((char *)curr_stat_list);
+
 	Mfirst_stat_list = NULL;
   }
 }
-
-/**7****************** LOCAL FUNCTION DEFINITIONS *********************/
-
-/**8************************** TEST DRIVER ****************************/
-
 /*+
  * United States Geological Survey
  *
  * PROJECT  : Modular Modeling System (MMS)
- * NAME     : get_elem_add.c
- * AUTHOR   : Programmer: Pedro J. Restrepo
- *              University of Colorado, CADSWES, June, 1992
- * DATE     : Jun 1992
- * FUNCTION :
+ * FUNCTION : get_elem_add
  * COMMENT  : This file contains utility routines for multiple index arrays.
- * REF      :
- * REVIEW   :
- * PR NRS   :
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
-   $Revision: 4870 $
-        $Log: get_elem_add.c,v $
-        Revision 1.12  1996/02/19 20:00:01  markstro
-        Now lints pretty clean
-
-        Revision 1.11  1994/11/22 17:19:36  markstro
-        (1) Cleaned up dimensions and parameters.
-        (2) Some changes due to use of malloc_dbg.
-
- * Revision 1.10  1994/11/08  16:17:28  markstro
- * (1) More proto type fine tuning
- * (2) fixed up data file reading
- *
- * Revision 1.9  1994/10/24  14:18:27  markstro
- * (1)  Integration of CADSWES's work on GIS.
- * (2)  Prototypes were added to the files referenced in "mms_proto.h".
- *
- * Revision 1.8  1994/09/30  14:54:18  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.7  1994/08/02  17:46:31  markstro
- * Split data file capabilities
- *
- * Revision 1.6  1994/07/07  14:23:55  markstro
- * DG fixes
- *
- * Revision 1.5  1994/06/21  20:20:26  markstro
- * More work on taking the module name out of the DB keyword.
- *
- * Revision 1.4  1994/05/13  15:37:38  markstro
- * Changes from TERRA
- *
- * Revision 1.3  1994/05/11  14:29:31  markstro
- * Changes from TERRA
- *
- * Revision 1.2  1994/01/31  20:16:24  markstro
- * Make sure that all source files have CVS log.
 -*/
 
 /**1************************ INCLUDE FILES ****************************/
@@ -4284,14 +2907,6 @@ void free_vstats (void) {
 #include <ctype.h>
 #include <stdlib.h>
 #include "mms.h"
-
-/**2************************* LOCAL MACROS ****************************/
-
-/**3************************ LOCAL TYPEDEFS ***************************/
-
-/**4***************** DECLARATION LOCAL FUNCTIONS *********************/
-
-/**5*********************** LOCAL VARIABLES ***************************/
 
 /**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
 /*--------------------------------------------------------------------*\
@@ -4426,9 +3041,6 @@ int CheckIndices (char *key, char *elemString, int type) {
 			return(5);
 	}
 
-//      for (k = 0; k < nindex; k++) free((char *)strindx[k]);
-//      free((char *)strindx);
-//      free((char *)intindx);
 	return(0);
 }
   
@@ -4592,53 +3204,21 @@ char *GetElemAddress (char *key, char *elemString, int type) {
 	}
     return NULL;
 }
-/**7****************** LOCAL FUNCTION DEFINITIONS *********************/
-
-/**8************************** TEST DRIVER ****************************/
-
 /*+
  * United States Geological Survey
  *
  * PROJECT  : Modular Modeling System (MMS)
- * NAME     : get_times.c
- * AUTHOR   : Mike Dixon CADSWES
- * DATE     : March 1990
  * FUNCTION : get_times
  * COMMENT  : get start and end times from control data base
- * REF      :
- * REVIEW   :
- * PR NRS   :
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
-   $Revision: 4870 $
-        $Log: get_times.c,v $
-        Revision 1.5  1996/02/19 20:00:02  markstro
-        Now lints pretty clean
-
-        Revision 1.4  1994/10/24 14:18:30  markstro
-        (1)  Integration of CADSWES's work on GIS.
-        (2)  Prototypes were added to the files referenced in "mms_proto.h".
-
- * Revision 1.3  1994/09/30  14:54:20  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.2  1994/01/31  20:16:27  markstro
- * Make sure that all source files have CVS log.
 -*/
 
 /**1************************ INCLUDE FILES ****************************/
 #define GET_TIMES_C
 #include <stdio.h>
 #include "mms.h"
-
-/**2************************* LOCAL MACROS ****************************/
-
-/**3************************ LOCAL TYPEDEFS ***************************/
-
-/**4***************** DECLARATION LOCAL FUNCTIONS *********************/
-
-/**5*********************** LOCAL VARIABLES ***************************/
 
 /**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
 /*--------------------------------------------------------------------*\
@@ -4678,43 +3258,24 @@ void get_times (void) {
   Mdeltat = (double)(*newvalue / 24.0);
   Mdeltanext = (double)(*newvalue / 24.0);
 }
-
-/**7****************** LOCAL FUNCTION DEFINITIONS *********************/
-
-/**8************************** TEST DRIVER ****************************/
-
-/**************************************************************************
- * getdim.c: gets the dimension associated with a name, and
- * returns it as a long int. Returns -1 if error.
+/*+
+ * United States Geological Survey
  *
- * There are 2 functions: getdim() to be called from C
- *                        getdim_() to be called from Fortran
+ * PROJECT  : Modular Modeling System (MMS)
+ * FUNCTION : getdim() to be called from C
+ *            getdim_() to be called from Fortran
+ *            returns it as a long int. Returns -1 if error.
+ * COMMENT  : gets the dimension associated with a name, and
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
-   $Revision: 4870 $
-        $Log: getdim.c,v $
-        Revision 1.5  1996/02/19 20:00:03  markstro
-        Now lints pretty clean
+-*/
 
-        Revision 1.4  1994/11/22 17:19:38  markstro
-        (1) Cleaned up dimensions and parameters.
-        (2) Some changes due to use of malloc_dbg.
-
- * Revision 1.3  1994/09/30  14:54:21  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.2  1994/01/31  20:16:28  markstro
- * Make sure that all source files have CVS log.
- *
- **************************************************************************/
+/**1************************ INCLUDE FILES ****************************/
 #define GETDIM_C
 #include <stdio.h>
 #include <string.h>
 #include "mms.h"
-
-/**************************************************************************
- */
 
 /*--------------------------------------------------------------------*\
  | FUNCTION     : getdim_
@@ -4741,18 +3302,9 @@ long getdim_ (char *dname, ftnlen namelen) {
 
   retval =  getdim(name);
 
-  /*
-   * free up array
-   */
-
-//ufree(name);
-
   return retval;
-
 }
 
-/**************************************************************************
- */
 /*--------------------------------------------------------------------*\
  | FUNCTION     : getdim
  | COMMENT		: is called from C
@@ -4783,55 +3335,23 @@ long getdim (char *name) {
 
   dim->got = TRUE;
   return dim->value;
-
 }
 
-/**************************************************************************
- * getparam.c: gets the parameter associated with a module and name, and
- * copies it into the space provided by the calling routine.
+/*+
+ * United States Geological Survey
  *
- * There are 2 functions: getparam() to be called from C
- *                        getparam_() to be called from Fortran
+ * PROJECT  : Modular Modeling System (MMS)
+ * FUNCTION : getparam() to be called from C
+ *            getparam_() to be called from Fortran
+ *            Returns 0 if successful, 1 otherwise.
+ * COMMENT  : gets the parameter associated with a module and name, and
+ *            copies it into the space provided by the calling routine.
  *
- * Returns 0 if successful, 1 otherwise.
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
- *
-   $Revision: 4870 $
-        $Log: getparam.c,v $
-        Revision 1.10  1997/03/26 17:04:14  markstro
-        Added function getdataname
+-*/
 
-        Revision 1.9  1996/12/05 21:24:12  markstro
-        (1)  Added getoutname()
-        (2)  Sensitivity work
-        (3)  Optimization work
-
-        Revision 1.8  1996/10/10 13:26:32  markstro
-        (1) Work on Rosenbrock
-        (2) Bug in fix dimension size
-
-        Revision 1.7  1996/02/19 20:00:05  markstro
-        Now lints pretty clean
-
-        Revision 1.6  1995/05/25 14:26:30  markstro
-        (1) Added batch mode
-        (2) Replaced "b" functions with "mem" versions
-
- * Revision 1.5  1994/11/22  17:19:40  markstro
- * (1) Cleaned up dimensions and parameters.
- * (2) Some changes due to use of malloc_dbg.
- *
- * Revision 1.4  1994/09/30  14:54:24  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.3  1994/06/16  16:47:09  markstro
- * Worked over runcontrol.c
- *
- * Revision 1.2  1994/01/31  20:16:32  markstro
- * Make sure that all source files have CVS log.
- *
- **************************************************************************/
+/**1************************ INCLUDE FILES ****************************/
 #define GETPARAM_C
 #include <stdio.h>
 #include <string.h>
@@ -4905,10 +3425,6 @@ long getparam_ (char *mname, char *pname, ftnint *pmaxsize, char *ptype, double 
 // call C version of getparam()
 	retval = getparam(module, name, maxsize, type, pval);
 
-//ufree(module);
-//ufree(name);
-//ufree(type);
-
 	return(retval);
 }
 
@@ -4952,8 +3468,8 @@ long getparam (char *module, char *name, int maxsize, char *type, double *pval) 
 
 //  Check to see if the parameter values were set in the Parameter File
 	if (param->read_in == 0) {
-		(void)fprintf(stderr,"\nWARNING: parameter %s is used by module %s but values are not set in the Parameter File.\n", pkey, module);
-		(void)fprintf(stderr,"         Module default values are being used.\n");
+		(void)fprintf(stderr,"\nWARNING: parameter %s is used by module %s but values are not\n", pkey, module);
+		(void)fprintf(stderr,"         set in the Parameter File. Module default values are being used.\n");
 	}
 
 // check that there is enough space allocated in the calling routine
@@ -5278,9 +3794,6 @@ long getparamstring_ (char *mname, char *pname, ftnint *pmaxsize, char *ptype, f
   strncpy(type, ptype, ptypelen);
   type[ptypelen] = '\0';
 
-
-
-
   param = param_addr(name);
 
   if (param == NULL) {
@@ -5294,8 +3807,8 @@ long getparamstring_ (char *mname, char *pname, ftnint *pmaxsize, char *ptype, f
   **  Check to see if the parameter values were set in the Parameter File
   */
   if (param->read_in == 0) {
-		(void)fprintf(stderr,"\nWARNING: parameter %s is used by module %s but values are not set in the Parameter File.\n", name, module);
-		(void)fprintf(stderr,"         Module default values are being used.\n");
+		(void)fprintf(stderr,"\nWARNING: parameter %s is used by module %s but values are not\n", name, module);
+		(void)fprintf(stderr,"         set in the Parameter File. Module default values are being used.\n");
 //	  (void)fprintf(stderr,
 //	    "getparamstring - parameter %s is used but values are not set in the Parameter File.  Module default values are being used.\n", name);
   }
@@ -5304,56 +3817,19 @@ long getparamstring_ (char *mname, char *pname, ftnint *pmaxsize, char *ptype, f
    strncpy (pstring, *((char **)param->value + *pindex), pslen);
 
    return(0);
-
 }
 /*+
  * United States Geological Survey
  *
  * PROJECT  : Modular Modeling System (MMS)
- * NAME     : getvar.c
- * AUTHOR   : CADSWES
- * DATE     : Mon 08 Apr 1996
- * FUNCTION :
- * COMMENT  :
- * getvar.c: gets the value associated with a module and name, and copies
- * it into the variable provided by the calling routine.
+ * FUNCTION : getvar() to be called from C
+ *            getvar_() to be called from Fortran
+ *            Returns 0 if successful, 1 otherwise.
+ * COMMENT  : gets the value associated with a module and name, and copies
+ *            it into the variable provided by the calling routine.
  *
- * There are 2 functions: getvar() to be called from C
- *                        getvar_() to be called from Fortran
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
- * Returns 0 if successful, 1 otherwise.
- *
- * REF      :
- * REVIEW   :
- * PR NRS   :
- *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
- *
-   $Revision: 4870 $
-        $Log: getvar.c,v $
-        Revision 1.8  1996/04/09 21:04:06  markstro
-        (1) Work on control files
-        (2) Runtime graphs
-
- * Revision 1.7  1996/02/19  20:00:06  markstro
- * Now lints pretty clean
- *
-        Revision 1.6  1995/05/25 14:26:31  markstro
-        (1) Added batch mode
-        (2) Replaced "b" functions with "mem" versions
-
- * Revision 1.5  1994/11/22  17:19:41  markstro
- * (1) Cleaned up dimensions and parameters.
- * (2) Some changes due to use of malloc_dbg.
- *
- * Revision 1.4  1994/09/30  14:54:25  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.3  1994/06/16  16:47:10  markstro
- * Worked over runcontrol.c
- *
- * Revision 1.2  1994/01/31  20:16:33  markstro
- * Make sure that all source files have CVS log.
 -*/
 
 /**1************************ INCLUDE FILES ****************************/
@@ -5362,15 +3838,6 @@ long getparamstring_ (char *mname, char *pname, ftnint *pmaxsize, char *ptype, f
 #include <stdlib.h>
 #include "mms.h"
 
-/**2************************* LOCAL MACROS ****************************/
-
-/**3************************ LOCAL TYPEDEFS ***************************/
-
-/**4***************** DECLARATION LOCAL FUNCTIONS *********************/
-
-/**5*********************** LOCAL VARIABLES ***************************/
-
-/**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
 /*--------------------------------------------------------------------*\
  | FUNCTION		: getvar_
  | COMMENT		: called from Fortran, sorts out args and calls getvar()
@@ -5549,7 +4016,6 @@ long getvar (char *module, char *name, long maxsize, char *type, double *value) 
 		}
 	}
 
-//      free (vkey);
 	return (0);
 }
 
@@ -5600,26 +4066,16 @@ long getvarsize_ (char *vname, ftnlen vnamelen) {
 
 	return (var->size);
 }
-/**8************************** TEST DRIVER ****************************/
-
-/**7****************** LOCAL FUNCTION DEFINITIONS *********************/
-
 /*+
  * United States Geological Survey
  *
  * PROJECT  : Modular Modeling System (MMS)
- * NAME     : graph_single_run.c
- * AUTHOR   : New version by Markstrom
- * DATE     : 
  * FUNCTION : graph_single_run
  * COMMENT  : graph routines for mms run
- * REF      :
- * REVIEW   :
- * PR NRS   :
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
- */
+-*/
 
 /**1************************ INCLUDE FILES ****************************/
 #define GRAPH_SINGLE_RUN_C
@@ -5629,12 +4085,6 @@ long getvarsize_ (char *vname, ftnlen vnamelen) {
 #include "mms.h"
 
 #define         MAXNUMBEROFGRAPHS               4
-
-/**2************************* LOCAL MACROS ****************************/
-
-/**3************************ LOCAL TYPEDEFS ***************************/
-
-/**4***************** DECLARATION LOCAL FUNCTIONS *********************/
 
 /**5*********************** LOCAL VARIABLES ***************************/
 long NdispGraphs;
@@ -5782,45 +4232,21 @@ int closeRuntimeGraphs (void) {
    printf ("closeRuntimeGraph\n");
    return (FALSE);
 }
-
-/**7****************** LOCAL FUNCTION DEFINITIONS *********************/
-
-/**8************************** TEST DRIVER ****************************/
-
-/*
- * convert Gregorian days to Julian date
+/*+
+ * United States Geological Survey
  *
- * Compile with 'cc greg2jul.c -o greg2jul'
+ * PROJECT  : Modular Modeling System (MMS)
+ * FUNCTION : julconvert
+ * COMMENT  : convert Gregorian days to Julian date
+ *            Modify as needed for your application.
+ *            The Julian day starts at noon of the Gregorian day and extends
+ *            to noon the next Gregorian day.
  *
- * Modify as needed for your application.
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
- * The Julian day starts at noon of the Gregorian day and extends
- * to noon the next Gregorian day.
- *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
- *
-   $Revision: 4870 $
-		$Log: julconvert.c,v $
-		Revision 1.6  2001/04/03 18:18:06  markstro
-		Unknown
+-*/
 
-		Revision 1.5  2001/01/22 22:26:41  markstro
-		unknown
-
-		Revision 1.4  1999/08/24 16:34:09  markstro
-		Version 1.1.1
-
-		Revision 1.3  1996/02/19 20:00:14  markstro
-		Now lints pretty clean
-
-		Revision 1.2  1994/09/30 14:54:33  markstro
-		Initial work on function prototypes.
-
- * Revision 1.1  1994/03/24  22:46:20  markstro
- * Initial version from TERRA
- *
- */
-
+/**1************************ INCLUDE FILES ****************************/
 #define JULCONVERT_C
 #include <stdio.h>
 #include <string.h>
@@ -5917,23 +4343,23 @@ int isleap (int year) {
       return(1);
    }
 }
-/**********************************************************************
- * julday() - computes julian day, puts it into the jd slot in the
+/*+
+ * United States Geological Survey
+ *
+ * PROJECT  : Modular Modeling System (MMS)
+ * FUNCTION : julday()
+ * COMMENT  : computes julian day, puts it into the jd slot in the
  *            datetime structure
  *
- * utility routine
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
- * Mike Dixon CADSWES CU July 1990
- *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
- *
- **********************************************************************/
+-*/
+
+/**1************************ INCLUDE FILES ****************************/
 #define JULDAY_C
 #include <math.h>
 #include "mms.h"
 #define IGREG (15+31L*(10+12L*1582))
-
-
 
 /*--------------------------------------------------------------------*\
  | FUNCTION     : julday
@@ -5986,34 +4412,14 @@ int julday (DATETIME *datetime) {
  * United States Geological Survey
  *
  * PROJECT  : Modular Modeling System (MMS)
- * NAME     : load_param.c
- * AUTHOR   :
- * DATE     :
  * FUNCTION : load_param
  * COMMENT  : Stores the parameter value, minima and maxima at the
- *  required address.  Uses str_to_vals to decode the strings and
- *  store the values. This routine mainly handles the error conditions.
- *  Examples of legal strings for this routine are given in str_to_vals.c
- * REF      :
- * REVIEW   :
- * PR NRS   :
+ *            required address.  Uses str_to_vals to decode the strings and
+ *            store the values. This routine mainly handles the error conditions.
+ *            Examples of legal strings for this routine are given in str_to_vals.c
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
-   $Revision: 4870 $
-        $Log: load_param.c,v $
-        Revision 1.5  1996/02/19 20:00:15  markstro
-        Now lints pretty clean
-
-        Revision 1.4  1994/11/22 17:19:49  markstro
-        (1) Cleaned up dimensions and parameters.
-        (2) Some changes due to use of malloc_dbg.
-
- * Revision 1.3  1994/09/30  14:54:33  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.2  1994/01/31  20:16:40  markstro
- * Make sure that all source files have CVS log.
 -*/
 
 /**1************************ INCLUDE FILES ****************************/
@@ -6021,15 +4427,6 @@ int julday (DATETIME *datetime) {
 #include <stdio.h>
 #include "mms.h"
 
-/**2************************* LOCAL MACROS ****************************/
-
-/**3************************ LOCAL TYPEDEFS ***************************/
-
-/**4***************** DECLARATION LOCAL FUNCTIONS *********************/
-
-/**5*********************** LOCAL VARIABLES ***************************/
-
-/**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
 /*--------------------------------------------------------------------*\
  | FUNCTION     : load_param
  | COMMENT		:
@@ -6042,7 +4439,7 @@ long load_param (PARAM *param) {
 	long i;
 	double *dval, *dmin, *dmax, *ddef;
 	float *fval, *fmin, *fmax, *fdef;
-	long *lval, *lmin, *lmax, *ldef;
+	int *lval, *lmin, *lmax, *ldef;
 	char *sval, *sdef;
 
 	if (param->type == M_DOUBLE) {
@@ -6056,10 +4453,10 @@ long load_param (PARAM *param) {
 		param->min = (char *)umalloc (param->size * sizeof (float));
 		param->max = (char *)umalloc (param->size * sizeof (float));
 	} else if (param->type == M_LONG) {
-		param->value = (char *)umalloc (param->size * sizeof (long));
-		param->def = (char *)umalloc (param->size * sizeof (long));
-		param->min = (char *)umalloc (param->size * sizeof (long));
-		param->max = (char *)umalloc (param->size * sizeof (long));
+		param->value = (char *)umalloc (param->size * sizeof (int));
+		param->def = (char *)umalloc (param->size * sizeof (int));
+		param->min = (char *)umalloc (param->size * sizeof (int));
+		param->max = (char *)umalloc (param->size * sizeof (int));
 	} else if (param->type == M_STRING) {
 		param->value = (char *)umalloc (param->size * sizeof (char *));
 		param->def = (char *)umalloc (param->size * sizeof (char *));
@@ -6071,7 +4468,7 @@ long load_param (PARAM *param) {
 * decode minima
 */
 	if (param->bound_status == M_BOUNDED) {
-		lmin = (long *)(param->min);	
+		lmin = (int *)(param->min);	
 		for (i = 0; i < param->size; i++)
 			*lmin++ = 0;
 	} else {
@@ -6088,7 +4485,7 @@ long load_param (PARAM *param) {
 * decode maxima
 */
 	if (param->bound_status == M_BOUNDED) {
-		lmax = (long *)(param->max);	
+		lmax = (int *)(param->max);	
 		for (i = 0; i < param->size; i++)
 			*lmax++ = (long)(param->bound_dimen->value);
 	} else {
@@ -6128,8 +4525,8 @@ long load_param (PARAM *param) {
 			break;
 
 		case M_LONG:
-			lval = (long *)param->value;
-			ldef = (long *)param->def;
+			lval = (int *)param->value;
+			ldef = (int *)param->def;
 			for (i = 0; i < param->size; i++)
 				*lval++ = *ldef++;
 			break;
@@ -6225,9 +4622,9 @@ long load_param (PARAM *param) {
 
 	case M_LONG:
 
-		lval = (long *) param->value;
-		lmin = (long *) param->min;
-		lmax = (long *) param->max;
+		lval = (int *) param->value;
+		lmin = (int *) param->min;
+		lmax = (int *) param->max;
 
 		for (i = 0; i < param->size; i++) {
 
@@ -6240,7 +4637,7 @@ long load_param (PARAM *param) {
 				    param->min_string, param->max_string);
 //				(void)fprintf(stderr, "The problem is with posn no %ld.\n", i+1);
 				(void)fprintf(stderr,
-				    "Assigned minimum = %ld, maximum = %ld\n", lmin[i], lmax[i]);
+				    "Assigned minimum = %d, maximum = %d\n", lmin[i], lmax[i]);
 				return(1);
 			}
 
@@ -6252,7 +4649,7 @@ long load_param (PARAM *param) {
 				    param->value_string, param->min_string, param->max_string);
 				(void)fprintf(stderr, "       Assigned values are:\n");
 				(void)fprintf(stderr,
-				    "       Value = %ld, Minimum = %ld, Maximum = %ld\n",
+				    "       Value = %d, Minimum = %d, Maximum = %d\n",
 				    lval[i], lmin[i], lmax[i]);
 				return(1);
 			}
@@ -6266,351 +4663,20 @@ long load_param (PARAM *param) {
 	}
 	return(0);
 }
-
-/**7****************** LOCAL FUNCTION DEFINITIONS *********************/
-
-/**8************************** TEST DRIVER ****************************/
-
 /*+
  * United States Geological Survey
  *
  * PROJECT  : Modular Modeling System (MMS)
- * NAME     : oprint.c
- * AUTHOR   : Mike Dixon CADSWES CU
- * DATE     : August 1990
- * FUNCTION :
- * COMMENT  : The following is a series of utility routines for printing
- *             to the output file from either Fortran or C modules.
- * REF      :
- * REVIEW   :
- * PR NRS   :
+ * FUNCTION : param_addr
+ *            returns a pointer to a PARAM struct which contains the given key
+ *            returns NULL if key not found
+ * COMMENT  :
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
-   $Revision: 4870 $
-        $Log: oprint.c,v $
-        Revision 1.4  1996/02/19 20:00:29  markstro
-        Now lints pretty clean
-
-        Revision 1.3  1994/10/24 14:18:44  markstro
-        (1)  Integration of CADSWES's work on GIS.
-        (2)  Prototypes were added to the files referenced in "mms_proto.h".
-
- * Revision 1.2  1994/01/31  20:16:59  markstro
- * Make sure that all source files have CVS log.
 -*/
 
 /**1************************ INCLUDE FILES ****************************/
-#define OPRINT_C
-#include <string.h>
-#include "mms.h"
-
-/**2************************* LOCAL MACROS ****************************/
-
-/**3************************ LOCAL TYPEDEFS ***************************/
-
-/**4***************** DECLARATION LOCAL FUNCTIONS *********************/
-
-/**5*********************** LOCAL VARIABLES ***************************/
-
-/**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
-/*--------------------------------------------------------------------*\
- | FUNCTION     : opstr_
- | COMMENT		: opstr: print string
- |                 opstr_ is called from Fortran as 'call opstr(string)'
- | PARAMETERS   :
- | RETURN VALUE : void
- | RESTRICTIONS :
-\*--------------------------------------------------------------------*/
-void opstr_ (char *str, ftnlen stringlen) {
-
-  char *string;
-
-  /*
-   * return if file pointer is NULL
-   */
-
-  if (Moutfile == NULL)
-    return;
-
-  /*
-   * copy string to new string
-   */
-
-  string = (char *) umalloc(stringlen + 1);
-  strncpy(string, str, stringlen);
-  string[stringlen] = '\0';
-
-  (void)fprintf(Moutfile, "%s\n", string);
-
-//ufree(string);
-
-}
-
-/*--------------------------------------------------------------------*\
- | FUNCTION     : opstr
- | COMMENT		: opstr: print string
- |                 opstr is called from C as 'opstr(string)
- | PARAMETERS   :
- | RETURN VALUE : void
- | RESTRICTIONS :
-\*--------------------------------------------------------------------*/
-void opstr (char *string) {
-
-  /*
-   * return if file pointer is NULL
-   */
-
-  if (Moutfile == NULL)
-    return;
-
-  (void)fprintf(Moutfile, "%s\n", string);
-
-}
-
-
-///*--------------------------------------------------------------------*\
-// | FUNCTION     : opint4_
-// | COMMENT		: opint4_ : print integer from Fortran
-// |                 The fortran call is:
-// |                   call opint4(string, array, n)
-// | PARAMETERS   : 'string' is a string,
-// |                'array' is the INTEGER*4 of long array or scalar to
-// |                    be printed
-// |                'n' is the number of values in the array, 1 if a scalar.
-// | RETURN VALUE : void
-// | RESTRICTIONS :
-//\*--------------------------------------------------------------------*/
-//void opint4_ (char *str, ftnint *array, ftnint *n, ftnlen stringlen) {
-//
-//  char *string;
-//  int i;
-//
-//  /*
-//   * return if file pointer is NULL
-//   */
-//
-//  if (Moutfile == NULL)
-//    return;
-//
-//  /*
-//   * copy string to new string
-//   */
-//
-//  string = (char *) umalloc(stringlen + 1);
-//  strncpy(string, str, stringlen);
-//  string[stringlen] = '\0';
-//
-//  (void)fprintf(Moutfile, "%s ",string);
-//
-//  for (i=0; i < *n; i++)
-//    (void)fprintf(Moutfile, " %d",array[i]);
-///*
-//    (void)fprintf(Moutfile, " %ld",array[i]);
-//*/
-//
-//  (void)fprintf(Moutfile, "\n");
-//
-//}
-//
-///*--------------------------------------------------------------------*\
-// | FUNCTION     : oplong
-// | COMMENT		: print long from C
-// |                  The C call is
-// |                      oplong(string, array, n)
-// | PARAMETERS   : 'string' is a string
-// |                'array' is the INTEGER*4 of long array or scalar
-// |                  to be printed
-// |                'n' is the number of values in the array, 1 if a scalar.
-// | RETURN VALUE : void
-// | RESTRICTIONS :
-//\*--------------------------------------------------------------------*/
-//void oplong (char *string, long *array, long n) {
-//
-//  int i;
-//
-//  /*
-//   * return if file pointer is NULL
-//   */
-//
-//  if (Moutfile == NULL)
-//    return;
-//
-//  (void)fprintf(Moutfile, "%s ",string);
-//
-//  for (i=0; i < n; i++)
-//    (void)fprintf(Moutfile, " %ld", array[i]);
-//
-//  (void)fprintf(Moutfile, "\n");
-//
-//}
-//
-//
-///*--------------------------------------------------------------------*\
-// | FUNCTION     : opreal_
-// | COMMENT		: print real array from Fortran
-// |                 The fortran call is:
-// |                   call opreal(string, array, n)
-// | PARAMETERS   : 'string' is a string
-// |                'array' is the REAL or float array or scalar to be printed
-// |                'n' is the number of values in the array, 1 if a scalar.
-// | RETURN VALUE : void
-// | RESTRICTIONS :
-//\*--------------------------------------------------------------------*/
-//void opreal_ (char *str, float *array, ftnint *n, ftnlen stringlen) {
-//
-//  char *string;
-//  int i;
-//
-//  /*
-//   * return if file pointer is NULL
-//   */
-//
-//  if (Moutfile == NULL)
-//    return;
-//
-//  /*
-//   * copy string to new string
-//   */
-//
-//  string = (char *) umalloc(stringlen + 1);
-//  strncpy(string, str, stringlen);
-//  string[stringlen] = '\0';
-//
-//  (void)fprintf(Moutfile, "%s ",string);
-//
-//  for (i=0; i < *n; i++)
-//    (void)fprintf(Moutfile, " %10g", array[i]);
-//
-//  (void)fprintf(Moutfile, "\n");
-//
-//}
-//
-///*--------------------------------------------------------------------*\
-// | FUNCTION     : opfloat
-// | COMMENT		: print float array from C
-// |                The C call is:
-// |                   opfloat(string, array, n)
-// | PARAMETERS   : 'string' is a string
-// |                'array' is the REAL or float array or scalar to be printed
-// |                'n' is the number of values in the array, 1 if a scalar
-// | RETURN VALUE : void
-// | RESTRICTIONS :
-//\*--------------------------------------------------------------------*/
-//void opfloat (char *string, float *array, long n) {
-//
-//  int i;
-//
-//  /*
-//   * return if file pointer is NULL
-//   */
-//
-//  if (Moutfile == NULL)
-//    return;
-//
-//  (void)fprintf(Moutfile, "%s ",string);
-//
-//  for (i=0; i < n; i++)
-//    (void)fprintf(Moutfile, " %10g", array[i]);
-//
-//  (void)fprintf(Moutfile, "\n");
-//}
-//
-///*--------------------------------------------------------------------*\
-// | FUNCTION     : opdble_
-// | COMMENT		: print double precision array from Fortran
-// |                 The fortran call is:
-// |                    call opdble(string, array, n)
-// | PARAMETERS   : 'string' is a string
-// |                'array' is the double precision array or scalar to be printed
-// |                'n' is the number of values in the array, 1 if a scalar
-// | RETURN VALUE : void
-// | RESTRICTIONS :
-//\*--------------------------------------------------------------------*/
-//void opdble_ (char *str, double *array, ftnint *n, ftnlen stringlen) {
-//
-//  char *string;
-//  int i;
-//
-//  /*
-//   * return if file pointer is NULL
-//   */
-//
-//  if (Moutfile == NULL)
-//    return;
-//
-//  /*
-//   * copy string to new string
-//   */
-//
-//  string = (char *) umalloc(stringlen + 1);
-//  strncpy(string, str, stringlen);
-//  string[stringlen] = '\0';
-//
-//  (void)fprintf(Moutfile, "%s ",string);
-//
-//  for (i=0; i < *n; i++)
-//    (void)fprintf(Moutfile, " %10lg", array[i]);
-//
-//  (void)fprintf(Moutfile, "\n");
-//
-//}
-//
-///*--------------------------------------------------------------------*\
-// | FUNCTION     : opdble
-// | COMMENT		: print double array from C
-// |                  The C call is:
-// |                    opdble(string, array, n)
-// | PARAMETERS   : 'string' is a string
-// |                'array' is the double precision array or scalar to be printed
-// |                'n' is the number of values in the array, 1 if a scalar
-// | RETURN VALUE : void
-// | RESTRICTIONS :
-//\*--------------------------------------------------------------------*/
-//void opdble (char *string, double *array, long n) {
-//
-//  int i;
-//
-//  /*
-//   * return if file pointer is NULL
-//   */
-//
-//  if (Moutfile == NULL)
-//    return;
-//
-//  (void)fprintf(Moutfile, "%s ",string);
-//
-//  for (i=0; i < n; i++)
-//    (void)fprintf(Moutfile, " %10lg", array[i]);
-//
-//  (void)fprintf(Moutfile, "\n");
-//
-//}
-//
-///**7****************** LOCAL FUNCTION DEFINITIONS *********************/
-//
-///**8************************** TEST DRIVER ****************************/
-//
-/**************************************************************************
- * param_addr.c: 
- *
- * returns a pointer to a PARAM struct which contains the given key
- * returns NULL if key not found
- *
-   $Revision: 4870 $
-        $Log: param_addr.c,v $
-        Revision 1.4  1996/02/19 20:00:33  markstro
-        Now lints pretty clean
-
-        Revision 1.3  1994/09/30 14:54:49  markstro
-        Initial work on function prototypes.
-
- * Revision 1.2  1994/01/31  20:17:02  markstro
- * Make sure that all source files have CVS log.
- *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
- *
- **************************************************************************/
 #define PARAM_ADDR_C
 #include <string.h>
 #include "mms.h"
@@ -6646,69 +4712,14 @@ PARAM * param_addr (char *key) {
   /* if no match found, return null */
   return NULL;
 }
-
 /*+
  * United States Geological Survey
  *
  * PROJECT  : Modular Modeling System (MMS)
- * NAME     : parse_args.c
- * AUTHOR   : Mike Dixon CADSWES
- * DATE     : March 1990
  * FUNCTION : parse_args
  * COMMENT  : parses the command line arguments
- * REF      :
- * REVIEW   :
- * PR NRS   :
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
- *
-   $Revision: 4870 $
-        $Log: parse_args.c,v $
-        Revision 1.15  1999/10/22 17:14:36  markstro
-        Added private variables
-
-        Revision 1.14  1999/08/25 17:44:33  markstro
-        Version for MMS 1.1.1
-
-        Revision 1.13  1999/08/24 16:34:12  markstro
-        Version 1.1.1
-
-        Revision 1.12  1997/11/25 15:49:37  markstro
-        Initial version
-
-        Revision 1.11  1997/09/26 16:32:25  markstro
-        Added ESP batch run mode.
-
-        Revision 1.10  1996/02/19 20:00:34  markstro
-        Now lints pretty clean
-
-        Revision 1.9  1995/05/25 14:26:33  markstro
-        (1) Added batch mode
-        (2) Replaced "b" functions with "mem" versions
-
- * Revision 1.8  1994/11/22  17:20:03  markstro
- * (1) Cleaned up dimensions and parameters.
- * (2) Some changes due to use of malloc_dbg.
- *
- * Revision 1.7  1994/11/08  16:17:33  markstro
- * (1) More proto type fine tuning
- * (2) fixed up data file reading
- *
- * Revision 1.6  1994/10/24  14:18:47  markstro
- * (1)  Integration of CADSWES's work on GIS.
- * (2)  Prototypes were added to the files referenced in "mms_proto.h".
- *
- * Revision 1.5  1994/08/31  21:50:36  markstro
- * Unknown
- *
- * Revision 1.4  1994/03/23  20:05:36  markstro
- * Changes from TERRA
- *
- * Revision 1.3  1994/02/11  23:12:10  markstro
- * Fixed up the "Edit Dimension Index Names" stuff.
- *
- * Revision 1.2  1994/01/31  20:17:03  markstro
- * Make sure that all source files have CVS log.
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
 -*/
 
@@ -6719,15 +4730,6 @@ PARAM * param_addr (char *key) {
 #include <stdlib.h> 
 #include "mms.h" 
 
-/**2************************* LOCAL MACROS ****************************/
-
-/**3************************ LOCAL TYPEDEFS ***************************/
-
-/**4***************** DECLARATION LOCAL FUNCTIONS *********************/
-
-/**5*********************** LOCAL VARIABLES ***************************/
-
-/**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
 /*--------------------------------------------------------------------*\
  | FUNCTION     : parse_args
  | COMMENT		:
@@ -6761,23 +4763,14 @@ void parse_args (int argc, char **argv, int *set_count, char **set_name, char **
       for (i = 1; i < argc ; i++) {
 		 if (!strcmp(argv[i], "-debug")) {
 			 Mdebuglevel = atoi(argv[i+1]);
+			 i++;
 
 		 } else if (!strncmp(argv[i],"-C",2)) {
             MAltContFile = (char *)((argv[i]));
             MAltContFile+=2;
 
-         } else if (!strncmp(argv[i],"-E",2)){
-            MAltEnvFile = (char *)((argv[i]));
-            MAltEnvFile+=2;
-
          } else if (!strncmp(argv[i],"-batch", 6)){
             batch_run_mode = TRUE;
-
-         } else if (!strncmp(argv[i],"-esp", 4)){
-            esp_mode = TRUE;
-
-         } else if (!strncmp(argv[i],"-rosenbrock", 11)){
-            rosenbrock_mode = TRUE;
 
          } else if (!strncmp(argv[i],"-print", 6)){
             print_mode = TRUE;
@@ -6798,19 +4791,28 @@ void parse_args (int argc, char **argv, int *set_count, char **set_name, char **
             *(set_value + *set_count) = strdup ((char *)((argv[i])));
             (*set_count)++;
 
+		} else if (!strncmp(argv[i],"-MAXDATALNLEN",13)){
+            max_data_ln_len = atoi(argv[i+1]);
+			i++;
+
 		 } else { // Assume argument with no flag is control file name
 			MAltContFile = (char *)((argv[i]));
 		 }
       }
    }
 }
-/**7****************** LOCAL FUNCTION DEFINITIONS *********************/
+/*+
+ * United States Geological Survey
+ *
+ * PROJECT  : Modular Modeling System (MMS)
+ * FUNCTION : print_model_info
+ * COMMENT  :
+ *
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
+ *
+-*/
 
-/**8************************** TEST DRIVER ****************************/
-
-/*
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
- */
+/**1************************ INCLUDE FILES ****************************/
 #define PRINT_MODEL_INFO_C
 #include <string.h>
 #include <stdio.h>
@@ -6828,7 +4830,7 @@ void parse_args (int argc, char **argv, int *set_count, char **set_name, char **
 \*--------------------------------------------------------------------*/
 int print_model_info (void) {
 
-  char pathname[MAXDATALNLEN];
+  char pathname[MAXPATHLEN];
   FILE *model_info_file;
   int i, j;
   MODULE_DATA *module;
@@ -6876,64 +4878,22 @@ int print_model_info (void) {
 	}
 	//fprintf(model_info_file, "\n\n\n\n\n\n");
 
- 
   fclose(model_info_file);
 
   return(0);
-
 }
-/**************************************************************************
- * print_params.c: prints the param data base to a file
+/*+
+ * United States Geological Survey
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
+ * PROJECT  : Modular Modeling System (MMS)
+ * FUNCTION : print_params
+ * COMMENT  : prints the param data base to a file
  *
-   $Revision: 4870 $
-        $Log: print_params.c,v $
-        Revision 1.15  2001/11/27 16:00:10  markstro
-        Unknown
-
-        Revision 1.14  2001/05/04 20:58:22  markstro
-        Added the xml print file
-
-        Revision 1.13  1999/10/22 17:14:36  markstro
-        Added private variables
-
-        Revision 1.12  1999/08/24 16:34:13  markstro
-        Version 1.1.1
-
-        Revision 1.11  1998/12/22 19:49:11  markstro
-        unknown
-
-        Revision 1.10  1998/04/02 17:50:47  markstro
-        Unknown
-
-        Revision 1.9  1996/04/29 16:23:07  markstro
-        Unknown
-
- * Revision 1.8  1996/02/19  20:00:36  markstro
- * Now lints pretty clean
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
-        Revision 1.7  1995/02/01 17:47:33  markstro
-        Addition of Rosenbrock optimization.  Start of sensitivity.  Many bug fixes.
+-*/
 
- * Revision 1.6  1994/11/22  17:20:05  markstro
- * (1) Cleaned up dimensions and parameters.
- * (2) Some changes due to use of malloc_dbg.
- *
- * Revision 1.5  1994/09/30  14:54:50  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.4  1994/05/23  14:27:23  markstro
- * Cleaned out a lot of includes in include files
- *
- * Revision 1.3  1994/05/18  17:15:51  markstro
- * TERRA changed mhms to mms
- *
- * Revision 1.2  1994/01/31  20:17:06  markstro
- * Make sure that all source files have CVS log.
- *
- **************************************************************************/
-
+/**1************************ INCLUDE FILES ****************************/
 #define PRINT_PARAMS_C
 #include <time.h>
 #include <string.h>
@@ -6952,7 +4912,7 @@ int print_model_info (void) {
 \*--------------------------------------------------------------------*/
 int print_params (void) {
 
-  char pathname[MAXDATALNLEN], *infostr;
+  char pathname[MAXPATHLEN], *infostr;
   FILE *param_file;
   PARAM *param;
   DIMEN *dim;
@@ -6997,7 +4957,6 @@ int print_params (void) {
   (void)fprintf(param_file, "%s\n\n", insert_crs(infostr, PRINTLEN));
 */
   (void)fprintf(param_file, "%s\n\n", infostr);
-//ufree(infostr);
 
   /*
    * write out dimensions
@@ -7029,126 +4988,132 @@ int print_params (void) {
   for (i = 0; i < Mnparams; i++) {
 
     param = Mparambase[i];
+	if (param->max != NULL){
 
-    (void)fprintf(param_file, "\n");
-    (void)fprintf(param_file, "Name      : %s\n", param->name);
-    (void)fprintf(param_file, "Module    : %s\n", param->module);
-    (void)fprintf(param_file, "Descr     : %s\n", param->descr);
-    (void)fprintf(param_file, "Help      : %s\n", param->help);
-    (void)fprintf(param_file, "Ndimen    : %ld\n", param->ndimen);
-    (void)fprintf(param_file, "Dimensions: ");
 
-    for (j = 0; j < param->ndimen; j++) {
-      (void)fprintf(param_file, "%s - %ld",
-	      param->dimen[j]->name, param->dimen[j]->value);
-      if (j < param->ndimen - 1)
-	(void)fprintf(param_file, ", ");
-    } /* j */
+		(void)fprintf(param_file, "\n");
+		(void)fprintf(param_file, "Name      : %s\n", param->name);
+		(void)fprintf(param_file, "Module    : %s\n", param->module);
+		(void)fprintf(param_file, "Descr     : %s\n", param->descr);
+		(void)fprintf(param_file, "Help      : %s\n", param->help);
+		(void)fprintf(param_file, "Ndimen    : %ld\n", param->ndimen);
+		(void)fprintf(param_file, "Dimensions: ");
 
-    (void)fprintf(param_file, "\n");
-    (void)fprintf(param_file, "Size      : %ld\n", param->size);
-    (void)fprintf(param_file, "Type      : %s\n", Mtypes[param->type]);
-    (void)fprintf(param_file, "Units     : %s\n", param->units);
-    if (param->format)
-       (void)fprintf(param_file, "Format    : %s\n", param->format);
-    (void)fprintf(param_file, "Width     : %ld\n", param->column_width);
+		for (j = 0; j < param->ndimen; j++) {
+			(void)fprintf(param_file, "%s - %ld",
+				param->dimen[j]->name, param->dimen[j]->value);
+			if (j < param->ndimen - 1)
+				(void)fprintf(param_file, ", ");
+		} /* j */
 
-    switch(param->type) {
-       case M_LONG:
-          (void)fprintf (param_file, "Max       : %ld\n", *(long *)(param->max));
-          (void)fprintf (param_file, "Min       : %ld\n", *(long *)(param->min));
-          (void)fprintf (param_file, "Default   : %ld\n", *(long *)(param->def));
-          break;
+		(void)fprintf(param_file, "\n");
+		(void)fprintf(param_file, "Size      : %ld\n", param->size);
+		(void)fprintf(param_file, "Type      : %s\n", Mtypes[param->type]);
+		(void)fprintf(param_file, "Units     : %s\n", param->units);
+		if (param->format)
+			(void)fprintf(param_file, "Format    : %s\n", param->format);
+		(void)fprintf(param_file, "Width     : %ld\n", param->column_width);
 
-       case M_FLOAT:
-          (void)fprintf (param_file, "Max       : %f\n",*(float *)(param->max));
-          (void)fprintf (param_file, "Min       : %f\n",*(float *)(param->min));
-          (void)fprintf (param_file, "Default   : %f\n",*(float *)(param->def));
-          break;
+		switch (param->type) {
+		case M_LONG:
+			/* DANGER
+		   (void)fprintf (param_file, "Max       : %ld\n", *(long *)(param->max));
+		   (void)fprintf (param_file, "Min       : %ld\n", *(long *)(param->min));
+		   (void)fprintf (param_file, "Default   : %ld\n", *(long *)(param->def));
+		   */
+			(void)fprintf(param_file, "Max       : %ld\n", *(int *)(param->max));
+			(void)fprintf(param_file, "Min       : %ld\n", *(int *)(param->min));
+			(void)fprintf(param_file, "Default   : %ld\n", *(int *)(param->def));
+			break;
 
-       case M_DOUBLE:
-          (void)fprintf (param_file, "Max       : %lf\n",*(double *)(param->max));
-          (void)fprintf (param_file, "Min       : %lf\n",*(double *)(param->min));
-          (void)fprintf (param_file, "Default   : %lf\n",*(double *)(param->def));
-          break;
-    }
+		case M_FLOAT:
+			(void)fprintf(param_file, "Max       : %f\n", *(float *)(param->max));
+			(void)fprintf(param_file, "Min       : %f\n", *(float *)(param->min));
+			(void)fprintf(param_file, "Default   : %f\n", *(float *)(param->def));
+			break;
 
-    if (param->bound_status == M_BOUNDED) {
-      (void)fprintf(param_file, "Bounded   : %s\n", (param->bound_dimen)->name);
-    }
+		case M_DOUBLE:
+			(void)fprintf(param_file, "Max       : %lf\n", *(double *)(param->max));
+			(void)fprintf(param_file, "Min       : %lf\n", *(double *)(param->min));
+			(void)fprintf(param_file, "Default   : %lf\n", *(double *)(param->def));
+			break;
+		}
 
-/*  DANGER commented out for data dictionary print out */
-/*
-    (void)fprintf(param_file, "Value(s):\n");
+		if (param->bound_status == M_BOUNDED) {
+			(void)fprintf(param_file, "Bounded   : %s\n", (param->bound_dimen)->name);
+		}
 
-    if (param->ndimen >= 3) {
+		/*  DANGER commented out for data dictionary print out */
+		/*
+			(void)fprintf(param_file, "Value(s):\n");
 
-      for (j = 0; j < param->dimen[2]->value; j++) {
+			if (param->ndimen >= 3) {
 
-	(void)fprintf(param_file, "[%ld]\n", j + 1);
+			for (j = 0; j < param->dimen[2]->value; j++) {
 
-	nk = param->dimen[1]->value;
+			(void)fprintf(param_file, "[%ld]\n", j + 1);
 
-	for (k = 0; k < nk; k++) {
+			nk = param->dimen[1]->value;
 
-	  (void)fprintf(param_file, "%5ld:", k + 1);
+			for (k = 0; k < nk; k++) {
 
-	  nl = param->dimen[0]->value;
+			(void)fprintf(param_file, "%5ld:", k + 1);
 
-	  for (l = 0; l < nl; l++) {
+			nl = param->dimen[0]->value;
 
-	    print_param(param_file, param, l, nl, k, nk, j);
+			for (l = 0; l < nl; l++) {
 
-	  }
+			print_param(param_file, param, l, nl, k, nk, j);
 
-	  (void)fprintf(param_file, "\n");
+			}
 
+			(void)fprintf(param_file, "\n");
+
+			}
+
+			}
+
+			} else if (param->ndimen == 2) {
+
+			nk = param->dimen[1]->value;
+
+			for (k = 0; k < nk; k++) {
+
+			(void)fprintf(param_file, "%5ld:", k + 1);
+
+			nl = param->dimen[0]->value;
+
+			for (l = 0; l < nl; l++) {
+
+			print_param(param_file, param, l, nl, k,0,0);
+
+			}
+
+			(void)fprintf(param_file, "\n");
+
+			}
+
+			} else {
+
+			nl = param->dimen[0]->value;
+
+			for (l = 0; l < nl; l++) {
+
+			print_param(param_file, param, l,0,0,0,0);
+
+			}
+
+			(void)fprintf(param_file, "\n");
+
+			}
+			*/
+		/*  end DANGER */
 	}
-
-      }
-
-    } else if (param->ndimen == 2) {
-
-      nk = param->dimen[1]->value;
-
-      for (k = 0; k < nk; k++) {
-
-	(void)fprintf(param_file, "%5ld:", k + 1);
-
-	nl = param->dimen[0]->value;
-
-	for (l = 0; l < nl; l++) {
-
-	  print_param(param_file, param, l, nl, k,0,0);
-
-	}
-
-	(void)fprintf(param_file, "\n");
-
-      }
-
-    } else {
-
-      nl = param->dimen[0]->value;
-
-      for (l = 0; l < nl; l++) {
-
-	print_param(param_file, param, l,0,0,0,0);
-
-      }
-
-      (void)fprintf(param_file, "\n");
-
-    }
-*/
-/*  end DANGER */
-
   } /* i */
 
   fclose(param_file);
 
   return(0);
-
 }
 
 /*--------------------------------------------------------------------*\
@@ -7197,42 +5162,18 @@ void print_param (FILE *param_file, PARAM *param, long l, long nl, long k,
 
   } /* switch (param->type) */
 }
-/**************************************************************************
- * print_vars.c: prints the var data base to a file
+/*+
+ * United States Geological Survey
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
+ * PROJECT  : Modular Modeling System (MMS)
+ * FUNCTION : print_vars
+ * COMMENT  : prints the var data base to a file
  *
-   $Revision: 4870 $
-        $Log: print_vars.c,v $
-        Revision 1.10  1999/10/22 17:14:37  markstro
-        Added private variables
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
+ *
+-*/
 
-        Revision 1.9  1999/08/24 16:34:14  markstro
-        Version 1.1.1
-
-        Revision 1.8  1996/02/19 20:00:37  markstro
-        Now lints pretty clean
-
-        Revision 1.7  1995/02/01 17:47:34  markstro
-        Addition of Rosenbrock optimization.  Start of sensitivity.  Many bug fixes.
-
- * Revision 1.6  1994/11/22  17:20:06  markstro
- * (1) Cleaned up dimensions and parameters.
- * (2) Some changes due to use of malloc_dbg.
- *
- * Revision 1.5  1994/09/30  14:54:51  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.4  1994/05/23  14:27:24  markstro
- * Cleaned out a lot of includes in include files
- *
- * Revision 1.3  1994/05/18  17:15:52  markstro
- * TERRA changed mhms to mms
- *
- * Revision 1.2  1994/01/31  20:17:07  markstro
- * Make sure that all source files have CVS log.
- *
- **************************************************************************/
+/**1************************ INCLUDE FILES ****************************/
 #define PRINT_VARS_C
 #include <stdlib.h>
 #include <stdio.h>
@@ -7241,7 +5182,6 @@ void print_param (FILE *param_file, PARAM *param, long l, long nl, long k,
 
 #define PRINTLEN 77
 
-/**************************************************************************/
 /*--------------------------------------------------------------------*\
  | FUNCTION     : print_vars
  | COMMENT		:
@@ -7251,7 +5191,7 @@ void print_param (FILE *param_file, PARAM *param, long l, long nl, long k,
 \*--------------------------------------------------------------------*/
 int print_vars (void) {
 
-  char pathname[MAXDATALNLEN], *infostr;
+  char pathname[MAXPATHLEN], *infostr;
   FILE *var_file;
   PUBVAR *var;
   long i, j;
@@ -7267,7 +5207,7 @@ int print_vars (void) {
     (void)fprintf(stderr,
 	    "ERROR - print_vars - creating file '%s'\n", pathname);
     perror("");
-//  ufree(pathname);
+
     return(1);
   }
 
@@ -7295,7 +5235,6 @@ int print_vars (void) {
   infostr = (char *) umalloc (strlen(Mparaminfo) + 1);
   (void)strcpy(infostr, Mparaminfo);
   (void)fprintf(var_file, "%s\n\n", infostr);
-//ufree(infostr);
 
   /*
    * write start and end times, and step number
@@ -7464,52 +5403,26 @@ void print_var (FILE *var_file, PUBVAR *var, long l, long nl, long k, long nk,
   } /* switch (var->type) */
 
 }
-/**************************************************************************
- * putvar.c: gets the value associated with a module and name, and copies
- * it into the variable provided by the calling routine.
+/*+
+ * United States Geological Survey
  *
- * There are 2 functions: putvar() to be called from C
- *                        putvar_() to be called from Fortran
+ * PROJECT  : Modular Modeling System (MMS)
+ * FUNCTION : putvar() to be called from C
+ *            putvar_() to be called from Fortran
+ *            Returns 0 if successful, 1 otherwise.
+ * COMMENT  : gets the value associated with a module and name, and copies
+ *            it into the variable provided by the calling routine.
  *
- * Returns 0 if successful, 1 otherwise.
+* $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
- *
-   $Revision: 4870 $
-        $Log: putvar.c,v $
-        Revision 1.7  1996/02/19 20:00:38  markstro
-        Now lints pretty clean
+-*/
 
-        Revision 1.6  1995/05/25 14:26:34  markstro
-        (1) Added batch mode
-        (2) Replaced "b" functions with "mem" versions
-
- * Revision 1.5  1994/11/22  17:20:07  markstro
- * (1) Cleaned up dimensions and parameters.
- * (2) Some changes due to use of malloc_dbg.
- *
- * Revision 1.4  1994/09/30  14:54:52  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.3  1994/08/01  16:35:58  markstro
- * Took module name out of key
- *
- * Revision 1.2  1994/01/31  20:17:09  markstro
- * Make sure that all source files have CVS log.
- *
- **************************************************************************/
+/**1************************ INCLUDE FILES ****************************/
 #define PUTVAR_C
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include "mms.h"
-/*
- **	OBJECTCENTER: Memory fault
- **		problem:  char *type was passed as a parameter to getparam
- **					realloced, and then freed in the calling procedure.
- **					for this action, the pointer of type must be passed.
- **		solution: change putvar to use local integer variable to avoid realloc
- */
 
 /*--------------------------------------------------------------------*\
  | FUNCTION     : putvar_
@@ -7563,13 +5476,6 @@ long putvar_ (char *mname, char *vname, ftnint *vmaxsize, char *vtype, double *v
 
   retval =  putvar(module, name, maxsize, type, value);
 
-  /*
-   * ufree up arrays
-   */
-
-//ufree(module);
-//ufree(name);
-//ufree(type);
   return retval;
 
 }
@@ -7590,7 +5496,6 @@ long putvar (char *module, char *name, long maxsize, char *type, double *value) 
   long n1, n2;
   char *ptr1;
   char *ptr2;
-
 
   /*
    * compute the key
@@ -7721,46 +5626,18 @@ long putvar (char *module, char *name, long maxsize, char *type, double *value) 
 	  }
 	}
     }
-  /*
-   * free up arrays
-   */
-//ufree(vkey);
   
   return(0);
-  
 }
-  
 /*+
  * United States Geological Survey
  *
  * PROJECT  : Modular Modeling System (MMS)
- * NAME     : read_control.c
- * AUTHOR   : CADSWES
- * DATE     : Mon 08 Apr 1996
- * FUNCTION :
- * COMMENT  :
- * read_control.c: reads the control data base from a file
- * File name is obtained from the environment variable "mms_control_file"
- * REF      :
- * REVIEW   :
- * PR NRS   :
+ * FUNCTION : read_control
+ * COMMENT  : reads the control data base from a file
+ *            File name is obtained from the environment variable "mms_control_file"
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
- *
-   $Revision: 4870 $
-        $Log: read_control.c,v $
-        Revision 1.21  1996/08/28 15:24:10  markstro
-        Unknown
-
- * Revision 1.20  1996/05/14  02:42:05  msbrewer
- * Cleaned up cvs conflicts. Bug fixes in dump_to_db.
- *
-        Revision 1.19  1996/04/29 16:23:09  markstro
-        Unknown
-
- * Revision 1.18  1996/04/09  21:04:09  markstro
- * (1) Work on control files
- * (2) Runtime graphs
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
 -*/
 
@@ -7772,17 +5649,10 @@ long putvar (char *module, char *name, long maxsize, char *type, double *value) 
 #include <stdlib.h>
 #include "mms.h"
 
-/**2************************* LOCAL MACROS ****************************/
-
-/**3************************ LOCAL TYPEDEFS ***************************/
-
 /**4***************** DECLARATION LOCAL FUNCTIONS *********************/
 static char *rc (char *);
 char *fgets_rc (char *, int , FILE *);
 
-/**5*********************** LOCAL VARIABLES ***************************/
-
-/**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
 /*--------------------------------------------------------------------*\
  | FUNCTION     : read_control
  | COMMENT      :
@@ -7829,7 +5699,7 @@ static char *rc (char *control_name) {
    double   *dptr;
    float   *fptr;
    long   *lptr;
-   char   line[MAXDATALNLEN], *key;
+   char   line[MAXCTRLLINELEN], *key;
    static char      buf[256];
 
 /*
@@ -7840,7 +5710,7 @@ static char *rc (char *control_name) {
       return (buf);
    }
 
-   if (!fgets_rc(line, MAXDATALNLEN, control_file)) {
+   if (!fgets_rc(line, MAXCTRLLINELEN, control_file)) {
       fclose (control_file);
       (void)sprintf (buf, "read_control: Problems reading %s", control_name);
       return (buf);
@@ -7855,7 +5725,7 @@ static char *rc (char *control_name) {
 **   Space fwd to #### header.
 */
       while (strncmp(line, "####", 4)) {
-         if (fgets_rc(line, MAXDATALNLEN, control_file) == NULL) {
+         if (fgets_rc(line, MAXCTRLLINELEN, control_file) == NULL) {
             fclose(control_file);
             return(NULL);
          }
@@ -7863,7 +5733,7 @@ static char *rc (char *control_name) {
 /*
 **   get key
 */
-      if (!fgets_rc (line, MAXDATALNLEN, control_file)) {
+      if (!fgets_rc (line, MAXCTRLLINELEN, control_file)) {
          (void)sprintf (buf, "read_control: reading key; Early end-of-file");
          printf ("read_control: reading key; Early end-of-file\n");
          return (buf);
@@ -7877,7 +5747,7 @@ static char *rc (char *control_name) {
 /*
 **   get size
 */
-      if (!fgets_rc (line, MAXDATALNLEN, control_file)) {
+      if (!fgets_rc (line, MAXCTRLLINELEN, control_file)) {
          (void)sprintf (buf,"read_control: reading size; key = %s", key);
          return (buf);
       }
@@ -7889,7 +5759,7 @@ static char *rc (char *control_name) {
 /*
 **   get type
 */
-      if (!fgets_rc (line, MAXDATALNLEN, control_file)) {
+      if (!fgets_rc (line, MAXCTRLLINELEN, control_file)) {
          (void)sprintf (buf, "WARNING: reading type; key = %s", key);
          return (buf);
       }
@@ -7920,7 +5790,7 @@ static char *rc (char *control_name) {
 			dptr = (double *)umalloc (sizeof (double) * size);
             cp->start_ptr = (void *)dptr;
             for (i = 0; i < size; i++) {
-               if (fgets_rc(line, MAXDATALNLEN, control_file) == NULL) {
+               if (fgets_rc(line, MAXCTRLLINELEN, control_file) == NULL) {
                   (void)sprintf (buf, "read_control: key is %s.\n, file: %s", key, control_name);
                   printf ("read_control CRASH reading control file: key is %s.\n, file: %s\n", key, control_name);
                   return (buf);
@@ -7933,7 +5803,7 @@ static char *rc (char *control_name) {
 			fptr = (float *)umalloc (sizeof (float) * size);
             cp->start_ptr = (void *)fptr;
             for (i = 0; i < size; i++) {
-               if (fgets_rc(line, MAXDATALNLEN, control_file) == NULL) {
+               if (fgets_rc(line, MAXCTRLLINELEN, control_file) == NULL) {
                   (void)sprintf (buf, "read_control: key is %s.\n, file: %s", key, control_name);
                   printf ("read_control CRASH reading control file: key is %s.\n, file: %s\n", key, control_name);
                   return (buf);
@@ -7946,7 +5816,7 @@ static char *rc (char *control_name) {
 			lptr = (long *)umalloc (sizeof (long) * size);
             cp->start_ptr = (void *)lptr;
             for (i = 0; i < size; i++) {
-               if (fgets_rc(line, MAXDATALNLEN, control_file) == NULL) {
+               if (fgets_rc(line, MAXCTRLLINELEN, control_file) == NULL) {
                   (void)sprintf (buf, "read_control: key is %s.\n, file: %s", key, control_name);
                   printf ("read_control CRASH reading control file: key is %s.\n, file: %s\n", key, control_name);
                   return (buf);
@@ -7958,7 +5828,7 @@ static char *rc (char *control_name) {
          case M_STRING:
 			cp->start_ptr = umalloc (sizeof (char *) * size);
             for (i = 0; i < size; i++) {
-               if (fgets_rc(line, MAXDATALNLEN, control_file) == NULL) {
+               if (fgets_rc(line, MAXCTRLLINELEN, control_file) == NULL) {
                   (void)sprintf (buf, "read_control: key is %s.\n, file: %s", key, control_name);
                   printf ("read_control CRASH reading control file: key is %s.\n, file: %s\n", key, control_name);
                   return (buf);
@@ -8021,71 +5891,16 @@ char *fgets_rc (char *str, int num, FILE *stream) {
          return ptr;
       }
 }
-
-/**7****************** LOCAL FUNCTION DEFINITIONS *********************/
-
-/**8************************** TEST DRIVER ****************************/
-
 /*+
  * United States Geological Survey
  *
- * PROJECT  : Modular Modelling System (MMS)
- * NAME     : read_datainfo.c
- * AUTHOR   : CADSWES; modified by Steve Markstrom (markstro)
- * DATE     : Wed 09 Mar 1994
- * FUNCTION :
- * COMMENT  : read_datainfo.c: reads the data file and updates the
- *                datainfo string and the data variable names and
- *                sizes
- * REF      :
- * REVIEW   :
- * PR NRS   :
+ * PROJECT  : Modular Modeling System (MMS)
+ * FUNCTION : read_datainfo
+ * COMMENT  : reads the data file and updates the
+ *            datainfo string and the data variable names and sizes
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
-   $Revision: 4870 $
-        $Log: read_datainfo.c,v $
-        Revision 1.15  2000/03/07 20:35:18  markstro
-        Added comments to data file header
-
-        Revision 1.14  1996/02/19 20:00:41  markstro
-        Now lints pretty clean
-
-        Revision 1.13  1995/03/20 22:44:40  markstro
-        DG changes
-
- * Revision 1.12  1994/11/22  17:20:10  markstro
- * (1) Cleaned up dimensions and parameters.
- * (2) Some changes due to use of malloc_dbg.
- *
- * Revision 1.11  1994/11/08  16:17:37  markstro
- * (1) More proto type fine tuning
- * (2) fixed up data file reading
- *
- * Revision 1.10  1994/10/24  14:18:50  markstro
- * (1)  Integration of CADSWES's work on GIS.
- * (2)  Prototypes were added to the files referenced in "mms_proto.h".
- *
- * Revision 1.9  1994/09/30  14:54:55  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.8  1994/08/02  17:46:36  markstro
- * Split data file capabilities
- *
- * Revision 1.7  1994/05/18  17:15:55  markstro
- * TERRA changed mhms to mms
- *
- * Revision 1.6  1994/03/11  21:16:38  markstro
- * Got rid of client_data data types.
- *
- * Revision 1.5  1994/02/01  21:17:16  markstro
- * Unknown
- *
- * Revision 1.4  1994/02/01  18:49:39  markstro
- * Made the declaration of read vars dynamic -- no more MAXREADVARS
- *
- * Revision 1.3  1994/01/31  20:17:12  markstro
- * Make sure that all source files have CVS log.
 -*/
 
 /**1************************ INCLUDE FILES ****************************/
@@ -8095,15 +5910,6 @@ char *fgets_rc (char *str, int num, FILE *stream) {
 #include <stdlib.h>
 #include "mms.h"
 
-/**2************************* LOCAL MACROS ****************************/
-
-/**3************************ LOCAL TYPEDEFS ***************************/
-
-/**4***************** DECLARATION LOCAL FUNCTIONS *********************/
-
-/**5*********************** LOCAL VARIABLES ***************************/
-
-/**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
 /*--------------------------------------------------------------------*\
  | FUNCTION     : read_datainfo
  | COMMENT      :
@@ -8115,13 +5921,22 @@ char *read_datainfo (FILE_DATA *fd) {
 
    static char   err_buf[512];
    long   count, nline = 0;
-   char   line[MAXDATALNLEN], linecopy[MAXDATALNLEN];
+   static char   *line = NULL;
+   static char *linecopy = NULL;
    PUBVAR   *var;
    char   *key, *countstr, *endptr;
 
    Mnreads = 0;
 
-   if (!(fgets (fd->info, MAXDATALNLEN, fd->fp))) {
+   if (line == NULL) {
+	   line = (char *) umalloc(max_data_ln_len * sizeof(char));
+   }
+
+   if (linecopy == NULL) {
+	   linecopy = (char *) umalloc(max_data_ln_len * sizeof(char));
+   }
+
+   if (!(fgets (fd->info, max_data_ln_len, fd->fp))) {
       (void)sprintf (err_buf, "Can't read data file info string\n%s", fd->name);
       return (err_buf);
    }
@@ -8135,7 +5950,7 @@ char *read_datainfo (FILE_DATA *fd) {
 */
    (void)strcpy (line, "");
    while (strncmp (line, "####", 4)) {
-      if ((fgets (line, MAXDATALNLEN, fd->fp)) == NULL) {
+      if ((fgets (line, max_data_ln_len, fd->fp)) == NULL) {
          (void)sprintf (err_buf,"#### delimiter not found in data file\n%s", fd->name);
          return (err_buf);
       }
@@ -8254,7 +6069,7 @@ char *read_datainfo (FILE_DATA *fd) {
 /*
 **   Read first line of data
 */
-   if (!(fgets (fd->line, MAXDATALNLEN, fd->fp))) {
+   if (!(fgets (fd->line, max_data_ln_len, fd->fp))) {
       (void)sprintf (err_buf,
          "read_datainfo: Data for first timestep not found in file %s\n",
          fd->name);
@@ -8263,140 +6078,20 @@ char *read_datainfo (FILE_DATA *fd) {
 
    return (NULL);
 }
-/**7****************** LOCAL FUNCTION DEFINITIONS *********************/
-
-/**8************************** TEST DRIVER ****************************/
 /*+
  * United States Geological Survey
  *
  * PROJECT  : Modular Modeling System (MMS)
- * NAME     : read_line.c
- * AUTHOR   : Mike Dixon CADSWES March 1990
- *            Pedro Restrepo CADSWES April 1992
- *            Steve Markstrom July 1994
- * DATE     : Tue 19 Jul 1994
  * FUNCTION : read_line
- * COMMENT  :    Reads one line from data file into a string,
- *               decodes date and time, and returns if the time
- *               is within start and end limits.
- *               Otherwise reads lines until within limits or the
- *               end of file is encountered.
- *                  
- *               Returns 1l if end of data, 0l if more data to be read,
- *               and 2l if end of file
- * REF      :
- * REVIEW   :
- * PR NRS   :
+ *            Returns 1l if end of data, 0l if more data to be read,
+ *            and 2l if end of file
+ * COMMENT  : Reads one line from data file into a string,
+ *            decodes date and time, and returns if the time
+ *            is within start and end limits.
+ *            Otherwise reads lines until within limits or the
+ *            end of file is encountered.
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
- *
-   $Revision: 4870 $
-        $Log: read_line.c,v $
-        Revision 1.35  2001/01/22 22:26:41  markstro
-        unknown
-
-        Revision 1.34  2000/07/27 18:18:59  markstro
-        Storm mode hacks
-
-        Revision 1.33  2000/07/25 14:18:35  markstro
-        Took out debugging print statements.
-
-        Revision 1.32  2000/07/24 23:12:56  markstro
-        Storm hack
-
-        Revision 1.31  2000/02/18 18:27:05  markstro
-        Made previous Julian time a global.  It is set to -1.0 before the run
-        so that read_line knows to recalculate it.
-
-        Revision 1.30  1999/09/13 15:44:47  markstro
-        Fixed multiple close of data file
-
-        Revision 1.29  1999/09/10 22:43:25  markstro
-        Fixed multiple closing of data files.
-
-        Revision 1.28  1999/08/24 16:34:15  markstro
-        Version 1.1.1
-
-        Revision 1.27  1998/03/04 17:20:17  markstro
-        Added seperate runcontrol functions for each run type.
-
-        Revision 1.26  1996/09/10 15:49:07  markstro
-        Fixed the "day before the end" problem in DATA_find_end.
-
- * Revision 1.25  1996/02/19  20:00:42  markstro
- * Now lints pretty clean
- *
- * Revision 1.24  1995/11/25  23:05:07  markstro
- * Put in hack to get around delta time = 0 when coming out of storm mode.
- *
- * Revision 1.23  1995/11/25  02:42:14  markstro
- * Reading unit vs. daily data files.
- *
- * Revision 1.22  1995/11/24  14:35:36  markstro
- * Initial Purify work.
- * This is the version for Watershed Systems Modeling class 11/27 - 12/1, 1995
- *
- * Revision 1.21  1995/06/21  18:07:18  markstro
- * Scenario stuff
- *
- * Revision 1.20  1995/05/25  14:26:37  markstro
- * (1) Added batch mode
- * (2) Replaced "b" functions with "mem" versions
- *
- * Revision 1.19  1995/01/23  22:03:24  markstro
- * Fixed getting end date of data.
- *
- * Revision 1.18  1995/01/06  20:26:30  markstro
- * Argument list fixes
- *
- * Revision 1.17  1994/12/21  21:36:16  markstro
- * (1) Fixed ESP to work with multiple data files.
- * (2) Fixed Optimization to work with multiple data files.
- * (3) Fixed Sensitivity to work with multiple data files.
- *
- * Revision 1.16  1994/12/15  19:12:31  markstro
- * Changes for Christoph:  (1) More work on setting data file labels;
- * and (2) Fixed problems with empty display variable lists.
- *
- * Revision 1.15  1994/12/09  16:17:38  markstro
- * (1)  More work on selection of data files.
- * (2)  Work on display variable windows.
- *
- * Revision 1.14  1994/11/25  18:13:41  markstro
- * unknown
- *
- * Revision 1.13  1994/11/22  17:20:11  markstro
- * (1) Cleaned up dimensions and parameters.
- * (2) Some changes due to use of malloc_dbg.
- *
- * Revision 1.12  1994/11/09  22:10:45  markstro
- * GIS stuff out
- *
- * Revision 1.11  1994/11/08  16:17:38  markstro
- * (1) More proto type fine tuning
- * (2) fixed up data file reading
- *
- * Revision 1.10  1994/10/24  14:18:51  markstro
- * (1)  Integration of CADSWES's work on GIS.
- * (2)  Prototypes were added to the files referenced in "mms_proto.h".
- *
- * Revision 1.9  1994/10/03  19:38:19  markstro
- * prevjt now static -- big bug fix !!
- *
- * Revision 1.8  1994/09/30  14:54:56  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.7  1994/09/06  19:16:44  markstro
- * Fixed the day "off by one" problem.
- *
- * Revision 1.6  1994/08/31  21:50:39  markstro
- * Unknown
- *
- * Revision 1.5  1994/08/02  17:46:37  markstro
- * Split data file capabilities
- *
- * Revision 1.4  1994/01/31  20:17:13  markstro
- * Make sure that all source files have CVS log.
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
 -*/
 
@@ -8410,10 +6105,6 @@ char *read_datainfo (FILE_DATA *fd) {
 #include <string.h>
 #include <stdlib.h>
 #include "mms.h"
-
-/**2************************* LOCAL MACROS ****************************/
-
-/**3************************ LOCAL TYPEDEFS ***************************/
 
 /**4***************** DECLARATION LOCAL FUNCTIONS *********************/
 static void INSERT_time (char *, DATETIME *);
@@ -8439,15 +6130,21 @@ long read_line (void) {
    float   initial_deltat;
    long   i,j;
    static int   start_of_data;
+   static long	data_eof_flag;
    DATETIME   prevtime;
    FILE_DATA   *cur_fd;
    char   *err_ptr;
-   char line[MAXDATALNLEN];
+   static char *line = NULL;
   
+   if (line == NULL) {
+	   line = (char *) umalloc(max_data_ln_len * sizeof(char));
+   }
+
 /*
 **   get initial delta-t from control data base
 */
    initial_deltat = *control_fvar("initial_deltat");
+   data_eof_flag = *control_lvar ("ignore_data_file_end");
 
    if (Mnsteps == 0) {
       start_of_data = TRUE;
@@ -8469,8 +6166,10 @@ long read_line (void) {
 /*
 **  9999 in the year field is the code for EOF. 
 */
-      if (cur_fd->time.year == 9999)
+      if (cur_fd->time.year == 9999) {
+		  (void)fprintf (stderr,"9999  1 \n");
          return ENDOFFILE;
+	  }
 
 /*
 **   DANGER -- This "if" is a hack to get delta time back after storm mode
@@ -8508,7 +6207,30 @@ cur_fd->time = {year = 1956, month = 2, day = 19, hour = 0, min = 0, sec = 0,
 **   check if data time is within limits
 */
       if (Mnowtime->jt > Mendtime->jt) {
-         *Mnowtime = prevtime;
+		  /*
+		  (void)fprintf (stderr,"\n\n nowtime = %ld\n", Mnowtime->year);
+		 (void)fprintf (stderr,"\n\n endtime = %ld\n", Mendtime->year);
+		 (void)fprintf (stderr,"\n\n nowtime = %ld\n", Mnowtime->month);
+		 (void)fprintf (stderr,"\n\n endtime = %ld\n", Mendtime->month);
+		 (void)fprintf (stderr,"\n\n nowtime = %ld\n", Mnowtime->day);
+		 (void)fprintf (stderr,"\n\n endtime = %ld\n", Mendtime->day);
+		 (void)fprintf (stderr,"\n\n nowtime = %ld\n", Mnowtime->hour);
+		 (void)fprintf (stderr,"\n\n endtime = %ld\n", Mendtime->hour);
+		 (void)fprintf (stderr,"\n\n nowtime = %ld\n", Mnowtime->min);
+		 (void)fprintf (stderr,"\n\n endtime = %ld\n", Mendtime->min);
+		 (void)fprintf (stderr,"\n\n nowtime = %ld\n", Mnowtime->sec);
+		 (void)fprintf (stderr,"\n\n endtime = %ld\n", Mendtime->sec);
+		 (void)fprintf (stderr,"\n\n nowtime = %ld\n", Mnowtime->jd);
+		 (void)fprintf (stderr,"\n\n endtime = %ld\n", Mendtime->jd);
+  		 (void)fprintf (stderr,"\n\n nowtime = %f\n", Mnowtime->jt);
+		 (void)fprintf (stderr,"\n\n endtime = %f\n", Mendtime->jt); 
+		 */
+		  *Mnowtime = prevtime;
+		 //(void)fprintf (stderr,"nowtime=endtime\n");
+		 if (data_eof_flag == 1) {
+			Mendtime = Mnowtime;
+			return (0); }
+		 //(void)fprintf (stderr,"nowtime=endtime 2\n");
          return ENDOFDATA;
       }
 
@@ -8589,7 +6311,7 @@ cur_fd->time = {year = 1956, month = 2, day = 19, hour = 0, min = 0, sec = 0,
                            strtod (start_point, &end_point);
                         break;
                      }
-
+				  	if (CHECK_data (errno, cur_fd))	 (void)fprintf (stderr,"nowtime=endtime 2\n");
                   if (CHECK_data (errno, cur_fd)) return (ENDOFDATA);
 
                } else {
@@ -8600,7 +6322,7 @@ cur_fd->time = {year = 1956, month = 2, day = 19, hour = 0, min = 0, sec = 0,
 
          Mprevjt = Mnowtime->jt;
 
-         if (!(fgets (cur_fd->line, MAXDATALNLEN, cur_fd->fp))) {
+         if (!(fgets (cur_fd->line, max_data_ln_len, cur_fd->fp))) {
             fclose (cur_fd->fp);
             cur_fd->fp = NULL;
             cur_fd->time.year = 9999;
@@ -8637,7 +6359,7 @@ cur_fd->time = {year = 1956, month = 2, day = 19, hour = 0, min = 0, sec = 0,
 */
          Mprevjt = Mnowtime->jt;
 
-         if (!(fgets (cur_fd->line, MAXDATALNLEN, cur_fd->fp))) {
+         if (!(fgets (cur_fd->line, max_data_ln_len, cur_fd->fp))) {
             fclose (cur_fd->fp);
             cur_fd->fp = NULL;
             cur_fd->time.year = 9999;
@@ -8668,8 +6390,13 @@ char *DATA_read_init (void) {
 
    int      i;
    static int      num_data_files = 0;
-   char   **fname, line[MAXDATALNLEN], *err_ptr;
+   char   **fname, *err_ptr;
    static char      buf[256];
+   static char   *line = NULL;
+
+   if (line == NULL) {
+	   line = (char *) umalloc(max_data_ln_len * sizeof(char));
+   }
 
 /*
 **   Clean up the old files
@@ -8680,9 +6407,6 @@ char *DATA_read_init (void) {
                fclose ((fd[i])->fp);
             fd[i]->fp = NULL;
             }
-/*
-      free (fd);
-*/
    }
 
    fname =   control_svar ("data_file");
@@ -8691,6 +6415,8 @@ char *DATA_read_init (void) {
    fd = (FILE_DATA **)malloc (num_data_files * sizeof (FILE_DATA *));
     for (i = 0; i < num_data_files; i++) {
       fd[i] = (FILE_DATA *)malloc (sizeof (FILE_DATA));
+	  fd[i]->line = (char *) umalloc(max_data_ln_len * sizeof(char));
+	  fd[i]->info = (char *) umalloc(max_data_ln_len * sizeof(char));
     }
 
 /*
@@ -8704,9 +6430,9 @@ char *DATA_read_init (void) {
          return (err);
       }
 
-      fgets (line, MAXDATALNLEN, (fd[i])->fp);
+      fgets (line, max_data_ln_len, (fd[i])->fp);
       while (strncmp (line, "####", 4)) {
-         if (!(fgets (line, MAXDATALNLEN, (fd[i])->fp))) {
+         if (!(fgets (line, max_data_ln_len, (fd[i])->fp))) {
                (void)sprintf (buf, "DATA_read_init - Spacing fwd to data - Check format of file %s.", fname[i]);
                return (buf);
             }
@@ -8717,7 +6443,7 @@ char *DATA_read_init (void) {
      * PJR 7/10/95
      */
        (fd[i])->time.year = 0;
-      fgets ((fd[i])->line, MAXDATALNLEN, (fd[i])->fp);
+      fgets ((fd[i])->line, max_data_ln_len, (fd[i])->fp);
 /* DANGER
       if (err_ptr = EXTRACT_time (&(fd[i])))
 */
@@ -8743,6 +6469,9 @@ char *READ_data_info (void) {
    char   **fname, *err_ptr;
    FILE_DATA  lfd;
    struct stat stbuf;
+
+   lfd.info = (char *) umalloc(max_data_ln_len * sizeof(char));
+   lfd.line = (char *) umalloc(max_data_ln_len * sizeof(char));
 
    fname =   (char **) control_var ("data_file");
    num_data_files = control_var_size ("data_file");
@@ -8773,9 +6502,7 @@ char *READ_data_info (void) {
       }
       err_ptr = read_datainfo (&lfd);
       if (err_ptr) return (err_ptr);
-/*
-      free (lfd.name);
-*/
+
       fclose (lfd.fp);
    }
    return (NULL);
@@ -8824,9 +6551,6 @@ void DATA_close (void) {
         }
     }
 
-/*
-   free (fd);
-*/
    fd = NULL;
 }
 
@@ -8852,7 +6576,7 @@ int control_var_size (char *key) {
  | FUNCTION     : FILE_with_next_ts
  | COMMENT      : Determine the file with the next time step.
  | PARAMETERS   : None
- | RETURN VALUE : Proiter to file data structure
+ | RETURN VALUE : Pointer to file data structure
  | RESTRICTIONS : None
 \*--------------------------------------------------------------------*/
 FILE_DATA * FILE_with_next_ts (void) {
@@ -8882,7 +6606,7 @@ FILE_DATA * FILE_with_next_ts (void) {
 
                Mprevjt = fd_ptr->time.jt;
 
-               if (!(fgets (fd_ptr->line, MAXDATALNLEN, fd_ptr->fp))) {
+               if (!(fgets (fd_ptr->line, max_data_ln_len, fd_ptr->fp))) {
                   fclose (fd_ptr->fp);
                       fd_ptr->fp = NULL;
                   fd_ptr->time.year = 9999;
@@ -8900,7 +6624,7 @@ FILE_DATA * FILE_with_next_ts (void) {
 
                Mprevjt = cur_fd->time.jt;
 
-               if (!(fgets (cur_fd->line, MAXDATALNLEN, cur_fd->fp))) {
+               if (!(fgets (cur_fd->line, max_data_ln_len, cur_fd->fp))) {
                   fclose (cur_fd->fp);
                       cur_fd->fp = NULL;
                   cur_fd->time.year = 9999;
@@ -8934,10 +6658,19 @@ FILE_DATA * FILE_with_next_ts (void) {
 \*--------------------------------------------------------------------*/
 char * EXTRACT_time (FILE_DATA *data) {
    char   *start_point, *end_point;
-   char   line[MAXDATALNLEN];
-   static char   err_buf[MAXDATALNLEN];
+   static char   *line = NULL;
+   static char   *err_buf = NULL;
+
+   if (line == NULL) {
+	   line = (char *) umalloc(max_data_ln_len * sizeof(char));
+   }
+
+   if (err_buf == NULL) {
+	   err_buf = (char *) umalloc(max_data_ln_len * sizeof(char));
+   }
 
    if (data->time.year == 9999) {
+	   (void)fprintf (stderr,"9990\n");
       return (NULL);
    }
 
@@ -8948,7 +6681,7 @@ char * EXTRACT_time (FILE_DATA *data) {
    errno = 0;
    data->time.year = strtol (start_point, &end_point, 10);
 
-   if (data->time.year < 1800 || data->time.year > 2100) {
+   if (data->time.year < 1800 || data->time.year > 2200) {
       (void)sprintf (err_buf, "EXTRACT_time - year %ld out of range.\nline:%s",
          data->time.year, data->line);
       return (err_buf);
@@ -9071,7 +6804,11 @@ void DATA_find_end (DATETIME *start_of_data, DATETIME *end_of_data) {
   FILE   *f_ptr;
   int      i, num_data_files;
   DATETIME check;
-  char line[MAXDATALNLEN];
+  static char *line = NULL;
+
+   if (line == NULL) {
+	   line = (char *) umalloc(max_data_ln_len * sizeof(char));
+   }
 
   num_data_files = control_var_size ("data_file");
 
@@ -9080,14 +6817,14 @@ void DATA_find_end (DATETIME *start_of_data, DATETIME *end_of_data) {
   */
   f_ptr = fopen ((fd[0])->name, "r");
   
-  fgets (line, MAXDATALNLEN, f_ptr);
+  fgets (line, max_data_ln_len, f_ptr);
   while (strncmp (line, "####", 4))
-    fgets (line, MAXDATALNLEN, f_ptr);
+    fgets (line, max_data_ln_len, f_ptr);
 
-  fgets (line, MAXDATALNLEN, f_ptr);
+  fgets (line, max_data_ln_len, f_ptr);
   INSERT_time (line, start_of_data);
 
-  while (fgets (line, MAXDATALNLEN, f_ptr));
+  while (fgets (line, max_data_ln_len, f_ptr));
 
   INSERT_time (line, end_of_data);
 
@@ -9099,11 +6836,11 @@ void DATA_find_end (DATETIME *start_of_data, DATETIME *end_of_data) {
   for (i = 1; i < num_data_files; i++) {
     f_ptr = fopen ((fd[i])->name, "r");
 
-    fgets (line, MAXDATALNLEN, f_ptr);
+    fgets (line, max_data_ln_len, f_ptr);
     while (strncmp (line, "####", 4))
-      fgets (line, MAXDATALNLEN, f_ptr);
+      fgets (line, max_data_ln_len, f_ptr);
 
-    fgets (line, MAXDATALNLEN, f_ptr);
+    fgets (line, max_data_ln_len, f_ptr);
     INSERT_time (line, &check);
 
     if (check.jt < start_of_data->jt) {
@@ -9117,7 +6854,7 @@ void DATA_find_end (DATETIME *start_of_data, DATETIME *end_of_data) {
       start_of_data->jt = check.jt;
     }
 
-    while (fgets (line, MAXDATALNLEN, f_ptr));
+    while (fgets (line, max_data_ln_len, f_ptr));
     INSERT_time (line, &check);
 
     if (check.jt > end_of_data->jt) {
@@ -9165,137 +6902,19 @@ static void INSERT_time (char *line, DATETIME *ptr) {
 
    julday (ptr);
 }
-
-/**8************************** TEST DRIVER ****************************/
-
 /*+
  * United States Geological Survey
  *
  * PROJECT  : Modular Modeling System (MMS)
- * NAME     : read_params.c
- * AUTHOR   : CADSWES, modified by Steve Markstrom (markstro)
- * DATE     : Wed 12 Oct 1994
- * FUNCTION :
- * COMMENT  :
- * REF      :
- * REVIEW   :
- * PR NRS   :
+ * FUNCTION : read_params
+ * COMMENT  : reads the params data base from a file
+ *            File name is passed in as an argument
  *
- * read_params.c: reads the params data base from a file
- * File name is passed in as an argument
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
- *
-   $Revision: 4870 $
-        $Log: read_params.c,v $
-        Revision 1.30  1998/10/20 15:53:02  markstro
-        Fixed "blank" format.
-
-        Revision 1.29  1997/09/22 14:07:09  markstro
-        Unknown
-
-        Revision 1.28  1996/08/28 15:24:12  markstro
-        Unknown
-
- * Revision 1.27  1996/06/28  19:32:24  markstro
- * (1) Fixed 3d control window.
- * (2) Fixed stats.
- *
- * Revision 1.26  1996/04/29  16:23:12  markstro
- * Unknown
- *
- * Revision 1.25  1996/02/19  20:00:44  markstro
- * Now lints pretty clean
- *
-        Revision 1.24  1995/05/25 14:26:38  markstro
-        (1) Added batch mode
-        (2) Replaced "b" functions with "mem" versions
-
- * Revision 1.23  1995/05/17  19:20:22  markstro
- * Bug fixes
- *
- * Revision 1.22  1995/02/10  23:58:30  markstro
- * Bug fixes for class
- *
- * Revision 1.21  1995/02/01  17:47:36  markstro
- * Addition of Rosenbrock optimization.  Start of sensitivity.  Many bug fixes.
- *
- * Revision 1.20  1994/12/21  21:36:19  markstro
- * (1) Fixed ESP to work with multiple data files.
- * (2) Fixed Optimization to work with multiple data files.
- * (3) Fixed Sensitivity to work with multiple data files.
- *
- * Revision 1.19  1994/11/22  17:20:12  markstro
- * (1) Cleaned up dimensions and parameters.
- * (2) Some changes due to use of malloc_dbg.
- *
- * Revision 1.18  1994/11/09  22:10:46  markstro
- * GIS stuff out
- *
- * Revision 1.17  1994/11/08  16:17:39  markstro
- * (1) More proto type fine tuning
- * (2) fixed up data file reading
- *
- * Revision 1.16  1994/10/24  14:18:53  markstro
- * (1)  Integration of CADSWES's work on GIS.
- * (2)  Prototypes were added to the files referenced in "mms_proto.h".
- *
- * Revision 1.15  1994/10/13  17:53:36  markstro
- * (1) Added annotation to parameter values through the spreadsheet
- * (2) Included <string.h> in a few more files that needed it.
- *
- * Revision 1.14  1994/09/30  14:54:57  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.13  1994/09/13  15:59:18  markstro
- * (1)  Version of save_params is now written into parameter file.
- * (2)  Took out min and max values for parameters -- these were not necessary.
- *
- * Revision 1.12  1994/09/09  14:56:27  markstro
- * (1)  Fixed up main edit menu.
- * (2)  Added a "notes" field to dimension indicies
- * (3)  A little more Rosenbrock work.
- * (4)  Fixed the list selector -- changed button names & first item
- *      selected by default.
- * (5)  Modified spread sheet help to be able to display dimension notes
- * (6)  Ran some source through "cb"
- *
- * Revision 1.11  1994/08/02  17:46:38  markstro
- * Split data file capabilities
- *
- * Revision 1.10  1994/07/25  17:06:39  markstro
- * Fixed message for when param file DNE.
- *
- * Revision 1.9  1994/05/18  17:15:56  markstro
- * TERRA changed mhms to mms
- *
- * Revision 1.8  1994/04/19  19:11:17  markstro
- * Unknown
- *
- * Revision 1.7  1994/04/08  16:04:11  markstro
- * Changes from TERRA
- *
- * Revision 1.6  1994/04/01  22:03:53  markstro
- * (1)  Error strings go back through return values.
- *
- * Revision 1.5  1994/03/25  22:07:33  markstro
- * Unknown
- *
- * Revision 1.3  1994/01/31  20:17:14  markstro
- * Make sure that all source files have CVS log.
 -*/
 
 /**1************************ INCLUDE FILES ****************************/
-
-/**2************************* LOCAL MACROS ****************************/
-
-/**3************************ LOCAL TYPEDEFS ***************************/
-
-/**4***************** DECLARATION LOCAL FUNCTIONS *********************/
-
-/**5*********************** LOCAL VARIABLES ***************************/
-
-/**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
 #define READ_PARAMS_C
 #include <stdio.h>
 #include <string.h>
@@ -9305,10 +6924,25 @@ static void INSERT_time (char *line, DATETIME *ptr) {
 #include <stdlib.h>
 #include "mms.h"
 
-static char *READ_param_head (PARAM **, FILE **, char *, char[]);
-static char *READ_param_values (PARAM *, FILE *, char []);
-static char *rp (char *, int);
-//static int ver = 0, rev = 0;
+static char *READ_param_head (PARAM **, FILE **, char *, char[], int);
+static char *READ_param_values (long, long, char *, char *, FILE *, char[]);
+static char *rp (char *, int, int);
+static int checkForValidDimensions (PARAM *);
+static int isDimensionIncompatable (char *, char *);
+static void oneToAnySizedArray(PARAM *, char *);
+static int getParamFileParamSize (PARAM *);
+static char *getMapParamName(char *);
+static void subbasinTo1DArray (PARAM *, PARAM *, char *);
+
+static char* dimNames[] = {"nhru", "nsegment",
+	"nrain", "ntemp", "nobs", "ngw",
+	"nssr"
+};
+
+static char* mapParamNames[] = {"hru_subbasin", "segment_subbasin",
+	"rain_subbasin", "temp_subbasin", "obs_subbasin", "gw_subbasin",
+	"ssr_subbasin"
+};
 
 int nComments;
 char **Comments;
@@ -9320,7 +6954,7 @@ char **Comments;
  | RETURN VALUE : 
  | RESTRICTIONS :
 \*--------------------------------------------------------------------*/
-char *read_params (char *param_file_name, int index) {
+char *read_params (char *param_file_name, int index, int mapping_flag) {
   	static char *foo = NULL;
   	char old[256], *cptr;
 
@@ -9333,10 +6967,10 @@ char *read_params (char *param_file_name, int index) {
 		foo = strdup (param_file_name);
 	}
 
-	cptr = rp (param_file_name, index);
+	cptr = rp (param_file_name, index, mapping_flag);
 
 	if (cptr) {
-		rp (old, index);
+		rp (old, index, 0);
 
 		free (foo);
 		foo = strdup (old);
@@ -9357,12 +6991,20 @@ char *read_dims (char *param_file_name) {
   DIMEN *dim;
   int dim_size, i, j;
 
-  char line[MAXDATALNLEN], key[MAXDATALNLEN];
+  static char *line = NULL;
+  static char *key = NULL;
   static char buf[256];
   char *endptr;
   char *nch;
   int		done;
+  
+   if (line == NULL) {
+	   line = (char *) umalloc(max_data_ln_len * sizeof(char));
+   }
 
+   if (key == NULL) {
+	   key = (char *) umalloc(max_data_ln_len * sizeof(char));
+   }
 
 /*
 * get param name, open file
@@ -9379,7 +7021,7 @@ char *read_dims (char *param_file_name) {
 /*
 * read in run info string
 */
-	if (!fgets (line, MAXDATALNLEN, param_file)) {
+	if (!fgets (line, max_data_ln_len, param_file)) {
 		if (param_file != NULL) {
 		   fclose (param_file);
 		   param_file = NULL;
@@ -9397,7 +7039,7 @@ char *read_dims (char *param_file_name) {
 /*
 **	See if version number is set
 */
-	if (!fgets (line, MAXDATALNLEN, param_file)) {
+	if (!fgets (line, max_data_ln_len, param_file)) {
 		if (param_file != NULL) {
 		   fclose (param_file);
 		   param_file = NULL;
@@ -9407,22 +7049,7 @@ char *read_dims (char *param_file_name) {
 		return (buf);
 	}
 
-  //if (!strncmp (line, "Version:", 8)) {
-  //  nch = (char *)strchr (line, ' ');
-  //  if (nch) {
-  //    *nch = '\0';
-  //    nch++;
-  //    ver = atoi (nch);
-  //  }
-
-  //  nch = (char *)strchr (nch, '.');
-  //  if (nch) {
-  //    *nch = '\0';
-  //    nch++;
-  //    rev = atoi (nch);
-  //  }
-
-	if (!fgets (line, MAXDATALNLEN, param_file)) {
+	if (!fgets (line, max_data_ln_len, param_file)) {
 		if (param_file != NULL) {
 		   fclose (param_file);
 		   param_file = NULL;
@@ -9440,7 +7067,7 @@ char *read_dims (char *param_file_name) {
 	nComments = 0;
 
 	while (strncmp (line, "** Dimensions **", 16)) {
-		if (!fgets (line, MAXDATALNLEN, param_file)) {
+		if (!fgets (line, max_data_ln_len, param_file)) {
 		   if (param_file != NULL) {
 		      fclose (param_file);
 		      param_file = NULL;
@@ -9469,7 +7096,7 @@ char *read_dims (char *param_file_name) {
 		return (buf);
 	}
   
-	if (!fgets (line, MAXDATALNLEN, param_file)) {
+	if (!fgets (line, max_data_ln_len, param_file)) {
 		if (param_file != NULL) {
 		   fclose (param_file);
 		   param_file = NULL;
@@ -9495,7 +7122,7 @@ char *read_dims (char *param_file_name) {
 /*
 **	Read dimension name from parameter file.
 */
-		if (fgets (key, MAXDATALNLEN, param_file) == NULL) {
+		if (fgets (key, max_data_ln_len, param_file) == NULL) {
 		   if (param_file != NULL) {
 		      fclose (param_file);
 		      param_file = NULL;
@@ -9511,7 +7138,7 @@ char *read_dims (char *param_file_name) {
 /*
 **	Read dimension size from parameter file.
 */
-			if (fgets (line, MAXDATALNLEN, param_file) == NULL) {
+			if (fgets (line, max_data_ln_len, param_file) == NULL) {
 		       if (param_file != NULL) {
 		          fclose (param_file);
 		          param_file = NULL;
@@ -9535,13 +7162,14 @@ char *read_dims (char *param_file_name) {
 **	If necessary, reset dimension to value read from file.
 */
 			if (dim->value != dim_size) {
-				reset_dim (dim, dim_size);
+				//reset_dim (dim, dim_size);
+				dim->value = dim_size;
 			}
 
 /*
 * check if there are index names below
 */
-			if (fgets (line, MAXDATALNLEN, param_file)) {
+			if (fgets (line, max_data_ln_len, param_file)) {
 				if (strncmp (line, "** Parameters **", 16)) {
 					if (dim->names) {
 				//        free (dim->names);
@@ -9574,7 +7202,7 @@ char *read_dims (char *param_file_name) {
 									*nch = '\0';
 								}
 								dim->notes[i] = strdup (&(line[1]));
-								fgets (line, MAXDATALNLEN, param_file);
+								fgets (line, max_data_ln_len, param_file);
 								i++;
 
 							} else {
@@ -9583,7 +7211,7 @@ char *read_dims (char *param_file_name) {
 									*nch = '\0';
 								}
 								dim->names[i] = strdup (line);
-								fgets (line, MAXDATALNLEN, param_file);
+								fgets (line, max_data_ln_len, param_file);
 								i++;
 							}
 
@@ -9606,9 +7234,8 @@ char *read_dims (char *param_file_name) {
 			}
 		} else {
 			(void)fprintf (stderr,"\nWARNING: dimension '%s' is not required; set in parameter file:\n         %s\n", key, param_file_name);
-//			(void)fprintf (stderr,"\nMMS Warning -- from read_dims:\ndimension '%s' is set in parameter file:\n%s\nbut has never been declared.\n\n", key, param_file_name);
-			fgets (line, MAXDATALNLEN, param_file);
-			fgets (line, MAXDATALNLEN, param_file);
+			fgets (line, max_data_ln_len, param_file);
+			fgets (line, max_data_ln_len, param_file);
 		}
 	}
 
@@ -9626,14 +7253,21 @@ char *read_dims (char *param_file_name) {
  | RETURN VALUE : 
  | RESTRICTIONS :
 \*--------------------------------------------------------------------*/
-static char *rp (char *param_file_name, int index) {
+static char *rp (char *param_file_name, int index, int map_flag) {
 
   FILE *param_file;
   PARAM *param;
 
-  char line[MAXDATALNLEN];
+  static char *line = NULL;
   static char buf[256], *buf_ptr;
+  char *pf_value, *mapParamName;
+  int i, j, k;
+  PARAM *mapping_param;
+//  int *mapping;
 
+  if (line == NULL) {
+	  line = (char *) umalloc(max_data_ln_len * sizeof(char));
+  }
 
 /*
 * get param name, open file
@@ -9647,10 +7281,10 @@ static char *rp (char *param_file_name, int index) {
 		return (buf);
 	}
 
-	fgets (line, MAXDATALNLEN, param_file);
+	fgets (line, max_data_ln_len, param_file);
 	if (index == 0) {  // if index equals zero, than this parameter file has dimension stuff and we need to skip over it.
 		while (strncmp (line, "** Parameters **", 16)) {
-			if (!fgets (line, MAXDATALNLEN, param_file)) {  // return if hits eol
+			if (!fgets (line, max_data_ln_len, param_file)) {  // return if hits eol
 		       if (param_file != NULL) {
 		          fclose (param_file);
 		          param_file = NULL;
@@ -9658,14 +7292,14 @@ static char *rp (char *param_file_name, int index) {
 			   return (NULL);
 			}
 		}
-		fgets (line, MAXDATALNLEN, param_file);
+		fgets (line, max_data_ln_len, param_file);
 	}
 
 /*
 **	Read in parameters.
 */
 	while (!feof (param_file)) {
-		buf_ptr = READ_param_head (&param, &param_file, param_file_name, line);
+		buf_ptr = READ_param_head (&param, &param_file, param_file_name, line, map_flag);
 		if (buf_ptr) {
 			if (buf_ptr == (char *)-1) {
 		      if (param_file != NULL) {
@@ -9683,7 +7317,288 @@ static char *rp (char *param_file_name, int index) {
 		}
 
 		if (param != NULL) {
-			buf_ptr = READ_param_values (param, param_file, line);
+
+			// If param->size (array size as defined by module) is the
+			// same as param->pf_size (array size as defined by parameter
+			// file, then read the values for this parameter from the
+			// parameter file directly into param->value because the 
+			// dimensions match.  If the sizes do not match, read the
+			// values into a temporary array that is used to remap the
+			// values into the correct size and shape for param->value.
+			if (param->pf_size == param->size) {
+				buf_ptr = READ_param_values (param->size, param->type, param->name, param->value, param_file, line);
+
+			} else {
+
+//  Make sure that this resizing code is in sync with the ParamToolExpandor code in the oui4 code base.
+
+				if (param->type == M_DOUBLE) {
+					pf_value = (char *)umalloc (param->pf_size * sizeof (double));
+				} else if (param->type == M_FLOAT) {
+					pf_value = (char *)umalloc (param->pf_size * sizeof (float));
+				} else if (param->type == M_LONG) {
+					pf_value = (char *)umalloc (param->pf_size * sizeof (int));
+				} else if (param->type == M_STRING) {
+					pf_value = (char *)umalloc (param->pf_size * sizeof (char *));
+				} else {
+					pf_value = NULL;
+				}
+
+				buf_ptr = READ_param_values (param->pf_size, param->type, param->name, pf_value, param_file, line);
+
+				// The values read from the parameter file need to be resized to fit into the size
+				// of the module array for this parameter.
+
+				// It's easy when the size is 1.  Tested this works for floats
+				if (param->pf_size == 1) {
+					oneToAnySizedArray(param, pf_value);
+
+				} else if (param->pf_ndimen == 1 && !strncmp(param->pf_dimNames[0], "nsub", 4) &&
+						(!strncmp(param->dimen[0]->name, "nhru", 4) || !strncmp(param->dimen[0]->name, "nsegment", 8) ||
+						!strncmp(param->dimen[0]->name, "nrain", 5) || !strncmp(param->dimen[0]->name, "ntemp", 5) ||
+						!strncmp(param->dimen[0]->name, "nobs", 4) || !strncmp(param->dimen[0]->name, "ngw", 3) ||
+						!strncmp(param->dimen[0]->name, "nssr", 4))) {  // subbasin to one mappable dimension
+
+					mapParamName = getMapParamName(param->dimen[0]->name);
+
+					mapping_param = param_addr (mapParamName);
+
+					if (!mapping_param || !(mapping_param->read_in)) {
+						sprintf (buf, "\nERROR: mapping parameter %s must be set in parameter file before parameter %s\n",
+							mapParamName, param->name);
+						return (buf);
+					}
+
+					subbasinTo1DArray (param, mapping_param, pf_value);
+
+				} else if (param->pf_ndimen == 1 && param->ndimen == 2) { // 1D in parameter file to 2D in module
+
+   					// convert "nmonths" to "nhru,nmonths"
+					if (!strncmp(param->pf_dimNames[0], "nmonths", 7)
+                                && !strncmp(param->dimen[0]->name, "nhru", 4) 
+                                && !strncmp(param->dimen[1]->name, "nmonths", 7)) {
+
+						if (param->type == M_DOUBLE) {
+							for (i = 0; i < param->dimen[1]->value; i++) {
+								for (j = 0; j < param->dimen[0]->value; j++) {
+									((double *)(param->value))[j + (i*param->dimen[0]->value)] = ((double *)pf_value)[i];
+								}
+							}
+
+						} else if (param->type == M_FLOAT) {
+							for (i = 0; i < param->dimen[1]->value; i++) {
+								for (j = 0; j < param->dimen[0]->value; j++) {
+									((float *)(param->value))[j + (i*param->dimen[0]->value)] = ((float *)pf_value)[i];
+								}
+							}
+
+						} else if (param->type == M_LONG) {
+							for (i = 0; i < param->dimen[1]->value; i++) {
+								for (j = 0; j < param->dimen[0]->value; j++) {
+									((int *)(param->value))[j + (i*param->dimen[0]->value)] = ((int *)pf_value)[i];
+								}
+							}
+
+						} else if (param->type == M_STRING) {
+							for (i = 0; i < param->dimen[1]->value; i++) {
+								for (j = 0; j < param->dimen[0]->value; j++) {
+									*((char **)param->value + (i*param->dimen[0]->value)) = strdup (pf_value + i);
+								}
+							}
+						}
+
+            // convert "nhru" to "nhru,nmonths"
+					} else if (!strncmp(param->pf_dimNames[0], "nhru", 4)
+                                && !strncmp(param->dimen[0]->name, "nhru", 4) 
+                                && !strncmp(param->dimen[1]->name, "nmonths", 7)) {
+
+						if (param->type == M_DOUBLE) {
+							k = 0;
+							for (i = 0; i < param->dimen[1]->value; i++) {
+								for (j = 0; j < param->dimen[0]->value; j++) {
+									((double *)(param->value))[k++] = ((double *)pf_value)[j];
+								}
+							}
+
+						} else if (param->type == M_FLOAT) {
+							k = 0;
+							for (i = 0; i < param->dimen[1]->value; i++) {
+								for (j = 0; j < param->dimen[0]->value; j++) {
+									((float *)(param->value))[k++] = ((float *)pf_value)[j];
+								}
+							}
+
+						} else if (param->type == M_LONG) {
+							k = 0;
+							for (i = 0; i < param->dimen[1]->value; i++) {
+								for (j = 0; j < param->dimen[0]->value; j++) {
+									((int *)(param->value))[k++] = ((int *)pf_value)[j];
+								}
+							}
+
+						} else if (param->type == M_STRING) {
+							k = 0;
+							for (i = 0; i < param->dimen[1]->value; i++) {
+								for (j = 0; j < param->dimen[0]->value; j++) {
+									*((char **)param->value + (k++)) = strdup (pf_value + j);
+								}
+							}
+						}
+
+            // convert "nrain" to "nrain,nmonths"
+					} else if (!strncmp(param->pf_dimNames[0], "nrain", 5)
+                                && !strncmp(param->dimen[0]->name, "nrain", 5) 
+                                && !strncmp(param->dimen[1]->name, "nmonths", 7)) {
+
+						if (param->type == M_DOUBLE) {
+							k = 0;
+							for (i = 0; i < param->dimen[1]->value; i++) {
+								for (j = 0; j < param->dimen[0]->value; j++) {
+									((double *)(param->value))[k++] = ((double *)pf_value)[j];
+								}
+							}
+
+						} else if (param->type == M_FLOAT) {
+							k = 0;
+							for (i = 0; i < param->dimen[1]->value; i++) {
+								for (j = 0; j < param->dimen[0]->value; j++) {
+									((float *)(param->value))[k++] = ((float *)pf_value)[j];
+								}
+							}
+
+						} else if (param->type == M_LONG) {
+							k = 0;
+							for (i = 0; i < param->dimen[1]->value; i++) {
+								for (j = 0; j < param->dimen[0]->value; j++) {
+									((int *)(param->value))[k++] = ((int *)pf_value)[j];
+								}
+							}
+
+						} else if (param->type == M_STRING) {
+							k = 0;
+							for (i = 0; i < param->dimen[1]->value; i++) {
+								for (j = 0; j < param->dimen[0]->value; j++) {
+									*((char **)param->value + (k++)) = strdup (pf_value + j);
+								}
+							}
+						}
+
+            // convert "ntemp" to "ntemp,nmonths"
+					} else if (!strncmp(param->pf_dimNames[0], "ntemp", 5)
+                                && !strncmp(param->dimen[0]->name, "ntemp", 5) 
+                                && !strncmp(param->dimen[1]->name, "nmonths", 7)) {
+
+						if (param->type == M_DOUBLE) {
+							k = 0;
+							for (i = 0; i < param->dimen[1]->value; i++) {
+								for (j = 0; j < param->dimen[0]->value; j++) {
+									((double *)(param->value))[k++] = ((double *)pf_value)[j];
+								}
+							}
+
+						} else if (param->type == M_FLOAT) {
+							k = 0;
+							for (i = 0; i < param->dimen[1]->value; i++) {
+								for (j = 0; j < param->dimen[0]->value; j++) {
+									((float *)(param->value))[k++] = ((float *)pf_value)[j];
+								}
+							}
+
+						} else if (param->type == M_LONG) {
+							k = 0;
+							for (i = 0; i < param->dimen[1]->value; i++) {
+								for (j = 0; j < param->dimen[0]->value; j++) {
+									((int *)(param->value))[k++] = ((int *)pf_value)[j];
+								}
+							}
+
+						} else if (param->type == M_STRING) {
+							k = 0;
+							for (i = 0; i < param->dimen[1]->value; i++) {
+								for (j = 0; j < param->dimen[0]->value; j++) {
+									*((char **)param->value + (k++)) = strdup (pf_value + j);
+								}
+							}
+						}
+
+            // convert "nmonths" to "nrain,nmonths"
+					} else if (!strncmp(param->pf_dimNames[0], "nmonths", 7)
+                                && !strncmp(param->dimen[0]->name, "nrain", 5) 
+                                && !strncmp(param->dimen[1]->name, "nmonths", 7)) {
+
+						if (param->type == M_DOUBLE) {
+							for (i = 0; i < param->dimen[1]->value; i++) {
+								for (j = 0; j < param->dimen[0]->value; j++) {
+									((double *)(param->value))[j + (i*param->dimen[0]->value)] = ((double *)pf_value)[i];
+								}
+							}
+
+						} else if (param->type == M_FLOAT) {
+							for (i = 0; i < param->dimen[1]->value; i++) {
+								for (j = 0; j < param->dimen[0]->value; j++) {
+									((float *)(param->value))[j + (i*param->dimen[0]->value)] = ((float *)pf_value)[i];
+								}
+							}
+
+						} else if (param->type == M_LONG) {
+							for (i = 0; i < param->dimen[1]->value; i++) {
+								for (j = 0; j < param->dimen[0]->value; j++) {
+									((int *)(param->value))[j + (i*param->dimen[0]->value)] = ((int *)pf_value)[i];
+								}
+							}
+
+						} else if (param->type == M_STRING) {
+							for (i = 0; i < param->dimen[1]->value; i++) {
+								for (j = 0; j < param->dimen[0]->value; j++) {
+									*((char **)param->value + (i*param->dimen[0]->value)) = strdup (pf_value + i);
+								}
+							}
+						}
+
+            // convert "nmonths" to "ntemp,nmonths"
+					} else if (!strncmp(param->pf_dimNames[0], "nmonths", 7)
+                                && !strncmp(param->dimen[0]->name, "ntemp", 5) 
+                                && !strncmp(param->dimen[1]->name, "nmonths", 7)) {
+
+						if (param->type == M_DOUBLE) {
+							for (i = 0; i < param->dimen[1]->value; i++) {
+								for (j = 0; j < param->dimen[0]->value; j++) {
+									((double *)(param->value))[j + (i*param->dimen[0]->value)] = ((double *)pf_value)[i];
+								}
+							}
+
+						} else if (param->type == M_FLOAT) {
+							for (i = 0; i < param->dimen[1]->value; i++) {
+								for (j = 0; j < param->dimen[0]->value; j++) {
+									((float *)(param->value))[j + (i*param->dimen[0]->value)] = ((float *)pf_value)[i];
+								}
+							}
+
+						} else if (param->type == M_LONG) {
+							for (i = 0; i < param->dimen[1]->value; i++) {
+								for (j = 0; j < param->dimen[0]->value; j++) {
+									((int *)(param->value))[j + (i*param->dimen[0]->value)] = ((int *)pf_value)[i];
+								}
+							}
+
+						} else if (param->type == M_STRING) {
+							for (i = 0; i < param->dimen[1]->value; i++) {
+								for (j = 0; j < param->dimen[0]->value; j++) {
+									*((char **)param->value + (i*param->dimen[0]->value)) = strdup (pf_value + i);
+								}
+							}
+						}
+
+
+
+
+
+
+
+                    }  // end of 1D to 2D conversion code
+				}
+			}
+
 			if (buf_ptr) {
 		        if (param_file != NULL) {
 		           fclose (param_file);
@@ -9691,9 +7606,13 @@ static char *rp (char *param_file_name, int index) {
 		        }
 				return (buf_ptr);
 			}
+
+			// This function copies the parameter values from the param structure
+			// to the arrays in the modules.
 			updateparam (param->name);
 		}
 	}
+
     if (param_file != NULL) {
 	   fclose (param_file);
 	   param_file = NULL;
@@ -9711,18 +7630,29 @@ static char *rp (char *param_file_name, int index) {
  | RETURN VALUE : 
  | RESTRICTIONS :
 \*--------------------------------------------------------------------*/
-static char *READ_param_head (PARAM **param_ptr, FILE **param_file, char *param_file_name, char line[]) {
-  char key[MAXDATALNLEN];
-  char dimen[MAXDATALNLEN];
+static char *READ_param_head (PARAM **param_ptr, FILE **param_file, char *param_file_name, char line[], int map_flag) {
+  static char *key = NULL;
+  static char *dimen = NULL;
   static char buf[256];
   char *temp, *npos, *tempfmt;
   int tempwidth, i, param_size, type;
+
+  int badFlag;
   
+  if (key == NULL) {
+	  key = (char *) umalloc(max_data_ln_len * sizeof(char));
+  }
+
+   if (dimen == NULL) {
+	  dimen = (char *) umalloc(max_data_ln_len * sizeof(char));
+  }
+
+
 /*
 * space fwd to #### header
 */
   while (strncmp (line, "####", 4))
-    if (!fgets (line, MAXDATALNLEN, *param_file)) {
+    if (!fgets (line, max_data_ln_len, *param_file)) {
 		if (*param_file != NULL) {
 		   fclose (*param_file);
 		   *param_file = NULL;
@@ -9733,7 +7663,7 @@ static char *READ_param_head (PARAM **param_ptr, FILE **param_file, char *param_
 /*
 * get key, column width and format
 */
-  if (fgets (line, MAXDATALNLEN, *param_file) == NULL) {
+  if (fgets (line, max_data_ln_len, *param_file) == NULL) {
 	  (void)sprintf (buf, "\nERROR: Early end of Parameter File: %s", param_file_name);
     return (buf);
   }
@@ -9754,10 +7684,11 @@ static char *READ_param_head (PARAM **param_ptr, FILE **param_file, char *param_
 **	get the column width
 */
   temp = (char *)strtok(NULL," ");
-  if (temp)
+  if (temp) {
     tempwidth = atoi(temp);
-  else
+  } else {
     tempwidth = 0;
+  }
 
 /*
 **	get the format
@@ -9776,7 +7707,29 @@ static char *READ_param_head (PARAM **param_ptr, FILE **param_file, char *param_
 /*
 **  param is allocated by calls from the modules to declparam.
 */
-	*param_ptr = param_addr (key);
+	if (!map_flag) {
+		*param_ptr = param_addr(key);
+
+	} else {
+		if (!strncmp (key, mapParamNames[0], strlen(key)) ||
+			!strncmp (key, mapParamNames[1], strlen(key)) ||
+			!strncmp (key, mapParamNames[2], strlen(key)) ||
+			!strncmp (key, mapParamNames[3], strlen(key)) ||
+			!strncmp (key, mapParamNames[4], strlen(key)) ||
+			!strncmp (key, mapParamNames[5], strlen(key)) ||
+			!strncmp (key, mapParamNames[6], strlen(key))) {
+			*param_ptr = param_addr (key);
+
+			if (*param_ptr == NULL) {  // Didn't find this mapping parameter in the parameter DB so declare one
+				declparam ("read_params", key, NULL, "integer", NULL, NULL, NULL, NULL, NULL, NULL);
+				*param_ptr = param_addr(key);
+			}
+
+		} else {
+			*param_ptr = NULL;
+		}
+	}
+
 	if (*param_ptr) {
 	  /*
 	  **  Set the read_in flag to true
@@ -9800,18 +7753,25 @@ static char *READ_param_head (PARAM **param_ptr, FILE **param_file, char *param_
 /*
 * get number of dimensions
 */
-		if(fgets(line, MAXDATALNLEN, *param_file) == NULL) {
+		if(fgets(line, max_data_ln_len, *param_file) == NULL) {
 			(void)sprintf (buf,"ERROR: reading param number of dimensions for %s in Parameter File %s", key, param_file_name);
 			return buf;
 		}
 
 		if (isdigit(*line)) {
-			if ((*param_ptr)->ndimen != atol(line)) {
-				sprintf (buf, "\nERROR: number of dimensions for parameter %s doesn't match parameter declaration.\nParameter File: %s\n", key, param_file_name);
-				return buf;
-			}
+			//if ((*param_ptr)->ndimen != atol(line)) {
+			//	sprintf (buf, "\nERROR: number of dimensions for parameter %s doesn't match parameter declaration.\nParameter File: %s\n", key, param_file_name);
+			//	return buf;
+			//}
 
-			if((*param_ptr)->ndimen == 0) {
+			(*param_ptr)->pf_ndimen = atol(line);
+
+			//if((*param_ptr)->ndimen == 0) {
+			//	(void)sprintf (buf, "\nERROR: number of dimensions is 0 for %s in Parameter File %s", key, param_file_name);
+			//	return (buf);
+			//}
+
+			if((*param_ptr)->pf_ndimen == 0) {
 				(void)sprintf (buf, "\nERROR: number of dimensions is 0 for %s in Parameter File %s", key, param_file_name);
 				return (buf);
 			}
@@ -9819,8 +7779,8 @@ static char *READ_param_head (PARAM **param_ptr, FILE **param_file, char *param_
 * get number of dimensions if file format supports 2D arrays. Otherwise
 * get dimension name.
 */
-			for (i = 0; i < (*param_ptr)->ndimen; i++) {
-				if(fgets(dimen, MAXDATALNLEN, *param_file) == NULL) {
+/*			for (i = 0; i < (*param_ptr)->ndimen; i++) {
+				if(fgets(dimen, max_data_ln_len, *param_file) == NULL) {
 					(void)sprintf (buf, "\nERROR: number of dimensions is wrong for %s in Parameter File %s", key, param_file_name);
 					return (buf);
 				}
@@ -9830,12 +7790,48 @@ static char *READ_param_head (PARAM **param_ptr, FILE **param_file, char *param_
 					(void)sprintf (buf, "\nERROR: dimension specification is wrong for %s in Parameter File %s", key, param_file_name);
 					return (buf);
 				}
-			} /* i */
+			}*/ /* i */
 
+			(*param_ptr)->pf_dimNames = (char **)malloc ((*param_ptr)->pf_ndimen * sizeof (char *));
+
+			for (i = 0; i < (*param_ptr)->pf_ndimen; i++) {
+				if(fgets(dimen, max_data_ln_len, *param_file) == NULL) {
+					(void)sprintf (buf, "\nERROR: number of dimensions is wrong for %s in Parameter File %s", key, param_file_name);
+					return (buf);
+				}
+
+				dimen[strlen(dimen) - 1] = '\0';
+				(*param_ptr)->pf_dimNames[i] = strdup(dimen);
+				//if (strcmp(dimen, (*param_ptr)->dimen[i]->name)) {
+				//	(void)sprintf (buf, "\nERROR: dimension specification is wrong for %s in Parameter File %s", key, param_file_name);
+				//	return (buf);
+				//}
+			}
+
+			if (map_flag) { // Need to set some values in the param structure for mapping parameter
+				(*param_ptr)->ndimen = 1;
+				(*param_ptr)->dimen = (DIMEN **)umalloc ((*param_ptr)->ndimen * sizeof (DIMEN *));
+				(*param_ptr)->dimen[0] = dim_addr((*param_ptr)->pf_dimNames[0]);
+			}
+
+			badFlag = checkForValidDimensions (*param_ptr);  // 0 = good;  1 = bad
+
+			if (badFlag) {
+				(void)sprintf (buf, "ERROR: dimensions for %s in Parameter File %s are incompatable with declaration in module", key, param_file_name);
+				return (buf);
+			}
+
+			(*param_ptr)->pf_size = getParamFileParamSize(*param_ptr);
+
+			if (map_flag) { // Need to set some values in the param structure for mapping parameter
+				(*param_ptr)->size = (*param_ptr)->pf_size;
+				(*param_ptr)->value = (char *)umalloc ((*param_ptr)->size * sizeof (int)); // Mapping parameters are always integers
+			}
 /*
 * get param size
 */
-			if(fgets(line, MAXDATALNLEN, *param_file) == NULL) {
+			fgets(line, max_data_ln_len, *param_file);
+			if(line == NULL) {
 				(void)sprintf (buf, "ERROR: incorrect parameter size for %s in Parameter File %s", key, param_file_name);
 				return (buf);
 			}
@@ -9845,12 +7841,13 @@ static char *READ_param_head (PARAM **param_ptr, FILE **param_file, char *param_
 				return (buf);
 			}
 
-			if(param_size != (*param_ptr)->size) {
+			//if(param_size != (*param_ptr)->size) {
+			if(param_size != (*param_ptr)->pf_size) {
 				(void)sprintf (buf, "\nERROR: incorrect parameter size for %s in Parameter File %s", key, param_file_name);
 				return (buf);
 			}
 
-		} else {
+		} else {  //  number of dimensions not a digit
 			(*param_ptr)->ndimen = 1;
 			strncpy(dimen, line, strlen(line));
 			dimen[strlen(line)-1] = '\0';
@@ -9866,8 +7863,8 @@ static char *READ_param_head (PARAM **param_ptr, FILE **param_file, char *param_
 /*
 * get type
 */
-
-		if(fgets(line, MAXDATALNLEN, *param_file) == NULL) {
+		fgets(line, max_data_ln_len, *param_file);
+		if(line == NULL) {
 			(void)sprintf (buf, "\nERROR: incorrect data type specified for parameter %s in Parameter File %s", key, param_file_name);
 			return (buf);
 		}
@@ -9883,10 +7880,10 @@ static char *READ_param_head (PARAM **param_ptr, FILE **param_file, char *param_
 		}
   
 	} else {
-//		(void)printf ("WARNING: parameter %s is included in the Parameter File (%s) and is not required.\n", key, param_file_name);
-//		(void)printf ("         This parameter is read and ignored.\n\n");
-		(void)printf ("\nWARNING: parameter %s is ignored as it is not required.\n", key);
-		(void)printf ("         Read from Parameter File: %s\n", param_file_name);
+		if (!map_flag) {
+			(void)printf ("\nWARNING: parameter %s is ignored as it is not required.\n", key);
+			(void)printf ("         Read from Parameter File: %s\n", param_file_name);
+		}
 	}
 
 	return (NULL);
@@ -9899,77 +7896,85 @@ static char *READ_param_head (PARAM **param_ptr, FILE **param_file, char *param_
  | RETURN VALUE : 
  | RESTRICTIONS :
 \*--------------------------------------------------------------------*/
-static char *READ_param_values (PARAM *param, FILE *param_file, char line[]) {
+static char *READ_param_values (long size, long type, char *name, char *value,
+								FILE *param_file, char *line) {
 	int i, j;
-	char *nch;
-	int l1, l2, done;
+//	char *nch;
+//	int l1, l2
+    int  done;
 	int	desc_count = 0;
 	int repeat_count;
 	char delims[] = ",";
 	char *result = NULL;
 	char *comp_ptr = NULL;
-	static char crap[MAXDATALNLEN], crap2[MAXDATALNLEN];
+	static char *crap = NULL;
+	static char *crap2 = NULL;
 	static char buf[256];
 	float foo;
 	double d;
 	char *endp;
 	long l;
+	
+	if (crap == NULL) {
+		crap = (char *) umalloc(max_data_ln_len * sizeof(char));
+	}
 
-	//if (!strncmp (param->name, "imperv_stor_max", 15)) {
-	//	printf ("imperv_stor_max\n");
-	//}
+	if (crap2 == NULL) {
+		crap2 = (char *) umalloc(max_data_ln_len * sizeof(char));
+	}
+
 /*
 **  Space for the values and value_desc are allocated in declparam
 */
 	done = FALSE;
 	i = 0;
 	while (!done) {
-		if (!fgets (line, MAXDATALNLEN, param_file)) {
+		fgets (line, max_data_ln_len, param_file);
+		if (!line) {
 			done = TRUE;
 
 		} else if (!strncmp (line, "####", 4)) {
 			done = TRUE;
 
-		} else if (!param) {
-			;
+		//} else if (!param) {
+		//	;
 
-		} else if (line[0] == '@') {
-			i--;
+		//} else if (line[0] == '@') {
+		//	i--;
 
-			nch = (char *)strchr (line, '\n');
-			if (nch) *nch = '\0';
+		//	nch = (char *)strchr (line, '\n');
+		//	if (nch) *nch = '\0';
 
-			if (desc_count) {
-				if (param->value_desc[i]) {
-					l1 = strlen (param->value_desc[i]);
-					l2 = strlen (line);
-					param->value_desc[i] = (char *)realloc
-					    (param->value_desc[i],
-					    (l1 + l2 + 2) * sizeof (char));
-					strcat (param->value_desc[i], "\n");
-					strcat (param->value_desc[i], &(line[1]));
-				} else {
-					param->value_desc[i] = strdup (&(line[1]));
-				}
-			} else {
-//				if (param->value_desc[i]) free (param->value_desc[i]);
+		//	if (desc_count) {
+		//		if (param->value_desc[i]) {
+		//			l1 = strlen (param->value_desc[i]);
+		//			l2 = strlen (line);
+		//			param->value_desc[i] = (char *)realloc
+		//			    (param->value_desc[i],
+		//			    (l1 + l2 + 2) * sizeof (char));
+		//			strcat (param->value_desc[i], "\n");
+		//			strcat (param->value_desc[i], &(line[1]));
+		//		} else {
+		//			param->value_desc[i] = strdup (&(line[1]));
+		//		}
+		//	} else {
 
-				param->value_desc[i] = strdup (&(line[1]));
-			}
-			i++;
+		//		param->value_desc[i] = strdup (&(line[1]));
+		//	}
+		//	i++;
 
 		} else {
 			desc_count = 0;
 			result = NULL;
 			//printf ("READ_param_values: line is %s\n", line);
-			strncpy (crap, line, MAXDATALNLEN);
+			strncpy (crap, line, max_data_ln_len);
 			//printf ("crap is %s\n", crap);
 
 			result = strtok (crap, delims);
 			while (result != NULL && !done) {
 				//printf ("   READ_param_values: result is |%s|\n", result);
 
-				strncpy (crap2, result, MAXDATALNLEN);
+				strncpy (crap2, result, max_data_ln_len);
 				//printf ("crap2 is %s\n", crap2);
 				comp_ptr = strchr (crap2, '*');
 				//printf ("comp_ptr is %s\n", comp_ptr);
@@ -9986,12 +7991,13 @@ static char *READ_param_values (PARAM *param, FILE *param_file, char line[]) {
 				}
 
 				for (j = 0; j < repeat_count && !done; j++) {
-					if (i < param->size) {
-						switch (param->type) {
+					if (i < size) {
+						switch (type) {
 
 							case M_STRING:
                                 comp_ptr[strlen(comp_ptr)-1] = '\0';
-                                *((char **)param->value + i) = strdup (comp_ptr);
+                                //*((char **)param->value + i) = strdup (comp_ptr);
+								*((char **)value + i) = strdup (comp_ptr);
                                 i++;
 
 								//if (comp_ptr != endp && *endp == '\n') {
@@ -10008,9 +8014,10 @@ static char *READ_param_values (PARAM *param, FILE *param_file, char line[]) {
 							case M_DOUBLE:
 								d = strtod(comp_ptr, &endp);
 								if (comp_ptr != endp && *endp == '\n') {
-									((double *)(param->value))[i++] = d;
+									//((double *)(param->value))[i++] = d;
+									((double *)value)[i++] = d;
 								} else {
-									sprintf (buf, "\nERROR: parameter format error. Parameter name: %s Index = %d\n   The data type should be a double precision float or there could be white spaces after the values on the line.", param->name, (i+1));
+									sprintf (buf, "\nERROR: parameter format error. Parameter name: %s Index = %d\n   The data type should be a double precision float or there could be white spaces after the values on the line.", name, (i+1));
 									return (buf);
 								}
 								break;
@@ -10018,9 +8025,10 @@ static char *READ_param_values (PARAM *param, FILE *param_file, char line[]) {
 							case M_FLOAT:
 								d = strtod(comp_ptr, &endp);
 								if (comp_ptr != endp && *endp == '\n') {
-									((float *)(param->value))[i++] = (float)d;
+									//((float *)(param->value))[i++] = (float)d;
+									((float *)value)[i++] = (float)d;
 								} else {
-									sprintf (buf, "\nERROR: parameter format error. Parameter name: %s Index = %d\n   The data type should be a float or there could be white spaces after the values on the line.", param->name, (i+1));
+									sprintf (buf, "\nERROR: parameter format error. Parameter name: %s Index = %d\n   The data type should be a float or there could be white spaces after the values on the line.", name, (i+1));
 									return (buf);
 								}
 								break;
@@ -10028,93 +8036,247 @@ static char *READ_param_values (PARAM *param, FILE *param_file, char line[]) {
 							case M_LONG:
 								l = strtol(comp_ptr, &endp, 0);
 								if (comp_ptr != endp && *endp == '\n') {
-									((int *)(param->value))[i++] = (int)l;
+									//((int *)(param->value))[i++] = (int)l;
+									((int *)value)[i++] = (int)l;
 								} else {
-									sprintf (buf, "\nERROR: parameter format error. Parameter name: %s Index = %d\n   The data type should be an integer or there could be white spaces after the values on the line.", param->name, (i+1));
+									sprintf (buf, "\nERROR: parameter format error. Parameter name: %s Index = %d\n   The data type should be an integer or there could be white spaces after the values on the line.", name, (i+1));
 									return (buf);
 								}
 								break;
 						} // switch
 				 
-					} else { // if (i < param->size)
+					} else { // if (i < size)
 						done = TRUE;
 						i++;
-					} // if (i < param->size)
+					} // if (i < size)
 				}
 				result = strtok(NULL, delims);
 			} // while
 		}
 	}
 
-	if (i < param->size) {
-		sprintf (buf, "\nERROR: too few values read for paramter %s in Parameter File", param->name);
+	if (i < size) {
+		sprintf (buf, "\nERROR: too few values read for paramter %s in Parameter File", name);
 		return (buf);
-	} else if (i > param->size) {
-		sprintf (buf, "\nERROR: too many values read for paramter %s in Parameter File", param->name);
+	} else if (i > size && !done) {
+		sprintf (buf, "\nERROR: too many values read for paramter %s in Parameter File", name);
 		return (buf);
 	}
 	return (NULL);
 }
-/***************************** TEST DRIVER ****************************/
+
+// returns
+// 0 = good;  1 = bad
+static int checkForValidDimensions (PARAM *param_ptr) {
+	int i, badFlag;
+
+//	printf ("checkForValidDimensions name = %s\n", param_ptr->name);
+//	printf ("   pf_ndimen = %d; module_ndimen = %d\n", (int)(param_ptr->pf_ndimen), (int)(param_ptr->ndimen));
+
+	if (param_ptr->pf_ndimen > param_ptr->ndimen ) { // more dimensions in the parameter file is always invalid
+		return 1;
+
+	} else if (param_ptr->pf_ndimen == param_ptr->ndimen ) {
+		for (i = 0; i < param_ptr->pf_ndimen; i++) {  // check each dimension for compatiblilty
+//printf ("   1 comparing %s to %s\n", param_ptr->pf_dimNames[i], param_ptr->dimen[i]->name);
+			badFlag = isDimensionIncompatable (param_ptr->pf_dimNames[i], param_ptr->dimen[i]->name); // 0 = good;  1 = bad
+		}
+		if (badFlag == 1) {
+			return 1;
+		}
+
+	} else { // less dimensions in the parameter file than declared in the module.
+		badFlag = 1;
+//printf ("   2 parameter file has %d dimensions\n", param_ptr->pf_ndimen);
+		for (i = 0; i < param_ptr->ndimen; i++) {  // check each dimension for compatiblilty; only need to find one that is compatable
+//printf ("   2 comparing %s to %s\n", param_ptr->pf_dimNames[0], param_ptr->dimen[i]->name);
+			if (badFlag == 1) {
+				badFlag = isDimensionIncompatable (param_ptr->pf_dimNames[0], param_ptr->dimen[i]->name); // 0 = good;  1 = bad
+			}
+		}
+		if (badFlag == 1) {
+			return 1;
+		}
+	}
+
+	//param_ptr->ndimen
+	return 0;
+}
+
+// returns
+// 0 = good;  1 = bad
+static int isDimensionIncompatable (char *pfDimName, char *modDimName) {
+//	char *dimNames[] ={"one",
+//		"ncascade",
+//		"ncascdgw",
+//		"nsegment",
+//		"npoigages",
+//		"nsub",
+//		"nhrucell",
+//		"ngw",
+//		"nhru",
+//		"nssr",
+//		"nsfres",
+//		"nlake",
+//		"nrain",
+//		"nsol",
+//		"ntemp",
+//		"nratetbl",
+//		"nwateruse",
+//		"ndepl",
+//		"ndeplval",
+//		"ndays",
+//		"nmonths",
+//		"nlapse",
+//		"nobs",
+//		"nsnow",
+//		"nform",
+//		"nevap",
+//		"nsfelev",
+//		"nlakeelev",
+//		"nwind",
+//		"nhumid",
+//		"ngate",
+//		"nstage",
+//		"ngate2",
+//		"nstage2",
+//		"ngate3",
+//		"nstage3",
+//		"ngate4",
+//		"nstage4",
+//		"mxnsos",
+//	};
+
+	if (!strncmp (pfDimName, modDimName, 10)) {  // a dimension is compatable with itself
+		return 0; 
+	}
+
+	if (!strncmp (pfDimName, "one", 3)) {  // "one" in the parameter file is compatable with everything
+		return 0; 
+	}
+
+	// Subbasin (nsub) can be mapped to these dimensions with mapping parameter
+	// "nhru" "hru_subbasin";
+    // "nsegment" "segment_subbasin";
+    // "nrain" "rain_subbasin";
+    // "ntemp" "temp_subbasin";
+    // "nobs"  "obs_subbasin";
+    // "ngw" "gw_subbasin";
+    // "nssr" "ssr_subbasin";
+	if (!strncmp (pfDimName, "nsub", 4)) {
+		if (!strncmp (modDimName, "nhru", 4)) {
+			return 0;
+
+		} else if (!strncmp (modDimName, "nsegment", 8)) {
+			return 0;
+
+		} else if (!strncmp (modDimName, "nrain", 5)) {
+			return 0;
+
+		} else if (!strncmp (modDimName, "ntemp", 5)) {
+			return 0;
+
+		} else if (!strncmp (modDimName, "nobs", 4)) {
+			return 0;
+
+		} else if (!strncmp (modDimName, "ngw", 3)) {
+			return 0;
+
+		} else if (!strncmp (modDimName, "nssr", 4)) {
+			return 0;
+		}
+	}
+	
+
+	return 1;
+}
+
+static int getParamFileParamSize (PARAM *param) {
+	int i, size;
+
+	size = 1;
+	for (i = 0; i < param->pf_ndimen; i++) {  // check each dimension for size
+		size = size * getdim(param->pf_dimNames[i]);
+	}
+	return size;
+}
+
+static void oneToAnySizedArray(PARAM *param, char *pf_value) {
+	int i;
+
+	if (param->type == M_DOUBLE) {
+		for (i = 0; i < param->size; i++) {
+			((double *)(param->value))[i] = *((double *)pf_value);
+		}
+	} else if (param->type == M_FLOAT) {
+		for (i = 0; i < param->size; i++) {
+			((float *)(param->value))[i] = *((float *)pf_value);
+		}
+	} else if (param->type == M_LONG) {
+		for (i = 0; i < param->size; i++) {
+			((int *)(param->value))[i] = *((int *)pf_value);
+		}
+	} else if (param->type == M_STRING) {
+		for (i = 0; i < param->size; i++) {
+			*((char **)param->value + i) = strdup (pf_value);
+		}
+	}
+}
+
+static char *getMapParamName(char *name) {
+	char *mapParamName;
+	int i;
+
+	mapParamName = NULL;
+	for (i = 0; i < (sizeof (dimNames) / sizeof (dimNames[0])); i++) {
+		if (!strncmp (name, dimNames[i], strlen(dimNames[i]))) {
+			mapParamName = mapParamNames[i];
+		} 
+	}
+
+    return mapParamName;
+}
+
+static void subbasinTo1DArray (PARAM *param, PARAM *mapping_param, char *pf_value) {
+	int i, map;
+
+	if (param->type == M_DOUBLE) {
+		for (i = 0; i < param->size; i++) {
+			map = ((int *)(mapping_param->value))[i];
+			((double *)(param->value))[i] = ((double *)pf_value)[map - 1];
+		}
+
+	} else if (param->type == M_FLOAT) {
+		for (i = 0; i < param->size; i++) {
+			map = ((int *)(mapping_param->value))[i];
+			((float *)(param->value))[i] = ((float *)pf_value)[map - 1];
+		}
+
+	} else if (param->type == M_LONG) {
+		for (i = 0; i < param->size; i++) {
+			map = ((int *)(mapping_param->value))[i];
+			((int *)(param->value))[i] = ((int *)pf_value)[map - 1];
+		}
+
+	} else if (param->type == M_STRING) {
+		for (i = 0; i < param->size; i++) {
+			map = ((int *)(mapping_param->value))[i];
+//			*((char **)param->value + i) = strdup (*pf_value + map - 1);
+			*((char **)param->value + i) = strdup (pf_value + map - 1);
+		}
+	}
+}
+
 /*+
  * United States Geological Survey
  *
  * PROJECT  : Modular Modeling System (MMS)
- * NAME     : read_vars.c
- * AUTHOR   : Steve Markstrom (markstro)
- * DATE     : Tue 22 Nov 1994
  * FUNCTION : read_vars
  * COMMENT  : reads the vars data base from a file.
- *             File name is passed in as an argument
- * REF      :
- * REVIEW   :
- * PR NRS   :
+ *            File name is passed in as an argument
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
-   $Revision: 4870 $
-        $Log: read_vars.c,v $
-        Revision 1.12  2000/02/18 18:27:06  markstro
-        Made previous Julian time a global.  It is set to -1.0 before the run
-        so that read_line knows to recalculate it.
-
-        Revision 1.11  1999/11/30 22:06:18  markstro
-        Added nsteps to the var save file.
-
-        Revision 1.10  1999/10/22 17:14:37  markstro
-        Added private variables
-
-        Revision 1.9  1996/04/09 21:04:12  markstro
-        (1) Work on control files
-        (2) Runtime graphs
-
- * Revision 1.8  1996/02/19  20:00:45  markstro
- * Now lints pretty clean
- *
-        Revision 1.7  1995/02/10 23:58:32  markstro
-        Bug fixes for class
-
- * Revision 1.6  1994/11/22  17:20:13  markstro
- * (1) Cleaned up dimensions and parameters.
- * (2) Some changes due to use of malloc_dbg.
- *
- * Revision 1.5  1994/09/30  14:54:59  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.4  1994/09/09  14:56:28  markstro
- * (1)  Fixed up main edit menu.
- * (2)  Added a "notes" field to dimension indicies
- * (3)  A little more Rosenbrock work.
- * (4)  Fixed the list selector -- changed button names & first item
- *      selected by default.
- * (5)  Modified spread sheet help to be able to display dimension notes
- * (6)  Ran some source through "cb"
- *
- * Revision 1.3  1994/05/18  17:15:57  markstro
- * TERRA changed mhms to mms
- *
- * Revision 1.2  1994/01/31  20:17:15  markstro
- * Make sure that all source files have CVS log.
 -*/
 
 /**1************************ INCLUDE FILES ****************************/
@@ -10125,14 +8287,8 @@ static char *READ_param_values (PARAM *param, FILE *param_file, char line[]) {
 #include <string.h>
 #include "mms.h"
 
-/**2************************* LOCAL MACROS ****************************/
-
-/**3************************ LOCAL TYPEDEFS ***************************/
-
 /**4***************** DECLARATION LOCAL FUNCTIONS *********************/
 static int read_var_line (char *, char *, FILE *, char *);
-
-/**5*********************** LOCAL VARIABLES ***************************/
 
 /**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
 /*--------------------------------------------------------------------*\
@@ -10151,8 +8307,8 @@ int read_vars (char *var_file_name) {
 	double *dvalptr;
 	float *fvalptr;
 	long *lvalptr;
-	char line[MAXDATALNLEN], key[MAXDATALNLEN];
-	char dimen[MAXDATALNLEN];
+	char line[MAXVARLEN], key[MAXVARLEN];
+	char dimen[MAXVARLEN];
 	char *pathname;
 	char *endptr;
 
@@ -10164,24 +8320,22 @@ int read_vars (char *var_file_name) {
    if ((var_file = fopen (pathname, "r")) == NULL) {
       (void)fprintf(stderr, "WARNING - read_vars - cannot open file '%s'\n",
                     pathname);
-//    ufree(pathname);
       return(0);
    }
 
 /*
 * read in run info string
 */
-   if (fgets(line, MAXDATALNLEN, var_file) == NULL) {
+   if (fgets(line, MAXVARLEN, var_file) == NULL) {
       fclose(var_file);
       return(0);
    }
-//   if (Mparaminfo) free (Mparaminfo);
    Mparaminfo = strdup (line);
 
 /*
 * read in last nstep
 */
-   if (fgets(line, MAXDATALNLEN, var_file) == NULL) {
+   if (fgets(line, MAXVARLEN, var_file) == NULL) {
       fclose(var_file);
       return(0);
    }
@@ -10191,7 +8345,7 @@ int read_vars (char *var_file_name) {
 /*
 * read in last time step
 */
-   if (fgets(line, MAXDATALNLEN, var_file) == NULL) {
+   if (fgets(line, MAXVARLEN, var_file) == NULL) {
       fclose(var_file);
       return(0);
    }
@@ -10205,7 +8359,7 @@ int read_vars (char *var_file_name) {
 /*
 * read in last delta time
 */
-   if (fgets(line, MAXDATALNLEN, var_file) == NULL) {
+   if (fgets(line, MAXVARLEN, var_file) == NULL) {
       fclose(var_file);
       return(0);
    }
@@ -10223,7 +8377,7 @@ int read_vars (char *var_file_name) {
 */
    (void)strcpy(line, " ");
    while (strncmp(line, "####", 4)) {
-      if (fgets(line, MAXDATALNLEN, var_file) == NULL) {
+      if (fgets(line, MAXVARLEN, var_file) == NULL) {
          fclose(var_file);
          return(0);
       }
@@ -10239,7 +8393,7 @@ int read_vars (char *var_file_name) {
 * get dimen name
 */
 
-      if(fgets(key, MAXDATALNLEN, var_file) == NULL) {
+      if(fgets(key, MAXVARLEN, var_file) == NULL) {
          (void)fprintf(stderr, "ERROR - read_var, reading dimen name.\n");
          (void)fprintf(stderr, "Early end-of-file, file '%s'\n", var_file_name);
          return(1);
@@ -10258,7 +8412,7 @@ int read_vars (char *var_file_name) {
 /*
 * get dimen size
 */
-         if(fgets(line, MAXDATALNLEN, var_file) == NULL) {
+         if(fgets(line, MAXVARLEN, var_file) == NULL) {
             (void)fprintf(stderr, "ERROR - read_var, reading dimen size.\n");
             fprintf(stderr,"Early end-of-file, file '%s'\n",var_file_name);
             return(1);
@@ -10300,7 +8454,7 @@ variables:
 */
       (void)strcpy(line, " ");
       while (strncmp(line, "####", 4)) {
-         if (fgets(line, MAXDATALNLEN, var_file) == NULL) {
+         if (fgets(line, MAXVARLEN, var_file) == NULL) {
             fclose(var_file);
             return(0);
          }
@@ -10309,7 +8463,7 @@ variables:
 /*
 * get key
 */
-      if(fgets(key, MAXDATALNLEN, var_file) == NULL) {
+      if(fgets(key, MAXVARLEN, var_file) == NULL) {
          (void)fprintf(stderr, "ERROR - read_var, reading var key.\n");
          (void)fprintf(stderr, "Early end-of-file, file '%s'\n", var_file_name);
          return(1);
@@ -10320,7 +8474,7 @@ variables:
 /*
 * get number of dimensions
 */
-         if(fgets(line, MAXDATALNLEN, var_file) == NULL) {
+         if(fgets(line, MAXVARLEN, var_file) == NULL) {
             (void)fprintf(stderr, "ERROR - read_var, reading var ndimen.\n");
             fprintf(stderr, "Early end-of-file, file '%s'\n", var_file_name);
             return(1);
@@ -10339,7 +8493,7 @@ variables:
 */
 
          for (i = 0; i < var->ndimen; i++) {
-            if(fgets(dimen, MAXDATALNLEN, var_file) == NULL) {
+            if(fgets(dimen, MAXVARLEN, var_file) == NULL) {
                (void)fprintf(stderr, "ERROR - read_var, reading var dimen.\n");
                (void)fprintf(stderr, "Early end-of-file, file '%s'\n", var_file_name);
                return(1);
@@ -10362,7 +8516,7 @@ variables:
 * get var size
 */
 
-         if(fgets(line, MAXDATALNLEN, var_file) == NULL) {
+         if(fgets(line, MAXVARLEN, var_file) == NULL) {
             (void)fprintf(stderr, "ERROR - read_var, reading var size.\n");
             (void)fprintf(stderr, "Early end-of-file, file '%s'\n", var_file_name);
             return(1);
@@ -10387,7 +8541,7 @@ variables:
 /*
 * get type
 */
-         if(fgets(line, MAXDATALNLEN, var_file) == NULL) {
+         if(fgets(line, MAXVARLEN, var_file) == NULL) {
             (void)fprintf(stderr, "ERROR - read_var, reading var type.\n");
             (void)fprintf(stderr, "Early end-of-file, file '%s'\n", var_file_name);
             return(1);
@@ -10443,7 +8597,7 @@ variables:
    } /* while */
 
    fclose(var_file);
-// ufree(pathname);
+
    return(0);
 }
 
@@ -10457,7 +8611,7 @@ variables:
 \*--------------------------------------------------------------------*/
 static int read_var_line (char *key, char *line, FILE *var_file, char *var_file_name) {
 
-	if (fgets(line, MAXDATALNLEN, var_file) == NULL) {
+	if (fgets(line, MAXVARLEN, var_file) == NULL) {
 		(void)fprintf(stderr,
 		    "ERROR - read_var, reading data.\n");
 		(void)fprintf(stderr,
@@ -10469,53 +8623,17 @@ static int read_var_line (char *key, char *line, FILE *var_file, char *var_file_
 	return(0);
 
 }
-/**8************************** TEST DRIVER ****************************/
-
-
 /*+
  * United States Geological Survey
  *
  * PROJECT  : Modular Modeling System (MMS)
- * NAME     : readvar.c
- * AUTHOR   : Steve Markstrom (markstro)
- * DATE     : Mon 08 Apr 1996
- * FUNCTION :
- * COMMENT  :
- * readvar.c: reads the values associated with a key from an input file,
- * and stores it in the data base
+ * FUNCTION : readvar() to be called from C
+ *            readvar_() to be called from Fortran
+ *            returns 0 if success, 1 if failure
+ * COMMENT  : reads the values associated with a key from an input file,
+ *            and stores it in the data base
  *
- * There are 2 functions: readvar() to be called from C
- *                        readvar_() to be called from Fortran
- *
- * returns 0 if success, 1 if failure
-
- * REF      :
- * REVIEW   :
- * PR NRS   :
- *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
- *
-   $Revision: 4870 $
-        $Log: readvar.c,v $
-        Revision 1.8  1996/04/09 21:04:14  markstro
-        (1) Work on control files
-        (2) Runtime graphs
-
- * Revision 1.7  1996/02/19  20:00:46  markstro
- * Now lints pretty clean
- *
-        Revision 1.6  1994/11/22 17:20:15  markstro
-        (1) Cleaned up dimensions and parameters.
-        (2) Some changes due to use of malloc_dbg.
-
- * Revision 1.5  1994/09/30  14:55:00  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.4  1994/06/16  16:47:15  markstro
- * Worked over runcontrol.c
- *
- * Revision 1.3  1994/01/31  20:17:17  markstro
- * Make sure that all source files have CVS log.
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
 -*/
 
@@ -10529,12 +8647,6 @@ static int read_var_line (char *key, char *line, FILE *var_file, char *var_file_
 
 /**2************************* LOCAL MACROS ****************************/
 #define MISSING_VAR -999
-
-/**3************************ LOCAL TYPEDEFS ***************************/
-
-/**4***************** DECLARATION LOCAL FUNCTIONS *********************/
-
-/**5*********************** LOCAL VARIABLES ***************************/
 
 /**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
 /*--------------------------------------------------------------------*\
@@ -10674,74 +8786,16 @@ long readvar (char *module, char *name) {
 
 
   return(0);
-
 }
-
-
-/**7****************** LOCAL FUNCTION DEFINITIONS *********************/
-
-/**8************************** TEST DRIVER ****************************/
 /*+
  * United States Geological Survey
  *
  * PROJECT  : Modular Modeling System (MMS)
- * NAME     : reset_dim.c
- * AUTHOR   : CADSWES
- * DATE     : 
- * FUNCTION :
+ * FUNCTION : reset_dim
  * COMMENT  :
- * REF      :
- * REVIEW   :
- * PR NRS   :
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
-   $Revision: 4870 $
-        $Log: reset_dim.c,v $
-        Revision 1.15  1999/10/22 17:14:37  markstro
-        Added private variables
-
-        Revision 1.14  1996/04/29 16:23:15  markstro
-        Unknown
-
- * Revision 1.13  1996/02/19  20:00:49  markstro
- * Now lints pretty clean
- *
-        Revision 1.12  1995/03/20 20:42:27  markstro
-        Import fix
-
- * Revision 1.11  1994/11/23  20:12:50  markstro
- * More malloc_dbg changes
- *
- * Revision 1.10  1994/11/22  17:20:17  markstro
- * (1) Cleaned up dimensions and parameters.
- * (2) Some changes due to use of malloc_dbg.
- *
- * Revision 1.9  1994/11/08  16:17:41  markstro
- * (1) More proto type fine tuning
- * (2) fixed up data file reading
- *
- * Revision 1.8  1994/10/13  17:53:37  markstro
- * (1) Added annotation to parameter values through the spreadsheet
- * (2) Included <string.h> in a few more files that needed it.
- *
- * Revision 1.7  1994/09/30  14:55:02  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.6  1994/09/23  22:49:12  markstro
- * Unknown
- *
- * Revision 1.5  1994/09/15  22:13:53  markstro
- * Fixes for dimension index notes.
- *
- * Revision 1.4  1994/09/15  17:22:46  markstro
- * Added the call declfix to the system for declaring fixed dimensions.
- *
- * Revision 1.3  1994/05/23  14:27:26  markstro
- * Cleaned out a lot of includes in include files
- *
- * Revision 1.2  1994/01/31  20:17:19  markstro
- * Make sure that all source files have CVS log.
 -*/
 
 /**1************************ INCLUDE FILES ****************************/
@@ -10755,16 +8809,9 @@ long readvar (char *module, char *name) {
 #include <stdlib.h>
 #include "mms.h"
 
-/**2************************* LOCAL MACROS ****************************/
-
-/**3************************ LOCAL TYPEDEFS ***************************/
-
 /**4***************** DECLARATION LOCAL FUNCTIONS *********************/
 static void resize_param (PARAM *, long, long, long, long);
 
-/**5*********************** LOCAL VARIABLES ***************************/
-
-/**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
 /*--------------------------------------------------------------------*\
  | FUNCTION     : reset_dim
  | COMMENT		:
@@ -10814,12 +8861,10 @@ void reset_dim (DIMEN *dim, long nnew) {
 	} else {
 		for (i = nnew + 1; i < nold; i++) {
 			if (dim->names && dim->names[i]) {
-//				free (dim->names[i]);
 				dim->names[i] = NULL;
 			}
 
 			if (dim->notes && dim->notes[i]) {
-//				free (dim->notes[i]);
 				dim->notes[i] = NULL;
 			}
 		}
@@ -10980,12 +9025,12 @@ static void resize_param (PARAM *param, long dimen_num, long nold, long nnew, lo
 /*
 **	resize the value_desc
 */
-	if (size_new)
-		param->value_desc = (char **) realloc (param->value_desc,
-			size_new * sizeof (char *));
-
-	for (i = param->size; i < size_new; i++)
-		param->value_desc[i] = NULL;
+//	if (size_new)
+//		param->value_desc = (char **) realloc (param->value_desc,
+//			size_new * sizeof (char *));
+//
+//	for (i = param->size; i < size_new; i++)
+//		param->value_desc[i] = NULL;
 
 /*
 * copy the data
@@ -11054,7 +9099,6 @@ static void resize_param (PARAM *param, long dimen_num, long nold, long nnew, lo
 				} /* j */
 			} /* inew */
 		} /* iframe */
-//		ufree(aptr_prev);
 
 		switch (icase) {
 			case VALUE_CASE:
@@ -11072,284 +9116,14 @@ static void resize_param (PARAM *param, long dimen_num, long nold, long nnew, lo
 		} /* switch (icase) */
 	} /* icase */
 }
-/**7****************** LOCAL FUNCTION DEFINITIONS *********************/
-
-/**8************************** TEST DRIVER ****************************/
-
 /*+
  * United States Geological Survey
  *
  * PROJECT  : Modular Modeling System (MMS)
- * NAME     : save_vars.c
- * AUTHOR   :
- * DATE     :
- * FUNCTION :
- * COMMENT  : saves the var data base to a file
- *             File name is passed in as arg
- * REF      :
- * REVIEW   :
- * PR NRS   :
- *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
- *
-   $Revision: 4870 $
-        $Log: save_vars.c,v $
-        Revision 1.14  2000/02/18 18:27:07  markstro
-        Made previous Julian time a global.  It is set to -1.0 before the run
-        so that read_line knows to recalculate it.
-
-        Revision 1.13  1999/12/07 21:10:42  markstro
-        More nstep and init_var stuff
-
-        Revision 1.12  1999/11/30 22:06:19  markstro
-        Added nsteps to the var save file.
-
-        Revision 1.11  1999/10/22 17:14:38  markstro
-        Added private variables
-
-        Revision 1.10  1996/04/29 16:23:20  markstro
-        Unknown
-
- * Revision 1.9  1996/02/19  20:00:59  markstro
- * Now lints pretty clean
- *
-        Revision 1.8  1994/12/21 21:36:23  markstro
-        (1) Fixed ESP to work with multiple data files.
-        (2) Fixed Optimization to work with multiple data files.
-        (3) Fixed Sensitivity to work with multiple data files.
-
- * Revision 1.7  1994/11/22  17:20:24  markstro
- * (1) Cleaned up dimensions and parameters.
- * (2) Some changes due to use of malloc_dbg.
- *
- * Revision 1.6  1994/11/10  23:26:46  markstro
- * (1)  Some memory fixes -- results of malloc_dbg.
- * (2)  More stuff removed from set menu.
- *
- * Revision 1.5  1994/09/30  14:55:09  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.4  1994/06/21  20:20:34  markstro
- * More work on taking the module name out of the DB keyword.
- *
- * Revision 1.3  1994/05/18  17:16:04  markstro
- * TERRA changed mhms to mms
- *
- * Revision 1.2  1994/01/31  20:17:25  markstro
- * Make sure that all source files have CVS log.
- *
--*/
-
-/**1************************ INCLUDE FILES ****************************/
-#define SAVE_VARS_C
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include "mms.h"
-
-/**2************************* LOCAL MACROS ****************************/
-
-/**3************************ LOCAL TYPEDEFS ***************************/
-
-/**4***************** DECLARATION LOCAL FUNCTIONS *********************/
-
-/**5*********************** LOCAL VARIABLES ***************************/
-
-/**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
-/*--------------------------------------------------------------------*\
- | FUNCTION     : save_vars
- | COMMENT		:
- | PARAMETERS   :
- | RETURN VALUE : 
- | RESTRICTIONS :
-\*--------------------------------------------------------------------*/
-int save_vars (char *var_file_name) {
-	FILE *var_file;
-	PUBVAR *var;
-	DIMEN *dim;
-	long i,j;
-	double *dvalptr;
-	float *fvalptr;
-	long *lvalptr;
-    char *buf, *ptr;
-
-/*
-* get var file path, open file
-*/
-	if ((var_file = fopen (var_file_name, "w")) == NULL) {
-		(void)fprintf(stderr, "ERROR - save_vars - creating file '%s'\n", var_file_name);
-		return(1);
-	}
-
-/*
-* write the run info string
-*/
-    buf = strdup (Mparaminfo);
-    ptr = strchr (buf, '\n');
-
-    if (ptr) *ptr = '\0';
-   
-	(void)fprintf (var_file, "%s\n", buf);
-
-/*
-* write nstep
-*/
-	(void)fprintf (var_file, "last nstep %ld\n", Mnsteps);
-
-/*
-* write Mnowtime->jt
-*/
-	(void)fprintf (var_file, "last julian time %f\n", Mnowtime->jt);
-
-/*
-* write delta time
-*/
-	(void)fprintf (var_file, "last delta time %f\n", Mdeltat);
-
-/*
-* write out dimensions
-*/
-	(void)fprintf(var_file, "** Dimensions **\n");
-	for (i = 0; i < dim_db->count; i++) {
-		dim = (DIMEN *)(dim_db->itm[i]);
-		(void)fprintf(var_file, "####\n");
-		(void)fprintf(var_file, "%s\n", dim->name);
-		(void)fprintf(var_file, "%ld\n", dim->value);
-
-	}
-
-/*
-* write out variable values
-*/
-	(void)fprintf(var_file, "** Variables **\n");
-
-   for (i = 0; i < Mnvars; i++) {
-      var = Mvarbase[i];
-      (void)fprintf (var_file, "####\n");
-      (void)fprintf (var_file, "%s\n", var->key);
-      if (!(var->private)) {
-         (void)fprintf (var_file, "%ld \n", var->ndimen);
-
-         for (j = 0; j < var->ndimen; j++)
-            (void)fprintf (var_file, "%s\n", var->dimen[j]->name);
-      } else {
-         (void)fprintf (var_file, "1\n");
-         (void)fprintf (var_file, "PRIVATE\n");
-      }
-
-      (void)fprintf(var_file, "%ld \n", var->size);
-      (void)fprintf(var_file, "%ld \n", var->type);
-
-      switch (var->type) {
-         case M_DOUBLE:
-            dvalptr = (double *) var->value;
-            for (j = 0; j < var->size; j++) {
-               (void)fprintf(var_file, "%.20le \n", *dvalptr);
-               dvalptr++;
-            }
-			break;
-
-         case M_FLOAT:
-            fvalptr = (float *) var->value;
-            for (j = 0; j < var->size; j++) {
-               (void)fprintf(var_file, "%.12e \n", *fvalptr);
-               fvalptr++;
-            }
-            break;
-
-         case M_LONG:
-            lvalptr = (long *) var->value;
-            for (j = 0; j < var->size; j++) {
-               (void)fprintf(var_file, "%ld \n", *lvalptr);
-               lvalptr++;
-            }
-            break;
-      }
-
-   }
-
-   fclose(var_file);
-   return(0);
-}
-
-/**7****************** LOCAL FUNCTION DEFINITIONS *********************/
-
-/**8************************** TEST DRIVER ****************************/
-
-/*+
- * United States Geological Survey
- *
- * PROJECT  : Modular Modeling System (MMS)
- * NAME     : save_params.c
- * AUTHOR   : CADSWES; modified by Markstrom
- * DATE     :
  * FUNCTION : save_params
  * COMMENT  : saves the param data base to a file. File name is passed in.
- * REF      :
- * REVIEW   :
- * PR NRS   :
-   $Revision: 4870 $
-        $Log: save_params.c,v $
-        Revision 1.17  1998/03/04 17:20:20  markstro
-        Added seperate runcontrol functions for each run type.
-
-        Revision 1.16  1996/06/28 19:32:29  markstro
-        (1) Fixed 3d control window.
-        (2) Fixed stats.
-
- * Revision 1.15  1996/04/29  16:23:19  markstro
- * Unknown
  *
- * Revision 1.14  1996/02/19  20:00:58  markstro
- * Now lints pretty clean
- *
-        Revision 1.13  1994/12/21 21:36:22  markstro
-        (1) Fixed ESP to work with multiple data files.
-        (2) Fixed Optimization to work with multiple data files.
-        (3) Fixed Sensitivity to work with multiple data files.
-
- * Revision 1.12  1994/11/25  18:13:43  markstro
- * unknown
- *
- * Revision 1.11  1994/11/22  17:20:23  markstro
- * (1) Cleaned up dimensions and parameters.
- * (2) Some changes due to use of malloc_dbg.
- *
- * Revision 1.10  1994/11/08  16:17:45  markstro
- * (1) More proto type fine tuning
- * (2) fixed up data file reading
- *
- * Revision 1.9  1994/10/13  17:53:38  markstro
- * (1) Added annotation to parameter values through the spreadsheet
- * (2) Included <string.h> in a few more files that needed it.
- *
- * Revision 1.8  1994/09/30  14:55:08  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.7  1994/09/13  15:59:20  markstro
- * (1)  Version of save_params is now written into parameter file.
- * (2)  Took out min and max values for parameters -- these were not necessary.
- *
- * Revision 1.6  1994/09/09  14:56:32  markstro
- * (1)  Fixed up main edit menu.
- * (2)  Added a "notes" field to dimension indicies
- * (3)  A little more Rosenbrock work.
- * (4)  Fixed the list selector -- changed button names & first item
- *      selected by default.
- * (5)  Modified spread sheet help to be able to display dimension notes
- * (6)  Ran some source through "cb"
- *
- * Revision 1.5  1994/05/18  17:16:03  markstro
- * TERRA changed mhms to mms
- *
- * Revision 1.4  1994/03/29  19:07:53  markstro
- * Save parameter file selector now comes up in exit sequence (if necessary).
- *
- * Revision 1.3  1994/03/11  21:16:41  markstro
- * Got rid of client_data data types.
- *
- * Revision 1.2  1994/01/31  20:17:24  markstro
- * Make sure that all source files have CVS log.
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
 -*/
 
@@ -11360,16 +9134,10 @@ int save_vars (char *var_file_name) {
 #include <stdlib.h>
 #include "mms.h"
 
-/**2************************* LOCAL MACROS ****************************/
-
-/**3************************ LOCAL TYPEDEFS ***************************/
-
 /**4***************** DECLARATION LOCAL FUNCTIONS *********************/
 static void write_parameters (FILE *, int);
 static void write_dimensions (FILE *);
 static void write_header (FILE *, char *);
-
-/**5*********************** LOCAL VARIABLES ***************************/
 
 /**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
 /*--------------------------------------------------------------------*\
@@ -11468,11 +9236,12 @@ static void write_dimensions (FILE *param_file) {
 
 static void write_parameters (FILE *param_file, int writeAllParams) {
 	PARAM *param;
-	char *ptr;
+//	char *ptr;
 	long i,j;
 	double	*dvalptr;
 	float	*fvalptr;
-	long	*lvalptr;
+//	long	*lvalptr;
+	int	*lvalptr;
 /*
 * Write out parameter values and description if any.
 */
@@ -11509,15 +9278,15 @@ static void write_parameters (FILE *param_file, int writeAllParams) {
 					for (j = 0; j < param->size; j++) {
 						(void)fprintf(param_file, "%.20le\n", *dvalptr);
 						dvalptr++;
-						if (param->value_desc[j]) {
-						  while ((ptr = strchr (param->value_desc[j], '\n'))) {
-							*ptr = '\0';
-							(void)fprintf (param_file, "@%s\n", param->value_desc[j]);
-							param->value_desc[j] = ptr + 1;
-						  }
-						  if (param->value_desc[j] && strlen (param->value_desc[j]))
-							(void)fprintf (param_file, "@%s\n", param->value_desc[j]);
-						}
+						//if (param->value_desc[j]) {
+						 // while ((ptr = strchr (param->value_desc[j], '\n'))) {
+							//*ptr = '\0';
+							//(void)fprintf (param_file, "@%s\n", param->value_desc[j]);
+							//param->value_desc[j] = ptr + 1;
+						 // }
+						 // if (param->value_desc[j] && strlen (param->value_desc[j]))
+							//(void)fprintf (param_file, "@%s\n", param->value_desc[j]);
+						//}
 					}
 					break;
 
@@ -11531,37 +9300,40 @@ static void write_parameters (FILE *param_file, int writeAllParams) {
 					for (j = 0; j < param->size; j++) {
 						(void)fprintf(param_file, "%.12e\n", *fvalptr);
 						fvalptr++;
-						if (param->value_desc[j]) {
-						  while ((ptr = strchr (param->value_desc[j], '\n'))) {
-							*ptr = '\0';
-							(void)fprintf (param_file, "@%s\n", param->value_desc[j]);
-							param->value_desc[j] = ptr + 1;
-						  }
-						  if (param->value_desc[j] && strlen (param->value_desc[j]))
-							(void)fprintf (param_file, "@%s\n", param->value_desc[j]);
-						}
+						//if (param->value_desc[j]) {
+						//  while ((ptr = strchr (param->value_desc[j], '\n'))) {
+						//	*ptr = '\0';
+						//	(void)fprintf (param_file, "@%s\n", param->value_desc[j]);
+						//	param->value_desc[j] = ptr + 1;
+						//  }
+						//  if (param->value_desc[j] && strlen (param->value_desc[j]))
+						//	(void)fprintf (param_file, "@%s\n", param->value_desc[j]);
+						//}
 					}
 					break;
 
 				case M_LONG:
 					if (writeAllParams) {
-						lvalptr = (long *) param->value;
+//						lvalptr = (long *) param->value;
+						lvalptr = (int *) param->value;
 					} else {
-						lvalptr = (long *) (param->references[0]);
+//						lvalptr = (long *) (param->references[0]);
+						lvalptr = (int *) (param->references[0]);
 					}
 
 					for (j = 0; j < param->size; j++) {
-						(void)fprintf(param_file, "%ld\n", *lvalptr);
+//						(void)fprintf(param_file, "%ld\n", *lvalptr);
+						(void)fprintf(param_file, "%d\n", *lvalptr);
 						lvalptr++;
-						if (param->value_desc[j]) {
-						  while ((ptr = strchr (param->value_desc[j], '\n'))) {
-							*ptr = '\0';
-							(void)fprintf (param_file, "@%s\n", param->value_desc[j]);
-							param->value_desc[j] = ptr + 1;
-						  }
-						  if (param->value_desc[j] && strlen (param->value_desc[j]))
-							(void)fprintf (param_file, "@%s\n", param->value_desc[j]);
-						}
+						//if (param->value_desc[j]) {
+						//  while ((ptr = strchr (param->value_desc[j], '\n'))) {
+						//	*ptr = '\0';
+						//	(void)fprintf (param_file, "@%s\n", param->value_desc[j]);
+						//	param->value_desc[j] = ptr + 1;
+						//  }
+						//  if (param->value_desc[j] && strlen (param->value_desc[j]))
+						//	(void)fprintf (param_file, "@%s\n", param->value_desc[j]);
+						//}
 					}
 					break;
 			}
@@ -11569,126 +9341,14 @@ static void write_parameters (FILE *param_file, int writeAllParams) {
 	}
 }
 
-/**7****************** LOCAL FUNCTION DEFINITIONS *********************/
-
-/**8************************** TEST DRIVER ****************************/
-
 /*+
  * United States Geological Survey
  *
  * PROJECT  : Modular Modeling System (MMS)
- * NAME     : setup_cont.c
- * AUTHOR   : CADSWES
- * DATE     : Fri 14 Oct 1994
- * FUNCTION :
+ * FUNCTION : setup_cont
  * COMMENT  :
- * REF      :
- * REVIEW   :
- * PR NRS   :
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
- *
-   $Revision: 4870 $
-        $Log: setup_cont.c,v $
-        Revision 1.31  1999/08/24 16:34:16  markstro
-        Version 1.1.1
-
-        Revision 1.30  1997/11/13 17:13:35  markstro
-        unknown
-
-        Revision 1.29  1996/12/05 21:24:25  markstro
-        (1)  Added getoutname()
-        (2)  Sensitivity work
-        (3)  Optimization work
-
-        Revision 1.28  1996/06/28 19:32:31  markstro
-        (1) Fixed 3d control window.
-        (2) Fixed stats.
-
- * Revision 1.27  1996/04/09  21:04:21  markstro
- * (1) Work on control files
- * (2) Runtime graphs
- *
- * Revision 1.26  1996/03/26  22:31:10  markstro
- * Work on GIS displayer.
- *
- * Revision 1.25  1996/02/19  20:01:08  markstro
- * Now lints pretty clean
- *
-        Revision 1.24  1995/11/21 20:03:08  markstro
-        Changes from Pedro -- added scenario stuff to control file.
-
- * Revision 1.23  1995/07/06  21:15:17  markstro
- * Fixed:
- * (1)  Index names are now initially set to number.
- * (2)  Variables dumped out to db come from selection list.
- *
- * Revision 1.22  1995/07/05  16:53:29  markstro
- * Pedro's sensitivity changes for time period.
- *
- * Revision 1.21  1995/06/08  18:01:54  markstro
- * (1)  Fixed info window
- * (2)  Changed b functions to mem functions for solaris compatibility
- * (3)  Fixed default values in spreadsheet help
- *
- * Revision 1.20  1995/02/13  15:11:50  markstro
- * unknown
- *
- * Revision 1.19  1995/02/12  23:57:32  markstro
- * Rosenbrock and Sensitivity changes just before class.
- *
- * Revision 1.18  1995/02/07  23:19:17  markstro
- * Stuff for rosenbrock and sensitivity
- *
- * Revision 1.17  1995/02/01  17:47:48  markstro
- * Addition of Rosenbrock optimization.  Start of sensitivity.  Many bug fixes.
- *
- * Revision 1.16  1994/12/21  21:36:26  markstro
- * (1) Fixed ESP to work with multiple data files.
- * (2) Fixed Optimization to work with multiple data files.
- * (3) Fixed Sensitivity to work with multiple data files.
- *
- * Revision 1.15  1994/11/22  17:20:31  markstro
- * (1) Cleaned up dimensions and parameters.
- * (2) Some changes due to use of malloc_dbg.
- *
- * Revision 1.14  1994/11/10  23:26:48  markstro
- * (1)  Some memory fixes -- results of malloc_dbg.
- * (2)  More stuff removed from set menu.
- *
- * Revision 1.13  1994/11/09  22:10:50  markstro
- * GIS stuff out
- *
- * Revision 1.12  1994/10/24  14:19:04  markstro
- * (1)  Integration of CADSWES's work on GIS.
- * (2)  Prototypes were added to the files referenced in "mms_proto.h".
- *
- * Revision 1.11  1994/09/30  14:55:17  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.10  1994/09/09  21:57:23  markstro
- * Added backup of param and control files.
- *
- * Revision 1.9  1994/08/31  21:50:45  markstro
- * Unknown
- *
- * Revision 1.8  1994/06/21  20:20:37  markstro
- * More work on taking the module name out of the DB keyword.
- *
- * Revision 1.7  1994/05/18  17:16:08  markstro
- * TERRA changed mhms to mms
- *
- * Revision 1.6  1994/05/11  14:29:39  markstro
- * Changes from TERRA
- *
- * Revision 1.5  1994/03/11  21:16:43  markstro
- * Got rid of client_data data types.
- *
- o Revisoon 1.4  1994/02/01  21:17:17  markstro
- * Unknown
- *
- * Revision 1.3  1994/01/31  20:17:29  markstro
- * Make sure that all source files have CVS log.
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
 -*/
 
@@ -11701,12 +9361,6 @@ static void write_parameters (FILE *param_file, int writeAllParams) {
 #include <string.h>
 #include <stdlib.h>
 #include "mms.h"
-
-/**2************************* LOCAL MACROS ****************************/
-
-/**3************************ LOCAL TYPEDEFS ***************************/
-
-/**4***************** DECLARATION LOCAL FUNCTIONS *********************/
 
 /**5*********************** LOCAL VARIABLES ***************************/
 extern void decl_control_string (char *key, char *valstr);
@@ -11725,34 +9379,27 @@ extern void decl_control_string_array (char *key, long size, char *valstr);
 void setup_cont (void) {
         long *lval;
         float *fval;
-//        char *cval;
-//      char **cp;
-//      int i;
 
         static long start_date[] = {2000,10,1,0,0,0};
         static long end_date[] = {2001,9,30,0,0,0};
+		static long modflow0_date[] = {-999,9,30,0,0,0};
 
 /*
 **	GSFLOW control variables
 */
-        decl_control_string ("model_mode", "PRMS");
+        decl_control_string ("model_mode", "GSFLOW");
         decl_control_string ("modflow_name", "modflow.nam");
         decl_control_string ("precip_module", "precip_1sta");
         decl_control_string ("temp_module", "temp_1sta");
         decl_control_string ("et_module", "potet_jh");
         decl_control_string ("srunoff_module", "srunoff_smidx");
         decl_control_string ("solrad_module", "ddsolrad");
-        decl_control_string ("soltab_module", "soltab");
-        decl_control_string ("soilzone_module", "soilzone");
-        decl_control_string ("stats_module", "null");
-        decl_control_string ("filename_divert", "null");
-        decl_control_string ("filename_return", "null");
-        decl_control_string ("filename_apply", "null");
+		decl_control_string ("soilzone_module", "soilzone");
+		decl_control_string ("capillary_module", "soilzone");
 		decl_control_string ("strmflow_module", "strmflow");
         decl_control_string ("transp_module", "transp_tindex");
         decl_control_string ("gsflow_output_file", "gsflow.out");
         decl_control_string ("gsflow_csv_file", "gsflow.csv");
-        decl_control_string ("capillary_module", "null");
 
 /*
         cval = (char *)umalloc (sizeof (long));
@@ -11771,14 +9418,6 @@ void setup_cont (void) {
         lval = (long *)umalloc (sizeof (long));
 		lval[0] = 0;
 		decl_control_int_array ("print_debug", 1, lval);
-
-        lval = (long *)umalloc (sizeof (long));
-		lval[0] = 0;
-		decl_control_int_array ("nmapVars", 1, lval);
-
-		lval = (long *)umalloc (sizeof (long));
-		lval[0] = 0;
-		decl_control_int_array ("cfgi_flag", 1, lval);
 
         lval = (long *)umalloc (sizeof (long));
 		lval[0] = 1;
@@ -11801,6 +9440,18 @@ void setup_cont (void) {
 		decl_control_int_array ("dprst_flag", 1, lval);
 
         lval = (long *)umalloc (sizeof (long));
+		lval[0] = 1;
+		decl_control_int_array ("parameter_check_flag", 1, lval);
+
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 1;
+		decl_control_int_array ("cbh_check_flag", 1, lval);
+
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("cbh_binary_flag", 1, lval);		
+
+		lval = (long *)umalloc (sizeof (long));
 		lval[0] = 0;
 		decl_control_int_array ("dyn_imperv_flag", 1, lval);
 
@@ -11814,11 +9465,27 @@ void setup_cont (void) {
 
         lval = (long *)umalloc (sizeof (long));
 		lval[0] = 0;
+		decl_control_int_array ("dyn_sro2dprst_perv_flag", 1, lval);
+
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("dyn_sro2dprst_imperv_flag", 1, lval);
+
+		lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
 		decl_control_int_array ("dyn_covtype_flag", 1, lval);
 
         lval = (long *)umalloc (sizeof (long));
 		lval[0] = 0;
 		decl_control_int_array ("dyn_transp_flag", 1, lval);
+
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("dyn_fallfrost_flag", 1, lval);
+
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("dyn_springfrost_flag", 1, lval);
 
         lval = (long *)umalloc (sizeof (long));
 		lval[0] = 0;
@@ -11832,9 +9499,21 @@ void setup_cont (void) {
 		lval[0] = 0;
 		decl_control_int_array ("dyn_radtrncf_flag", 1, lval);
 
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("dyn_sro_to_dprst_flag", 1, lval);
+
+		lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("dyn_sro_to_imperv_flag", 1, lval);
+
 		lval = (long *)umalloc (sizeof (long));
 		lval[0] = 0;
 		decl_control_int_array ("dyn_dprst_flag", 1, lval);
+
+		lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("stream_temp_flag", 1, lval);
 
 		lval = (long *)umalloc (sizeof (long));
 		lval[0] = 0;
@@ -11850,11 +9529,23 @@ void setup_cont (void) {
 
 		lval = (long *)umalloc (sizeof (long));
 		lval[0] = 0;
+		decl_control_int_array ("consumed_transferON_OFF", 1, lval);
+
+		lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
 		decl_control_int_array ("lake_transferON_OFF", 1, lval);
 
 		lval = (long *)umalloc (sizeof (long));
 		lval[0] = 0;
 		decl_control_int_array ("dprst_transferON_OFF", 1, lval);
+
+		lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("soilzone_transferON_OFF", 1, lval);
+
+		lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("canopy_transferON_OFF", 1, lval);
 
 		lval = (long *)umalloc (sizeof (long));
 		lval[0] = 0;
@@ -11876,13 +9567,29 @@ void setup_cont (void) {
 		lval[0] = 0;
 		decl_control_int_array ("orad_flag", 1, lval);
 
-        lval = (long *)umalloc (sizeof (long));
+		lval = (long *)umalloc (sizeof (long));
 		lval[0] = 0;
-		decl_control_int_array ("lake_flag", 1, lval);
+		decl_control_int_array ("snow_cbh_flag", 1, lval);
 
 		lval = (long *)umalloc (sizeof (long));
 		lval[0] = 0;
-        decl_control_int_array ("map_resultsON_OFF", 1, lval);
+		decl_control_int_array ("gwflow_cbh_flag", 1, lval);
+
+		lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("humidity_cbh_flag", 1, lval);
+
+		lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("windspeed_cbh_flag", 1, lval);
+
+		lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+		decl_control_int_array ("segmentOutON_OFF", 1, lval);
+
+		lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+        decl_control_int_array ("ignore_data_file_end", 1, lval);
 /*
 **	file names
 */
@@ -11892,38 +9599,54 @@ void setup_cont (void) {
         decl_control_string ("param_file", "prms.params");
         decl_control_string ("var_save_file", "prms_ic.out");
         decl_control_string ("var_init_file", "prms_ic.in");
-        //decl_control_string ("stats_output_file", "stats.out");
         decl_control_string ("stat_var_file", "statvar.out");
         decl_control_string ("ani_output_file", "animation.out");
         decl_control_string ("model_output_file", "prms.out");
-        decl_control_string ("tmax_day", "tmax.day");
+        decl_control_string ("stats_output_file", "stats.out");
+		decl_control_string ("tmax_day", "tmax.day");
         decl_control_string ("tmin_day", "tmin.day");
         decl_control_string ("precip_day", "precip.day");
         decl_control_string ("swrad_day", "swrad.day");
         decl_control_string ("potet_day", "potet.day");
         decl_control_string ("transp_day", "transp.day");
-        decl_control_string ("covden_dynamic", "dyncovden");
-        decl_control_string ("dprst_area_dynamic", "dyndprst");
-        decl_control_string ("dprst_depth_dynamic", "dyndprst");
+        decl_control_string ("windspeed_day", "windspeed.day");
+        decl_control_string ("humidity_day", "humidity.day");
+		decl_control_string ("pkwater_equiv_day", "pkwater_equiv.day");
+        decl_control_string ("pk_depth_day", "pk_depth.day");
+        decl_control_string ("snow_evap_day", "snow_evap.day");
+        decl_control_string ("snowcov_area_day", "snowcov_area.day");
+        decl_control_string ("snowmelt_day", "snowmelt.day");
+        decl_control_string ("gwres_flow_day", "gwres_flow.day");
+        decl_control_string ("dprst_area_dynamic", "dyndprst_area");
+        decl_control_string ("dprst_depth_dynamic", "dyndprst_depth");
+        decl_control_string ("dprst_frac_dynamic", "dyndprst_frac");
 		decl_control_string ("snow_intcp_dynamic", "dynsnowintcp");
 		decl_control_string ("srain_intcp_dynamic", "dynsrainintcp");
 		decl_control_string ("wrain_intcp_dynamic", "dynwrainintcp");
 		decl_control_string ("imperv_frac_dynamic", "dynimperv");
 		decl_control_string ("imperv_stor_dynamic", "dynimperv");
 		decl_control_string ("covtype_dynamic", "dyncovtype");
+		decl_control_string ("covden_sum_dynamic", "dyncovden_sum");
+		decl_control_string ("covden_win_dynamic", "dyncovden_win");
 		decl_control_string ("jhcoef_dynamic", "dynjhcoef");
 		decl_control_string ("potet_coef_dynamic", "dynpotetcoef");
 		decl_control_string ("transpbeg_dynamic", "dyntranspbeg");
 		decl_control_string ("transpend_dynamic", "dyntranspend");
+		decl_control_string ("fallfrost_dynamic", "dynfallfrost");
+		decl_control_string ("springfrost_dynamic", "dynspringfrost");
 		decl_control_string ("soilrechr_dynamic", "dynsoilrechr");
 		decl_control_string ("soilmoist_dynamic", "dynsoilmoist");
 		decl_control_string ("radtrncf_dynamic", "dynradtrncf");
-		decl_control_string ("csv_output_file", "prms_summary.csv");
+		decl_control_string ("sro2dprst_perv_dynamic", "dynsro2dprst_perv");
+		decl_control_string ("sro2dprst_imperv_dynamic", "dynsro2dprst_imperv");
+		decl_control_string ("csv_output_file", "gsflow.csv");
+        decl_control_string ("nhruOutBaseFileName", "nhruout_path");
 /*
 **	run start and end times
 */
         decl_control_int_array("start_time", 6, start_date);
         decl_control_int_array("end_time", 6, end_date);
+        decl_control_int_array("modflow_time_zero", 6, modflow0_date);
 
 /*
 **	flag for initializing vars from file
@@ -11946,13 +9669,7 @@ void setup_cont (void) {
 /*
 **	stats analysis
 */
-//      cp = (char **)umalloc (sizeof (char *) * MAXSTATVARS);
-//      for (i = 0; i < MAXSTATVARS; i++) *(cp+i) = strdup ("inactive");
-//      decl_control ("statVar_names", M_STRING, MAXSTATVARS, cp);
-//      cp = (char **)umalloc (sizeof (char *) * MAXSTATVARS);
-//      for (i = 0; i < MAXSTATVARS; i++) *(cp+i) = strdup ("-1");
-//      decl_control ("statVar_element", M_STRING, MAXSTATVARS, cp);
-//
+
         lval = (long *)umalloc (sizeof (long));
 		lval[0] = 0;
         decl_control_int_array ("statsON_OFF", 1, lval);
@@ -11963,10 +9680,6 @@ void setup_cont (void) {
 /*
 **	animation output
 */
-//      decl_control_int_array ("naniOutVars", 1, &lval);
-//      cp = (char **)umalloc (sizeof (char *) * MAXSTATVARS);
-//      for (i = 0; i < MAXSTATVARS; i++) cp[i] = strdup ("inactive");
-//      decl_control ("aniOutVar_names", M_STRING, MAXSTATVARS, cp);
         lval = (long *)umalloc (sizeof (long));
 		lval[0] = 0;
         decl_control_int_array ("aniOutON_OFF", 1, lval);
@@ -11985,16 +9698,24 @@ void setup_cont (void) {
         decl_control_int_array ("nmapOutVars", 1, lval);
 
 /*
+**	nhru_summary
+*/
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+        decl_control_int_array ("nhruOutON_OFF", 1, lval);
+        lval = (long *)umalloc (sizeof (long));
+		lval[0] = 0;
+        decl_control_int_array ("nhruOutVars", 1, lval);
+		lval = (long *)umalloc(sizeof (long));
+		lval[0] = 1;
+		decl_control_int_array("nhruOut_freq", 1, lval);
+		
+/*
 **	graphics display
 */
         lval = (long *)umalloc (sizeof (long));
 		lval[0] = 0;
         decl_control_int_array ("ndispGraphs", 1, lval);
-//      decl_control_string ("dispVar_names", "inactive");
-//      decl_control_string ("dispVar_element", "-1");
-
-//      lval = -1;
-//      decl_control_int_array ("dispVar_plot", 1, &lval);
 
         lval = (long *)umalloc (sizeof (long));
 		lval[0] = 50;
@@ -12004,46 +9725,21 @@ void setup_cont (void) {
         lval = (long *)umalloc (sizeof (long));
 		lval[0] = 0;
         decl_control_int_array ("csvON_OFF", 1, lval);
-/*
-**  Env file
-*/
-/*
-	err = read_control (MAltContFile);
-	if (err) {
-           (void)fprintf (stderr,"%s\n", err);
-           exit (1);
-        }
-*/
 
-/*
-        if (MAltEnvFile == NULL) MAltEnvFile = strdup (*control_svar ("env_file"));
-*/
 }
-
-/**7****************** LOCAL FUNCTION DEFINITIONS *********************/
-
-/**8************************** TEST DRIVER ****************************/
-/**************************************************************************
- * sort_dims.c: sorts the dimen array so that the key for each
- * structure is in increasing alphabetical order
+/*+
+ * United States Geological Survey
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
+ * PROJECT  : Modular Modeling System (MMS)
+ * FUNCTION : sort_dims
+ * COMMENT  : sorts the dimen array so that the key for each
+ *            structure is in increasing alphabetical order
  *
-   $Revision: 4870 $
-        $Log: sort_dims.c,v $
-        Revision 1.5  1996/04/29 16:23:25  markstro
-        Unknown
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
+ *
+-*/
 
- * Revision 1.4  1996/02/19  20:01:11  markstro
- * Now lints pretty clean
- *
-        Revision 1.3  1994/09/30 14:55:19  markstro
-        Initial work on function prototypes.
-
- * Revision 1.2  1994/01/31  20:17:32  markstro
- * Make sure that all source files have CVS log.
- *
- **************************************************************************/
+/**1************************ INCLUDE FILES ****************************/
 #define SORT_DIMS_C
 #include <stdio.h>
 #include <string.h>
@@ -12076,31 +9772,11 @@ void sort_dims (void) {
  * United States Geological Survey
  *
  * PROJECT  : Modular Modeling System (MMS)
- * NAME     : sort_params.c
- * AUTHOR   : 
- * DATE     : Thu 15 Sep 1994
  * FUNCTION : sort_params
  * COMMENT  : sorts the param array so that the key for each structure
- *             is in increasing alphabetical order
- * REF      :
- * REVIEW   :
- * PR NRS   :
+ *            is in increasing alphabetical order
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
- *
-   $Revision: 4870 $
-        $Log: sort_params.c,v $
-        Revision 1.5  1996/02/19 20:01:12  markstro
-        Now lints pretty clean
-
-        Revision 1.4  1994/09/30 14:55:20  markstro
-        Initial work on function prototypes.
-
- * Revision 1.3  1994/09/19  15:51:17  markstro
- * Fixed multiple dimension edit parameter window.
- *
- * Revision 1.2  1994/01/31  20:17:33  markstro
- * Make sure that all source files have CVS log.
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
 -*/
 
@@ -12110,14 +9786,6 @@ void sort_dims (void) {
 #include <string.h>
 #include <stdlib.h>
 #include "mms.h"
-
-/**2************************* LOCAL MACROS ****************************/
-
-/**3************************ LOCAL TYPEDEFS ***************************/
-
-/**4***************** DECLARATION LOCAL FUNCTIONS *********************/
-
-/**5*********************** LOCAL VARIABLES ***************************/
 
 /**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
 /*--------------------------------------------------------------------*\
@@ -12157,32 +9825,19 @@ void sort_params (void) {
 		}
 	}
 }
-
-/**7****************** LOCAL FUNCTION DEFINITIONS *********************/
-
-/**8************************** TEST DRIVER ****************************/
-/**************************************************************************
- * sort_vars.c: sorts the pubvar array so that the key for each
- * structure is in increasing alphabetical order
+/*+
+ * United States Geological Survey
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
+ * PROJECT  : Modular Modeling System (MMS)
+ * FUNCTION : sort_vars
+ * COMMENT  : sorts the pubvar array so that the key for each
+ *            structure is in increasing alphabetical order
  *
-   $Revision: 4870 $
-        $Log: sort_vars.c,v $
-        Revision 1.5  1996/02/19 20:01:12  markstro
-        Now lints pretty clean
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
+ *
+-*/
 
-        Revision 1.4  1994/11/10 23:26:51  markstro
-        (1)  Some memory fixes -- results of malloc_dbg.
-        (2)  More stuff removed from set menu.
-
- * Revision 1.3  1994/09/30  14:55:21  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.2  1994/01/31  20:17:34  markstro
- * Make sure that all source files have CVS log.
- *
- **************************************************************************/
+/**1************************ INCLUDE FILES ****************************/
 #ifdef MALLOC_FUNC_CHECK
 #include <malloc_dbg.h>
 #endif
@@ -12240,355 +9895,24 @@ void sort_vars (void) {
  * United States Geological Survey
  *
  * PROJECT  : Modular Modeling System (MMS)
- * NAME     : stats.c
- * AUTHOR   : Mike Dixon, Pedro Restrepo CADSWES, University of Colorado,
- *             Boulder
- * DATE     : May 1990   
- * FUNCTION : stats
- * COMMENT  : statistical analysis postprocessor
- * REF      :
- * REVIEW   :
- * PR NRS   :
+ * FUNCTION : str_to_vals
+ * COMMENT  : decodes a string into values, and loads memory addresses
+ *            Examples of legal strings for this routine:
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
- *
-   $Revision: 4870 $
-        $Log: stats.c,v $
-        Revision 1.13  1998/11/10 15:17:44  markstro
-        unknown
-
-        Revision 1.12  1996/03/25 21:58:12  markstro
-        Unknown
-
- * Revision 1.11  1996/02/19  20:01:15  markstro
- * Now lints pretty clean
- *
-        Revision 1.10  1995/02/01 17:47:50  markstro
-        Addition of Rosenbrock optimization.  Start of sensitivity.  Many bug fixes.
-
- * Revision 1.9  1994/11/22  17:20:35  markstro
- * (1) Cleaned up dimensions and parameters.
- * (2) Some changes due to use of malloc_dbg.
- *
- * Revision 1.8  1994/10/24  14:19:06  markstro
- * (1)  Integration of CADSWES's work on GIS.
- * (2)  Prototypes were added to the files referenced in "mms_proto.h".
- *
- * Revision 1.7  1994/09/30  14:55:23  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.6  1994/05/18  17:16:10  markstro
- * TERRA changed mhms to mms
- *
- * Revision 1.5  1994/03/07  21:20:00  markstro
- * Changes from TERRA
- *
- * Revision 1.4  1994/02/01  21:17:18  markstro
- * Unknown
- *
- * Revision 1.3  1994/01/31  20:17:36  markstro
- * Make sure that all source files have CVS log.
--*/
-
-/**1************************ INCLUDE FILES ****************************/
-#define STATS_C
-#include <stdio.h>
-#include <string.h>
-#include <math.h>
-#include <stdlib.h>
-#include "mms.h"
-
-#define MAXCELLS 100
-
-
-/**2************************* LOCAL MACROS ****************************/
-#define SQR(A) (A) * (A)
-#define CUBE(A) (A) * (A) * (A)
-
-/**3************************ LOCAL TYPEDEFS ***************************/
-  typedef struct {
-    char varName[30];        /* variable name                  */
-    char * elem_number;      /* element number                 */
-    float Sx;                /* Sum of x                       */
-    float Sx2;               /* Sum of x*x                     */
-    float Sx3;               /* Sum of x*x*x                   */
-    float mx;		     /* mean of x                      */
-    float sdev;		     /* standard deviation             */
-    float skew;		     /* skewness                       */
-    float min;		     /* minimum                        */
-    float max;		     /* maximum                        */
-    float histmin;	     /* histogram minimum              */
-    float histmax;	     /* histogram maximum              */
-    int   ncells;	     /* number of cell in the histogram*/
-    float width;             /* width of the histogram cell    */
-    float histog[MAXCELLS];  /* histogram                      */
-  }STATS;
-
-/**4***************** DECLARATION LOCAL FUNCTIONS *********************/
-
-/**5*********************** LOCAL VARIABLES ***************************/
-
-/**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
-/*--------------------------------------------------------------------*\
- | FUNCTION     : stats
- | COMMENT		:
- | PARAMETERS   :
- | RETURN VALUE : int
- | RESTRICTIONS :
-\*--------------------------------------------------------------------*/
-int stats (void) {
-     
-  int     nvars;                 /* number of variables in the file*/
-  STATS   st[MAXSTATVARS];            /* array of statistics structures */
-  FILE    *statvar_file;
-  //FILE    *stats_file;
-  char    path[MAXDATALNLEN];
-  char    line[MAXDATALNLEN];
-  int     i,nvals;
-  //int     j;
-  int     recNo;
-  int     year;
-  int     month;
-  int     day;
-  int     hour;
-  int     minute;
-  int     second;
-  char    elem_number[MAXDATALNLEN];
-  double  x[MAXSTATVARS];
-  float   squared;
-  //float   cumul,comp;
-
-  /*
-   * Open statvar file, and store number of variables and variable names 
-   */
-
-  if (*((char **) control_var("stat_var_file")) == NULL) {
-    (void)fprintf(stderr, "ERROR - stats");
-    (void)fprintf(stderr, "Check Control File, stat_var_file missing.\n");
-    return(1);
-  }
-
-  (void)sprintf(path, "%s", *((char **) control_var("stat_var_file")));
-
-  if ((statvar_file = fopen(path, "r")) == NULL) {
-      (void)fprintf(stderr, "ERROR - stats");
-      (void)fprintf(stderr, "Could not open statvar file '%s'\n",
-	      path);
-      return(1);
-    }
-  
-  fscanf(statvar_file,"%d",&nvars);
-
-	if (!nvars) {
-		//fclose(stats_file);
-		return(0);
-	}
-
-
-  for (i=0;i<nvars;i++) {
-      memset (&st[i], 0, sizeof(STATS));
-      st[i].min = 1e30;
-      st[i].max = -1e30;
-      fscanf(statvar_file,"%s %s", st[i].varName,
-	     elem_number);
-      st[i].elem_number = (char *)malloc(strlen(elem_number) + 1);
-      (void)strcpy(st[i].elem_number, elem_number);
-
-    }
-
-  nvals = 0;
-
-  while (EOF !=
-	 fscanf(statvar_file, "%d %d %d %d %d %d %d",
-		&recNo,&year,&month,&day,&hour,&minute,&second))
-    {
-      nvals++;
-      for (i=0;i<nvars;i++) 
-	{
-	  fscanf(statvar_file, "%lf", &x[i]); 
-	  st[i].Sx += x[i];
-	  st[i].Sx2 += SQR(x[i]);
-	  st[i].Sx3 += CUBE(x[i]);
-	  st[i].min = MIN(st[i].min,x[i]);
-	  st[i].max = MAX(st[i].max,x[i]);
-	}
-    }
-
-  for (i=0;i<nvars;i++)
-    {
-      if (nvals > 1) {
-	st[i].mx   = st[i].Sx/nvals;
-	
-	squared = (st[i].Sx2 - nvals*SQR(st[i].mx)) / (nvals-1);
-	
-	if (squared < 0.0)
-	  squared = 0.0;
-	
-	st[i].sdev =  (float)sqrt(squared);
-	
-	if (st[i].sdev > 0.0) {
-	  st[i].skew = ((st[i].Sx3/nvals -
-			 3.0*st[i].mx*st[i].Sx2/nvals+2.0*CUBE(st[i].mx))
-			/(CUBE(st[i].sdev)));
-	}
-	
-	if(nvals) 
-/* DANGER
-	  st[i].ncells = MIN(1 + 3.3 * log10((double)nvals),MAXCELLS);
-*/
-	  st[i].ncells = MAXCELLS;
-	else
-	  {
-	    /*
-	     ** NOTE: No values exist for histogram
-	     */
-	    st[i].ncells = 0;
-	  }
-	
-	st[i].histmin = st[i].min;
-	st[i].histmax = st[i].max;
-	
-	if (st[i].ncells)
-	  st[i].width = ((st[i].histmax - st[i].histmin)/st[i].ncells);
-	else
-	  st[i].width = 0.0;
-	
-      }
-    }
-  /*
-   * rewind the statvar file
-   */
-
-  fseek(statvar_file, 0L, 0);
-
-  /*
-   * space fwd to data
-   */
-
-  for (i = 0; i < nvars+1; i++) {
-    if (fgets(line, MAXDATALNLEN, statvar_file) == NULL) {
-      (void)fprintf(stderr, "ERROR - stats.\n");
-      (void)fprintf(stderr, "Reading statvar file for histogram comps.\n");
-      perror(path);
-      return(1);
-    }
-  }
-
-  /*
-   * re-read the data to load the histograms
-   */
-
-  while (EOF !=
-	 fscanf(statvar_file,"%d %d %d %d %d %d %d",
-		&recNo,&year,&month,&day,&hour,&minute,&second))
-    {
-      for (i=0;i<nvars;i++) 
-	{
-	  fscanf(statvar_file,"%lf",&x[i]); 
-	  (st[i].histog[(int)((x[i]-st[i].histmin)/st[i].width)])++;
-	}
-    }
-
-  /*
-   * close statvar file
-   */
-
-  fclose(statvar_file);
-
-  /*
-   * Open output file
-   */
-
-//  (void)sprintf(path, "%s", *control_svar("stats_output_file"));
-//  
-//  if ((stats_file = fopen(path, "w")) == NULL)
-//    {
-//      (void)fprintf(stderr, "ERROR - stats - ");
-//      (void)fprintf(stderr, "Could not create statistics output file\n");
-//      perror(path);
-//      return(1);
-//    }
-//
-//  for (i=0;i<nvars;i++) 
-//    {
-//      for (j = 0;j < st[i].ncells;j++)
-//	st[i].histog[j] /= nvals;
-//  
-//      (void)fprintf(stats_file,"\n");
-//      (void)fprintf(stats_file,"Variable:  %s\n",st[i].varName);
-//      (void)fprintf(stats_file,"Elem #     %s\n",st[i].elem_number);
-//      (void)fprintf(stats_file,"Mean       %f\n",st[i].mx);
-//      (void)fprintf(stats_file,"Std Dev    %f\n",st[i].sdev);
-//      (void)fprintf(stats_file,"Skewness   %f\n",st[i].skew);
-//      (void)fprintf(stats_file,"Minimum    %f\n",st[i].min);
-//      (void)fprintf(stats_file,"Maximum    %f\n",st[i].max);
-//      (void)fprintf(stats_file,"#. Cells   %d\n",st[i].ncells);
-//      (void)fprintf(stats_file,"Cell width %f\n",st[i].width);
-//      (void)fprintf(stats_file,
-//	      "\nHistogram\nCellNo. Lower Limit   Upper Limit   Frequency   Cumulative Complementary\n");
-//  
-//      cumul = 0.0;
-//      comp = 1.0;
-//      for (j = 0;j < st[i].ncells;j++){
-//	cumul += st[i].histog[j];
-//	comp = 1.0-cumul;
-//	(void)fprintf(stats_file,"%4d %11f %13f %13f %13f %13f\n", j,
-//		st[i].histmin+j*st[i].width,
-//		st[i].histmin+(j+1)*st[i].width,
-//		st[i].histog[j],cumul,comp);
-//      }
-////    free((char *)st[i].elem_number);
-//    }
-//
-//  fclose(stats_file);
-
-  return(0);
-
-}
-
-/**7****************** LOCAL FUNCTION DEFINITIONS *********************/
-
-/**8************************** TEST DRIVER ****************************/
-
-/**************************************************************************
- * str_to_vals.c: decodes a string into values, and loads memory addresses
- *
- * Examples of legal strings for this routine:
- *
- *           "1 2 3 4 5"
- *           "1.0, 2.2, 19e9"
- *           "1*23.5, 7*1 13 12*3"
+ *            "1 2 3 4 5"
+ *            "1.0, 2.2, 19e9"
+ *            "1*23.5, 7*1 13 12*3"
  *
  * Blanks, commas, tabs and newlines may delimit the values.
  * The repeat count is optional, but must be greater than 0 if included.
  * If the total number of entries is less than required, the sequence
  * is repeated.
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
-   $Revision: 4870 $
-        $Log: str_to_vals.c,v $
-        Revision 1.7  1996/02/19 20:01:17  markstro
-        Now lints pretty clean
+-*/
 
-        Revision 1.6  1994/11/23 20:12:59  markstro
-        More malloc_dbg changes
-
- * Revision 1.5  1994/11/22  17:20:37  markstro
- * (1) Cleaned up dimensions and parameters.
- * (2) Some changes due to use of malloc_dbg.
- *
- * Revision 1.4  1994/11/08  16:17:51  markstro
- * (1) More proto type fine tuning
- * (2) fixed up data file reading
- *
- * Revision 1.3  1994/09/30  14:55:25  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.2  1994/01/31  20:17:39  markstro
- * Make sure that all source files have CVS log.
- *
- **************************************************************************/
+/**1************************ INCLUDE FILES ****************************/
 #define STR_TO_VALS_C
 #include <stdio.h>
 #include <string.h>
@@ -12611,10 +9935,14 @@ long str_to_vals (char *encoded_string, long size, long type, char *store_addr) 
   long i, isource;
   long ndecoded, repeat;
   char *scopy, *token, *valstr, *asterisk, *end_point;
-  char tcopy[MAXDATALNLEN];
+  static char *tcopy = NULL;
   double dvalue, *dval;
   float fvalue, *fval;
-  long lvalue, *lval;
+  int lvalue, *lval;
+  
+  if (tcopy == NULL) {
+	  tcopy = (char *) umalloc(max_data_ln_len * sizeof(char));
+  }
 
   /*
    * set up pointer for data type
@@ -12631,7 +9959,7 @@ long str_to_vals (char *encoded_string, long size, long type, char *store_addr) 
     fval = (float *) store_addr;
     break;
   case M_LONG:
-    lval = (long *) store_addr;
+    lval = (int *) store_addr;
     break;
   }
 
@@ -12688,7 +10016,7 @@ long str_to_vals (char *encoded_string, long size, long type, char *store_addr) 
       fvalue = (float) strtod(valstr, &end_point);
       break;
     case M_LONG:
-      lvalue = strtol(valstr, &end_point, 10);
+      lvalue = (int)strtol(valstr, &end_point, 10);
       break;
     }
 
@@ -12778,44 +10106,22 @@ long str_to_vals (char *encoded_string, long size, long type, char *store_addr) 
 
   }
 
-//ufree(scopy);
   return S2V_SUCCESS;
-
 }
-/**************************************************************************
- * timing.c: timing functions
+/*+
+ * United States Geological Survey
  *
- * The routines with a _ suffix are called from Fortran
+ * PROJECT  : Modular Modeling System (MMS)
+ * FUNCTION : timing
+ * COMMENT  : timing functions
+ *            The routines with a _ suffix are called from Fortran
+ *            The routines without the suffix are called from C
  *
- * The routines without the suffix are called from C
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
- *
-   $Revision: 4870 $
-        $Log: timing.c,v $
-        Revision 1.7  1997/04/18 16:44:15  markstro
-        (1)  Commented out errno problem with opening files from fortran.
-        (2)  Put in checks for saving parameter file when loading new one.
-        (3)  Changes to runcontrol.c and timing.c unknown
+-*/
 
-        Revision 1.6  1996/02/19 20:01:20  markstro
-        Now lints pretty clean
-
-        Revision 1.5  1994/11/22 17:20:38  markstro
-        (1) Cleaned up dimensions and parameters.
-        (2) Some changes due to use of malloc_dbg.
-
- * Revision 1.4  1994/11/08  16:17:52  markstro
- * (1) More proto type fine tuning
- * (2) fixed up data file reading
- *
- * Revision 1.3  1994/09/30  14:55:26  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.2  1994/01/31  20:17:43  markstro
- * Make sure that all source files have CVS log.
- *
- **************************************************************************/
+/**1************************ INCLUDE FILES ****************************/
 #define TIMING_C
 #include <stdio.h>
 #include <string.h>
@@ -12868,13 +10174,6 @@ void dattim_ (char *dwhen, ftnint *timearray, ftnlen dwhenlen) {
   timearray[3] = ta[3];
   timearray[4] = ta[4];
   timearray[5] = ta[5];
-  
-
-  /*
-   * free up array
-   */
-
-//ufree(when);
 
 }
 
@@ -12978,13 +10277,6 @@ long julian_ (char *jwhen, char *jtype, ftnlen jwhenlen, ftnlen jtypelen) {
    */
 
   retval = julian(when, type);
-
-  /*
-   * free up arrays
-   */
-
-//ufree(when);
-//ufree(type);
 
   return retval;
 
@@ -13283,16 +10575,18 @@ double delnex (void) {
   return (double) Mdeltanext * 24.0;
 }
 
-/**********************************************************************
- * umalloc_etc.c : memory allocation routines with error handling
+/*+
+ * United States Geological Survey
  *
- * utility routine
+ * PROJECT  : Modular Modeling System (MMS)
+ * FUNCTION : umalloc_etc
+ * COMMENT  : memory allocation routines with error handling
  *
- * Mike Dixon CADSWES CU July 1990
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
- *
- **********************************************************************/
+-*/
+
+/**1************************ INCLUDE FILES ****************************/
 #define UMALLOC_ETC_C
 #include <stdlib.h>
 #include <stdio.h>
@@ -13369,495 +10663,15 @@ void ufree (char *ptr) {
  * United States Geological Survey
  *
  * PROJECT  : Modular Modeling System (MMS)
- * NAME     : uprint.c
- * AUTHOR   : Adapted from oprint, written by Mike Dixon CADSWES CU
- *              Pedro J. Restrepo, CADSWES, CU, April, 1992
- * DATE     : August 1990
- * FUNCTION :
- * COMMENT  : The following is a series of utility routines for printing
- *              to the output file from either Fortran or C modules.
- * REF      :
- * REVIEW   :
- * PR NRS   :
+ * FUNCTION : var_addr
+ * COMMENT  : returns a pointer to a PUBVAR struct which contains the given key
+ *            returns NULL if key not found
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
-   $Revision: 4870 $
-        $Log: uprint.c,v $
-        Revision 1.10  1996/04/29 16:23:26  markstro
-        Unknown
-
- * Revision 1.9  1996/02/19  20:01:22  markstro
- * Now lints pretty clean
- *
-        Revision 1.8  1995/11/24 14:35:54  markstro
-        Initial Purify work.
-        This is the version for Watershed Systems Modeling class 11/27 - 12/1, 1995
-
- * Revision 1.7  1995/05/12  15:18:47  markstro
- * Unknown
- *
- * Revision 1.6  1994/11/22  17:20:39  markstro
- * (1) Cleaned up dimensions and parameters.
- * (2) Some changes due to use of malloc_dbg.
- *
- * Revision 1.5  1994/10/24  14:19:07  markstro
- * (1)  Integration of CADSWES's work on GIS.
- * (2)  Prototypes were added to the files referenced in "mms_proto.h".
- *
- * Revision 1.4  1994/09/30  14:55:33  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.3  1994/05/18  17:16:12  markstro
- * TERRA changed mhms to mms
- *
- * Revision 1.2  1994/01/31  20:17:50  markstro
- * Make sure that all source files have CVS log.
 -*/
 
 /**1************************ INCLUDE FILES ****************************/
-////#define UPRINT_C
-////#include <string.h>
-////#include <stdlib.h>
-////#include <stdio.h>
-////#include "mms.h"
-////
-/////**2************************* LOCAL MACROS ****************************/
-////
-/////**3************************ LOCAL TYPEDEFS ***************************/
-////
-/////**4***************** DECLARATION LOCAL FUNCTIONS *********************/
-////
-/////**5*********************** LOCAL VARIABLES ***************************/
-////
-/////**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
-/////*--------------------------------------------------------------------*\
-//// | FUNCTION     : GetUserFile
-//// | COMMENT		:
-//// | PARAMETERS   :
-//// | RETURN VALUE : 
-//// | RESTRICTIONS :
-////\*--------------------------------------------------------------------*/
-////FILE *GetUserFile (char *name, long dimNo) {
-////	DIMEN *dim;
-////	//char pathname[512];
-////	int i;
-////
-////	/*
-////   * Find if dimension "name" has names defined
-////   */
-////
-////	dim = dim_addr(name);
-////
-////	if (!dim)
-////	{
-////		(void)fprintf(stderr, "ERROR - GetUserFile, Can't find dimension named %s\n",name);
-////		return (NULL);
-////	}
-////
-////	if (!dim->names)
-////	{
-////		(void)fprintf(stderr, "ERROR - GetUserFile. Dimension %s has no named indices\n",name);
-////		return (NULL);
-////	}
-////
-////	/*
-////   * If so, find if the file indexed dimNo is opened. If it isn't, open it.
-////   */
-////
-////	if (!dim->files)
-////	{
-////		dim->files = (FILE **)calloc(dim->value,sizeof(FILE *));
-////
-////		/*
-////       * initalize all pointers to NULL
-////       */
-////
-////		for (i = 0; i < dim->value; i++)
-////			dim->files[i] = NULL;
-////	}
-////
-////	//if (!dim->files[dimNo-1] && MuserFiles)
-////	//{
-////	//	/*
-//// //      * get user output directory from environment
-//// //      */
-////
-//// //     (void)sprintf (pathname, "%s%s", *control_svar("stats_output_file"), dim->names[dimNo-1]);
-//// //     dim->files[dimNo-1] = fopen(pathname,"w");
-////	//}
-////
-////	/* 
-////   * return file pointer
-////   */
-////
-////	return(dim->files[dimNo-1]);
-////
-////}
-////
-/////*--------------------------------------------------------------------*\
-//// | FUNCTION     : closeUserFiles
-//// | COMMENT		:
-//// | PARAMETERS   :
-//// | RETURN VALUE : 
-//// | RESTRICTIONS :
-////\*--------------------------------------------------------------------*/
-////void closeUserFiles (void) {
-////
-////	int		i, j;
-////	DIMEN	*dp;
-////
-////	for (i = 0; i < dim_db->count; i++) {
-////		dp = (DIMEN *)(dim_db->itm[i]);
-////		if (dp->files) {
-////			for (j = 0; j < dp->value; j++) {
-////				if (dp->files[j]) {
-////					fclose (dp->files[j]);
-////				}
-////			}
-//////			free (dp->files);
-////			dp->files = NULL;
-////		}
-////	}
-////	MuserFiles = 0;
-////}
-////
-/////*--------------------------------------------------------------------*\
-//// | FUNCTION     : upstr_
-//// | COMMENT		: called from Fortran as 'call upstr(dimname, dimNo, string)'
-//// | PARAMETERS   :
-//// | RETURN VALUE : 
-//// | RESTRICTIONS :
-////\*--------------------------------------------------------------------*/
-////void upstr_ (char *dimname, ftnint *dimNo, char *str, ftnlen dimlen, ftnlen stringlen) {
-////
-////	char *string;
-////	char *name;
-////	FILE *UserFile;
-////
-////	/*
-////   * return if file pointer is NULL
-////   */
-////
-////	name = (char *) umalloc(dimlen + 1);
-////	strncpy(name, dimname, dimlen);
-////	name[dimlen] = '\0';
-////
-////	UserFile = GetUserFile(name,*dimNo);
-////
-////	if (UserFile == NULL)
-////		return;
-////
-////	/*
-////   * copy string to new string
-////   */
-////
-////	string = (char *) umalloc(stringlen + 1);
-////	strncpy(string, str, stringlen);
-////	string[stringlen] = '\0';
-////
-////	(void)fprintf(UserFile, "%s\n", string);
-////
-//////	ufree(string);
-////}
-////
-////
-/////*--------------------------------------------------------------------*\
-//// | FUNCTION     : upstr
-//// | COMMENT		: upstr is called from C as 'upstr(dimname, dimNo, string)
-//// | PARAMETERS   :
-//// | RETURN VALUE : 
-//// | RESTRICTIONS :
-////\*--------------------------------------------------------------------*/
-////void upstr (char *dimname, long dimNo, char *string) {
-////
-////	FILE *UserFile;
-////	/*
-////   * return if file pointer is NULL
-////   */
-////
-////	UserFile = GetUserFile(dimname,dimNo);
-////
-////	if (UserFile == NULL)
-////		return;
-////
-////	(void)fprintf(UserFile, "%s\n", string);
-////
-////}
-////
-/////*--------------------------------------------------------------------*\
-//// | FUNCTION     : upint4_
-//// | COMMENT		: print integer from Fortran
-//// | PARAMETERS   : 'string' is a string
-//// |                'array' is the INTEGER*4 of long array or scalar to be printed
-//// |                'n' is the number of values in the array, 1 if a scalar
-//// | RETURN VALUE : 
-//// | RESTRICTIONS :
-////\*--------------------------------------------------------------------*/
-////void upint4_ (char *dimname, ftnint *dimNo, char *str, ftnint *array, ftnint *n,
-////ftnlen dimlen, ftnlen stringlen) {
-////
-////	FILE *UserFile;
-////
-////	char *string;
-////	char * name;
-////	int i;
-////
-////	name = (char *) umalloc(dimlen + 1);
-////	strncpy(name, dimname, dimlen);
-////	name[dimlen] = '\0';
-////
-////	/*
-////   * return if file pointer is NULL
-////   */
-////
-////	UserFile = GetUserFile(name,*dimNo);
-////
-////	if (UserFile == NULL)
-////		return;
-////
-////	/*
-////   * copy string to new string
-////   */
-////
-////	string = (char *) umalloc(stringlen + 1);
-////	strncpy(string, str, stringlen);
-////	string[stringlen] = '\0';
-////
-////	(void)fprintf(UserFile, "%s ",string);
-////
-////	for (i=0; i < *n; i++)
-////		(void)fprintf(UserFile, " %d",array[i]);
-//////		(void)fprintf(UserFile, " %ld",array[i]);
-////
-////	(void)fprintf(UserFile, "\n");
-////
-////}
-////
-/////*--------------------------------------------------------------------*\
-//// | FUNCTION     : uplong
-//// | COMMENT      : print long from C
-//// | PARAMETERS   : 'string' is a string
-//// |                'array' is the INTEGER*4 of long array or scalar to be printed
-//// |                'n' is the number of values in the array, 1 if a scalar
-//// | RETURN VALUE :
-//// | RESTRICTIONS :
-////\*--------------------------------------------------------------------*/
-////void uplong (char *dimname, long dimNo, char *string, long *array, long n) {
-////
-////	int i;
-////	FILE *UserFile;
-////
-////	/*
-////   * return if file pointer is NULL
-////   */
-////
-////	UserFile = GetUserFile(dimname,dimNo);
-////
-////	if (UserFile == NULL)
-////		return;
-////
-////	(void)fprintf(UserFile, "%s ",string);
-////
-////	for (i=0; i < n; i++)
-////		(void)fprintf(UserFile, " %ld", array[i]);
-////
-////	(void)fprintf(UserFile, "\n");
-////
-////}
-////
-/////*--------------------------------------------------------------------*\
-//// | FUNCTION     : upreal_
-//// | COMMENT		: print real array from Fortran
-//// |                The fortran call is:
-//// |                call upreal(string, array, n)
-//// | PARAMETERS   : 'string' is a string
-//// |                'array' is the REAL or float array or scalar to be printeD
-//// |                'n' is the number of values in the array, 1 if a scalar.
-//// | RETURN VALUE : 
-//// | RESTRICTIONS :
-////\*--------------------------------------------------------------------*/
-////void upreal_ (char *dimname, ftnint *dimNo, char *str, float *array, ftnint *n,
-////ftnlen dimlen, ftnlen stringlen) {
-////
-////	char *string;
-////	char *name;
-////	int i;
-////	FILE *UserFile;
-////
-////	name = (char *) umalloc(dimlen + 1);
-////	strncpy(name, dimname, dimlen);
-////	name[dimlen] = '\0';
-////
-////	/*
-////   * return if file pointer is NULL
-////   */
-////
-////	UserFile = GetUserFile(name,*dimNo);
-////
-////	if (UserFile == NULL)
-////		return;
-////
-////	/*
-////   * copy string to new string
-////   */
-////
-////	string = (char *) umalloc(stringlen + 1);
-////	strncpy(string, str, stringlen);
-////	string[stringlen] = '\0';
-////
-////	(void)fprintf(UserFile, "%s ",string);
-////
-////	for (i=0; i < *n; i++)
-////		(void)fprintf(UserFile, " %10g", array[i]);
-////
-////	(void)fprintf(UserFile, "\n");
-////
-////}
-////
-/////*--------------------------------------------------------------------*\
-//// | FUNCTION     : upfloat
-//// | COMMENT		: print float array from C
-//// |                The C call is:
-//// |                upfloat(string, array, n)
-//// | PARAMETERS   : 'string' is a string
-//// |                'array' is the REAL or float array or scalar to be printeD
-//// |                'n' is the number of values in the array, 1 if a scalar.
-//// | RETURN VALUE : 
-//// | RESTRICTIONS :
-////\*--------------------------------------------------------------------*/
-////void upfloat (char *dimname, long dimNo, char *string, float *array, long n) {
-////
-////	int i;
-////	FILE *UserFile;
-////
-////	/*
-////   * return if file pointer is NULL
-////   */
-////
-////	UserFile = GetUserFile(dimname,dimNo);
-////
-////	if (UserFile == NULL)
-////		return;
-////
-////	(void)fprintf(UserFile, "%s ",string);
-////
-////	for (i=0; i < n; i++)
-////		(void)fprintf(UserFile, " %10g", array[i]);
-////
-////	(void)fprintf(UserFile, "\n");
-////
-////}
-////
-/////*--------------------------------------------------------------------*\
-//// | FUNCTION     : updble_
-//// | COMMENT		: print double precision array from Fortran
-//// |                The fortran call is:
-//// |                call updble(string, array, n)
-//// | PARAMETERS   : 'string' is a string
-//// |                'array' is the double precision array or scalar to be printed
-//// |                'n' is the number of values in the array, 1 if a scalar
-//// | RETURN VALUE : 
-//// | RESTRICTIONS :
-////\*--------------------------------------------------------------------*/
-////void updble_ (char *dimname, ftnint *dimNo, char *str, double *array, ftnint *n, ftnlen dimlen, ftnlen stringlen) {
-////
-////	char *string;
-////	char *name;
-////	int i;
-////	FILE *UserFile;
-////
-////	name = (char *) umalloc(dimlen + 1);
-////	strncpy(name, dimname, dimlen);
-////	name[dimlen] = '\0';
-////
-////	/*
-////   * return if file pointer is NULL
-////   */
-////
-////	UserFile = GetUserFile(name,*dimNo);
-////
-////	if (UserFile == NULL)
-////		return;
-////
-////	/*
-////   * copy string to new string
-////   */
-////
-////	string = (char *) umalloc(stringlen + 1);
-////	strncpy(string, str, stringlen);
-////	string[stringlen] = '\0';
-////
-////	(void)fprintf(UserFile, "%s ",string);
-////
-////	for (i=0; i < *n; i++)
-////		(void)fprintf(UserFile, " %10lg", array[i]);
-////
-////	(void)fprintf(UserFile, "\n");
-////
-////}
-////
-/////*--------------------------------------------------------------------*\
-//// | FUNCTION     : updble
-//// | COMMENT		: print double array from C
-//// |                The C call is
-//// |                call updble(string, array, n)
-//// | PARAMETERS   : 'string' is a string
-//// |                'array' is the double precision array or scalar to be printed
-//// |                'n' is the number of values in the array, 1 if a scalar
-//// | RETURN VALUE : 
-//// | RESTRICTIONS :
-////\*--------------------------------------------------------------------*/
-////void updble (char *dimname, long dimNo, char *string, double *array, long n) {
-////
-////	int i;
-////	FILE *UserFile;
-////
-////	/*
-////   * return if file pointer is NULL
-////   */
-////
-////	UserFile = GetUserFile(dimname,dimNo);
-////
-////	if (UserFile == NULL)
-////		return;
-////
-////	(void)fprintf(UserFile, "%s ",string);
-////
-////	for (i=0; i < n; i++)
-////		(void)fprintf(UserFile, " %10lg", array[i]);
-////
-////	(void)fprintf(UserFile, "\n");
-////
-////}
-
-/**7****************** LOCAL FUNCTION DEFINITIONS *********************/
-
-/**8************************** TEST DRIVER ****************************/
-
-/**************************************************************************
- * var_addr.c: 
- *
- * returns a pointer to a PUBVAR struct which contains the given key
- * returns NULL if key not found
- *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
- *
-   $Revision: 4870 $
-        $Log: var_addr.c,v $
-        Revision 1.5  1999/10/22 17:14:38  markstro
-        Added private variables
-
-        Revision 1.4  1996/02/19 20:01:23  markstro
-        Now lints pretty clean
-
-        Revision 1.3  1994/09/30 14:55:35  markstro
-        Initial work on function prototypes.
-
- * Revision 1.2  1994/01/31  20:17:54  markstro
- * Make sure that all source files have CVS log.
- *
- **************************************************************************/
 #define VAR_ADDR_C
 #include <stdio.h>
 #include <string.h>
@@ -13940,29 +10754,11 @@ PUBVAR *var_addr (char *key) {
  * United States Geological Survey
  *
  * PROJECT  : Modular Modeling System (MMS)
- * NAME     : write_vstats.c
- * AUTHOR   : Pedro Restrepo CADSWES
- * DATE     : June 1990
  * FUNCTION : write_vstats
  * COMMENT  : saves values of stat variables into a temporary file.
  *            The temporary file was open in user_input
- * REF      :
- * REVIEW   :
- * PR NRS   :
  *
- * $Id: mms_util.c 4870 2012-10-03 22:29:05Z rsregan $
- *
-   $Revision: 4870 $
-        $Log: write_vstats.c,v $
-        Revision 1.4  1996/02/19 20:01:24  markstro
-        Now lints pretty clean
-
-        Revision 1.3  1994/10/24 14:19:09  markstro
-        (1)  Integration of CADSWES's work on GIS.
-        (2)  Prototypes were added to the files referenced in "mms_proto.h".
-
- * Revision 1.2  1994/01/31  20:17:56  markstro
- * Make sure that all source files have CVS log.
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
 -*/
 
@@ -13971,15 +10767,6 @@ PUBVAR *var_addr (char *key) {
 #include <stdio.h>
 #include "mms.h"
 
-/**2************************* LOCAL MACROS ****************************/
-
-/**3************************ LOCAL TYPEDEFS ***************************/
-
-/**4***************** DECLARATION LOCAL FUNCTIONS *********************/
-
-/**5*********************** LOCAL VARIABLES ***************************/
-
-/**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
 /*--------------------------------------------------------------------*\
  | FUNCTION     : write_vstats
  | COMMENT		:
@@ -14029,8 +10816,9 @@ void write_vstats (FILE *statvar_file) {
       break;
 
     case M_LONG:
-
-      (void)fprintf(statvar_file,"%ld ", *(long *)stat_list->value);
+	// markstro test
+    //  (void)fprintf(statvar_file,"%ld ", *(long *)stat_list->value);
+	(void)fprintf(statvar_file,"%ld ", *(int *)stat_list->value);
       break;
 
     }
@@ -14046,16 +10834,18 @@ void write_vstats (FILE *statvar_file) {
   (void)fprintf(statvar_file,"\n");
 
 }
+/*+
+ * United States Geological Survey
+ *
+ * PROJECT  : Modular Modeling System (MMS)
+ * FUNCTION : call_setdims
+ * COMMENT  :
+ *
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
+ *
+-*/
 
-/**7****************** LOCAL FUNCTION DEFINITIONS *********************/
-
-/**8************************** TEST DRIVER ****************************/
-
-/*************************************************
- * call_setdims.c: created by 'mbuild'.
- * Creation time: Tue May 23 11:13:30 2006
- *************************************************/
-
+/**1************************ INCLUDE FILES ****************************/
 #include <stdio.h>
 #include "mms.h"
 
@@ -14079,46 +10869,12 @@ int call_setdims()
  * United States Geological Survey
  *
  * PROJECT  : Modular Modeling System (MMS)
- * NAME     : getdimname.c
- * AUTHOR   : Pedro J. Restrepo, Steve Markstrom (markstro)
- * DATE     : May 1992
- * FUNCTION :
+ * FUNCTION : getdimname
  * COMMENT  : The following are two routines to obtain the "ith" index name 
  *            of a dimension variable from either Fortran or C modules.
- * REF      :
- * REVIEW   :
- * PR NRS   :
  *
-   $Revision: 4870 $
-        $Log: getdimname.c,v $
-        Revision 1.10  1999/08/24 16:34:04  markstro
-        Version 1.1.1
-
-        Revision 1.9  1996/04/29 16:23:02  markstro
-        Unknown
-
- * Revision 1.8  1996/04/25  13:27:07  msbrewer
- * Fixed up Markstorm's pathetic coding mistakes
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
  *
-        Revision 1.7  1996/04/23 14:29:49  markstro
-        Added getdimdesc system function.
-
- * Revision 1.6  1996/02/19  20:00:04  markstro
- * Now lints pretty clean
- *
-        Revision 1.5  1995/11/24 14:35:24  markstro
-        Initial Purify work.
-        This is the version for Watershed Systems Modeling class 11/27 - 12/1, 1995
-
- * Revision 1.4  1994/11/22  17:19:39  markstro
- * (1) Cleaned up dimensions and parameters.
- * (2) Some changes due to use of malloc_dbg.
- *
- * Revision 1.3  1994/09/30  14:54:22  markstro
- * Initial work on function prototypes.
- *
- * Revision 1.2  1994/01/31  20:16:29  markstro
- *me - dimension name. Make sure that all source files have CVS log.
 -*/
 
 /**1************************ INCLUDE FILES ****************************/
@@ -14127,15 +10883,6 @@ int call_setdims()
 #include <stdlib.h>
 #include "mms.h"
 
-/**2************************* LOCAL MACROS ****************************/
-
-/**3************************ LOCAL TYPEDEFS ***************************/
-
-/**4***************** DECLARATION LOCAL FUNCTIONS *********************/
-
-/**5*********************** LOCAL VARIABLES ***************************/
-
-/**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
 /*--------------------------------------------------------------------*\
  | FUNCTION     : getdimname_
  | COMMENT		: called from fortran
@@ -14268,18 +11015,18 @@ void getdimdesc (char *name, long i, char *descname) {
 		(void)strcpy (descname, "");
 
 }
+/*+
+ * United States Geological Survey
+ *
+ * PROJECT  : Modular Modeling System (MMS)
+ * FUNCTION : call_modules
+ * COMMENT  : used to call a Fortran version
+ *
+ * $Id: mms_util.c 7588 2015-08-18 22:58:42Z rsregan $
+ *
+-*/
 
-/**7****************** LOCAL FUNCTION DEFINITIONS *********************/
-
-/**8************************** TEST DRIVER ****************************/
-
-/*********************************************************
- * call_modules.c: to replace the one created by 'mbuild',
- * used to call a Fortran version, such as for GSFLOW
- * Creation time: Wed Jan 18 15:52:21 2007
- * Creation time: Thu May 26 10:54:21 2005
- *********************************************************/
-
+/**1************************ INCLUDE FILES ****************************/
 #include <stdlib.h>
 #include <string.h>
 #include "mms.h"
@@ -14294,3 +11041,4 @@ int call_modules(char *arg) {
 	 retval = call_modules_ (arg, len);
 	 return((int)retval);
 }
+

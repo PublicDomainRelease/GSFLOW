@@ -42,18 +42,18 @@ CONTAINS
     ! Gaussian elimination without pivoting.                      
     !----------------------------------------------------------------------
     USE machine_constants, ONLY: kdp
-    USE GLOBAL, ONLY: iout
+!!    USE GLOBAL, ONLY: iout
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: n    ! ... The row dimension of A
-    REAL(KIND=kdp), DIMENSION(:), INTENT(IN) :: a     ! ... Matrix A in compressed
+    DOUBLE PRECISION, DIMENSION(:), INTENT(IN) :: a     ! ... Matrix A in compressed
     INTEGER, DIMENSION(:), INTENT(IN) :: ja           ! ... sparse row format
     INTEGER, DIMENSION(:), INTENT(IN) :: ia
     INTEGER, INTENT(IN) :: lfil         ! ...  fill-in parameter. Each row of L and 
                                         ! ...    of U will have a maximum of lfil elements 
                                         ! ...    (excluding the diagonal element). must be >= 0.
-    REAL(KIND=kdp), INTENT(IN) :: droptol     ! ... the threshold for dropping small terms in 
+    DOUBLE PRECISION, INTENT(IN) :: droptol     ! ... the threshold for dropping small terms in 
                                               ! ...   the factorization. See below for details.
-    REAL(KIND=kdp), DIMENSION(:), INTENT(OUT) :: alu     ! ...  LU matrix stored in Modified 
+    DOUBLE PRECISION, DIMENSION(:), INTENT(OUT) :: alu     ! ...  LU matrix stored in Modified 
                                                          ! ...    Sparse Row (MSR) format
                                                          ! ...  The diagonal (stored in alu(1:n))
                                                          ! ...   is inverted. alu(n+1) is unused. 
@@ -75,19 +75,19 @@ CONTAINS
                                      !    -5 : zero row encountered during factorization
     !
     ! ... Patch since automatic arrays clash with Java using Visual Fortran90 v6.0
-!!$    REAL(KIND=kdp), DIMENSION(n+1), TARGET :: w     ! ... work array
-    REAL(KIND=kdp), DIMENSION(:), ALLOCATABLE, TARGET :: w     ! ... work array
+!!$    DOUBLE PRECISION, DIMENSION(n+1), TARGET :: w     ! ... work array
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE, TARGET :: w     ! ... work array
 !!$    INTEGER, DIMENSION(2*n), TARGET :: jw           ! ... work array
     INTEGER, DIMENSION(:), ALLOCATABLE, TARGET :: jw           ! ... work array
     ! ...     w, jw (1:n) store the working array [1:ii-1 = L-part, ii:n = U-part]
     ! ...     jw(n+1:2n)  stores indices of nonzero elements
-    REAL(KIND=kdp), DIMENSION(:), POINTER :: wp     
+    DOUBLE PRECISION, DIMENSION(:), POINTER :: wp     
     INTEGER, DIMENSION(:), POINTER :: jwp           
     INTEGER :: ju0,k,j1,j2,j,ii,i,lenl,lenu,jj,jrow,jpos,len
     INTEGER :: a_err, da_err
-    REAL(KIND=kdp) :: fact, s, t, tnorm
+    DOUBLE PRECISION :: fact, s, t, tnorm
     ! ... Set string for use with RCS ident command
-    CHARACTER(LEN=80) :: ident_string='$RCSfile: ilupc_mod.f90,v $//$Revision: 3841 $'
+!!    CHARACTER(LEN=80) :: ident_string='$RCSfile: ilupc_mod.f90,v $//$Revision: 7226 $'
     !     ------------------------------------------------------------------
     !...
     IF (lfil < 0) THEN         ! ... illegal lfil entered.
@@ -303,16 +303,16 @@ CONTAINS
     ! All the diagonal elements of the A matrix must be  nonzero.
     !----------------------------------------------------------------------
     USE machine_constants, ONLY: kdp
-    USE global, only: iout
+!!    USE global, only: iout
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: n    ! ... The row dimension of A
-    REAL(KIND=kdp), DIMENSION(:), INTENT(IN) :: a     ! ... Matrix A in compressed
+    DOUBLE PRECISION, DIMENSION(:), INTENT(IN) :: a     ! ... Matrix A in compressed
     INTEGER, DIMENSION(:), INTENT(IN) :: ja           ! ... sparse row format
     INTEGER, DIMENSION(:), INTENT(IN) :: ia
     INTEGER, INTENT(IN) :: lfil         ! ...  fill-in parameter. Each row of L and 
                                         ! ...    of U will have lfil levels of fill-in 
                                         ! ...    (excluding the diagonal element). must be >= 0.
-    REAL(KIND=kdp), DIMENSION(:), INTENT(OUT) :: alu     ! ...  LU matrix stored in Modified 
+    DOUBLE PRECISION, DIMENSION(:), INTENT(OUT) :: alu     ! ...  LU matrix stored in Modified 
                                                          ! ...    Sparse Row (MSR) format
                                                          ! ...  The diagonal (stored in alu(1:n))
                                                          ! ...   is inverted. alu(n+1) is unused. 
@@ -334,8 +334,8 @@ CONTAINS
                                      !    -5 : zero row encountered during factorization
     !
     ! ... Patch since automatic arrays clash with Java using Visual Fortran90 v6.0
-!!$    REAL(KIND=kdp), DIMENSION(n) :: w     ! ... work array
-    REAL(KIND=kdp), DIMENSION(:), ALLOCATABLE :: w     ! ... work array
+!!$    DOUBLE PRECISION, DIMENSION(n) :: w     ! ... work array
+    DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: w     ! ... work array
 !!$    INTEGER, DIMENSION(3*n) :: jw           ! ... work array
     INTEGER, DIMENSION(:), ALLOCATABLE :: jw           ! ... work array
     ! ...     w, jw (1:n) store the working array [1:ii-1 = L-part, ii:n = U-part]
@@ -345,9 +345,9 @@ CONTAINS
                                             ! ...   in alu, jlu; could be passed to caller
     INTEGER :: ju0, k, j1, j2, j, ii, i, lenl, lenu, jj, jrow, jpos, n2, jlev
     INTEGER :: a_err, da_err
-    REAL(KIND=kdp) :: t, s, fact
+    DOUBLE PRECISION :: t, s, fact
     ! ... Set string for use with RCS ident command
-    CHARACTER(LEN=80) :: ident_string='$RCSfile: ilupc_mod.f90,v $//$Revision: 3841 $'
+!!    CHARACTER(LEN=80) :: ident_string='$RCSfile: ilupc_mod.f90,v $//$Revision: 7226 $'
     ! ... ------------------------------------------------------------------
     !...
     IF (lfil < 0) THEN         ! ... illegal lfil entered
@@ -547,15 +547,15 @@ CONTAINS
     USE machine_constants, ONLY: kdp
     IMPLICIT NONE
     INTEGER, INTENT(IN) :: n
-    REAL(KIND=kdp), DIMENSION(:), INTENT(IN OUT) :: a
+    DOUBLE PRECISION, DIMENSION(:), INTENT(IN OUT) :: a
     INTEGER, DIMENSION(:), INTENT(IN OUT) :: ind
     INTEGER, INTENT(IN) :: ncut
     !
     INTEGER :: j, mid
-    REAL(KIND=kdp) :: tmp, abskey
+    DOUBLE PRECISION :: tmp, abskey
     INTEGER :: itmp, first, last
     ! ... Set string for use with RCS ident command
-    CHARACTER(LEN=80) :: ident_string='$RCSfile: ilupc_mod.f90,v $//$Revision: 3841 $'
+!!    CHARACTER(LEN=80) :: ident_string='$RCSfile: ilupc_mod.f90,v $//$Revision: 7226 $'
     ! ... ------------------------------------------------------------------
     !...
     first = 1
@@ -614,7 +614,7 @@ CONTAINS
     INTEGER :: a_err, da_err, bw, bwl, bwu, ffmin, i, j, jp, jpt, k, t, tp 
     !
     ! ... Set string for use with RCS ident command
-    CHARACTER(LEN=80) :: ident_string='$RCSfile: ilupc_mod.f90,v $//$Revision: 3841 $'
+!!    CHARACTER(LEN=80) :: ident_string='$RCSfile: ilupc_mod.f90,v $//$Revision: 7226 $'
     ! ... ------------------------------------------------------------------
     !...
     ! ... Determine bandwidth and allocate ff array

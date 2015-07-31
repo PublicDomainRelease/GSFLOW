@@ -193,6 +193,7 @@ C1C-----IF THERE ARE ACTIVE GHB PARAMETERS, READ THEM AND SUBSTITUTE
    30    CONTINUE
       END IF
 C4
+      ierr = 0
       DO 100 L=1,NBOUND
 C
 C5------GET COLUMN, ROW AND LAYER OF CELL CONTAINING BOUNDARY.
@@ -207,13 +208,15 @@ C7------SINCE THE CELL IS INTERNAL GET THE BOUNDARY DATA.
       HB=BNDS(4,L)
       BOT=BOTM(IC,IR,LBOTM(IL))
       IF ( HB.LT.BOT ) THEN
-        WRITE(IOUT,103)IC,IR,IL
-        CALL USTOP(' ')
+        WRITE(IOUT,103)IC,IR,IL,HB,BOT
+        ierr = 1
       END IF
   103 FORMAT('GHB HEAD SET TO BELOW CELL BOTTOM. MODEL STOPPING. ',
-     +                'CELL WITH ERROR (IC,IR,IL): ',3I5)
+     +                'CELL WITH ERROR (IC,IR,IL): ',3I5,/,
+     +                'HEAD:',F10.3,'BOTTOM:',F10.3)
 
   100 CONTINUE
+      IF ( ierr==1 ) CALL USTOP(' ')
 C
 C3------PRINT NUMBER OF GHB'S IN CURRENT STRESS PERIOD.
       WRITE (IOUT,101) NBOUND
@@ -229,7 +232,8 @@ C     ******************************************************************
 C
 C     SPECIFICATIONS:
 C     ------------------------------------------------------------------
-      USE GLOBAL,       ONLY:IBOUND,RHS,HCOF,botm,lbotm
+      USE GLOBAL,       ONLY:IBOUND,RHS,HCOF
+!!      USE GLOBAL,       ONLY:IBOUND,RHS,HCOF,botm,lbotm
       USE GWFGHBMODULE, ONLY:NBOUND,BNDS
 C     ------------------------------------------------------------------
       CALL SGWF2GHB7PNT(IGRID)
@@ -267,8 +271,9 @@ C     ******************************************************************
 C
 C     SPECIFICATIONS:
 C     ------------------------------------------------------------------
-      USE GLOBAL,      ONLY:IOUT,NCOL,NROW,NLAY,IBOUND,HNEW,BUFF,
-     1                      botm, lbotm
+      USE GLOBAL,      ONLY:IOUT,NCOL,NROW,NLAY,IBOUND,HNEW,BUFF
+!!      USE GLOBAL,      ONLY:IOUT,NCOL,NROW,NLAY,IBOUND,HNEW,BUFF,
+!!     1                      botm, lbotm
       USE GWFBASMODULE,ONLY:MSUM,ICBCFL,IAUXSV,DELT,PERTIM,TOTIM,
      1                      VBVL,VBNM
       USE GWFGHBMODULE,ONLY:NBOUND,IGHBCB,BNDS,NGHBVL,GHBAUX
@@ -332,7 +337,7 @@ C
 C5E-----PRINT THE INDIVIDUAL RATES IF REQUESTED(IGHBCB<0).
       IF(IBD.LT.0) THEN
          IF(IBDLBL.EQ.0) WRITE(IOUT,61) TEXT,KPER,KSTP
-   61    FORMAT(1X,/1X,A,'   PERIOD ',I4,'   STEP ',I3)
+   61    FORMAT(1X,/1X,A,'   PERIOD ',I4,'   STEP',I6) !gsf
          WRITE(IOUT,62) L,IL,IR,IC,RATE
    62    FORMAT(1X,'BOUNDARY ',I6,'   LAYER ',I3,'   ROW ',I5,'   COL ',
      1       I5,'   RATE ',1PG15.6)

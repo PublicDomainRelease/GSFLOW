@@ -1,5 +1,5 @@
 ! ... Module files used for hydrotherm for definition of data groups
-! ... $Revision: 3841 $//$Date: 2009/03/31 21:30:03 $
+! ... $Revision: 6501 $//$Date: 2009/03/31 21:30:03 $
 MODULE f_units
   ! ... fortran unit assignments
   IMPLICIT NONE
@@ -17,7 +17,7 @@ MODULE math_constants
   USE machine_constants, ONLY: kdp
   IMPLICIT NONE
   SAVE
-  REAL(KIND=kdp), PARAMETER :: pi = 3.1415926535898_kdp, twopi = 2*pi
+  DOUBLE PRECISION, PARAMETER :: pi = 3.1415926535898_kdp, twopi = 2*pi
 END MODULE math_constants
 
 MODULE mesh
@@ -26,9 +26,9 @@ MODULE mesh
   IMPLICIT NONE
   SAVE 
   LOGICAL :: irad
-  REAL(KIND=kdp), DIMENSION(:), ALLOCATABLE :: ax, ay, az
-  REAL(KIND=kdp), DIMENSION(:), ALLOCATABLE :: dx, dy, dz
-  REAL(KIND=kdp) :: avgdx, avgdy, avgdz, xcmin, xcmax, ycmin, ycmax, zcmin, zcmax
+  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: ax, ay, az
+  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: dx, dy, dz
+  DOUBLE PRECISION :: avgdx, avgdy, avgdz, xcmin, xcmax, ycmin, ycmax, zcmin, zcmax
   INTEGER, DIMENSION(:), ALLOCATABLE :: mrno
   INTEGER, DIMENSION(:), ALLOCATABLE :: nb, npic
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: ci, np, npp
@@ -83,11 +83,11 @@ MODULE bc
   LOGICAL, DIMENSION(:,:), ALLOCATABLE :: seeping
   INTEGER :: nhcond, nprecip, nseep, nspecpbc
   INTEGER, DIMENSION(:,:), ALLOCATABLE :: ibc, prflag
-  REAL(KIND=kdp) :: ptop
-  REAL(KIND=kdp), DIMENSION(:), ALLOCATABLE :: ptopa
-  REAL(KIND=kdp), DIMENSION(:), ALLOCATABLE :: ehassoc, tcassoc
-  REAL(KIND=kdp), DIMENSION(:), ALLOCATABLE :: cdtn, qprecip, tflux, denflux, ehflux, qhflux
-  REAL(KIND=kdp), DIMENSION(:), ALLOCATABLE :: land_surf_area, qseep
+  DOUBLE PRECISION :: ptop
+  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: ptopa
+  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: ehassoc, tcassoc
+  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: cdtn, qprecip, tflux, denflux, ehflux, qhflux
+  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: land_surf_area, qseep
 CONTAINS
   SUBROUTINE alloc_bc(a_status)
     USE mesh
@@ -118,24 +118,24 @@ MODULE fdeq
   IMPLICIT NONE
   SAVE
   LOGICAL :: ioptupst
-  REAL(KIND=kdp), DIMENSION(:), ALLOCATABLE :: c, d, f, g 
+  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: c, d, f, g 
   ! ... Jacobian derivatives for Newton-Raphson
-  REAL(KIND=kdp), DIMENSION(:), ALLOCATABLE :: dhrsh, dhrsp, dhrwh, dhrwp, dqhh, &
+  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: dhrsh, dhrsp, dhrwh, dhrwp, dqhh, &
        dqhp, dth, dtp, drsh, drsp, drwh, drwp, dxvdsh, dxvdsp, dxvdwh, dxvdwp, &
        dyvdsh, dyvdsp, dyvdwh, dyvdwp, dzvdsh, dzvdsp, dzvdwh, dzvdwp, &
        dzvdgsh, dzvdgsp, dzvdgwh, dzvdgwp 
-  REAL(KIND=kdp), DIMENSION(:), ALLOCATABLE :: reside, residm
-  REAL(KIND=kdp), DIMENSION(:), ALLOCATABLE :: hrs, hrw
-  REAL(KIND=kdp), DIMENSION(:), ALLOCATABLE :: tx, txk, ty, tyk, tz, tzk
+  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: reside, residm
+  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: hrs, hrw
+  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: tx, txk, ty, tyk, tz, tzk
   !...Spatial weighting factors
-  REAL(KIND=kdp), DIMENSION(:), ALLOCATABLE :: usx, usy, usz, uwx, uwy, uwz
+  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: usx, usy, usz, uwx, uwy, uwz
   !...Density and viscosity coefficients in difference equations
-  REAL(KIND=kdp), DIMENSION(:), ALLOCATABLE :: xvds, xvdw, xvs, xvw, xds, xdw, yvds, yvdw, yvs, & 
+  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: xvds, xvdw, xvs, xvw, xds, xdw, yvds, yvdw, yvs, & 
        yvw, yds, ydw, zvdgs, zvdgw, zvds, zvdw, zvs, zvw, zds, zdw
-  REAL(KIND=kdp) :: pcee=0._kdp, pcem=0._kdp, resmaxm, resmaxe, resmas, reseng, resmaxmall, resmaxeall
-  REAL(kind=kdp) :: reseold, reseold2, resmold, resmold2
+  DOUBLE PRECISION :: pcee=0._kdp, pcem=0._kdp, resmaxm, resmaxe, resmas, reseng, resmaxmall, resmaxeall
+  DOUBLE PRECISION :: reseold, reseold2, resmold, resmold2
   INTEGER :: imres, jmres, kmres, ieres, jeres, keres, ltimresmaxm, ltimresmaxe
-  REAL(KIND=kdp) :: potdif
+  DOUBLE PRECISION :: potdif
 CONTAINS
   SUBROUTINE alloc_fdeq(a_status)
     USE mesh
@@ -238,8 +238,8 @@ MODULE i_c
   IMPLICIT NONE
   SAVE
   LOGICAL :: initphi
-  REAL(KIND=kdp), DIMENSION(:), ALLOCATABLE :: pinit, plith
-  REAL(KIND=kdp), DIMENSION(:), ALLOCATABLE :: phiinit
+  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: pinit, plith
+  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: phiinit
 CONTAINS
   SUBROUTINE alloc_ic(a_status)
     USE mesh
@@ -261,20 +261,20 @@ MODULE parameters
   IMPLICIT NONE
   SAVE
   INTEGER, PARAMETER :: mprxparm=8, mptlparm=mprxparm+12, mprock=9
-  REAL(KIND=kdp) :: grav, patm, pwb, pwr, bb, cc, lambda, gamma
-  REAL(KIND=kdp) :: ssr, swr
-  REAL(KIND=kdp) :: ykfactor, zkfactor
+  DOUBLE PRECISION :: grav, patm, pwb, pwr, bb, cc, lambda, gamma
+  DOUBLE PRECISION :: ssr, swr
+  DOUBLE PRECISION :: ykfactor, zkfactor
   !..Relative permeabilities
-  REAL(KIND=kdp), DIMENSION(:), ALLOCATABLE :: rs, rw
-  REAL(KIND=kdp),  DIMENSION(:), ALLOCATABLE :: phi, xkc, ykc, zkc, xk, yk, zk
+  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: rs, rw
+  DOUBLE PRECISION,  DIMENSION(:), ALLOCATABLE :: phi, xkc, ykc, zkc, xk, yk, zk
   !...Porous matrix properties
-  REAL(KIND=kdp), DIMENSION(:), ALLOCATABLE :: beta, df, phfwt, phfwtdt
-  REAL(KIND=kdp), DIMENSION(mprock) :: ykrxkxfac, zkrxkxfac
+  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: beta, df, phfwt, phfwtdt
+  DOUBLE PRECISION, DIMENSION(mprock) :: ykrxkxfac, zkrxkxfac
   LOGICAL, DIMENSION(mprock) :: ilrxtype
   LOGICAL :: lrxftreq, lrxftimreq
-  REAL(KIND=kdp), DIMENSION(mprxparm,mprock) :: rxparm
-  REAL(KIND=kdp), DIMENSION(mprxparm,mprock,8) :: rxftparm
-  REAL(KIND=kdp), DIMENSION(2:4,mprock,8) :: rxftimparm
+  DOUBLE PRECISION, DIMENSION(mprxparm,mprock) :: rxparm
+  DOUBLE PRECISION, DIMENSION(mprxparm,mprock,8) :: rxftparm
+  DOUBLE PRECISION, DIMENSION(2:4,mprock,8) :: rxftimparm
   INTEGER :: nrxtype
   INTEGER, DIMENSION(:), ALLOCATABLE :: icrxtype
   INTEGER, DIMENSION(mprock) :: irxused
@@ -331,7 +331,7 @@ MODULE control
   INTEGER :: ilnrimax, iphschgtot, iphschglt, iphschgnr, iter_gm_max
   INTEGER, DIMENSION(21) :: itmcntl
   INTEGER, DIMENSION(3) :: iconvrg
-  REAL(KIND=kdp) :: maxdelt, mindelt
+  DOUBLE PRECISION :: maxdelt, mindelt
   !...Input and print control
   INTEGER, DIMENSION(28) :: ioptprta
   INTEGER :: icall, iplot
@@ -340,9 +340,9 @@ MODULE control
   INTEGER, DIMENSION(20,3) :: ijktp
   INTEGER, DIMENSION(6) :: ioptpr
   INTEGER :: lnrimax, ltimemax, ltime, lnri, lnritotl, ltmcutmx, tot_iter_gm
-  REAL(KIND=kdp) :: tmincmx, pchgmxts, hchgmxts, wschgmx, flwrlx, deltmin, deltmax
-  REAL(KIND=kdp) :: prfreq, prtimenxt, tchg, timestr
-  REAL(KIND=kdp) :: hchgmxnr, pchgmxnr
+  DOUBLE PRECISION :: tmincmx, pchgmxts, hchgmxts, wschgmx, flwrlx, deltmin, deltmax
+  DOUBLE PRECISION :: prfreq, prtimenxt, tchg, timestr
+  DOUBLE PRECISION :: hchgmxnr, pchgmxnr
   INTEGER :: iphschgmx
   INTEGER :: informt
   INTEGER :: iprsat, iprden, iprvis, iprpot, iprvel, iprbcflow, &
@@ -350,13 +350,13 @@ MODULE control
   INTEGER :: n_locations
   INTEGER :: ltmcntl, nppn
   INTEGER :: slmeth=0
-  REAL(KIND=kdp) :: print_press, print_enth, print_temp, print_satn, &
+  DOUBLE PRECISION :: print_press, print_enth, print_temp, print_satn, &
        print_dens, print_vis, print_pot, &
        print_vel, print_bcflow, print_source, &
        print_pmprop, print_poros, print_perm, & 
        print_balance, print_dump, print_dimno, print_resid, &
        print_plotscalar, print_plotvector, print_temporal 
-  REAL(KIND=kdp) :: timprp, timprh, timprt, timprsat, timprd, timprv, timprpot,  &
+  DOUBLE PRECISION :: timprp, timprh, timprt, timprsat, timprd, timprv, timprpot,  &
        timprvel, timprbcf, timprsrc, timprprop, timprpor, timprperm, timprbal, timprdump,  &
        timprresid, timprdimno, timprpscal, timprpvec, timprtemp
 !!$  CONTAINS
@@ -379,9 +379,9 @@ MODULE solver
   IMPLICIT NONE
   SAVE
   INTEGER :: mbw
-  REAL(KIND=kdp) :: tol, wo
-  REAL(KIND=kdp), DIMENSION(:,:), ALLOCATABLE :: alit
-  REAL(KIND=kdp), DIMENSION(:), ALLOCATABLE :: rlit, cscal
+  DOUBLE PRECISION :: tol, wo
+  DOUBLE PRECISION, DIMENSION(:,:), ALLOCATABLE :: alit
+  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: rlit, cscal
   INTEGER :: lssormax
 CONTAINS
   SUBROUTINE alloc_solver(a_status)
@@ -411,14 +411,14 @@ MODULE solver_gmres
   INTEGER :: npaja, neq
   INTEGER :: maxit_gmres, m_save_dir
   INTEGER :: ilu_method, lev_fill, nnz_ilu
-  REAL(KIND=kdp) :: stop_tol_gmres, r_norm_gmres
-  REAL(KIND=kdp) :: drop_tol
+  DOUBLE PRECISION :: stop_tol_gmres, r_norm_gmres
+  DOUBLE PRECISION :: drop_tol
   INTEGER, DIMENSION(:), ALLOCATABLE :: ja, ia
   INTEGER, DIMENSION(:), ALLOCATABLE :: jb, ib
   INTEGER, DIMENSION(:), ALLOCATABLE :: jailu, iilu, levs
-  REAL(KIND=kdp), DIMENSION(:), ALLOCATABLE :: av, rhs, xxs
-  REAL(KIND=kdp), DIMENSION(:), ALLOCATABLE :: bv, diagc, diagr
-  REAL(KIND=kdp), DIMENSION(:), ALLOCATABLE :: ailu
+  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: av, rhs, xxs
+  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: bv, diagc, diagr
+  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: ailu
 CONTAINS
   SUBROUTINE alloc_solver_gmres(a_status)
     USE mesh
@@ -444,7 +444,7 @@ MODULE source
   USE machine_constants, ONLY: kdp
   IMPLICIT NONE
   SAVE
-  REAL(KIND=kdp),  DIMENSION(:), ALLOCATABLE :: q, qh, qhi, qhcondflx, qhinodsrc, qhnodsrc,  &
+  DOUBLE PRECISION,  DIMENSION(:), ALLOCATABLE :: q, qh, qhi, qhcondflx, qhinodsrc, qhnodsrc,  &
        qhwelsrc, qnodsrc, qwelsrc,  &
        qt, qv
   !..Well screen layer index
@@ -491,7 +491,7 @@ MODULE units
   CHARACTER(LEN=80) :: fname
   CHARACTER(LEN=40) :: usuff
   CHARACTER(LEN=80) :: phifile
-  REAL(KIND=kdp), DIMENSION(mptlparm) :: unitfac = 0._kdp
+  DOUBLE PRECISION, DIMENSION(mptlparm) :: unitfac = 0._kdp
   CHARACTER(LEN=13), DIMENSION(mptlparm) :: unitlabel = "             "
   CHARACTER(LEN=130) :: dash = '------------------------------------------------------------&
        &----------------------------------------------------------------------', &
@@ -509,43 +509,43 @@ CONTAINS
 
   FUNCTION sec(years)
     IMPLICIT NONE
-    REAL(KIND=kdp) :: sec
-    REAL(KIND=kdp), INTENT(IN) :: years
+    DOUBLE PRECISION :: sec
+    DOUBLE PRECISION, INTENT(IN) :: years
     sec = years*365.25_kdp*24.0_kdp*60.0_kdp*60.0_kdp
   END FUNCTION sec
 
   FUNCTION year(secs)
     IMPLICIT NONE
-    REAL(KIND=kdp) :: year
-    REAL(KIND=kdp), INTENT(IN) :: secs
+    DOUBLE PRECISION :: year
+    DOUBLE PRECISION, INTENT(IN) :: secs
     year = secs/(365.25_kdp*24.0_kdp*60.0_kdp*60.0_kdp)
   END FUNCTION year
 
   FUNCTION cmyr(cmsec)
     IMPLICIT NONE
-    REAL(KIND=kdp) :: cmyr
-    REAL(KIND=kdp), INTENT(IN) :: cmsec
+    DOUBLE PRECISION :: cmyr
+    DOUBLE PRECISION, INTENT(IN) :: cmsec
     cmyr = cmsec*365.25_kdp*24.0_kdp*60.0_kdp*60.0_kdp
   END FUNCTION cmyr
 
   FUNCTION akm(cmr)
     IMPLICIT NONE
-    REAL(KIND=kdp) :: akm
-    REAL(KIND=kdp), INTENT(IN) :: cmr
+    DOUBLE PRECISION :: akm
+    DOUBLE PRECISION, INTENT(IN) :: cmr
     akm = cmr*1.0e-5_kdp
   END FUNCTION akm
 
   FUNCTION amtr(cmr)
     IMPLICIT NONE
-    REAL(KIND=kdp) :: amtr
-    REAL(KIND=kdp), INTENT(IN) :: cmr
+    DOUBLE PRECISION :: amtr
+    DOUBLE PRECISION, INTENT(IN) :: cmr
     amtr = cmr*1.0e-2_kdp
   END FUNCTION amtr
 
   FUNCTION atm(dynes)
     IMPLICIT NONE
-    REAL(KIND=kdp) :: atm
-    REAL(KIND=kdp), INTENT(IN) :: dynes
+    DOUBLE PRECISION :: atm
+    DOUBLE PRECISION, INTENT(IN) :: dynes
     atm = dynes/1.013e6_kdp
   END FUNCTION atm
 END MODULE units
@@ -557,30 +557,30 @@ MODULE variables
   SAVE
   ! ... Dependent variables
   INTEGER, DIMENSION(:), ALLOCATABLE :: ind, indoldnr, indoldt
-  REAL(KIND=kdp), DIMENSION(:), ALLOCATABLE :: dens, denw, viss, visw, satnw, wpot, spot, &
+  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: dens, denw, viss, visw, satnw, wpot, spot, &
        swoldt, hspot, hwpot, fs_elev
-  REAL(KIND=kdp), DIMENSION(:), ALLOCATABLE :: tc
-  REAL(KIND=kdp), DIMENSION(:), ALLOCATABLE :: dhn, dpn
-  REAL(KIND=kdp), DIMENSION(:), ALLOCATABLE :: en, enoldt, enoldt2, xm, xmoldt, xmoldt2, &
+  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: tc
+  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: dhn, dpn
+  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: en, enoldt, enoldt2, xm, xmoldt, xmoldt2, &
        h, holdt, holdnr, p, poldt, poldnr
-  REAL(KIND=kdp), DIMENSION(:), ALLOCATABLE :: xsvel, xwvel, ysvel, ywvel, zsvel, zwvel, &
+  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: xsvel, xwvel, ysvel, ywvel, zsvel, zwvel, &
        xsmflx, xwmflx, ysmflx, ywmflx, zsmflx, zwmflx
-  REAL(KIND=kdp) :: xsvelmax, xwvelmax, ysvelmax, ywvelmax, zsvelmax, zwvelmax, &
+  DOUBLE PRECISION :: xsvelmax, xwvelmax, ysvelmax, ywvelmax, zsvelmax, zwvelmax, &
        xsmflxmax, xwmflxmax, ysmflxmax, ywmflxmax, zsmflxmax, zwmflxmax
-  REAL(KIND=kdp), DIMENSION(:), ALLOCATABLE :: hrock
-  REAL(KIND=kdp), DIMENSION(:), ALLOCATABLE :: xsflux, xwflux, ysflux, ywflux, zsflux, zwflux
+  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: hrock
+  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: xsflux, xwflux, ysflux, ywflux, zsflux, zwflux
   ! ... Dimensionless numbers
-  REAL(KIND=kdp), DIMENSION(:), ALLOCATABLE :: pe, nu
+  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: pe, nu
   !...Independent variables
-  REAL(KIND=kdp) :: delt, deltoldt, time
-  REAL(KIND=kdp), DIMENSION(:), ALLOCATABLE :: rsq, xx, yy, zz, zzz, zztop, zls
+  DOUBLE PRECISION :: delt, deltoldt, time
+  DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: rsq, xx, yy, zz, zzz, zztop, zls
   INTEGER, DIMENSION(:), ALLOCATABLE :: ktop
   ! ... Underrelaxation of pressure and enthalpy with seepage
-  REAL(KIND=kdp) :: maxenthic, maxpressic, wrelaxh, wrelaxp
+  DOUBLE PRECISION :: maxenthic, maxpressic, wrelaxh, wrelaxp
   ! ... Cumulative amount variables
-  REAL(KIND=kdp) :: totfi, totfp, tothi, tothp, tfres, thres, tcfsbc, tcfpfbc, tcfsepbc,  &
+  DOUBLE PRECISION :: totfi, totfp, tothi, tothp, tfres, thres, tcfsbc, tcfpfbc, tcfsepbc,  &
        totwfi, totwfp, tchsbc, tchpfbc, tchsepbc, tchhcbc, totwhi, totwhp
-  REAL(KIND=kdp) :: fir0, ehir0, dfs_l2norm
+  DOUBLE PRECISION :: fir0, ehir0, dfs_l2norm
 CONTAINS
   SUBROUTINE alloc_variables(a_status)
     USE mesh

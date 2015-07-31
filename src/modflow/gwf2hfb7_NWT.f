@@ -16,12 +16,13 @@ C     ******************************************************************
 C
 C        SPECIFICATIONS:
 C     ------------------------------------------------------------------
-      USE GLOBAL,      ONLY:NCOL,NROW,NLAY,LAYHDT,CR,CC,BOTM,LBOTM,
-     1                      DELR,DELC,IOUT
+      USE GLOBAL,      ONLY:NCOL,NROW,NLAY,LAYHDT,IOUT
+!!      USE GLOBAL,      ONLY:NCOL,NROW,NLAY,LAYHDT,CR,CC,BOTM,LBOTM,
+!!     1                      DELR,DELC,IOUT
       USE GWFHFBMODULE,ONLY:MXHFB,NHFB,IPRHFB,NHFBNP,NPHFB,IHFBPB,HFB
 C
       INTEGER INHFB, MXACTFB
-      CHARACTER*16 AUX(1)
+!!      CHARACTER*16 AUX(1)
       CHARACTER*200 LINE
 C     ------------------------------------------------------------------
 C
@@ -31,7 +32,7 @@ C
 C2------IDENTIFY PACKAGE.
       WRITE(IOUT,1) INHFB
     1 FORMAT(1X,/1X,'HFB -- HORIZONTAL-FLOW BARRIER',
-     &' PACKAGE, NWT VERSION 1.0.5, 4/05/2012.',/,
+     &' PACKAGE, NWT VERSION 1.0.9, 7/01/2014.',/,
      &'   INPUT READ FROM UNIT ',I4)
 C
 C3------READ AND PRINT NPHFB, MXFB, NHFBNP
@@ -147,8 +148,9 @@ C     ******************************************************************
 C
 C        SPECIFICATIONS:
 C     ------------------------------------------------------------------
-      USE GLOBAL,      ONLY:NCOL,NROW,HNEW,LAYHDT,CR,CC,BOTM,LBOTM,
-     1                      DELR,DELC
+      USE GLOBAL,      ONLY:HNEW,LAYHDT,CR,CC,BOTM,LBOTM,DELR,DELC
+!!      USE GLOBAL,      ONLY:NCOL,NROW,HNEW,LAYHDT,CR,CC,BOTM,LBOTM,
+!!     1                      DELR,DELC
       USE GWFHFBMODULE,ONLY:NHFB,HFB
 C     ------------------------------------------------------------------
 C
@@ -251,7 +253,8 @@ C     ******************************************************************
 C
 C        SPECIFICATIONS:
 C     ------------------------------------------------------------------
-      USE GLOBAL,      ONLY:IOUT,BOTM,LBOTM,DELR,DELC,CR,CC,LAYHDT
+      USE GLOBAL,      ONLY:BOTM,LBOTM,DELR,DELC,CR,CC,LAYHDT
+!!      USE GLOBAL,      ONLY:IOUT,BOTM,LBOTM,DELR,DELC,CR,CC,LAYHDT
       USE GWFHFBMODULE,ONLY:NHFB,HFB
 C     ------------------------------------------------------------------
 C
@@ -490,7 +493,7 @@ C     ------------------------------------------------------------------
       DIMENSION HFB(LSTVL,MXHFB)
       CHARACTER*(*) LABEL
       CHARACTER*200 LINE
-      CHARACTER*10 CTMP1,CTMP2,CTMP3,CTMP4
+      CHARACTER*10 CTMP1,CTMP2 !!,CTMP3,CTMP4
 C     ------------------------------------------------------------------
 C
 C1------The Listing File file unit is the absolute value of IOUTU.  
@@ -599,8 +602,9 @@ C     ******************************************************************
 C
 C        SPECIFICATIONS:
 C     ------------------------------------------------------------------
-      USE GLOBAL,      ONLY:NCOL,NROW,HNEW,LAYHDT,CR,CC,BOTM,LBOTM,
-     1                      DELR,DELC
+      USE GLOBAL,      ONLY:LAYHDT,CR,CC,DELR,DELC
+!!      USE GLOBAL,      ONLY:NCOL,NROW,HNEW,LAYHDT,CR,CC,BOTM,LBOTM,
+!!     1                      DELR,DELC
       USE GWFHFBMODULE,ONLY:NHFB,HFB
 C     ------------------------------------------------------------------
 C

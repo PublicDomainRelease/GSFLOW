@@ -40,7 +40,7 @@ BACKGROUND
      to load directly into an Microsoft Excel spreadsheet.
  
 RUNNING THE SPREADSHEET   
-     1. Using your browser, navigate to the "GSFLOW_1.0\utilities\" folder.
+     1. Using your browser, navigate to the "GSFLOW_1.0/utilities" folder.
         Double click on "gsflowAnalysis.xls". The spreadsheet will appear.
         
      2. Go to (click on) the "data" worksheet. Worksheets are identified by their tabs
@@ -49,7 +49,7 @@ RUNNING THE SPREADSHEET
         
      3. This spreadsheet has been preloaded with the CSV file created by a 16-year 
         simulation of the Sagehen example problem --
-        "GSFLOWv1.1\data\sagehen\output-test\gsflow.csv". Use these data to evaluate
+        "GSFLOWv1.1/data/sagehen/output-test/gsflow.csv". Use these data to evaluate
         the performance of GSFLOW or load a CSV file created by subsequent runs of
         GSFLOW by clicking on the "Load New gsflow.csv File" button on the "data"
         worksheet and select the desired CSV file in the Excel file browser. The
@@ -77,7 +77,7 @@ RUNNING THE SPREADSHEET
      8. You can set the default directory for loading a CSV file in Excel by selecting
         Tools>>Options then General tab, then set the Default File location path. For
         example, you could set the Default File location to:
-        C:\WRDAPP\GSFLOW_1.0\data\sagehen\output if GSFLOW was installed in that directory.
+        /z/home/user/GSFLOW_1.2.0/data/sagehen/output if GSFLOW was installed in that directory.
         
 ET WATER BALANCE
      Click on the "total ET" worksheet tab. This worksheet sums all components of

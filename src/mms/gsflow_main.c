@@ -2,17 +2,12 @@
  * United States Geological Survey
  *
  * PROJECT  : Modular Modeling System (MMS)
- * NAME     : xmms.c
- * AUTHOR   : CADSWES; reworked by Markstrom
- * DATE     : 
- * FUNCTION : xmms - main driver for xmms
- * COMMENT  : Main driver for xmms system.
- * REF      :
- * REVIEW   :
- * PR NRS   :
- * $Id: gsflow_main.c 4450 2012-04-27 17:25:51Z rsregan $
+ * FUNCTION : xmms
+ * COMMENT  : main driver for xmms
  *
- -*/
+ * $Id: gsflow_main.c 7561 2015-08-03 17:19:06Z rsregan $
+ *
+-*/
 
 /**1************************ INCLUDE FILES ****************************/
 #define MAIN
@@ -25,17 +20,10 @@
 #include "mms.h"
 
 
-/**2************************* LOCAL MACROS ****************************/
-
-/**3************************ LOCAL TYPEDEFS ***************************/
-
 /**4***************** DECLARATION LOCAL FUNCTIONS *********************/
 extern int call_modules(char *);
 extern int call_setdims(void);
 
-/**5*********************** LOCAL VARIABLES ***************************/
-
-/**6**************** EXPORTED FUNCTION DEFINITIONS ********************/
 /*--------------------------------------------------------------------*\
   | FUNCTION     : main
   | COMMENT		: Main source for xmms
@@ -60,16 +48,23 @@ int main (int argc, char *argv[]) {
    char	*err;
    static int      num_param_files = 0;
    char   **fname;
-   char pathname[MAXDATALNLEN];
+   char pathname[MAXPATHLEN];
 
-   
+
+    /*
+	**  Maximum buffer size for reading lines from files.
+	**  This used to be set as a C precompiler directive.
+	**  That is still the default, but now users are give.
+	**  the option to set this on the command line, otherwise
+	**  size still comes from the defs.h file.
+	*/
+    max_data_ln_len = MAXDATALNLEN;
+
 	/*
 	**  List of modules that are used by the model. This is
 	**  determined by calls to declmodule
 	*/
 	module_db = ALLOC_list ("Module Data Base", 0, 100);
-
-   //declmodule("PRMS system library", "$Id: gsflow_main.c 4450 2012-04-27 17:25:51Z rsregan $");
 
   /*
   **	parse the command-line arguments
@@ -134,15 +129,10 @@ int main (int argc, char *argv[]) {
 	fname =   control_svar ("param_file");
     num_param_files = control_var_size ("param_file");
 
-/*
-   append_env (MAltEnvFile, MAltContFile);
-*/
-
     if (call_setdims()) {
 	  (void)fprintf(stderr, "\nERROR: Calling function 'call_setdims'\n");
       exit (1);
     }
-    
 
     /*
     **	read dimension info from parameter file
@@ -162,7 +152,6 @@ int main (int argc, char *argv[]) {
         exit (1);
 	}
 
-
 	fname =   control_svar ("param_file");
     num_param_files = control_var_size ("param_file");
 
@@ -177,6 +166,9 @@ int main (int argc, char *argv[]) {
 	fname =   control_svar ("param_file");
     num_param_files = control_var_size ("param_file");
 
+	/*
+	**  Look for, declare and read in mapping parameters before any of the "module" parameters
+	*/
 	for (i = 0; i < num_param_files; i++) {
 		if (stat (fname[i], &stbuf) != -1) {
 		   if (stbuf.st_size) {
@@ -187,7 +179,27 @@ int main (int argc, char *argv[]) {
 		   }
 		}
 	    
-		err = read_params (fname[i], i);
+		err = read_params (fname[i], i, 1);
+		if (err) {
+			(void)fprintf (stderr,"\nWARNING: %s\n", err);
+		}
+	}
+
+	/*
+	**  Read in the parameters declared by the modules.
+	*/
+
+	for (i = 0; i < num_param_files; i++) {
+		if (stat (fname[i], &stbuf) != -1) {
+		   if (stbuf.st_size) {
+		  } else {
+			  (void)fprintf (stderr,buf, "ERROR: Parameter file: %s is empty.",
+						   fname[i]);
+			  exit (1);
+		   }
+		}
+	    
+		err = read_params (fname[i], i, 0);
 		if (err) {
 			(void)fprintf (stderr,"\nWARNING: %s\n", err);
 		}
@@ -210,22 +222,12 @@ int main (int argc, char *argv[]) {
       print_model_info();
 	  (void)sprintf (pathname, "%s.param", MAltContFile);
 	  save_params (pathname);
-/*
-    } else if (esp_mode) {
-      ESP_batch_run ();
-    } else if (rosenbrock_mode) {
-      ROSENBROCK_batch_run ();
-*/
+
     } else {
 
-//      exit(BATCH_run ());
       BATCH_run ();
       ;
     }
 
     exit (0);
 }
-
-
-/**8************************** TEST DRIVER ****************************/
-

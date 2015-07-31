@@ -4,12 +4,12 @@
 !
       SUBROUTINE GWF2NWT1AR(In, Mxiter, Iunitlak, Igrid)
 !
-!------NEWTON SOLVER VERSION NUMBER 1.0.6:  DECEMBER 5, 2012
+!------NEWTON SOLVER VERSION NUMBER 1.0.9:  July 1, 2014
 !      RICHARD G. NISWONGER
-      USE GLOBAL,     ONLY:NCOL,NROW,NLAY,ITRSS,LAYHDT,LAYHDS,LAYCBD,
-     1                     NCNFBD,IBOUND,BUFF,BOTM,NBOTM,DELR,DELC,IOUT,
-     2                     LBOTM,HNEW
-      USE GWFBASMODULE,ONLY:HDRY
+      USE GLOBAL,     ONLY:NCOL,NROW,NLAY,IBOUND,BOTM,IOUT,LBOTM,HNEW
+!!      USE GLOBAL,     ONLY:NCOL,NROW,NLAY,ITRSS,LAYHDT,LAYHDS,LAYCBD,
+!!     1                     NCNFBD,IBOUND,BUFF,BOTM,NBOTM,DELR,DELC,IOUT,
+!!     2                     LBOTM,HNEW
       USE GWFNWTMODULE
       IMPLICIT NONE
 !     ------------------------------------------------------------------
@@ -21,18 +21,21 @@
 !     ------------------------------------------------------------------
 !     ARGUMENTS
 !     ------------------------------------------------------------------
-      INTEGER In, Igrid, Mxiter, L, NRC, Iunitlak
+      INTEGER In, Igrid, Mxiter, Iunitlak
+!!      INTEGER In, Igrid, Mxiter, L, NRC, Iunitlak
 !     ------------------------------------------------------------------
 !     LOCAL VARIABLES
 !     ------------------------------------------------------------------
       INTEGER lloc, LLOCSAVE, istart, istop, i, ic, ir, il, jj
-      CHARACTER(LEN=200) line
-      REAL r, toldum, ftoldum, relaxdum, thetadum, amomentdum
-      REAL akappadum, gammadum, Breducdum, Btoldum, Thickdum,ZERO
-      INTEGER IANAME,KHANI,N,KK,nc,nr,nl,j,k,NCNVRT,NHANI,NWETD
+      CHARACTER(LEN=300) line
+      REAL r, toldum, ftoldum, thetadum, amomentdum
+      REAL akappadum, gammadum, Breducdum, Btoldum, Thickdum
+!!      REAL r, toldum, ftoldum, relaxdum, thetadum, amomentdum
+!!      REAL akappadum, gammadum, Breducdum, Btoldum, Thickdum,ZERO
+!!      INTEGER IANAME,KHANI,N,KK,nc,nr,nl,j,k,NCNVRT,NHANI,NWETD
 ! Memory use variables
       INTEGER lrwrk,liwrk,NODES,MBLACK,NJAF
-      REAL Memuse1,Memuse2
+!!      REAL Memuse1,Memuse2
 !     ------------------------------------------------------------------
 !
 
@@ -48,7 +51,7 @@
 !1------IDENTIFY PACKAGE AND INITIALIZE.
       WRITE (Iout, 9001) In
  9001 FORMAT (1X, /' NWT1 -- Newton Solver, ',
-     +       'VERSION 1.0.6, 12/05/2012', /, 9X, 'INPUT READ FROM UNIT',
+     +    'VERSION 1.0.9, 07/01/2014', /, 9X, 'INPUT READ FROM UNIT',
      +        I3,/)
       i = 1
       Itreal = 0
@@ -369,7 +372,9 @@ C
 !1     SUBROUTINE TEMPFILLUN. SET SCALERS FOR UNCONFINED FLOW
       SUBROUTINE TEMPFILLUN(Ic, Ir, Il)
       USE GLOBAL, ONLY:Ncol, Nrow, Nlay, Cv, Hnew, Cc, Cr, Ibound, Hcof,
-     +    Rhs, Botm, Lbotm,Iout
+     +    Rhs, Botm, Lbotm
+!!      USE GLOBAL, ONLY:Ncol, Nrow, Nlay, Cv, Hnew, Cc, Cr, Ibound, Hcof,
+!!     +    Rhs, Botm, Lbotm,Iout
       USE GWFNWTMODULE, ONLY:Cvm1,Hvp1,Hvm1,Crm1,Hrm1,Hrp1,Ccm1,Hcm1,
      +                       Hcp1,Ccc,Crr,Cvv,H,Closezero,Icell,Hcoff,
      +                       Rhss
@@ -382,7 +387,7 @@ C
 !     -----------------------------------------------------------------
 !     LOCAL VARIABLES
 !     -----------------------------------------------------------------
-      INTEGER itemp
+!!      INTEGER itemp
       DOUBLE PRECISION THICK
 !     -----------------------------------------------------------------
       Cvm1 = 0.0D0
@@ -487,20 +492,25 @@ C
 !     SUBROUTINE TEMPFILLCON. SET SCALERS FOR CONFINED FLOW
       SUBROUTINE TEMPFILLCON(Ic, Ir, Il)
       USE GLOBAL, ONLY:Ncol, Nrow, Nlay, Cv, Hnew, Cc, Cr, Ibound, Hcof,
-     +    Rhs, Botm, Lbotm,Iout
+     +    Rhs
+!!      USE GLOBAL, ONLY:Ncol, Nrow, Nlay, Cv, Hnew, Cc, Cr, Ibound, Hcof,
+!!     +    Rhs, Botm, Lbotm,Iout
       USE GWFNWTMODULE, ONLY:Cvm1,Hvp1,Hvm1,Crm1,Hrm1,Hrp1,Ccm1,Hcm1,
-     +                       Hcp1,Ccc,Crr,Cvv,H,Closezero,Icell,Hcoff,
-     +                       Rhss
+     +                       Hcp1,Ccc,Crr,Cvv,H,Closezero,Hcoff,Rhss
+!!      USE GWFNWTMODULE, ONLY:Cvm1,Hvp1,Hvm1,Crm1,Hrm1,Hrp1,Ccm1,Hcm1,
+!!     +                       Hcp1,Ccc,Crr,Cvv,H,Closezero,Icell,Hcoff,
+!!     +                       Rhss
       IMPLICIT NONE
 !     ------------------------------------------------------------------
 !     ARGUMENTS
 !     ------------------------------------------------------------------
-      INTEGER Ic, Ir, Il, ij
+      INTEGER Ic, Ir, Il
+!!      INTEGER Ic, Ir, Il, ij
 !     -----------------------------------------------------------------
 !     LOCAL VARIABLES
 !     -----------------------------------------------------------------
-      INTEGER itemp
-      DOUBLE PRECISION THICK
+!!      INTEGER itemp
+!!      DOUBLE PRECISION THICK
 !     -----------------------------------------------------------------
       Cvm1 = 0.0D0
       Hvp1 = 0.0D0
@@ -575,8 +585,9 @@ C
 !     -----------------------------------------------------------------
 !     LOCAL VARIABLES
 !     -----------------------------------------------------------------
-      DOUBLE PRECISION factor, x, s, v, cof1, cof2, EPS, ACOF, Y
-      DOUBLE PRECISION EPSQD, z    
+      DOUBLE PRECISION factor, x, EPS, ACOF, Y
+!!      DOUBLE PRECISION factor, x, s, v, cof1, cof2, EPS, ACOF, Y
+!!      DOUBLE PRECISION EPSQD, z  
       INTEGER il
 !     -----------------------------------------------------------------
       DHORIZ = 0.0D0
@@ -616,7 +627,7 @@ C-------STRAIGHT LINE WITH PARABOLIC SMOOTHING
 !     ARGUMENTS
 !     -----------------------------------------------------------------
       DOUBLE PRECISION Hh,Ttop,Bbot
-      INTEGER J, I, K, iltyp
+!!      INTEGER J, I, K, iltyp
 !     -----------------------------------------------------------------
 !     LOCAL VARIABLES
 !     -----------------------------------------------------------------
@@ -672,10 +683,12 @@ C-------STRAIGHT LINE WITH PARABOLIC SMOOTHING
         ENDIF
         isum = 0
         IF ( Ibound(ic, ir, il).NE.0 ) THEN
-          IF ( IL.GT.1 ) isum = isum + abs(Ibound(ic, ir, il-1))
+          IF ( NCOL+NROW.LT.7 ) THEN
+            IF ( IL.GT.1 ) isum = isum + abs(Ibound(ic, ir, il-1))
+            IF ( IL.LT.NLAY ) isum = isum + abs(Ibound(ic, ir, il+1))
+          END IF
           IF ( IR.GT.1 ) isum = isum + abs(Ibound(ic, ir-1, il))
           IF ( IC.GT.1 ) isum = isum + abs(Ibound(ic-1, ir, il))
-          IF ( IL.LT.NLAY ) isum = isum + abs(Ibound(ic, ir, il+1))
           IF ( IR.LT.NROW ) isum = isum + abs(Ibound(ic, ir+1, il))
           IF ( IC.LT.NCOL ) isum = isum + abs(Ibound(ic+1, ir, il))
           IF ( isum.GT.0 ) THEN
@@ -705,7 +718,8 @@ C-------STRAIGHT LINE WITH PARABOLIC SMOOTHING
 ! Fill CRS pointers for MODFLOW storage scheme by relating Row, Col, and Lay to
 ! Jacobian order
       USE GWFNWTMODULE
-      USE GLOBAL, ONLY: IOUT,NCOL,NROW,NLAY,IBOUND
+      USE GLOBAL, ONLY: NCOL,NROW,NLAY,IBOUND
+!!      USE GLOBAL, ONLY: IOUT,NCOL,NROW,NLAY,IBOUND
       IMPLICIT NONE
 !     ------------------------------------------------------------------
 !     SPECIFICATIONS:
@@ -713,8 +727,9 @@ C-------STRAIGHT LINE WITH PARABOLIC SMOOTHING
 !     -----------------------------------------------------------------
 !     LOCAL VARIABLES
 !     -----------------------------------------------------------------
-      INTEGER ic, ir, il, nrncnl, ij, jj
-      INTEGER ILM, ILP, IRM, IRP, ICM, ICP, itemp
+      INTEGER ic, ir, il, ij, jj
+!!      INTEGER ic, ir, il, nrncnl, ij, jj
+!!      INTEGER ILM, ILP, IRM, IRP, ICM, ICP, itemp
 !     -----------------------------------------------------------------
 !
 !ij is the number of active cells (row in sol. vector)
@@ -784,7 +799,8 @@ C-------STRAIGHT LINE WITH PARABOLIC SMOOTHING
 !     -----------------------------------------------------------------
       SUBROUTINE COUNTACTIVE(jj)
       USE GWFNWTMODULE
-      USE GLOBAL, ONLY: IOUT,NCOL,NROW,NLAY,IBOUND
+      USE GLOBAL, ONLY: NCOL,NROW,NLAY,IBOUND
+!!      USE GLOBAL, ONLY: IOUT,NCOL,NROW,NLAY,IBOUND
       IMPLICIT NONE
 !     ------------------------------------------------------------------
 !     SPECIFICATIONS:
@@ -792,8 +808,9 @@ C-------STRAIGHT LINE WITH PARABOLIC SMOOTHING
 !     -----------------------------------------------------------------
 !     LOCAL VARIABLES
 !     -----------------------------------------------------------------
-      INTEGER ic, ir, il, nrncnl, ij, jj
-      INTEGER ILM, ILP, IRM, IRP, ICM, ICP, itemp
+      INTEGER ic, ir, il, ij, jj
+!!      INTEGER ic, ir, il, nrncnl, ij, jj
+!!      INTEGER ILM, ILP, IRM, IRP, ICM, ICP, itemp
 !     -----------------------------------------------------------------
 !
       jj = 0
@@ -842,9 +859,10 @@ C-------STRAIGHT LINE WITH PARABOLIC SMOOTHING
      +                      Iunitchd, Igrid)
 ! Builds and Solves Jacobian
 ! Calls various unstructured linear solvers to solve Jacobian
-      USE GLOBAL, ONLY:Ncol, Nrow, Nlay, Ibound, Hcof, Rhs, Iout,botm,
-     +                 LBOTM, HOLD, HNEW, DELR, DELC, ISSFLG
-      USE GWFBASMODULE, ONLY:TOTIM, HNOFLO
+      USE GLOBAL, ONLY:Iout,ISSFLG
+!!      USE GLOBAL, ONLY:Ncol, Nrow, Nlay, Ibound, Hcof, Rhs, Iout,botm,
+!!     +                 LBOTM, HOLD, HNEW, DELR, DELC, ISSFLG
+!!      USE GWFBASMODULE, ONLY:TOTIM, HNOFLO
       USE GWFNWTMODULE
       USE XMDMODULE
       USE GMRESMODULE
@@ -866,18 +884,24 @@ C-------STRAIGHT LINE WITH PARABOLIC SMOOTHING
 !     -----------------------------------------------------------------
 !     LOCAL VARIABLES
 !     -----------------------------------------------------------------
-      DOUBLE PRECISION h2
-      DOUBLE PRECISION FHEADTEMP,R_norm_gmres
-      DOUBLE PRECISION r_norm, fheadsave2, STPNUM
-      INTEGER ic, ir, il, LICNVG,ITER, ippn
-      INTEGER ij, jj, ichld, irhld, ilhld, IUNSTR, itertot
-      INTEGER n_iter, z, n, icfld, irfld, ilfld, ITP, ITER1U
+      DOUBLE PRECISION R_norm_gmres, r_norm, fheadsave2
+      INTEGER ic, ir, il, ITER, ippn
+      INTEGER ij, jj, ichld, irhld, ilhld, itertot
+      INTEGER n_iter, n, icfld, irfld, ilfld
+!!      DOUBLE PRECISION h2
+!!      DOUBLE PRECISION FHEADTEMP,R_norm_gmres
+!!      DOUBLE PRECISION r_norm, fheadsave2, STPNUM
+!!      INTEGER ic, ir, il, LICNVG,ITER, ippn
+!!      INTEGER ij, jj, ichld, irhld, ilhld, IUNSTR, itertot
+!!      INTEGER n_iter, z, n, icfld, irfld, ilfld, ITP, ITER1U
 !      CHARACTER ierr
-      SAVE FHEADTEMP,itertot
-      DOUBLE PRECISION TINY,SCALE
+      SAVE itertot
+      DOUBLE PRECISION TINY
+!!      SAVE FHEADTEMP,itertot
+!!      DOUBLE PRECISION TINY,SCALE
 
-      INTEGER matrix,ncyc_done,ierr_samg,control,iout_samg,i,j,new
-      DOUBLE PRECISION res_out
+!!      INTEGER matrix,ncyc_done,ierr_samg,control,iout_samg,i,j,new
+!!      DOUBLE PRECISION res_out
 !     -----------------------------------------------------------------
 !
 !
@@ -1141,7 +1165,9 @@ C--Update heads.
 !     Set the head in dewatered cells to Hdry.
       SUBROUTINE GWF2NWT1BD()
       USE GLOBAL, ONLY:Hnew, Nrow, Ncol, Nlay, BOTM, LBOTM, IBOUND,
-     +                 LAYHDT, IOUT  
+     +                 LAYHDT
+!!      USE GLOBAL, ONLY:Hnew, Nrow, Ncol, Nlay, BOTM, LBOTM, IBOUND,
+!!     +                 LAYHDT !, IOUT  
       USE GWFBASMODULE,ONLY:HDRY
       USE GWFUPWMODULE,ONLY:IPHDRY
       IMPLICIT NONE
@@ -1156,6 +1182,7 @@ C--Update heads.
 !        write(iout,222)( Hnew(ic, ir, 1), ic = 1, Ncol)
 !      end do
 ! 222  format(113e20.10)
+      CALL Head_save()   !From Scott B. 9/7/2013
       DO il = 1, Nlay
         IF ( LAYHDT(il).GT.0 ) THEN
           DO ir = 1, Nrow
@@ -1179,7 +1206,8 @@ C--Update heads.
 !     -----------------------------------------------------------------
 !
       SUBROUTINE Back_track(ichld,irhld,ilhld,ISS)
-      USE GLOBAL, ONLY:Ibound, Hnew, Lbotm, Botm, Iout, NLAY
+      USE GLOBAL, ONLY:Ibound, Hnew, Lbotm, Botm, NLAY
+!!      USE GLOBAL, ONLY:Ibound, Hnew, Lbotm, Botm, Iout, NLAY
       USE GWFUPWMODULE, ONLY:LAYTYPUPW
       USE GWFNWTMODULE
       IMPLICIT NONE
@@ -1262,7 +1290,8 @@ C--Update heads.
 !     -----------------------------------------------------------------
       SUBROUTINE GWF2NWT1UPH2(ichld,irhld,ilhld,ISS,Kkiter)
 !  Update heads and apply relaxation (delta-bar-delta)
-      USE GLOBAL, ONLY:Ibound, Hnew, Lbotm, Botm, Iout, NCOL,NROW,NLAY
+      USE GLOBAL, ONLY:Ibound, Hnew, Lbotm, Botm, NLAY
+!!      USE GLOBAL, ONLY:Ibound, Hnew, Lbotm, Botm, Iout, NCOL,NROW,NLAY
       USE GWFUPWMODULE, ONLY:LAYTYPUPW
       USE GWFNWTMODULE
       IMPLICIT NONE
@@ -1274,11 +1303,13 @@ C--Update heads.
 !     -----------------------------------------------------------------
 !     ARGUMENTS
 !     -----------------------------------------------------------------
-      INTEGER Kkiter,Icnvg,ichld,irhld,ilhld,ISS
+      INTEGER Kkiter,ichld,irhld,ilhld,ISS
+!!      INTEGER Kkiter,Icnvg,ichld,irhld,ilhld,ISS
 !     -----------------------------------------------------------------
 !     LOCAL VARIABLES
 !     -----------------------------------------------------------------
-      DOUBLE PRECISION s, wstar, ww, change, hsave, sum
+      DOUBLE PRECISION ww, hsave, sum
+!!      DOUBLE PRECISION s, wstar, ww, change, hsave, sum
       INTEGER ic, ir, il, jj, ibotlay, i
 !     -----------------------------------------------------------------
 !
@@ -1349,7 +1380,7 @@ C--Update heads.
           ichld = ic
           irhld = ir
           ilhld = il
-        ENDIF 
+        ENDIF
       ENDDO
       END SUBROUTINE GWF2NWT1UPH2
 !
@@ -1357,8 +1388,9 @@ C--Update heads.
 !     -----------------------------------------------------------------
 !     Save previous iteration heads.
       SUBROUTINE Head_save()
-      USE GLOBAL, ONLY:Hnew, Nrow, Ncol, Nlay, Iout, BOTM
-      USE GWFBASMODULE,ONLY:HDRY
+      USE GLOBAL, ONLY:Hnew, Nrow, Ncol, Nlay
+!!      USE GLOBAL, ONLY:Hnew, Nrow, Ncol, Nlay, Iout, BOTM
+!!      USE GWFBASMODULE,ONLY:HDRY
       USE GWFNWTMODULE
       IMPLICIT NONE
 !     ------------------------------------------------------------------
@@ -1381,7 +1413,7 @@ C--Update heads.
 !     Return value of groundwater flow equation
       DOUBLE PRECISION FUNCTION GW_func(Ic, Ir, Il)
       USE GWFNWTMODULE
-      USE GLOBAL,      ONLY:iout
+!!      USE GLOBAL,      ONLY:iout
       USE GWFBASMODULE, ONLY:HNOFLO
       IMPLICIT NONE
 !     ------------------------------------------------------------------
@@ -1389,7 +1421,8 @@ C--Update heads.
 !     -----------------------------------------------------------------
 !     ARGUMENTS
 !     -----------------------------------------------------------------
-      INTEGER Ic, Ir, Il, Iunitlak
+      INTEGER Ic, Ir, Il
+!!      INTEGER Ic, Ir, Il, Iunitlak
 !     -----------------------------------------------------------------
 !     LOCAL VARIABLES
 !     -----------------------------------------------------------------
@@ -1401,7 +1434,7 @@ C--Update heads.
       term2 = (-Cvm1-Ccm1-Crm1-Crr-Ccc-Cvv+Hcoff)*H
       term3 = Crr*Hcp1 + Ccc*Hrp1 + Cvv*Hvp1 - Rhss
       GW_func = term1 + term2 + term3
-!      if(ic==271)then
+!      if(ic==166.and.ir==159.and.il==1)then
 !      write(iout,222)ic,ir,il,cvm1*(Hvm1-h),ccm1*(hrm1-h),crm1*(hcm1-h),
 !     +cvv*(hvp1-h),ccc*(hrp1-h),crr*(hcp1-h),rhss,gw_func
 !      end if
@@ -1423,8 +1456,9 @@ C--Update heads.
       DOUBLE PRECISION FUNCTION RMS_func(icfld,irfld,ilfld)
       USE GWFNWTMODULE, ONLY: Fflux,Numactive,Diag
       USE GWFUPWMODULE, ONLY: Laytypupw
-      USE GLOBAL,      ONLY:Iout,Hnew,Ibound
-      USE GWFBASMODULE, ONLY:HNOFLO
+      USE GLOBAL,      ONLY:Ibound
+!!      USE GLOBAL,      ONLY:Iout,Hnew,Ibound
+!!      USE GWFBASMODULE, ONLY:HNOFLO
       IMPLICIT NONE
 !     ------------------------------------------------------------------
 !     SPECIFICATIONS:
@@ -1437,7 +1471,8 @@ C--Update heads.
 !     LOCAL VARIABLES
 !     -----------------------------------------------------------------
       DOUBLE PRECISION rms, ferr
-      INTEGER ichld, irhld, ilhld, icfld, irfld, ilfld
+      INTEGER icfld, irfld, ilfld
+!!      INTEGER ichld, irhld, ilhld, icfld, irfld, ilfld
       INTEGER jj, ic, ir, il
 !     -----------------------------------------------------------------   
       rms = 0.0D0
@@ -1472,8 +1507,9 @@ C--Update heads.
       SUBROUTINE Dcon(kkiter)
       USE GWFNWTMODULE
       USE GWFUPWMODULE, ONLY:LAYTYPUPW
-      USE GLOBAL,      ONLY:Iout,HNEW,BOTM,LBOTM,NLAY,CC,CR,CV,NCOL,
-     +                      NROW
+      USE GLOBAL,      ONLY:HNEW,BOTM,LBOTM,NLAY,CC,CR,CV,NCOL,NROW
+!!      USE GLOBAL,      ONLY:Iout,HNEW,BOTM,LBOTM,NLAY,CC,CR,CV,NCOL,
+!!     +                      NROW
       IMPLICIT NONE
 !     ------------------------------------------------------------------
 !     SPECIFICATIONS:
@@ -1534,8 +1570,9 @@ C--Update heads.
       DOUBLE PRECISION FUNCTION Sum_sat(sum,ic,ir,il)
       USE GWFNWTMODULE, ONLY:Icell
       USE GWFUPWMODULE, ONLY:Sn
-      USE GLOBAL,       ONLY:Hnew,Ibound,Botm,Lbotm,Ncol,Nrow,Nlay
-      USE GWFBASMODULE, ONLY:HNOFLO
+      USE GLOBAL,       ONLY:Ncol,Nrow,Nlay
+!!      USE GLOBAL,       ONLY:Hnew,Ibound,Botm,Lbotm,Ncol,Nrow,Nlay
+!!      USE GWFBASMODULE, ONLY:HNOFLO
       IMPLICIT NONE
 !     -----------------------------------------------------------------
 !     ARGUMENTS
@@ -1558,8 +1595,9 @@ C--Update heads.
       END FUNCTION Sum_sat
 !
       SUBROUTINE Jacobian(kkiter,kper,kstp)
-      USE GLOBAL, ONLY:Ncol, Nrow, Nlay, Ibound, Iout, Hnew, Botm,
-     +                 Lbotm, CR, CC, CV
+      USE GLOBAL, ONLY:Ibound, Hnew, Botm
+!!      USE GLOBAL, ONLY:Ncol, Nrow, Nlay, Ibound, Iout, Hnew, Botm,
+!!     +                 Lbotm, CR, CC, CV
       USE GWFNWTMODULE
       USE GWFUPWMODULE, ONLY: LAYTYPUPW
       IMPLICIT NONE
@@ -1572,11 +1610,13 @@ C--Update heads.
 !     -----------------------------------------------------------------
 !     LOCAL VARIABLES
 !     -----------------------------------------------------------------
-      DOUBLE PRECISION dum, ferr, Adiag, DD, tolf2
-      DOUBLE PRECISION zero, ttop, bbot, Dv, Dh, sum, tolf, botcheck
-      DOUBLE PRECISION term1, term2, term3, term4, term5, term6, coef
-      INTEGER ic, ir, il, icc, irr, ill
-      INTEGER ij, iltyp, kstp, I, I1, I2
+      DOUBLE PRECISION dum, ferr, Adiag, DD, zero, sum, tolf, botcheck
+!!      DOUBLE PRECISION dum, ferr, Adiag, DD, tolf2
+!!      DOUBLE PRECISION zero, ttop, bbot, Dv, Dh, sum, tolf, botcheck
+!!      DOUBLE PRECISION term1, term2, term3, term4, term5, term6, coef
+      INTEGER ic, ir, il, icc, irr, ill, ij, iltyp, kstp, I
+!!      INTEGER ic, ir, il, icc, irr, ill
+!!      INTEGER ij, iltyp, kstp, I, I1, I2
 !     -----------------------------------------------------------------
       zero = 0.0D0
 ! Set conductance derivatives.
@@ -1628,11 +1668,12 @@ C--Update heads.
      +                         (HNEW(icc,irr,ill)-HNEW(ic,ir,il))
             END DO
           END IF
-          A(IA(ij)) = A(IA(ij))-Cvm1-Ccm1-Crm1-Cvv-Ccc-Crr+Hcoff
+          I = IA(ij)
+          A(I) = A(I)-Cvm1-Ccm1-Crm1-Cvv-Ccc-Crr+Hcoff
 ! Calculate the right hand side
           ferr = -GW_func(ic, ir, il)
           BB(ij) = ferr
-          BB(ij) = BB(ij) + A(IA(ij))*HNEW(ic,ir,il)
+          BB(ij) = BB(ij) + A(I)*HNEW(ic,ir,il)
           sum  = 0.0D0
           DO I = IA(ij)+1,IA(ij+1)-1
             ill = Diag(JA(I), 1)
@@ -1678,18 +1719,16 @@ C--Update heads.
 !        I1 = IA(ij)
 !        I2 = IA(ij+1)-1
 !        do i=i1,i2
-!!        if ( kper.gt.28)then
-!!        if(ic==49.and.ir==236.and.il==1)then
- !       WRITE(IOUT,66)ij,BB(ij),HNEW(ic,ir,il),BOTM(ic,ir,il-1),
- !    +                BOTM(ic,ir,il),HCOFF,RHSS,(A(I),I=I1,I2)
+!        if ( kstp.eq.2)then
+!        if(ic==166.and.ir==159.and.il==1)then
+!        WRITE(IOUT,66)ij,BB(ij),HNEW(ic,ir,il),BOTM(ic,ir,il-1),
+!     +                BOTM(ic,ir,il),HCOFF,RHSS,(A(I),I=I1,I2)
 !       write(iout,*)IA(ij),i,A(I),BB(ij)
-!!        end if
+!        end if
 !!        end if      
 ! 66      FORMAT(I9,1X,3G15.6,2X,11G15.6)
- !      end do
+!       end do
       END DO
       RETURN
       END SUBROUTINE Jacobian
 !
-      
-

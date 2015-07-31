@@ -1,4 +1,5 @@
       MODULE GWFNWTMODULE
+      USE machine_constants, ONLY: kdp
       IMPLICIT NONE                                                     
       DOUBLE PRECISION, PARAMETER :: HEPS = 1.0E-7                      
       DOUBLE PRECISION, PARAMETER :: CLOSEZERO = 1.0E-15

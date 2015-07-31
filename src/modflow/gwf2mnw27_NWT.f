@@ -29,7 +29,7 @@
 C     ******************************************************************
 C     ALLOCATE ARRAY STORAGE FOR MNW2 PACKAGE.
 !rgn------REVISION NUMBER CHANGED TO BE CONSISTENT WITH NWT RELEASE
-!rgn------NEW VERSION NUMBER 1.0.5:  April 5, 2012
+!rgn------NEW VERSION NUMBER 1.0.10, 9/01/2015
 C     ******************************************************************
 C
 C     SPECIFICATIONS:
@@ -50,8 +50,8 @@ C1------grids to be defined.
 C
 C2------IDENTIFY PACKAGE AND INITIALIZE NMNW2.
       WRITE(IOUT,1)IN
-    1 format(/,1x,'MNW2 -- MULTI-NODE WELL 2 PACKAGE, VERSION 1.0.7,',
-     +' 12/20/2012.',/,4X,'INPUT READ FROM UNIT ',i3)
+    1 format(/,1x,'MNW2 -- MULTI-NODE WELL 2 PACKAGE, VERSION 1.0.8,',
+     +' 09/01/2013.',/,4X,'INPUT READ FROM UNIT ',i3)
       NMNW2=0
       ntotnod=0
 c-lfk-Dec 2012
@@ -167,7 +167,8 @@ C     ------------------------------------------------------------------
       USE DE4MODULE,ONLY:HCLOSEDE4
       USE PCGMODULE,ONLY:HCLOSEPCG
       USE GWFNWTMODULE,ONLY:Tol
-!      USE GMGMODULE,ONLY:HCLOSEGMG
+      USE GMGMODULE,ONLY:HCLOSEGMG
+      USE GLOBAL,ONLY:IUNIT
 !      USE PCGN,ONLY:HCLOSEPCGN
 C     ------------------------------------------------------------------
       INTEGER Qlimit,QCUT,firstnode,lastnode,
@@ -212,9 +213,10 @@ C-------SET SMALL DEPENDING ON CLOSURE CRITERIA OF THE SOLVER
       IF ( Iude4.NE.0 ) SMALL = HCLOSEDE4
 !     IF ( Iusor.NE.0 ) SMALL = HCLOSESOR
       IF ( Iupcg.NE.0 ) SMALL = HCLOSEPCG
-      IF ( Iulmg.NE.0 ) SMALL = 0.0D0  !LMG SETS HCLOSE TO ZERO
+!      IF ( Iulmg.NE.0 ) SMALL = 0.0D0  !LMG SETS HCLOSE TO ZERO
       IF ( Iunwt.NE.0 ) SMALL = TOL
-!      IF ( Iugmg.NE.0 ) SMALL = HCLOSEGMG
+      Iugmg = IUNIT(42)
+      IF ( Iugmg.NE.0 ) SMALL = HCLOSEGMG
 !      IF ( Iupcgn.NE.0 ) SMALL = HCLOSEPCGN
 c     initialize
       WELLID=' '
@@ -1193,19 +1195,22 @@ c     LOSSTYPE=THIEM, read Ztop,Zbotm,IR,IC,{Rw}
 c     LOSSTYPE=SKIN, read Ztop,Zbotm,IR,IC,{Rw Rskin Kskin}
               CASE (2)
             write(iout,'(100A)') ' Interval      Ztop       Zbotm    ',
-     &'  Row  Col      Rw     Rskin    ',
-     &' Kskin '
+     &'  Row  Col      Rw       Rskin    ',
+c-lfk     &' Kskin '
+     &'  Kskin '
 
 c     LOSSTYPE=GENERAL, read Ztop,Zbotm,IR,IC,{Rw B C P}
               CASE (3)
             write(iout,'(100A)') ' Interval      Ztop       Zbotm    ',
-     &'  Row  Col      Rw     B         C         P  '
+c-lfk     &'  Row  Col      Rw     B         C         P  '
+     &'  Row  Col      Rw        B          C          P  '
 
 c     LOSSTYPE=SPECIFYcwc, read Ztop,Zbotm,IR,IC,{CWC}
               CASE (4)
 C-LFK
             write(iout,'(100A)') ' Interval      Ztop       Zbotm    ',
-     &'  Row  Col   spec.CWC   '
+c-lfk     &'  Row  Col   spec.CWC   '
+     &'  Row  Col     spec.CWC   '
             END SELECT
 c
 c     get first interval in this well
@@ -1221,21 +1226,25 @@ c     LOSSTYPE=NONE, write Ztop,Zbotm,IR,IC only
 c     LOSSTYPE=THIEM, write Ztop,Zbotm,IR,IC,{Rw}
               CASE (1)
             do IINT=INTNUM,(INTNUM+NINTVL-1)
-            write(iout,'(1x,I4,6x,1P2G12.5,1x,I4,1x,I4,2x,1P1G10.4)')
+c-lfk  (Feb. 2013) 
+c           write(iout,'(1x,I4,6x,1P2G12.5,1x,I4,1x,I4,2x,1P1G10.4)')
+            write(iout,'(1x,I4,6x,1P2G12.5,1x,I4,1x,I4,2x,1P1G11.4)')
      &IINT-intnum+1,(MNWINT(j,iint),j=1,2),(INT(MNWINT(j,iint)),j=3,4),
      &(MNWINT(5,iint))
             end do
 c     LOSSTYPE=SKIN, write Ztop,Zbotm,IR,IC,{Rw Rskin Kskin}
               CASE (2)
             do IINT=INTNUM,(INTNUM+NINTVL-1)
-            write(iout,'(1x,I4,6x,1P2G12.5,1x,I4,1x,I4,2x,1P3G10.4)')
+c-lfk            write(iout,'(1x,I4,6x,1P2G12.5,1x,I4,1x,I4,2x,1P3G10.4)')
+            write(iout,'(1x,I4,6x,1P2G12.5,1x,I4,1x,I4,2x,1P3G11.4)')
      &IINT-intnum+1,(MNWINT(j,iint),j=1,2),(INT(MNWINT(j,iint)),j=3,4),
      &(MNWINT(j,iint),j=5,7)
             end do
 c     LOSSTYPE=GENERAL, write Ztop,Zbotm,IR,IC,{Rw B C P}
               CASE (3)
             do IINT=INTNUM,(INTNUM+NINTVL-1)
-            write(iout,'(1x,I4,6x,1P2G12.5,1x,I4,1x,I4,2x,1P4G10.4)')
+C-lfk            write(iout,'(1x,I4,6x,1P2G12.5,1x,I4,1x,I4,2x,1P4G10.4)')
+            write(iout,'(1x,I4,6x,1P2G12.5,1x,I4,1x,I4,2x,1P4G11.4)')
      &IINT-intnum+1,(MNWINT(j,iint),j=1,2),(INT(MNWINT(j,iint)),j=3,4),
      &(MNWINT(5,iint)),(MNWINT(j,iint),j=8,10)
             end do
@@ -1243,7 +1252,7 @@ c     LOSSTYPE=SPECIFYcwc, write Ztop,Zbotm,IR,IC,{CWC}
               CASE (4)
             do IINT=INTNUM,(INTNUM+NINTVL-1)
 c-lfk            write(iout,'(1x,I4,6x,1P2G12.5,1x,I4,1x,I4,2x,1P1G10.4)')
-            write(iout,'(1x,I4,6x,1P2G12.5,1x,I4,1x,I4,4x,1P1G10.4)')
+            write(iout,'(1x,I4,6x,1P2G12.5,1x,I4,1x,I4,4x,1P1G11.4)')
      &IINT-intnum+1,(MNWINT(j,iint),j=1,2),(INT(MNWINT(j,iint)),j=3,4),
      &(MNWINT(11,iint))
             end do
@@ -1269,7 +1278,7 @@ c     for MNWs defined by intervals
          write(iout,'(100A)') ' Node  Lay  Row  Col '
          do INODE=firstnode,lastnode
           nod=INODE-firstnode+1
-c  if more than one interval made up this node, write composite 
+c  if more than one interval made up this node, write 'composite' 
           if(MNWNOD(12,INODE).ne.MNWNOD(13,INODE)) then
 C-LFK           write(iout,'(1x,I4,1x,I4,1x,I4,1x,I4,2x,9A)')
            write(iout,'(1x,I4,1x,I4,1x,I4,1x,I4,2x,10A)')
@@ -1293,19 +1302,25 @@ c     LOSSTYPE=NONE, read IL,IR,IC only
       write(iout,'(100A)') ' Node  Lay  Row  Col'
 c     LOSSTYPE=THIEM, read IL,IR,IC,{Rw}
               CASE (1)
-      write(iout,'(100A)') ' Node  Lay  Row  Col      Rw     '
+c-lfk      write(iout,'(100A)') ' Node  Lay  Row  Col      Rw     '
+      write(iout,'(100A)') ' Node  Lay  Row  Col       Rw    '
 c     LOSSTYPE=SKIN, read IL,IR,IC,{Rw Rskin Kskin}
               CASE (2)
-      write(iout,'(100A)') ' Node  Lay  Row  Col      Rw     Rskin    ',
-     &' Kskin'
+c-lfk      write(iout,'(100A)') ' Node  Lay  Row  Col      Rw     Rskin    ',
+c-lfk     &' Kskin'
+      write(iout,'(100A)') ' Node  Lay  Row  Col       Rw      Rskin  ',
+     &'    Kskin'
 c     LOSSTYPE=GENERAL, read IL,IR,IC,{Rw B C P}
               CASE (3)
-      write(iout,'(100A)') ' Node  Lay  Row  Col      Rw     B
-     &         C          P  '
+c-lfk      write(iout,'(100A)') ' Node  Lay  Row  Col      Rw     B
+c-lfk     &         C          P  '
+      write(iout,'(100A)') ' Node  Lay  Row  Col      Rw        B
+     &          C           P  '
 c     LOSSTYPE=SPECIFYcwc, read IL,IR,IC,{CWC}
               CASE (4)
 C-LFK
-      write(iout,'(100A)') ' Node  Lay  Row  Col  spec.CWC'
+c-lfk      write(iout,'(100A)') ' Node  Lay  Row  Col  spec.CWC'
+      write(iout,'(100A)') ' Node  Lay  Row  Col   spec.CWC'
             END SELECT
 c
 c     write data depending on LOSSTYPE
@@ -1321,21 +1336,24 @@ c     LOSSTYPE=THIEM, write IL,IR,IC,{Rw}
               CASE (1)
          do INODE=firstnode,lastnode
           nod=INODE-firstnode+1
-          write(iout,'(1x,I4,1x,I4,1x,I4,1x,I4,2x,1P1G10.4)')
+c-lfk          write(iout,'(1x,I4,1x,I4,1x,I4,1x,I4,2x,1P1G10.4)')
+          write(iout,'(1x,I4,1x,I4,1x,I4,1x,I4,2x,1P1G11.4)')
      &nod,(INT(MNWNOD(i,INODE)),i=1,3),(MNWNOD(5,INODE))       
          end do
 c     LOSSTYPE=SKIN, write IL,IR,IC,{Rw Rskin Kskin}
               CASE (2)
          do INODE=firstnode,lastnode
           nod=INODE-firstnode+1
-          write(iout,'(1x,I4,1x,I4,1x,I4,1x,I4,2x,1P3G10.4)')
+c-lfk          write(iout,'(1x,I4,1x,I4,1x,I4,1x,I4,2x,1P3G10.4)')
+          write(iout,'(1x,I4,1x,I4,1x,I4,1x,I4,2x,1P3G11.4)')
      &nod,(INT(MNWNOD(i,INODE)),i=1,3),(MNWNOD(j,INODE),j=5,7)       
          end do
 c     LOSSTYPE=GENERAL, write IL,IR,IC,{Rw B C P}
               CASE (3)
          do INODE=firstnode,lastnode
           nod=INODE-firstnode+1
-          write(iout,'(1x,I4,1x,I4,1x,I4,1x,I4,2x,1P4G10.4)')
+c-lfk 2/13          write(iout,'(1x,I4,1x,I4,1x,I4,1x,I4,2x,1P4G10.4)')
+          write(iout,'(1x,I4,1x,I4,1x,I4,1x,I4,2x,1P4G11.4)')
      &nod,(INT(MNWNOD(i,INODE)),i=1,3),(MNWNOD(5,INODE)),
      &(MNWNOD(j,INODE),j=8,10)       
          end do
@@ -1343,7 +1361,8 @@ c     LOSSTYPE=SPECIFYcwc, write IL,IR,IC,{CWC}
               CASE (4)
          do INODE=firstnode,lastnode
           nod=INODE-firstnode+1
-          write(iout,'(1x,I4,1x,I4,1x,I4,1x,I4,2x,1P1G10.4)')
+c-lfk          write(iout,'(1x,I4,1x,I4,1x,I4,1x,I4,2x,1P1G10.4)')
+          write(iout,'(1x,I4,1x,I4,1x,I4,1x,I4,2x,1P1G11.4)')
      &nod,(INT(MNWNOD(i,INODE)),i=1,3),(MNWNOD(11,INODE))       
          end do
             END SELECT
@@ -1353,14 +1372,17 @@ c     write header depending on LOSSTYPE
             SELECT CASE (INT(MNW2(3,MNWID)))
 c     LOSSTYPE=NONE, read IL,IR,IC only
               CASE (0)
-      write(iout,'(100A)') ' Node  Lay  Row  Col        PP'
+c-lfk      write(iout,'(100A)') ' Node  Lay  Row  Col        PP'
+      write(iout,'(100A)') ' Node  Lay  Row  Col    PP'
 c     LOSSTYPE=THIEM, read IL,IR,IC,{Rw}
               CASE (1)
       write(iout,'(100A)') ' Node  Lay  Row  Col      Rw        PP'
 c     LOSSTYPE=SKIN, read IL,IR,IC,{Rw Rskin Kskin}
               CASE (2)
-      write(iout,'(100A)') ' Node  Lay  Row  Col      Rw     Rskin    ',
-     &' Kskin        PP'
+c-lfk      write(iout,'(100A)') ' Node  Lay  Row  Col      Rw     Rskin    ',
+c-lfk     &' Kskin        PP'
+      write(iout,'(100A)') ' Node  Lay  Row  Col       Rw      Rskin  ',
+     &'    Kskin         PP'
 c     LOSSTYPE=GENERAL, read IL,IR,IC,{Rw B C P}
               CASE (3)
       write(iout,'(100A)') ' Node  Lay  Row  Col      Rw     B
@@ -1368,7 +1390,7 @@ c     LOSSTYPE=GENERAL, read IL,IR,IC,{Rw B C P}
 c     LOSSTYPE=SPECIFYcwc, read IL,IR,IC,{CWC}
               CASE (4)
 C-LFK
-      write(iout,'(100A)') ' Node  Lay  Row  Col  spec.CWC      PP'
+      write(iout,'(100A)') ' Node  Lay  Row  Col   spec.CWC     PP'
             END SELECT
 c
 c     write data depending on LOSSTYPE
@@ -1377,7 +1399,8 @@ c     LOSSTYPE=NONE, write IL,IR,IC only
               CASE (0)
          do INODE=firstnode,lastnode
           nod=INODE-firstnode+1
-          write(iout,'(1x,I4,1x,I4,1x,I4,1x,I4,G10.3)')
+c-lfk          write(iout,'(1x,I4,1x,I4,1x,I4,1x,I4,G10.3)')
+          write(iout,'(1x,I4,1x,I4,1x,I4,1x,I4,2x,G10.3)')
      &nod,(INT(MNWNOD(i,INODE)),i=1,3),MNWNOD(19,INODE)       
          end do
 c     LOSSTYPE=THIEM, write IL,IR,IC,{Rw}
@@ -1392,7 +1415,8 @@ c     LOSSTYPE=SKIN, write IL,IR,IC,{Rw Rskin Kskin}
               CASE (2)
          do INODE=firstnode,lastnode
           nod=INODE-firstnode+1
-          write(iout,'(1x,I4,1x,I4,1x,I4,1x,I4,2x,1P4G10.4)')
+c-lfk          write(iout,'(1x,I4,1x,I4,1x,I4,1x,I4,2x,1P4G10.4)')
+          write(iout,'(1x,I4,1x,I4,1x,I4,1x,I4,2x,1P4G11.4)')
      &nod,(INT(MNWNOD(i,INODE)),i=1,3),(MNWNOD(j,INODE),j=5,7),
      & MNWNOD(19,INODE)      
          end do
@@ -1400,7 +1424,8 @@ c     LOSSTYPE=GENERAL, write IL,IR,IC,{Rw B C P}
               CASE (3)
          do INODE=firstnode,lastnode
           nod=INODE-firstnode+1
-          write(iout,'(1x,I4,1x,I4,1x,I4,1x,I4,2x,1P5G10.4)')
+c-lfk          write(iout,'(1x,I4,1x,I4,1x,I4,1x,I4,2x,1P5G10.4)')
+          write(iout,'(1x,I4,1x,I4,1x,I4,1x,I4,2x,1P5G10.3)')
      &nod,(INT(MNWNOD(i,INODE)),i=1,3),(MNWNOD(5,INODE)),
      &(MNWNOD(j,INODE),j=8,10),MNWNOD(19,INODE)       
          end do
@@ -1410,7 +1435,8 @@ c     LOSSTYPE=SPECIFYcwc, write IL,IR,IC,{CWC}
           nod=INODE-firstnode+1
 c-lfk-11/27/2012
 c          write(iout,'(1x,I4,1x,I4,1x,I4,1x,I4,2x,1P2G10.4)')
-          write(iout,'(1x,I4,1x,I4,1x,I4,1x,I4,2x,1PG10.4,2x,0PF5.2)')
+c-lfk          write(iout,'(1x,I4,1x,I4,1x,I4,1x,I4,2x,1PG10.4,2x,0PF5.2)')
+          write(iout,'(1x,I4,1x,I4,1x,I4,1x,I4,2x,1PG10.3,2x,0PF5.2)')
      &nod,(INT(MNWNOD(i,INODE)),i=1,3),MNWNOD(11,INODE),
      &MNWNOD(19,INODE)      
          end do
@@ -1640,7 +1666,7 @@ c-lfk:  Only read Cprime for recharge/injection well (Qdes.gt.0.0)
               read(in,*) WELLNAME,Qdes,
      &                 (MNW2(30+IAUX,MNWID),IAUX=1,NAUX)
             end if
-	      endif
+	      end if
 	     else
           if(igwtunit.le.0) then
             read(in,*) WELLNAME,Qdes,CapMult,
@@ -1654,8 +1680,17 @@ c-lfk:  Only read Cprime for recharge/injection well (Qdes.gt.0.0)
               read(in,*) WELLNAME,Qdes,CapMult,
      &                 (MNW2(30+IAUX,MNWID),IAUX=1,NAUX)
             end if
-	    endif
+	    end if
+C-LFK (2/13) Check consistency of Qdes with CapTable values for Q
+         if (CapMult.gt.0.0.and.Qdes.LT.0.0) then
+         index=pumpcap+1
+          if(abs(Qdes).LT.(CapTable(MNWID,index,2)*CapMult)) then
+           write(iout,*) '***ERROR*** Qdes(Qmax) value < capacity table 
+     &value; must be in ascending order'
+            STOP 'MNW2 ERROR - CapTable vs Qdes'
+          end if
          end if
+        end if
 C-LFK   write auxiliary variable info.
          if (naux.gt.0.and.mnwprnt.gt.0) then
             write(iout,1900) (mnwaux(iaux),iaux=1,naux)
@@ -1763,11 +1798,17 @@ c   Initialize CapFlag2
              end if
 c  now that we have Qdes, write Capacity table
              write(iout,*) 
-             write(iout,*) 'Well Capacity Table'
-             write(iout,*) ' Lift     Discharge'
+c-lfk (2/13)
+c             write(iout,*) 'Well Capacity Table'
+c             write(iout,*) ' Lift     Discharge'
+             write(iout,*) '  Well Capacity Table'
+             write(iout,*) '   Lift       Discharge'
              do index=1,PUMPCAP+2
-               write(iout,'(1x,1pG10.5,G10.4)') CapTable(MNWID,index,1),
-     &                      CapTable(MNWID,index,2)
+c-lfk 2/13
+c               write(iout,'(1x,1pG10.5,G10.4)') CapTable(MNWID,index,1),
+c     &                      CapTable(MNWID,index,2)
+               write(iout,'(1x,1pG12.5,1x,G11.4)') CapTable(MNWID,index,
+     &                      1),CapTable(MNWID,index,2)
              end do
 	     end if
 	   end if
@@ -2457,7 +2498,7 @@ c
                  END IF
 ! Added next line to limit well-bore head to the cell bottom 
 ! for unconfined condtions. RGN 3/20/12
-                 IF ( LAYHDT(IL).GT.0 ) THEN
+                 IF ( LAYHDT(IL).GT.0 .AND. MNW2(6,iw).NE.0 ) THEN
                    IF ( hlim.LT.BOTM(ic,ir,lbotm(il)) ) 
      +                  hlim = BOTM(ic,ir,lbotm(il))
                    if ( hwell.LT.hlim ) hwell = hlim
@@ -2544,12 +2585,26 @@ c-lfk
               ir=MNWNOD(2,INODE)              
               ic=MNWNOD(3,INODE)              
               if( ibound(ic,ir,il).eq.0 ) MNWNOD(4,INODE) = 0.0D0
-              if( MNWNOD(4,INODE).le.0.0D0 ) then
-                qin = qin  + MNWNOD(4,INODE)
+              IF(Iuupw.NE.0.AND.HNEW(IC,IR,IL).LE.BOTM(IC,IR,LBOTM(IL)))
+     +                                           MNWNOD(4,INODE) = 0.0D0!seb ADDED CHECK FOR WHEN HNEW<BOT, SCOTT SHOULD THIS BE HERE, WHAT IF Hwel>BOT, there would be flow, but very minimal. NOTE MNWNOD(4,INODE)=Qact
+              q=MNWNOD(4,INODE)
+              IF ( Iuupw.GT.0 ) THEN                                    !seb ADDED BLOCK TO MATCH WHAT IS WRITTEN TO BUDGET
+                hwell = MNWNOD(15,INODE)
+                   IF ( LAYHDT(IL).GT.0  .AND. MNW2(6,iw).NE.0) THEN    !ADDED  .AND. MNW2(6,iw).NE.0 OTHERWISE HLIM is not defined
+                     IF ( hlim.LT.BOTM(ic,ir,lbotm(il)) ) 
+     +                    hlim = BOTM(ic,ir,lbotm(il))
+                     if ( hwell.LT.hlim ) hwell = hlim
+                   END IF
+                hcell=hnew(ic,ir,il)
+                cond = MNWNOD(14,INODE)
+                q = cond*(hwell-hcell)
+              END IF
+              if( q.le.0.0D0 ) then
+                qin = qin  + q                                          !seb CHANGED MNWNOD(4,INODE) to q   --SCOTT SHOULDN'T qin and qout be used for ratin and ratout, rather than q?
               else
-                qout = qout  + MNWNOD(4,INODE)
+                qout = qout  + q                                        ! seb originally + MNWNOD(4,INODE)
               endif
-              qnet  = qnet  + MNWNOD(4,INODE)
+              qnet  = qnet  + q                                         ! seb originally + MNWNOD(4,INODE)
             enddo
             mnw2(18,iw) = qnet
 c
@@ -2645,8 +2700,21 @@ c   Loop over nodes in well
                 ir=MNWNOD(2,INODE)
                 il=MNWNOD(1,INODE)
                 Q = MNWNOD(4,INODE)
+                IF ( Iuupw.GT.0 ) THEN                                  !seb ADDED BLOCK TO MATCH WHAT IS WRITTEN TO BUDGET
+                  hwell = MNWNOD(15,INODE)
+                     IF ( LAYHDT(IL).GT.0 .AND. MNW2(6,iw).NE.0) THEN
+                       hlim=mnw2(7,iw)
+                       IF ( hlim.LT.BOTM(ic,ir,lbotm(il)) ) 
+     +                      hlim = BOTM(ic,ir,lbotm(il))
+                       if ( hwell.LT.hlim ) hwell = hlim
+                     END IF
+                  hcell=hnew(ic,ir,il)
+                  cond = MNWNOD(14,INODE)
+                  q = cond*(hwell-hcell)
+                END IF
 c  lfk  active well check
-                if(MNW2(1,iw).eq.0) Q=0.0
+                if(MNW2(1,iw).eq.0) Q=0.0D0
+                IF(NMNW2.EQ.0) Q=0.0D0                                  !seb SET FLOW RATE TO 0 WHEN NOT MNW2 WELLS ARE IN USE
 c
                 call UBDSVB(ioc,ncol,nrow,IC,IR,IL,real(Q),
      +                    real(mnw2(:,iw)),
@@ -2655,6 +2723,7 @@ c
 c            endif
             enddo
           else                  !!  Write full 3D array
+            IF(NMNW2.EQ.0) buff=0.0                                     !seb SET FLOW RATE TO 0 WHEN NOT MNW2 WELLS ARE IN USE
             call ubudsv(kstp,kper,text,ioc, buff,ncol,nrow,nlay,iout)
           endif
         endif
@@ -3102,11 +3171,11 @@ C     FIND HORIZONTAL ANISOTROPY, THE RATIO Ky/Kx
          IF (CHANI(IZ).GT.0.0) THEN
           AH = CHANI(IZ)
          ELSE
-          IF(ITRSS.NE.0) THEN 
+C-LFK     IF(ITRSS.NE.0) THEN 
             AH = HANI(IX,IY,IZ)
-          ELSE
-            AH = HANI(1,1,1)
-          END IF
+C-LFK     ELSE
+C-LFK       AH = HANI(1,1,1)
+C-LFK     END IF
          ENDIF
 C
          if (LAYHDT(IZ).EQ.0) then
@@ -3217,7 +3286,10 @@ c   if transient, by kiter=1 , if not, by tstep=1
         write(iout,'(120A)') '                              M O D E L
      &  L A Y E R     W E L L  S C R E E N   Penetration    SKIN     
      &  CALCULATED'
-        write(iout,'(120A)') 'WELLID        Node    CWC*    top_elev   
+c-lfk        write(iout,'(120A)') 'WELLID        Node    CWC*    top_elev   
+c-lfk     & bott.elev    top_elev   bott.elev    fraction     COEFF.
+c-lfk     &          B'
+        write(iout,'(120A)') 'WELLID        Node    CWC*     top_elev   
      & bott.elev    top_elev   bott.elev    fraction     COEFF.
      &          B'
       end if
@@ -3544,7 +3616,7 @@ c        if irecalc=0, use saved cond
           cond= MNWNOD(14,INODE)
          endif
 c        output node info  
-c  if more than one interval made up this node, write composite 
+c  if more than one interval made up this node, write 'composite' 
           if(MNWNOD(12,INODE).ne.MNWNOD(13,INODE)) then
 c--LFK
             ctext=' COMPOSITE'
@@ -3643,7 +3715,6 @@ C
       h =  (HNEW(C1,R1,lbotm(L1))-BOTM(C1,R1,lbotm(L1)))
       IF( h.LT.0.0 ) h = 0.0
       pi = 3.1415926535897932D0
-!
       verysmall = 1.D-25
 C-LFK
       ISEGFLG=0
@@ -3675,7 +3746,7 @@ c--LFK--Dec 2012   IF Vert.Segment, Length & Cond. = 1/2 of calc. value.
 c
 c       For the "NONE" option, multiply the Kh by 1000 to equivalate Hnew and hwell
         if(LOSSTYPE.EQ.0) then
-          cel2wel2=1.0D3*((Txx*Tyy)**0.5D0)/thck    
+          cel2wel2=1.0D4*((Txx*Tyy)**0.5D0)/thck    
 c
 c       THEIM option (LOSSTYPE.EQ.1) only needs A, so no need to calculate  B or C
 c
@@ -3760,13 +3831,12 @@ c     ******************************************************************
 c
 C        SPECIFICATIONS:
 C     ------------------------------------------------------------------
-     
+c     
       USE GLOBAL,       ONLY:IOUT,NCOL,NROW,NLAY,NBOTM,LBOTM,BOTM,
      1                       IBOUND,LAYCBD,HNEW
       USE GWFBASMODULE, ONLY:HDRY
       USE GWFMNW2MODULE, ONLY:NMNW2,MNWMAX,MNWPRNT,
      1                       NODTOT,MNW2,MNWNOD,SMALL,WELLID,LIMQ
-
       INTEGER firstnode,lastnode,nd,Iuupw  !RGN
       DOUBLE PRECISION qdes,qact,csum,chsum,Qseep,
      & hwell,hlim,verysmall,hmax,hsim,bottom,qcut,qoff,qon,qsmall,
@@ -4831,7 +4901,6 @@ c     &                 rw,Rskin,Kskin,B,Cf,PLoss,thck1,Qact,
               cond1 = cel2wel2(LOSSTYPE,Txx,Tyy,dx1,dy1,
      &                 rw,Rskin,Kskin,B,Cf,PLoss,thck1*2,Qact,
      &                 WELLID(iw),Skin,iw,C1,R1,L1,Iuupw)  !RGN
-                           
          end if
       else
          cond1=0.D0 
@@ -5074,7 +5143,7 @@ c    this makes conductance very small
         cel2wel2SEG = ( Txx * Tyy )** 0.5D0
 c       For the "NONE" option, multiply the Kh by 1000 to equivalate Hnew and hwell
       else if(LOSSTYPE.EQ.0) then
-        cel2wel2SEG=1.0D3*((Kx*Ky)**0.5D0)   
+        cel2wel2SEG=1.0D4*((Kx*Ky)**0.5D0)   
       else 
 c
 c    define ro (effective radius) for each direction 

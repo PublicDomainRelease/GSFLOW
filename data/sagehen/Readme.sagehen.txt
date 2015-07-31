@@ -1,36 +1,32 @@
 
                       Sagehen Sample Problem for GSFLOW
-                                 January 2012
+                                 August 2015
  
-A sample problem with GSFLOW data sets is provided in this subdirectory
-to verify that GSFLOW is correctly installed and running on the system.
-The sample problem also may be looked at as an example of how to use the 
-program. The sample GSFLOW model is for the Sagehen Creek Watershed, 
-and is described in the GSFLOW documentation (Markstrom and others,
-2008).
+Several GSFLOW Control and shell script files are provided to run the sample 
+problem in different model modes and for different module, solver, and 
+input-data set options that are available for a GSFLOW simulation. These 
+Control and script files are provided in the 'linux' subdirectory. Each 
+of the .sh files shown in that directory are hard-coded to use the provided
+executable (gsflow) of the compiled source code.
 
-Several Control and batch files are provided to run the sample problem
-in different model modes and for different module, solver, and input-data
-set options that are available for a GSFLOW simulation. These example 
-files are provided for use with an executable compiled for your Linux
-computer named gsflow that is stored in the GSFLOW_1.1.5/bin subdirectory.
-The Control and batch files found in the subdirectory:
-GSFLOW_1.1.5/data/sagehen/control_linux and are for the following seven
-simulation conditions:
+The Control and script files found in the subdirectory are for the following 
+seven simulation conditions:
 
 1. GSFLOW mode using the PCG solver and PRMS parameters split into five 
      separate Parameter Files. This condition also provides an example of the 
      use of the subbasin module, and a separate PRMS Parameter File 
      (subbasin.params) is provided to illustrate specification of the relevant 
      parameters: gsflow.sh and gsflow.control
-2. GSFLOW mode using the NWT solver and PRMS Parameter Files for condition 1:
-     gsflow_NWT.sh and gsflow_NWT.control
+2. GSFLOW mode using the NWT solver and PRMS Parameter Files for condition 1.
+     Note that this sample problem also uses Control file gsflow.control, but
+     resets the values of two of the parameters (modflow_name and subbasin_flag)
+     in the script file: gsflow_NWT.sh and gsflow.control
 3. GSFLOW mode using the PCG solver and climate_hru module using pre-processed
      input climate data, to replace PRMS modules temp_1sta, precip_1sta, 
      ddsolrad, and potet_jh. Four of the Parameter Files used
      for conditions 1 and 2 are unchanged, and the fifth modified to include
      parameters required for use with the climate_hru model and to remove
-     parameters not needed for climate_hru: gsflow_climate_hru.sh
+     parameters not needed for climate_hru: gsflow_climate_hru.sh 
      and gsflow_climate_hru.control
 4. PRMS-only mode using four Parameter Files, three of which are the same
      as those used in condition 1 and one of which was modified for a PRMS-only
@@ -43,31 +39,27 @@ simulation conditions:
 6. PRMS-only mode demonstrating use of the Map Results module using five Parameter
      Files, four of which are the same as used in condition 4 and an additional
      file that specifies the mapping between the HRU and MODFLOW cell maps (file
-     gvr.params): gsflow_prms_map_results.sh and gsflow_prms_map_results.control
-7. MODFLOW-only mode using the PCG solver, a minimum-input Control File, and
-     a PRMS Parameter File that contains GSFLOW-specific parameters required 
-     for MODFLOW-only mode (a Data File is not necessary for a MODFLOW-only
-     simulation): gsflow_modflow.sh and gsflow_modflow.control
+     gvr.params): gsflow_prms_map_results.sh and gsflow_prms.control (with
+     parameter mapOutOn_OFF reset to 1)
+7. MODFLOW-only mode using the PCG solver and a minimum-input Control File:
+     gsflow_modflow.sh and gsflow_modflow.control
 
-The data-input files for the problem can be found in the input subdirectory, 
-which contains modflow and prms subdirectories. The modflow subdirectory contains 
-files related to the MODFLOW and MODFLOW-NWT components of GSFLOW. The prms 
-subdirectory contains the Data and Parameter files for each simulation. The 
-files ending in 'day' refer to pre-processed climate-data files used with the 
+The data-input files for the problem can be found in the 'input' subdirectory, 
+which contains 'modflow' and 'prms' subdirectories. The 'modflow' subdirectory 
+contains files related to the MODFLOW and MODFLOW-NWT components of GSFLOW. The 
+'prms' subdirectory contains the Data and Parameter files for each simulation. 
+The files ending in 'day' refer to pre-processed climate-data files used with the 
 Climate by HRU Distribution module.
 
-To execute a simulation condition, type one of the shell script file names
-within the GSFLOW_1.1.5/data/sagehen/control_linux directory from an xterm window.
+Type the file name of the .sh files to run the model in a Terminal window or double click the file in a File Browser.
 
-A gsflow.log file will be written directly to the directory from which a
-simulation is initiated. Output files (recharge.monthly, recharge.yearly,
-and recharge.total) generated by the Map Results module used in simulation
-condition six will be written to this directory. Additional output files will be
-written to the output subdirectory and to the modflow and prms subdirectories
-under the output subdirectory. The names of the output files are specified in
-either the GSFLOW Control File or the MODFLOW name file for each simulation.
-Several types of files will be generated, each of which is described in detail
-in the GSFLOW documentation. These include:
+A gsflow.log file will be written directly to the 'linux' subdirectory. Output 
+files generated by the Map Results module also will be written to the subdirectory. 
+Additional output files will be written to the 'output' subdirectory and to the 
+'modflow' and 'prms' subdirectories under the 'output' subdirectory. The names of 
+the output files are specified in either the GSFLOW Control File or the MODFLOW 
+name file for each simulation. Several types of files will be generated, each of 
+which is described in detail in the GSFLOW documentation. These include:
 
 1. GSFLOW water-budget file (example: gsflow.out)
 2. GSFLOW comma-separated-values (CSV) File (example: gsflow.csv)
@@ -80,15 +72,13 @@ in the GSFLOW documentation. These include:
 
 Several output files are provided with the distribution for comparison
 to the results of your simulations. These files are provided in the 
-output-test subdirectory and are arranged by the simulation mode and
-seven model conditions described above. The results provided were
-generated using a executable compiled for a 32-bit Linux-based computer
-using gfortran version 4.4.3.
-
-Note that the results calculated using the version 1.1.5 release of the
-code differ somewhat from previous results because of the bug in the
-Soil Zzone module that was identified and fixed for the 1.1.5 release
-(see the file "GSFLOW_v1.1.5_Updates.pdf").
+'output-test' subdirectory and are arranged by the simulation mode and
+seven model conditions described above. (The results provided were
+generated using the 64-bit executable; results for the 32-bit executable
+should be nearly identical to those provided.) The results will differ slightly
+from previous versions because of changes to the code and because the bottom
+elevation of layer 2, row 51, column 58 was changed from 1,185 meters to
+1,980 meters, which is more consistent with surrounding cells.
 
 
 Reference:
