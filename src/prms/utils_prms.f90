@@ -1,4 +1,4 @@
-      ! $Id: utils_prms.f90 7531 2015-07-29 22:34:39Z rsregan $
+      ! utils_prms.f90 2016-05-10 15:48:00Z
 !***********************************************************************
 !     Read CBH File to current time
 !***********************************************************************
@@ -401,14 +401,16 @@
 
 !***********************************************************************
 ! Compute saturation vapor pressure over water in millibars
+! 6th order Polynominal method (Flatau et. all., 1992) valid: -50 to 50C
 ! 1 kPa = 10 millibars
+! Flatau, P.j., Walko, R.L., Cotton, W.R., 1992, Polynomial Fits to
+!   saturation vapor pressure: Jornal of Applied Meteorology, v. 31, p. 1507-1513
 !***********************************************************************
       REAL FUNCTION sat_vapor_press_poly(Tempc)
       IMPLICIT NONE
 ! Arguments
       REAL, INTENT(IN) :: Tempc
 !***********************************************************************
-! 6th order Polynominal method (Flatau et. all., 1992) valid: -50 to 50C
       sat_vapor_press_poly = 6.11176750 + 0.443986062*Tempc &
      &                       + 0.0143053301*Tempc**2 &
      &                       + 0.265027242E-03*Tempc**3 &
@@ -423,20 +425,20 @@
 !      sat_vapor_press_poly = 6.1121D0*EXP((18.678D0-Tempc/234.5D0)*Tempc/(257.14+Tempc))
 ! WMO 2008, CIMO Guide
 !      sat_vapor_press_poly = 6.112*EXP(17.62*Tempc/(243.12+Tempc))
-! Irmak and others (2012)
+! Irmak and others (2012), equation 12
 !      sat_vapor_press_poly = 0.6108*EXP(17.27*Tempc/(237.3+Tempc))
       END FUNCTION sat_vapor_press_poly
 
 !***********************************************************************
 ! Compute saturation vapor pressure over water
-! Irmak and others (2012)
+! Irmak and others (2012), equation 12
 !***********************************************************************
       REAL FUNCTION sat_vapor_press(Tempc)
       IMPLICIT NONE
 ! Arguments
       REAL, INTENT(IN) :: Tempc
 !***********************************************************************
-      sat_vapor_press = 6.1078*EXP( (17.26939*Tempc)/(237.30+Tempc) )
+      sat_vapor_press = 6.1078*EXP( (17.26939*Tempc)/(237.3+Tempc) )
       END FUNCTION sat_vapor_press
 
 !***********************************************************************
@@ -821,7 +823,9 @@
       ! Functions
       INTRINSIC INDEX
       ! Local Variables
-      INTEGER nc, n
+      INTEGER nc, n, nb
+      CHARACTER(LEN=72) :: buffer
+      CHARACTER(LEN=32), PARAMETER :: blanks = '                                '
 !***********************************************************************
       nc = INDEX( Versn, 'Z' )
       IF ( Ftntype==90 ) THEN
@@ -829,9 +833,11 @@
       ELSE
         n = INDEX( Versn, '.f' ) + 1
       ENDIF
-      PRINT '(A)', Description//' '//Versn(6:n)//', version: '//Versn(n+2:nc-10)
-      WRITE ( Logunt, '(A)' ) Description//' '//Versn(6:n)//', version: '//Versn(n+2:nc)
-      IF ( Model/=2 ) WRITE ( PRMS_output_unit, '(A)' ) Description//' '//Versn(6:n)//', version: '//Versn(n+2:nc)
+      nb = 25 - n
+      WRITE (buffer, '(A)' ) Description//'     '//Versn(:n)//blanks(:nb)//Versn(n+2:nc-10)
+      PRINT '(A)', buffer
+      WRITE ( Logunt, '(A)' ) buffer
+      IF ( Model/=2 ) WRITE ( PRMS_output_unit, '(A)' ) buffer
       END SUBROUTINE print_module
 
 !***********************************************************************
@@ -895,7 +901,8 @@
       INTEGER, INTENT(INOUT) :: Iret
 !***********************************************************************
       IF ( Param_value<0.0 .OR. Param_value>1.0 ) THEN
-        PRINT *, 'ERROR, ', Param, ' < 0.0 or > 1.0 for HRU:', Ihru, ' value specified:', Param_value
+        PRINT *, 'ERROR, ', Param, ' < 0.0 or > 1.0 for HRU:', Ihru, '; value:', Param_value
+        PRINT *, ' '
         Iret = 1
       ENDIF
       END SUBROUTINE check_param_value
@@ -911,8 +918,10 @@
       INTEGER, INTENT(INOUT) :: Iret
 !***********************************************************************
       IF ( Param_value<Lower_val .OR. Param_value>Upper_val ) THEN
-        PRINT *, 'ERROR, bad value, parameter: ', Param, ' Value:', Param_value, ' array index:', Indx
-        PRINT *, '       lower bound:', Lower_val, ' upper bound:', Upper_val
+        PRINT *, 'ERROR, bad value, parameter: ', Param
+        PRINT *, '       value:  ', Param_value, '; array index:', Indx
+        PRINT *, '       minimum:', Lower_val, '  ; maximum:', Upper_val
+        PRINT *, ' '
         Iret = 1
       ENDIF
       END SUBROUTINE check_param_limits
@@ -927,8 +936,10 @@
       INTEGER, INTENT(INOUT) :: Iret
 !***********************************************************************
       IF ( Param_value<Lower_val .OR. Param_value>Upper_val ) THEN
-        PRINT *, 'ERROR, bad value, parameter: ', Param, ' Value:', Param_value, ' array index:', Indx
-        PRINT *, '       lower bound:', Lower_val, ' upper bound:', Upper_val
+        PRINT *, 'ERROR, out-of-bounds value for parameter: ', Param
+        PRINT *, '       value:  ', Param_value, '; array index:', Indx
+        PRINT *, '       minimum:', Lower_val, '; maximum:', Upper_val
+        PRINT *, ' '
         Iret = 1
       ENDIF
       END SUBROUTINE checkint_param_limits
@@ -943,8 +954,10 @@
       INTEGER, INTENT(INOUT) :: Iret
 !***********************************************************************
       IF ( Param_value<Lower_val .OR. Param_value>Upper_val ) THEN
-        PRINT *, 'ERROR, bad value, parameter: ', Param, ' Value:', Param_value, ' array index:', Indx
-        PRINT *, '       lower bound:', Lower_val, ' ', Dimen, '=', Upper_val
+        PRINT *, 'ERROR, out-of-bounds value for bounded parameter: ', Param
+        PRINT *, '       value:  ', Param_value, '; array index:', Indx
+        PRINT *, '       minimum:', Lower_val, '; maximum is dimension ', Dimen, ' =', Upper_val
+        PRINT *, ' '
         Iret = 1
       ENDIF
       END SUBROUTINE checkdim_param_limits
@@ -960,65 +973,37 @@
       INTEGER, INTENT(INOUT) :: Iret
 !***********************************************************************
       IF ( Param_value<0.0 ) THEN
-        PRINT *, 'ERROR, value < 0.0, parameter: ', Param, ' Value:', Param_value, ' HRU:', Indx
+        PRINT *, 'ERROR, value < 0.0 for parameter: ', Param
+        PRINT *, '       value:', Param_value, '; HRU:', Indx
+        PRINT *, ' '
         Iret = 1
       ENDIF
-    END SUBROUTINE check_param_zero
+      END SUBROUTINE check_param_zero
 
 !***********************************************************************
-!     check_nhru_params - Check some basin-wide parameters and
-!                              compute some basin variable
+! checks values of basin wide parameters
+! and compute some basin variables
 !***********************************************************************
       SUBROUTINE check_nhru_params()
-      USE PRMS_MODULE, ONLY: Temp_flag, Ntemp, Nevap, Print_debug, Inputerror_flag, Solrad_flag, Et_flag, Sroff_flag
-      USE PRMS_BASIN, ONLY: Hru_type, Active_hrus, Hru_route_order, SMALLPARAM, Cov_type, Covden_win, Covden_sum
-      USE PRMS_CLIMATEVARS, ONLY: Hru_tsta, Hru_pansta, Use_pandata, Radj_sppt, Radj_wppt, Epan_coef
-      USE PRMS_FLOWVARS, ONLY: Soil_moist_max
-      USE PRMS_POTET_JH, ONLY: Jh_coef, Jh_coef_hru
-      USE PRMS_SRUNOFF, ONLY: Carea_max, Carea_min, Smidx_coef, Smidx_exp, Carea_dif
+      USE PRMS_MODULE, ONLY: Temp_flag, Ntemp, Nevap, Print_debug, Inputerror_flag
+      USE PRMS_BASIN, ONLY: Hru_type, Active_hrus, Hru_route_order, Cov_type
+      USE PRMS_CLIMATEVARS, ONLY: Hru_tsta, Hru_pansta, Use_pandata
       IMPLICIT NONE
 ! Functions
-      EXTERNAL :: checkdim_param_limits, check_param_value, check_param_limits
+      EXTERNAL :: checkdim_param_limits
 ! Local variables
-      INTEGER :: i, j, k, check_tsta, check_solrad, num_hrus
-      REAL :: frac
+      INTEGER :: i, j, check_tsta
 !***********************************************************************
       check_tsta = 0
       IF ( Temp_flag==1 .OR. Temp_flag==2 ) check_tsta = 1
-      check_solrad = 0
-      IF ( Solrad_flag==1 .OR. Solrad_flag==2 ) check_solrad = 1
 
       ! Sanity checks for parameters
-      num_hrus = 0
       DO j = 1, Active_hrus
         i = Hru_route_order(j)
 
         IF ( check_tsta==1 ) CALL checkdim_param_limits(i, 'hru_tsta', 'ntemp', Hru_tsta(i), 1, Ntemp, Inputerror_flag)
 
-        IF ( check_solrad==1 ) THEN
-          CALL check_param_value(i, 'radj_sppt', Radj_sppt(i), Inputerror_flag)
-          CALL check_param_value(i, 'radj_wppt', Radj_wppt(i), Inputerror_flag)
-        ENDIF
-
         IF ( Use_pandata==1 ) CALL checkdim_param_limits(i, 'hru_pansta', 'nevap', Hru_pansta(i), 1, Nevap, Inputerror_flag)
-
-        IF ( Et_flag==1 ) THEN
-          CALL check_param_limits(i, 'jh_coef_hru', Jh_coef_hru(i), -99.0, 150.0, Inputerror_flag)
-          DO k = 1, 12
-            CALL check_param_limits(k, 'jh_coef', Jh_coef(i, k), -1.0, 10.0, Inputerror_flag)
-          ENDDO
-        ENDIF
-
-        DO k = 1, 12
-          IF ( Epan_coef(i,k)<0.0 ) THEN
-            PRINT *, 'ERROR, epan_coef specified < 0 for month:', k, Epan_coef(i, k)
-            Inputerror_flag = 1
-          ENDIF
-        ENDDO
-
-        CALL check_param_value(i, 'covden_win', Covden_win(i), Inputerror_flag)
-        CALL check_param_value(i, 'covden_sum', Covden_sum(i), Inputerror_flag)
-        CALL checkint_param_limits(i, 'cov_type', Cov_type(i), 0, 4, Inputerror_flag)
 
         IF ( Hru_type(i)==2 ) THEN
           IF ( Cov_type(i)/=0 ) THEN
@@ -1027,41 +1012,6 @@
           ENDIF
           CYCLE
         ENDIF
-
-        CALL check_param_value(i, 'carea_max', Carea_max(i), Inputerror_flag)
-        IF ( Sroff_flag==2 ) THEN
-          CALL check_param_value(i, 'carea_min', Carea_min(i), Inputerror_flag)
-          Carea_dif(i) = Carea_max(i) - Carea_min(i)
-        ELSE
-          CALL check_param_value(i, 'smidx_coef', Smidx_coef(i), Inputerror_flag)
-          CALL check_param_value(i, 'smidx_exp', Smidx_exp(i), Inputerror_flag)
-          frac = Smidx_coef(i)*10**(Soil_moist_max(i)*Smidx_exp(i))
-          k = 0
-          IF ( frac>2.0 ) k = 1
-          IF ( frac>Carea_max(i)*2.0 ) k = k + 2
-          IF ( k>0 ) THEN
-            num_hrus = num_hrus + 1
-            !IF ( Print_debug>-1 ) THEN
-            !  PRINT *, ' '
-            !  PRINT *, 'WARNING'
-            !  PRINT *, 'Contributing area based on smidx parameters and soil_moist_max:', frac
-            !  IF ( k==1 .OR. k==3 ) PRINT *, 'Maximum contributing area > 200%'
-            !  IF ( k>1 ) PRINT *, 'Maximum contributing area > carea_max:', Carea_max(i)
-            !  PRINT *, 'HRU:', i, '; soil_moist_max:', Soil_moist_max(i)
-            !  PRINT *, 'smidx_coef:', Smidx_coef(i), '; smidx_exp:', Smidx_exp(i)
-            !  PRINT *, 'This can make smidx parameters insensitive and carea_max very sensitive'
-            !ENDIF
-          ENDIF
-        ENDIF
       ENDDO
-
-      IF ( num_hrus>0 .AND. Print_debug>-1 ) THEN
-        WRITE (*, '(/,A,/,9X,A,/,9X,A,I7,/,9X,A,/,9X,A,/)') &
-     &         'WARNING, maximum contributing area based on smidx coefficents and', &
-     &         'soil_moist_max are > 200% of the HRU area and/or > 2*carea_max', &
-     &         'number of HRUs for which this condition exists:', num_hrus, &
-     &         'This means the smidx parameters are insensitive and', &
-     &         'carea_max very sensitive for those HRUs'
-      ENDIF
 
       END SUBROUTINE check_nhru_params

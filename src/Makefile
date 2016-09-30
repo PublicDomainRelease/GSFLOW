@@ -4,11 +4,11 @@
 # Top-level makefile for the GSFLOW
 #
 #-------------------------------------------------------------------
-# $Id: Makefile 7493 2015-07-17 16:20:50Z rsregan $
+# $Id: Makefile 8348 2016-07-26 20:37:09Z rsregan $
 #-------------------------------------------------------------------
 
 include ./makelist
-MMF      = ./mms
+MMF      = ./mmf
 PRMS     = ./prms
 GSFLOW   = ./gsflow
 MODFLOW  = ./modflow

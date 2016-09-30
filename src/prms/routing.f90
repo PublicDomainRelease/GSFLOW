@@ -6,6 +6,7 @@
 !   Local Variables
       CHARACTER(LEN=7), SAVE :: MODNAME
       DOUBLE PRECISION, SAVE :: Cfs2acft
+      DOUBLE PRECISION, SAVE :: Segment_area
       CHARACTER(LEN=80), SAVE :: Version_routing
       !CHARACTER(LEN=32), SAVE :: Outfmt
 !   Declared Variables
@@ -13,7 +14,7 @@
       DOUBLE PRECISION, SAVE, ALLOCATABLE :: Seginc_gwflow(:), Seginc_swrad(:), Seginc_potet(:)
       DOUBLE PRECISION, SAVE, ALLOCATABLE :: Hru_outflow(:), Seg_ssflow(:), Seg_sroff(:), Seg_gwflow(:)
 !   Declared Parameters
-      !INTEGER, SAVE, ALLOCATABLE :: Segment_type(:)
+      INTEGER, SAVE, ALLOCATABLE :: Segment_type(:)
       END MODULE PRMS_ROUTING
 
 !***********************************************************************
@@ -46,7 +47,7 @@
 !***********************************************************************
       INTEGER FUNCTION routingdecl()
       USE PRMS_ROUTING
-      USE PRMS_MODULE, ONLY: Nhru, Nsegment, Cascade_flag, Model !, Strmflow_flag
+      USE PRMS_MODULE, ONLY: Nhru, Nsegment, Model, Strmflow_flag
       IMPLICIT NONE
 ! Functions
       INTEGER, EXTERNAL :: declparam, declvar
@@ -54,7 +55,7 @@
 !***********************************************************************
       routingdecl = 0
 
-      Version_routing = '$Id: routing.f90 7588 2015-08-18 22:58:42Z rsregan $'
+      Version_routing = 'routing.f90 2016-03-25 21:00:49Z'
       CALL print_module(Version_routing, 'Routing Initialization      ', 90)
       MODNAME = 'routing'
 
@@ -64,16 +65,15 @@
      &     'Total flow leaving each HRU', &
      &     'cfs', Hru_outflow)/=0 ) CALL read_error(3, 'hru_outflow')
 
-!      IF ( Strmflow_flag==3 .OR. Model==99 ) THEN
-!        ALLOCATE ( Segment_type(Nsegment) )
-!        IF ( declparam(MODNAME, 'segment_type', 'nsegment', 'integer', &
-!     &       '0', '0', '3', &
-!     &       'Segment type', &
-!     &       'Segment type (0=segment; 1=diversion; 2=lake; 3=replace inflow)', &
-!     &       'none')/=0 ) CALL read_error(1, 'segment_type')
-!      ENDIF
+      IF ( Strmflow_flag==2 .OR. Model==99 ) THEN
+        ALLOCATE ( Segment_type(Nsegment) )
+        IF ( declparam(MODNAME, 'segment_type', 'nsegment', 'integer', &
+     &       '0', '0', '3', &
+     &       'Segment type', &
+     &       'Segment type (0=segment; 1=diversion; 2=lake; 3=replace inflow)', &
+     &       'none')/=0 ) CALL read_error(1, 'segment_type')
+      ENDIF
 
-      IF ( Cascade_flag==1 .AND. Model/=99 ) RETURN
 
       ALLOCATE ( Seginc_potet(Nsegment) )
       IF ( declvar(MODNAME, 'seginc_potet', 'nsegment', Nsegment, 'double', &
@@ -130,44 +130,42 @@
 !**********************************************************************
       INTEGER FUNCTION routinginit()
       USE PRMS_ROUTING
-      USE PRMS_MODULE, ONLY: Nsegment, Init_vars_from_file, Cascade_flag ! , Strmflow_flag, PRMS_strmflow_unit
+      USE PRMS_MODULE, ONLY: Nsegment, Init_vars_from_file, Strmflow_flag
       USE PRMS_SET_TIME, ONLY: Timestep_seconds
-      USE PRMS_BASIN, ONLY: FT2_PER_ACRE
+      USE PRMS_BASIN, ONLY: FT2_PER_ACRE, Segment_hruarea
       IMPLICIT NONE
 ! Functions
       INTEGER, EXTERNAL :: getparam
       EXTERNAL :: read_error
 ! Local Variable
-      !INTEGER :: i
+      INTEGER :: i
 !**********************************************************************
       routinginit = 0
 
       IF ( Init_vars_from_file==0 ) THEN
-        IF ( Cascade_flag==0 ) THEN
-          Seginc_potet = 0.0D0
-          Seginc_gwflow = 0.0D0
-          Seginc_ssflow = 0.0D0
-          Seginc_sroff = 0.0D0
-          Seginc_swrad = 0.0D0
-          Seg_gwflow = 0.0D0
-          Seg_ssflow = 0.0D0
-          Seg_sroff = 0.0D0
-        ENDIF
+        Seginc_potet = 0.0D0
+        Seginc_gwflow = 0.0D0
+        Seginc_ssflow = 0.0D0
+        Seginc_sroff = 0.0D0
+        Seginc_swrad = 0.0D0
+        Seg_gwflow = 0.0D0
+        Seg_ssflow = 0.0D0
+        Seg_sroff = 0.0D0
         Hru_outflow = 0.0D0
       ENDIF
 
       Cfs2acft = Timestep_seconds/FT2_PER_ACRE
 
-!      IF ( Strmflow_flag==3 ) THEN
-!        IF ( getparam(MODNAME, 'segment_type', Nsegment, 'integer', Segment_type)/=0 ) CALL read_error(2, 'segment_type')
-!      ENDIF
+      IF ( Strmflow_flag==2 ) THEN
+        IF ( getparam(MODNAME, 'segment_type', Nsegment, 'integer', Segment_type)/=0 ) CALL read_error(2, 'segment_type')
+      ENDIF
 
-      !WRITE ( Outfmt, 9001 ) Nsegment - 1
-      !WRITE ( PRMS_strmflow_unit, Outfmt ) (i, i = 1, Nsegment)
-      !WRITE ( Outfmt, 9002 ) Nsegment - 1
-
-! 9001 FORMAT ( '(',I8,'(I10,","),I10)' )
-! 9002 FORMAT ( '(',I8,'(E10.3,","),E10.3)' )
+      Segment_area = 0.0D0
+      DO i = 1, Nsegment
+        Segment_area = Segment_area + Segment_hruarea(i)
+      ENDDO
+!      IF ( Active_area/=Segment_area ) PRINT *, 'Not all area in model domain included with segments, basin area =', &
+!     &                                          Active_area, ' segment area = ', Segment_area
 
       END FUNCTION routinginit
 
@@ -176,7 +174,7 @@
 !***********************************************************************
       INTEGER FUNCTION route_run()
       USE PRMS_ROUTING
-      USE PRMS_MODULE, ONLY: Nsegment, Cascade_flag !, PRMS_strmflow_unit
+      USE PRMS_MODULE, ONLY: Nsegment, Cascade_flag
       USE PRMS_BASIN, ONLY: Hru_area, Hru_route_order, Active_hrus, NEARZERO, &
      &    Hru_segment, Segment_hruarea, Tosegment, Noarea_flag, FT2_PER_ACRE
       USE PRMS_CLIMATEVARS, ONLY: Swrad, Potet
@@ -195,44 +193,37 @@
       Cfs2acft = Timestep_seconds/FT2_PER_ACRE
 
       ! add hru_ppt, hru_actet
+      Seginc_gwflow = 0.0D0
+      Seginc_ssflow = 0.0D0
+      Seginc_sroff = 0.0D0
+      Seginc_swrad = 0.0D0
+      Seginc_potet = 0.0D0
+      Seg_gwflow = 0.0D0
+      Seg_sroff = 0.0D0
+      Seg_ssflow = 0.0D0
       IF ( Cascade_flag==0 ) THEN
-        Seginc_gwflow = 0.0D0
-        Seginc_ssflow = 0.0D0
-        Seginc_sroff = 0.0D0
-        Seginc_swrad = 0.0D0
-        Seginc_potet = 0.0D0
         Seg_lateral_inflow = 0.0D0
-        Seg_gwflow = 0.0D0
-        Seg_sroff = 0.0D0
-        Seg_ssflow = 0.0D0
       ELSE
-        DO i = 1, Nsegment
-          Seg_lateral_inflow(i) = Strm_seg_in(i)
-        ENDDO
+        Seg_lateral_inflow = Strm_seg_in
       ENDIF
 
       DO jj = 1, Active_hrus
         j = Hru_route_order(jj)
         tocfs = DBLE( Hru_area(j) )*Cfs_conv
         Hru_outflow(j) = DBLE( (Sroff(j) + Ssres_flow(j) + Gwres_flow(j)) )*tocfs
-        IF ( Cascade_flag==1 ) CYCLE
         i = Hru_segment(j)
         IF ( i>0 ) THEN
           Seg_gwflow(i) = Seg_gwflow(i) + Gwres_flow(j)
           Seg_sroff(i) = Seg_sroff(i) + Sroff(j)
           Seg_ssflow(i) = Seg_ssflow(i) + Ssres_flow(j)
-          Seg_lateral_inflow(i) = Seg_lateral_inflow(i) + Hru_outflow(j)
-          Seginc_sroff(i) = Seginc_sroff(i) + DBLE(Sroff(j))*tocfs
-          Seginc_ssflow(i) = Seginc_ssflow(i) + DBLE(Ssres_flow(j))*tocfs
-          Seginc_gwflow(i) = Seginc_gwflow(i) + DBLE(Gwres_flow(j))*tocfs
+          IF ( Cascade_flag==0 ) Seg_lateral_inflow(i) = Seg_lateral_inflow(i) + Hru_outflow(j)
+          Seginc_sroff(i) = Seginc_sroff(i) + DBLE( Sroff(j) )*tocfs
+          Seginc_ssflow(i) = Seginc_ssflow(i) + DBLE( Ssres_flow(j) )*tocfs
+          Seginc_gwflow(i) = Seginc_gwflow(i) + DBLE( Gwres_flow(j) )*tocfs
           Seginc_swrad(i) = Seginc_swrad(i) + DBLE( Swrad(j)*Hru_area(j) )
           Seginc_potet(i) = Seginc_potet(i) + DBLE( Potet(j)*Hru_area(j) )
         ENDIF
       ENDDO
-
-      !WRITE ( PRMS_strmflow_unit, Outfmt ) (Seg_outflow(i), i = 1, Nsegment)
-
-      IF ( Cascade_flag==1 ) RETURN
 
 ! Divide solar radiation and PET by sum of HRU area to get avarage
       IF ( Noarea_flag==0 ) THEN
@@ -267,7 +258,7 @@
 !     routing_restart - write or read restart file
 !***********************************************************************
       SUBROUTINE routing_restart(In_out)
-      USE PRMS_MODULE, ONLY: Restart_outunit, Restart_inunit, Cascade_flag
+      USE PRMS_MODULE, ONLY: Restart_outunit, Restart_inunit
       USE PRMS_ROUTING
       IMPLICIT NONE
       ! Argument
@@ -279,25 +270,21 @@
       IF ( In_out==0 ) THEN
         WRITE ( Restart_outunit ) MODNAME
         WRITE ( Restart_outunit ) Cfs2acft
-        IF ( Cascade_flag==1 ) THEN
-          WRITE ( Restart_outunit ) Seginc_ssflow
-          WRITE ( Restart_outunit ) Seginc_sroff
-          WRITE ( Restart_outunit ) Seginc_gwflow
-          WRITE ( Restart_outunit ) Seginc_swrad
-          WRITE ( Restart_outunit ) Seginc_potet
-        ENDIF
+        WRITE ( Restart_outunit ) Seginc_ssflow
+        WRITE ( Restart_outunit ) Seginc_sroff
+        WRITE ( Restart_outunit ) Seginc_gwflow
+        WRITE ( Restart_outunit ) Seginc_swrad
+        WRITE ( Restart_outunit ) Seginc_potet
         WRITE ( Restart_outunit ) Hru_outflow
       ELSE
         READ ( Restart_inunit ) module_name
         CALL check_restart(MODNAME, module_name)
         READ ( Restart_inunit ) Cfs2acft
-        IF ( Cascade_flag==1 ) THEN
-          READ ( Restart_inunit ) Seginc_ssflow
-          READ ( Restart_inunit ) Seginc_sroff
-          READ ( Restart_inunit ) Seginc_gwflow
-          READ ( Restart_inunit ) Seginc_swrad
-          READ ( Restart_inunit ) Seginc_potet
-        ENDIF
+        READ ( Restart_inunit ) Seginc_ssflow
+        READ ( Restart_inunit ) Seginc_sroff
+        READ ( Restart_inunit ) Seginc_gwflow
+        READ ( Restart_inunit ) Seginc_swrad
+        READ ( Restart_inunit ) Seginc_potet
         READ ( Restart_inunit ) Hru_outflow
       ENDIF
       END SUBROUTINE routing_restart

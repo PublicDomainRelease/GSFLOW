@@ -12,9 +12,9 @@
       CHARACTER(LEN=40), SAVE :: Output_fmt, Output_fmt2
       CHARACTER(LEN=12), SAVE :: MODNAME
       INTEGER, SAVE :: Daily_flag, Double_vars
-      REAL, SAVE :: Monthdays
+      DOUBLE PRECISION, SAVE :: Monthdays
       INTEGER, SAVE, ALLOCATABLE :: Monthlyunit(:)
-      REAL, SAVE, ALLOCATABLE :: Nhru_var_monthly(:, :)
+      DOUBLE PRECISION, SAVE, ALLOCATABLE :: Nhru_var_monthly(:, :)
 ! Declared Parameters
       INTEGER, SAVE :: Prms_warmup
 ! Control Parameters
@@ -57,7 +57,7 @@
       INTEGER :: i
       CHARACTER(LEN=80), SAVE :: Version_nhru_summary
 !***********************************************************************
-      Version_nhru_summary = '$Id: nhru_summary.f90 7588 2015-08-18 22:58:42Z rsregan $'
+      Version_nhru_summary = 'nhru_summary.f90 2015-11-13 18:59:32Z'
       CALL print_module(Version_nhru_summary, 'Output Summary              ', 90)
       MODNAME = 'nhru_summary'
 
@@ -147,15 +147,14 @@
       ENDIF
 
       IF ( NhruOut_freq>1 ) THEN
-        Monthdays = 0.0
+        Monthdays = 0.0D0
         ALLOCATE ( Nhru_var_monthly(Nhru, NhruOutVars), Monthlyunit(NhruOutVars) )
-        Nhru_var_monthly = 0.0
+        Nhru_var_monthly = 0.0D0
       ENDIF
 
       WRITE ( Output_fmt2, 9002 ) Nhru
       ALLOCATE ( Nhru_var_daily(Nhru, NhruOutVars) )
       Nhru_var_daily = 0.0
-      ALLOCATE ( Dailyunit(NhruOutVars) ) ! don't need array if all in one file
       DO jj = 1, NhruOutVars
         IF ( Daily_flag==1 ) THEN
           fileName = NhruOutBaseFileName(:numchars(NhruOutBaseFileName))//NhruOutVar_names(jj)(:Nc_vars(jj))//'.csv'
@@ -194,7 +193,7 @@
       USE PRMS_SET_TIME, ONLY: Nowyear, Nowmonth, Nowday, Modays
       IMPLICIT NONE
 ! FUNCTIONS AND SUBROUTINES
-      INTRINSIC SNGL
+      INTRINSIC SNGL, DBLE
       INTEGER, EXTERNAL :: getvar
       EXTERNAL read_error
 ! Local Variables
@@ -230,7 +229,7 @@
             IF ( Nowday==End_day ) write_month = 1
           ENDIF
         ENDIF
-        Monthdays = Monthdays + 1.0
+        Monthdays = Monthdays + 1.0D0
       ENDIF
 
       IF ( Double_vars==1 ) THEN
@@ -248,7 +247,7 @@
         DO jj = 1, NhruOutVars
           DO j = 1, Active_hrus
             i = Hru_route_order(j)
-            Nhru_var_monthly(i, jj) = Nhru_var_monthly(i, jj) + Nhru_var_daily(i, jj)
+            Nhru_var_monthly(i, jj) = Nhru_var_monthly(i, jj) + DBLE( Nhru_var_daily(i, jj) )
             IF ( write_month==1 ) THEN
               IF ( NhruOut_freq==4 ) Nhru_var_monthly(i, jj) = Nhru_var_monthly(i, jj)/Monthdays
             ENDIF
@@ -261,8 +260,8 @@
         IF ( write_month==1 ) WRITE ( Monthlyunit(jj), Output_fmt) Nowyear, Nowmonth, Nowday, (Nhru_var_monthly(j,jj), j=1,Nhru)
       ENDDO
       IF ( write_month==1 ) THEN
-        Monthdays = 0.0
-        Nhru_var_monthly = 0.0
+        Monthdays = 0.0D0
+        Nhru_var_monthly = 0.0D0
       ENDIF
 
       END SUBROUTINE nhru_summaryrun

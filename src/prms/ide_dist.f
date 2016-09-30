@@ -76,7 +76,7 @@
       idedecl = 0
 
       Version_ide_dist =
-     +'$Id: ide_dist.f 7588 2015-08-18 22:58:42Z rsregan $'
+     +'ide_dist.f 2016-07-22 17:22:00Z'
       CALL print_module(Version_ide_dist,
      +                  'Temp & Precip Distribution  ', 77)
       MODNAME = 'ide_dist'
@@ -100,7 +100,7 @@
 ! declare parameters
       ALLOCATE ( Adjust_snow(Nrain,12) )
       IF ( declparam(MODNAME, 'adjust_snow', 'nrain,nmonths', 'real',
-     +     '-0.4', '-0.5', '0.5',
+     +     '-0.4', '-0.6', '0.6',
      +     'Monthly (January to December) snow downscaling adjustment'//
      +     ' factor for each precipitation measurement station',
      +     'Monthly (January to December) snow downscaling adjustment'//
@@ -109,7 +109,7 @@
 
       ALLOCATE ( Adjust_rain(Nrain,12) )
       IF ( declparam(MODNAME, 'adjust_rain', 'nrain,nmonths', 'real',
-     +     '-0.4', '-0.5', '0.5',
+     +     '-0.4', '-0.6', '0.6',
      +     'Monthly (January to December) rain downscaling adjustment'//
      +     ' factor for each precipitation measurement station',
      +     'Monthly (January to December) rain downscaling adjustment'//
@@ -176,7 +176,7 @@
      +     'Elevation of the solrad station used for DD curves',
      +     'Elevation of the solar radiation station used for'//
      +     ' degree-day curves to distribute temperature',
-     +     'elev_units')/=0 ) CALL read_error(1, 'solrad_elev')
+     +     'meters')/=0 ) CALL read_error(1, 'solrad_elev')
 
       ALLOCATE ( Psta_nuse(Nrain), Rain_nuse(Nrain) )
       IF ( declparam(MODNAME, 'psta_nuse', 'nrain', 'integer',
@@ -211,7 +211,7 @@
      +     'none')/=0 ) CALL read_error(1, 'dist_exp')
 
       IF ( declparam(MODNAME, 'ndist_psta', 'one', 'integer',
-     +     '1', 'bounded', 'nrain',
+     +     '0', 'bounded', 'nrain',
      +     'Number of stations for inverse distance calcs:'//
      +     ' precipitation',
      +     'Number of precipitation measurement stations for inverse'//
@@ -219,7 +219,7 @@
      +     'none')/=0 ) CALL read_error(1, 'ndist_psta')
 
       IF ( declparam(MODNAME, 'ndist_tsta', 'one', 'integer',
-     +     '1', 'bounded', 'ntemp',
+     +     '0', 'bounded', 'ntemp',
      +     'Number of stations for inverse distance calcs: temperature',
      +     'Number of temperature measurement stations for inverse'//
      +     ' distance calculations',
@@ -227,7 +227,7 @@
 
       ALLOCATE ( Tmax_allrain_sta(Nrain,12) )
       IF ( declparam(MODNAME, 'tmax_allrain_sta', 'nrain,nmonths',
-     +     'real', '38.0', '-8.0', '45.0',
+     +     'real', '38.0', '-8.0', '75.0',
      +     'Precipitation is rain if HRU max temperature >= this value',
      +     'Monthly (January to December) maximum air temperature'//
      +     ' when precipitation is assumed to be rain; if'//
@@ -320,9 +320,17 @@
 
       IF ( getparam(MODNAME, 'ndist_psta', 1, 'integer',
      +     Ndist_psta)/=0 ) CALL read_error(2, 'ndist_psta')
+      IF ( Ndist_psta==0 ) THEN
+        PRINT *, 'ERROR, need to specify ndist_psta > 0'
+        ierr = 1
+      ENDIF
 
       IF ( getparam(MODNAME, 'ndist_tsta', 1, 'integer',
      +     Ndist_tsta)/=0 ) CALL read_error(2, 'ndist_tsta')
+      IF ( Ndist_tsta==0 ) THEN
+        PRINT *, 'ERROR, need to specify ndist_tsta > 0'
+        ierr = 1
+      ENDIF
 
       IF ( getparam(MODNAME, 'tmax_allrain_sta', Nrain*12, 'real',
      +     Tmax_allrain_sta)/=0 ) CALL read_error(2, 'tmax_allrain_sta')
@@ -360,7 +368,7 @@
       ENDDO
       IF ( Temp_nsta<2 ) THEN
         PRINT *, 'ERROR, need to select at least 2 temperature stations'
-        PRINT *, '       using temp_nuse for ide_dist'
+        PRINT *, '       using tsta_nuse for ide_dist'
         ierr = 1
       ENDIF
 
@@ -374,7 +382,7 @@
       ENDDO
       IF ( Rain_nsta<2 ) THEN
         PRINT*,'ERROR, need to select at least 2 precipitation stations'
-        PRINT *, '       using temp_nuse for ide_dist'
+        PRINT *, '       using psta_nuse for ide_dist'
         ierr = 1
       ENDIF
       IF ( ierr==1 ) THEN
@@ -596,7 +604,7 @@
      +    Adjust_snow, Adjust_rain, Tmax_allsnow_sta, Tmax_allrain_sta
       USE PRMS_MODULE, ONLY: Nrain
       USE PRMS_BASIN, ONLY: Hru_area, Basin_area_inv, Active_hrus,
-     +    Hru_route_order, MM2INCH, Hru_elev_meters, NEARZERO
+     +    Hru_route_order, MM2INCH, Hru_elev_meters
       USE PRMS_CLIMATEVARS, ONLY: Tmaxf, Tminf, Newsnow, Pptmix,
      +    Hru_ppt, Hru_rain, Hru_snow, Basin_rain,
      +    Basin_ppt, Prmx, Basin_snow, Psta_elev_meters, Basin_obs_ppt,
@@ -681,16 +689,16 @@
         IF ( Prcp_wght_dist>0.0 )
      +       CALL compute_inv(Nrain, Rain_nsta, Rain_nuse, Psta_x, x,
      +            Psta_y, y, Precip_ide, dat_dist, Ndist_psta, Dist_exp)
-        IF ( dat_dist<NEARZERO ) dat_dist = 0.0
+!        IF ( dat_dist<0.0 ) dat_dist = 0.0
 
         IF ( Prcp_wght_elev>0.0 )
      +       CALL compute_elv(Nrain, Rain_nsta, Rain_nuse,
      +            Psta_elev_meters, z, Precip_ide, dat_elev, itype)
-        IF ( dat_elev<NEARZERO ) dat_elev = 0.0
+!        IF ( dat_elev<0.0 ) dat_elev = 0.0
 
         ppt = (Prcp_wght_dist*dat_dist) + (Prcp_wght_elev*dat_elev)
 
-        IF ( ppt>NEARZERO ) THEN
+        IF ( ppt>0.0 ) THEN
           IF ( Precip_units==1 ) ppt = ppt*MM2INCH
           CALL precip_form(ppt, Hru_ppt(n), Hru_rain(n), Hru_snow(n),
      +         Tmaxf(n), Tminf(n), Pptmix(n), Newsnow(n), Prmx(n),
@@ -829,7 +837,6 @@
       slope = -999.0D0
       b = -999.0D0
       ave = -999.0D0
-      z_dble = DBLE( Z )
 !
 ! First get rid of missing data
       n = 0
@@ -923,6 +930,7 @@
 ! If elevation to be estimated at is not within bounds of stations then
 ! you will be extrapolating, so use the slope from end to end:
 !
+      z_dble = DBLE( Z )
       IF ( z_dble<xmnelv(1) .OR. z_dble>xmnelv(num) ) THEN
 !
 ! Find lowest and highest 3-station mean

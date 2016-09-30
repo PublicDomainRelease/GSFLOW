@@ -62,7 +62,7 @@
 !***********************************************************************
       INTEGER FUNCTION prms2mfdecl()
       USE GSFPRMS2MF
-      USE PRMS_MODULE, ONLY: Nhrucell, Ngwcell, Nhru, Nsegment
+      USE PRMS_MODULE, ONLY: Nhrucell, Ngwcell, Nhru, Nsegment, Model
       IMPLICIT NONE
       INTEGER, EXTERNAL :: declparam, declvar
       EXTERNAL read_error, print_module
@@ -71,7 +71,7 @@
 !***********************************************************************
       prms2mfdecl = 0
 
-      Version_gsflow_prms2mf = '$Id: gsflow_prms2mf.f90 7562 2015-08-04 20:02:18Z rsregan $'
+      Version_gsflow_prms2mf = 'gsflow_prms2mf.f90 2016-07-19 10:53:00Z'
       CALL print_module(Version_gsflow_prms2mf, 'GSFLOW PRMS to MODFLOW      ', 90)
       MODNAME = 'gsflow_prms2mf'
 
@@ -95,7 +95,7 @@
       ALLOCATE (Cell_drain_rate(Ngwcell))
       IF ( declvar(MODNAME, 'cell_drain_rate', 'ngwcell', Ngwcell, 'real', &
      &     'Recharge rate for each cell', &
-     &     'MF L/T', Cell_drain_rate)/=0 ) CALL read_error(3, 'Cell_drain_rate')
+     &     'L3/T', Cell_drain_rate)/=0 ) CALL read_error(3, 'Cell_drain_rate')
 
       IF ( declvar(MODNAME, 'basin_reach_latflow', 'one', 1, 'double', &
      &     'Lateral flow into all reaches in basin', &
@@ -158,7 +158,7 @@
 !    &     'Index of stream segment associate with each stream reach', &
 !    &     'none')/=0 ) CALL read_error(1, 'reach_segment')
 
-      IF ( Nhru/=Nhrucell ) THEN
+      IF ( Nhru/=Nhrucell .OR. Model==99 ) THEN
         ALLOCATE ( Gvr_hru_pct(Nhrucell) )
         IF ( declparam('prms2mf', 'gvr_hru_pct', 'nhrucell', 'real', &
      &       '0.0', '0.0', '1.0', &
@@ -179,10 +179,10 @@
       USE GWFLAKMODULE, ONLY: NLAKES
       USE GSFMODFLOW, ONLY: Gwc_row, Gwc_col, Have_lakes
       USE PRMS_MODULE, ONLY: Nhru, Nsegment, Nlake, Print_debug, &
-     &    Nhrucell, Ngwcell, Gvr_cell_id, Gvr_hru_pct_adjusted, Logunt, Init_vars_from_file
+     &    Nhrucell, Ngwcell, Gvr_cell_id, Logunt, Init_vars_from_file
       USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type, &
      &    Basin_area_inv, Hru_area, NEARZERO
-      USE PRMS_SOILZONE, ONLY: Gvr_hru_id
+      USE PRMS_SOILZONE, ONLY: Gvr_hru_id, Gvr_hru_pct_adjusted
       USE GLOBAL, ONLY: NLAY, MXITER, NROW, NCOL
       USE GWFUZFMODULE, ONLY: IUZFBND
       IMPLICIT NONE
@@ -235,9 +235,8 @@
       IF ( Mnsziter<1 ) Mnsziter = MXITER
       IF ( Mnsziter<3 ) Mnsziter = 3
       IF ( Mnsziter>Mxsziter ) Mxsziter = Mnsziter
-      WRITE (Logunt, *) 'szconverge =', Szconverge, 'mxsziter =', &
-     &                  Mxsziter, 'mnsziter =', Mnsziter
-      WRITE (Logunt, *) 'Tolerance check for gvr_hru_pct:', PCT_CHK
+      WRITE (Logunt, '(A,F10.7,A,I4,A,I4,/)') 'szconverge =', Szconverge, ', mxsziter =', Mxsziter, ', mnsziter =', Mnsziter
+      WRITE (Logunt, '(A,D15.7,/)') 'Tolerance check for gvr_hru_pct:', PCT_CHK
 
       IF ( Nhru/=Nhrucell ) THEN
         IF ( getparam('prms2mf', 'gvr_hru_pct', Nhrucell, 'real', Gvr_hru_pct)/=0 ) CALL read_error(2, 'gvr_hru_pct')
@@ -368,6 +367,8 @@
           newpct(is) = newpct(is) + temp_pct(i)
 !        WRITE ( 840,'(F15.13)' ) temp_pct(i)
         ENDDO
+      ELSE
+        Gvr_hru_pct_adjusted = 1.0D0
       ENDIF
 !      STOP
 
@@ -409,9 +410,10 @@
       IF ( ierr==1 ) STOP
 
       Totalarea = Totalarea*Basin_area_inv
-      WRITE ( Logunt, '(A,D16.8,/)' ) &
-     &        ' Percent difference between GVR mapping and active model domain:', (Totalarea-1.0D0)*100.0D0
-      PRINT '(/,A,D15.7)', 'Percent difference between GVR mapping and active model domain:', (Totalarea-1.0D0)*100.0D0
+      WRITE ( Logunt, '(A,D15.7)' ) &
+     &        'Percent difference between GVR mapping and active model domain:', (Totalarea-1.0D0)*100.0D0
+      IF ( Print_debug>-1 ) &
+      &    PRINT '(/,A,D15.7)', 'Percent difference between GVR mapping and active model domain:', (Totalarea-1.0D0)*100.0D0
 
       IF ( Nhru/=Nhrucell ) DEALLOCATE ( hru_pct, newpct, temp_pct )
       !DEALLOCATE ( nseg_rch, seg_area )
@@ -444,12 +446,12 @@
 !     USE GLOBAL, ONLY: IOUT
       USE GWFUZFMODULE, ONLY: IUZFBND, NWAVST, PETRATE, IGSFLOW, FINF
       USE GWFLAKMODULE, ONLY: RNF, EVAPLK, PRCPLK, NLAKES
-      USE PRMS_MODULE, ONLY: KKITER, Gvr_hru_pct_adjusted, Nhrucell, Gvr_cell_id, Logunt
+      USE PRMS_MODULE, ONLY: KKITER, Nhrucell, Gvr_cell_id, Logunt
       USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_type, Hru_area, Lake_area, Lake_hru_id, NEARZERO
       USE PRMS_CLIMATEVARS, ONLY: Hru_ppt
       USE PRMS_FLOWVARS, ONLY: Hru_actet
       USE PRMS_SRUNOFF, ONLY: Hortonian_lakes
-      USE PRMS_SOILZONE, ONLY: Sm2gw_grav_old, Sm2gw_grav, Lakein_sz, Hrucheck, Gvr_hru_id, Unused_potet
+      USE PRMS_SOILZONE, ONLY: Sm2gw_grav_old, Sm2gw_grav, Lakein_sz, Hrucheck, Gvr_hru_id, Unused_potet, Gvr_hru_pct_adjusted
       IMPLICIT NONE
 ! FUNCTIONS AND SUBROUTINES
       INTEGER, EXTERNAL :: toStream

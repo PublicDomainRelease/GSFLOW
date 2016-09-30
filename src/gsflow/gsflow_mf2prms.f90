@@ -8,9 +8,9 @@
 !     ******************************************************************
       INTEGER FUNCTION gsflow_mf2prms()
       USE GSFMODFLOW, ONLY: Mfq2inch_conv, Gwc_col, Gwc_row
-      USE PRMS_SOILZONE, ONLY: Hrucheck, Gvr_hru_id
+      USE PRMS_SOILZONE, ONLY: Hrucheck, Gvr_hru_id, Gw2sm_grav, Gw2sm_grav_save
       USE GWFUZFMODULE, ONLY: SEEPOUT
-      USE PRMS_MODULE, ONLY: Process, Gw2sm_grav, Nhrucell, Gvr_cell_id, Gw2sm_grav_save
+      USE PRMS_MODULE, ONLY: Process, Nhrucell, Gvr_cell_id
       IMPLICIT NONE
 ! Functions
       EXTERNAL print_module
@@ -34,7 +34,7 @@
         ENDDO
 
       ELSEIF ( Process(:4)=='decl' ) THEN
-        Version_gsflow_mf2prms = '$Id: gsflow_mf2prms.f90 7535 2015-07-29 22:37:29Z rsregan $'
+        Version_gsflow_mf2prms = 'gsflow_mf2prms.f90 2016-03-11 20:42:32Z'
         CALL print_module(Version_gsflow_mf2prms, 'GSFLOW MODFLOW to PRMS      ', 90)
 !        MODNAME = 'gsflow_mf2prms'
       ENDIF

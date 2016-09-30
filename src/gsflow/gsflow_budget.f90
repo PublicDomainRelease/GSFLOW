@@ -9,9 +9,9 @@
 !      REAL, SAVE, ALLOCATABLE :: Fluxchange(:)
       CHARACTER(LEN=13), SAVE :: MODNAME
 !   Declared Variables
-      DOUBLE PRECISION, SAVE :: Total_pump, Total_pump_cfs, Stream_leakage, Sat_store
-      DOUBLE PRECISION, SAVE :: Stream_inflow, Basin_gw2sm, Gw_inout
-      DOUBLE PRECISION, SAVE :: Unsat_store, Sat_change_stor
+      DOUBLE PRECISION, SAVE :: Total_pump, Total_pump_cfs, StreamExchng2Sat_Q, Stream2Unsat_Q, Sat_S
+      DOUBLE PRECISION, SAVE :: Stream_inflow, Basin_gw2sm, NetBoundaryFlow2Sat_Q
+      DOUBLE PRECISION, SAVE :: Unsat_S, Sat_dS, LakeExchng2Sat_Q, Lake2Unsat_Q
       REAL, SAVE, ALLOCATABLE :: Reach_cfs(:), Reach_wse(:), Streamflow_sfr(:)
       REAL, SAVE, ALLOCATABLE :: Gw2sm(:), Actet_gw(:), Actet_tot_gwsz(:)
       REAL, SAVE, ALLOCATABLE :: Uzf_infil_map(:), Sat_recharge(:), Mfoutflow_to_gvr(:)
@@ -58,7 +58,7 @@
 !***********************************************************************
       gsfbuddecl = 0
 
-      Version_gsflow_budget = '$Id: gsflow_budget.f90 7508 2015-07-23 22:15:56Z rniswon $'
+      Version_gsflow_budget = 'gsflow_budget.f90 2016-06-08 14:13:00Z'
       CALL print_module(Version_gsflow_budget, 'GSFLOW Output Budget Summary', 90)
       MODNAME = 'gsflow_budget'
 
@@ -66,34 +66,54 @@
       IF ( Nreach==-1 ) CALL read_error(6, 'nreach')
 
 ! Declared Variables
-      IF ( declvar(MODNAME, 'gw_inout', 'one', 1, 'double', &
-     &     'Volumetric flow rate to saturated zone along external'// &
-     &     ' boundary (negative value is flow out of modeled region)', &
-     &     'L3', Gw_inout)/=0 ) CALL read_error(3, 'gw_inout')
+      IF ( declvar(MODNAME, 'NetBoundaryFlow2Sat_Q', 'one', 1, 'double', &
+     &     'Volumetric flow rate to the saturated zone along the external boundary'// &
+     &     ' (negative value is flow out of model domain)', &
+     &     'L3', NetBoundaryFlow2Sat_Q)/=0 ) CALL read_error(3, 'NetBoundaryFlow2Sat_Q')
 
-      IF ( declvar(MODNAME, 'stream_leakage', 'one', 1, 'double', &
-     &     'Volumetric flow rate of stream leakage to the unsaturated and saturated zones', &
-     &     'L3', Stream_leakage)/=0 ) CALL read_error(3, 'stream_leakage')
+      IF ( declvar(MODNAME, 'StreamExchng2Sat_Q', 'one', 1, 'double', &
+     &     'Volumetric flow rate of exchange betweeen streams and the saturated'// &
+     &     ' zone (value is equal to Strm2UZGW minus SatDisch2Stream_Q, where a'// &
+     &     ' negative value indicates a net loss from streams)', &
+     &     'L3', StreamExchng2Sat_Q)/=0 ) CALL read_error(3, 'StreamExchng2Sat_Q')
+
+      IF ( declvar(MODNAME, 'Stream2Unsat_Q', 'one', 1, 'double', &
+     &     'Volumetric flow rate betweeen streams and the unsaturated'// &
+     &     ' zone (value is equal to Strm2UZGW minus SatDisch2Stream_Q, where a'// &
+     &     ' negative value indicates a net loss from streams)', &
+     &     'L3', Stream2Unsat_Q)/=0 ) CALL read_error(3, 'Stream2Unsat_Q')
+
+      IF ( declvar(MODNAME, 'LakeExchng2Sat_Q', 'one', 1, 'double', &
+     &     'Volumetric flow rate of exchange betweeen lakes and the saturated'// &
+     &     ' zone (value is equal to Strm2UZGW minus SatDisch2Stream_Q, where a'// &
+     &     ' negative value indicates a net loss from streams)', &
+     &     'L3', LakeExchng2Sat_Q)/=0 ) CALL read_error(3, 'LakeExchng2Sat_Q')
+
+      IF ( declvar(MODNAME, 'Lake2Unsat_Q', 'one', 1, 'double', &
+     &     'Volumetric flow rate betweeen lakes and the unsaturated'// &
+     &     ' zone (value is equal to Strm2UZGW minus SatDisch2Stream_Q, where a'// &
+     &     ' negative value indicates a net loss from streams)', &
+     &     'L3', Lake2Unsat_Q)/=0 ) CALL read_error(3, 'Lake2Unsat_Q')
 
       IF ( declvar(MODNAME, 'stream_inflow', 'one', 1, 'double', &
      &     'Specified volumetric stream inflow rate into model ', &
      &     'L3', Stream_inflow)/=0 ) CALL read_error(3, 'stream_inflow')
 
-      IF ( declvar(MODNAME, 'unsat_store', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'Unsat_S', 'one', 1, 'double', &
      &     'Volume of water in the unsaturated zone', &
-     &     'L3', Unsat_store)/=0 ) CALL read_error(3, 'unsat_store')
+     &     'L3', Unsat_S)/=0 ) CALL read_error(3, 'Unsat_S')
 
-      IF ( declvar(MODNAME, 'sat_store', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'Sat_S', 'one', 1, 'double', &
      &     'Volume of water in the saturated zone', &
-     &     'L3', Sat_store)/=0 ) CALL read_error(3, 'sat_store')
+     &     'L3', Sat_S)/=0 ) CALL read_error(3, 'Sat_S')
 
-      IF ( declvar(MODNAME, 'sat_change_stor', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'Sat_dS', 'one', 1, 'double', &
      &     'Change in saturated-zone storage', &
-     &     'L3', Sat_change_stor)/=0 ) CALL read_error(3, 'sat_change_stor')
+     &     'L3', Sat_dS)/=0 ) CALL read_error(3, 'Sat_dS')
 
       IF ( declvar(MODNAME, 'total_pump', 'one', 1, 'double', &
-     &     'Total pumpage from all cells in MODFLOW units', &
-     &     'none', Total_pump)/=0 ) CALL read_error(3, 'total_pump')
+     &     'Total pumpage from all cells', &
+     &     'L3', Total_pump)/=0 ) CALL read_error(3, 'total_pump')
 
       IF ( declvar(MODNAME, 'total_pump_cfs', 'one', 1, 'double', &
      &     'Total pumpage from all cells', &
@@ -107,15 +127,15 @@
       ALLOCATE (Reach_wse(Nreach))
       IF ( declvar(MODNAME, 'reach_wse', 'nreach', Nreach, 'real', &
      &     'Water surface elevation in each stream reach', &
-     &     'length', Reach_wse)/=0 ) CALL read_error(3, 'reach_wse')
+     &     'L', Reach_wse)/=0 ) CALL read_error(3, 'reach_wse')
 
       IF ( declvar(MODNAME, 'basin_gw2sm', 'one', 1, 'double', &
-     &     'Basin average water exfiltrated from UZF and added to SZ', &
+     &     'Basin average water exfiltrated from unsaturated and saturated zones and added to soil zone', &
      &     'inches', Basin_gw2sm)/=0) CALL read_error(3, 'basin_gw2sm')
 
       ALLOCATE (Gw2sm(Nhru))
       IF ( declvar(MODNAME, 'gw2sm', 'nhru', Nhru, 'real', &
-     &     'HRU average water exfiltrated from groundwater model and added back to SM', &
+     &     'HRU average water exfiltrated from groundwater model and added back to soil zone', &
      &     'inches', Gw2sm)/=0 ) CALL read_error(3, 'gw2sm')
 
       ALLOCATE (Actet_gw(Nhru))
@@ -135,17 +155,17 @@
 
       ALLOCATE ( Uzf_infil_map(Nhru) )
       IF ( declvar(MODNAME, 'uzf_infil_map', 'nhru', Nhru, 'real', &
-     &     'HRU total gravity drainage to UZF cells', 'MFL3', &
+     &     'HRU total gravity drainage to UZF cells', 'L3', &
      &     Uzf_infil_map)/=0 ) CALL read_error(3, 'uzf_infil_map')
 
       ALLOCATE ( Sat_recharge(Nhru) )
       IF ( declvar(MODNAME, 'sat_recharge', 'nhru', Nhru, 'real', &
-     &     'HRU total recharge to the saturated zone', 'MFL3', &
+     &     'HRU total recharge to the saturated zone', 'L3', &
      &     Sat_recharge)/=0 ) CALL read_error(3, 'sat_recharge')
 
       ALLOCATE ( Mfoutflow_to_gvr(Nhru) )
       IF ( declvar(MODNAME, 'mfoutflow_to_gvr', 'nhru', Nhru, 'real', &
-     &     'MODFLOW total discharge and ET to each HRU', 'MFL3', &
+     &     'MODFLOW total discharge and ET to each HRU', 'L3', &
      &     Mfoutflow_to_gvr)/=0 ) CALL read_error(3, 'mfoutflow_to_gvr')
 
       END FUNCTION gsfbuddecl
@@ -174,12 +194,15 @@
         Reach_wse = 0.0 ! dimension NSTRM
         Total_pump = 0.0D0
         Total_pump_cfs = 0.0D0
-        Unsat_store = UZTSRAT(6)
+        Unsat_S = UZTSRAT(6)
         IF ( IUNIT(1)>0 ) CALL MODFLOW_GET_STORAGE_BCF()
         IF ( IUNIT(23)>0 ) CALL MODFLOW_GET_STORAGE_LPF()
         IF ( IUNIT(62)>0 ) CALL MODFLOW_GET_STORAGE_UPW()
-        Sat_change_stor = 0.0D0
-        Stream_leakage = 0.0D0
+        Sat_dS = 0.0D0
+        StreamExchng2Sat_Q = 0.0D0
+        Stream2Unsat_Q = 0.0D0
+        LakeExchng2Sat_Q = 0.0D0
+        Lake2Unsat_Q = 0.0D0
         Stream_inflow = 0.0D0
         Basin_gw2sm = 0.0D0
         Uzf_infil_map = 0.0 ! dimension nhru
@@ -210,8 +233,7 @@
 !Warning, modifies Gw_rejected_grav, Gw_rejected_grav
       USE GSFPRMS2MF, ONLY: Excess, Gw_rejected_grav
 !Warning, modifies Gw2sm_grav
-      USE PRMS_MODULE, ONLY: Gw2sm_grav, Nhrucell, Gvr_cell_id, &
-     &    Gvr_hru_pct_adjusted, Gw_rejected, Gw2sm_grav_save, Basin_szreject
+      USE PRMS_MODULE, ONLY: Nhrucell, Gvr_cell_id !, Print_debug
       USE GLOBAL, ONLY: IUNIT, DELR, DELC
       USE GWFBASMODULE, ONLY: VBVL, DELT
       USE GWFUZFMODULE, ONLY: SEEPOUT, UZFETOUT, UZTSRAT, REJ_INF, GWET, UZOLSFLX, UZFLWT
@@ -227,7 +249,8 @@
 !Warning, modifies Basin_soil_moist, Basin_ssstor
       USE PRMS_SRUNOFF, ONLY: Basin_sroff
       USE PRMS_SOILZONE, ONLY: Pref_flow_stor, Gravity_stor_res, Hrucheck, Gvr_hru_id, &
-     &    Basin_pref_stor, Basin_slstor, Gvr2sm, Basin_gvr2sm
+     &    Basin_pref_stor, Basin_slstor, Gvr2sm, Basin_gvr2sm, Gw2sm_grav, &
+     &    Gw_rejected, Gw2sm_grav_save, Basin_szreject, Gvr_hru_pct_adjusted
       IMPLICIT NONE
 ! Functions
       INTRINSIC :: ABS, SNGL
@@ -373,8 +396,8 @@
           IF ( Soil_moist(i)<0.0 ) THEN
 !           remove water from ET to maintain water balance
 !           PRINT *, 'negative GW flux > soil_moist', Soil_moist(i), i, Soil_moist(i)/Hru_frac_perv(i), KKITER
-            Hru_actet(i) = Hru_actet(i) - Soil_moist(i)/Hru_frac_perv(i)
-!            Perv_actet(i) = Perv_actet(i) - Soil_moist(i)/Hru_frac_perv(i)
+            Hru_actet(i) = Hru_actet(i) - Soil_moist(i)*Hru_frac_perv(i)
+!            Perv_actet(i) = Perv_actet(i) - Soil_moist(i)*Hru_frac_perv(i)
 !            if (hru_actet(i)<0.0) print*,'budget hru_actet', hru_actet(i)
             Soil_moist(i) = 0.0
           ENDIF
@@ -422,9 +445,9 @@
       IF ( IUNIT(62)>0 ) CALL MODFLOW_GET_STORAGE_UPW()
 
       IF ( Vbnm_index(1)==-1 ) CALL MODFLOW_VB_DECODE(Vbnm_index)
-      Sat_change_stor = VBVL(4,Vbnm_index(12)) - VBVL(3,Vbnm_index(12))
+      Sat_dS = VBVL(4,Vbnm_index(12)) - VBVL(3,Vbnm_index(12))
 
-      Unsat_store = UZTSRAT(6)
+      Unsat_S = UZTSRAT(6)
 
 !  Stuff from MODFLOW
 
@@ -499,11 +522,11 @@
         Well_out = Well_out + VBVL(4, Vbnm_index(14))
       ENDIF
 
-      Gw_inout = modflow_in - modflow_out
+      NetBoundaryFlow2Sat_Q = modflow_in - modflow_out
 
       CALL getStreamFlow()
 
-      Basin_gwflow_cfs = Stream_leakage*Mfl3t_to_cfs
+      Basin_gwflow_cfs = StreamExchng2Sat_Q*Mfl3t_to_cfs
 
 !     CALL getHeads()
 
@@ -514,10 +537,10 @@
 !***********************************************************************
 ! Figure out the total storage of the cells in MODFLOW
 ! written by markstro but hijacked from MODFLOW subroutine SGWF1BCF6S
-! Use Sat_store for display purposes only, don't use in budget.
+! Use Sat_S for display purposes only, don't use in budget.
 !***********************************************************************
       SUBROUTINE MODFLOW_GET_STORAGE_BCF()
-      USE GSFBUDGET, ONLY: Sat_store
+      USE GSFBUDGET, ONLY: Sat_S
       USE GLOBAL, ONLY: NCOL, NROW, NLAY, IBOUND, BOTM, HNEW, LBOTM
       USE GWFBASMODULE, ONLY: DELT
       USE GWFBCFMODULE, ONLY: LAYCON, SC1, SC2
@@ -527,7 +550,7 @@
       DOUBLE PRECISION :: tled, top, bot, rho, storage, head
 !***********************************************************************
       tled = 1.0D0/DELT
-      Sat_store = 0.0D0
+      Sat_S = 0.0D0
 
 !5------LOOP THROUGH EVERY CELL IN THE GRID.
       kt = 0
@@ -561,7 +584,7 @@
               ELSE
                 storage = rho*(head-bot)*tled
               ENDIF
-              Sat_store = Sat_store + storage
+              Sat_S = Sat_S + storage
             ENDIF
 
           ENDDO
@@ -573,10 +596,10 @@
 !***********************************************************************
 ! Figure out the total storage of the cells in MODFLOW
 ! written by markstro but hijacked from MODFLOW subroutine SGWF1LPF1S
-! Use Sat_store for display purposes only, don't use in budget.
+! Use Sat_S for display purposes only, don't use in budget.
 !***********************************************************************
       SUBROUTINE MODFLOW_GET_STORAGE_LPF()
-      USE GSFBUDGET, ONLY: Sat_store
+      USE GSFBUDGET, ONLY: Sat_S
       USE GLOBAL, ONLY: NCOL, NROW, NLAY, IBOUND, BOTM, HNEW, LBOTM
       USE GWFBASMODULE, ONLY: DELT
       USE GWFLPFMODULE, ONLY: LAYTYP, SC1, SC2
@@ -586,7 +609,7 @@
       DOUBLE PRECISION :: tled, top, bot, rho, storage, head
 !***********************************************************************
       tled = 1.0D0/DELT
-      Sat_store = 0.0D0
+      Sat_S = 0.0D0
 
 !5------LOOP THROUGH EVERY CELL IN THE GRID.
       kt = 0
@@ -621,7 +644,7 @@
               ELSE
                 storage = rho*(head-bot)*tled
               ENDIF
-              Sat_store = Sat_store + storage
+              Sat_S = Sat_S + storage
             ENDIF
 
           ENDDO
@@ -633,10 +656,10 @@
 !***********************************************************************
 ! Figure out the total storage of the cells in MODFLOW
 ! written by markstro but hijacked from MODFLOW subroutine SGWF1LPF1S
-! Use Sat_store for display purposes only, don't use in budget.
+! Use Sat_S for display purposes only, don't use in budget.
 !***********************************************************************
       SUBROUTINE MODFLOW_GET_STORAGE_UPW()
-      USE GSFBUDGET, ONLY: Sat_store
+      USE GSFBUDGET, ONLY: Sat_S
       USE PRMS_BASIN, ONLY: NEARZERO
       USE GLOBAL, ONLY: NCOL, NROW, NLAY, IBOUND, BOTM, HNEW, LBOTM
       USE GWFBASMODULE, ONLY: DELT, HDRY
@@ -649,7 +672,7 @@
       DOUBLE PRECISION :: tled, top, bot, rho, storage, head
 !***********************************************************************
       tled = 1.0D0/DELT
-      Sat_store = 0.0D0
+      Sat_S = 0.0D0
 
 !5------LOOP THROUGH EVERY CELL IN THE GRID.
       kt = 0
@@ -679,7 +702,7 @@
               ELSE
                 storage = rho*(head-bot)*tled
               ENDIF
-              Sat_store = Sat_store + storage
+              Sat_S = Sat_S + storage
             ENDIF
 
           ENDDO
@@ -722,7 +745,7 @@
 !***********************************************************************
 !***********************************************************************
       SUBROUTINE getStreamFlow()
-      USE GSFBUDGET, ONLY: Reach_cfs, Reach_wse, Stream_leakage, &
+      USE GSFBUDGET, ONLY: Reach_cfs, Reach_wse, StreamExchng2Sat_Q, &
      &    Stream_inflow, Streamflow_sfr
       USE GSFMODFLOW, ONLY: Mfl3t_to_cfs
       USE GWFSFRMODULE, ONLY: STRM, IOTSG, NSS, SGOTFLW, SFRRATOUT, &
@@ -756,7 +779,7 @@
         Stream_inflow = Stream_inflow + TOTSPFLOW
       END IF
 ! RGN added next line.
-      Stream_leakage = SFRRATIN - SFRRATOUT
+      StreamExchng2Sat_Q = SFRRATIN - SFRRATOUT
       Basin_cfs = Basin_cfs*Mfl3t_to_cfs
       Basin_cms = Basin_cfs*CFS2CMS_CONV
       Basin_stflow_out = Basin_cfs*Cfs2inches
@@ -811,8 +834,9 @@
 !***********************************************************************
       IF ( In_out==0 ) THEN
         WRITE ( Restart_outunit ) MODNAME
-        WRITE ( Restart_outunit ) Total_pump, Total_pump_cfs, Unsat_store, Sat_store, &
-     &          Sat_change_stor, Stream_leakage, Stream_inflow, Basin_gw2sm
+        WRITE ( Restart_outunit ) Total_pump, Total_pump_cfs, Unsat_S, Sat_S, &
+     &          Sat_dS, StreamExchng2Sat_Q, Stream2Unsat_Q, Stream_inflow, &
+     &          Basin_gw2sm, LakeExchng2Sat_Q, Lake2Unsat_Q
         WRITE ( Restart_outunit ) Gw2sm
         WRITE ( Restart_outunit ) Actet_gw
         WRITE ( Restart_outunit ) Actet_tot_gwsz
@@ -825,8 +849,9 @@
       ELSE
         READ ( Restart_inunit ) module_name
         CALL check_restart(MODNAME, module_name)
-        READ ( Restart_inunit ) Total_pump, Total_pump_cfs, Unsat_store, Sat_store, &
-     &         Sat_change_stor, Stream_leakage, Stream_inflow, Basin_gw2sm
+        READ ( Restart_inunit ) Total_pump, Total_pump_cfs, Unsat_S, Sat_S, &
+     &         Sat_dS, StreamExchng2Sat_Q, Stream2Unsat_Q, Stream_inflow, &
+     &         Basin_gw2sm, LakeExchng2Sat_Q, Lake2Unsat_Q
         READ ( Restart_inunit ) Gw2sm
         READ ( Restart_inunit ) Actet_gw
         READ ( Restart_inunit ) Actet_tot_gwsz

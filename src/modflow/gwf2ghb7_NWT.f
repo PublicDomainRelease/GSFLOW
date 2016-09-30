@@ -233,7 +233,6 @@ C
 C     SPECIFICATIONS:
 C     ------------------------------------------------------------------
       USE GLOBAL,       ONLY:IBOUND,RHS,HCOF
-!!      USE GLOBAL,       ONLY:IBOUND,RHS,HCOF,botm,lbotm
       USE GWFGHBMODULE, ONLY:NBOUND,BNDS
 C     ------------------------------------------------------------------
       CALL SGWF2GHB7PNT(IGRID)
@@ -272,8 +271,6 @@ C
 C     SPECIFICATIONS:
 C     ------------------------------------------------------------------
       USE GLOBAL,      ONLY:IOUT,NCOL,NROW,NLAY,IBOUND,HNEW,BUFF
-!!      USE GLOBAL,      ONLY:IOUT,NCOL,NROW,NLAY,IBOUND,HNEW,BUFF,
-!!     1                      botm, lbotm
       USE GWFBASMODULE,ONLY:MSUM,ICBCFL,IAUXSV,DELT,PERTIM,TOTIM,
      1                      VBVL,VBNM
       USE GWFGHBMODULE,ONLY:NBOUND,IGHBCB,BNDS,NGHBVL,GHBAUX

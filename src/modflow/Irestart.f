@@ -327,7 +327,9 @@ C
      +                      IXSEC,IUNIT
       USE GWFBASMODULE,ONLY:HNOFLO
       USE GWFNWTMODULE, ONLY:HITER
+      INTEGER, INTENT(IN) :: IOUT, IURESTARTHEAD
       DOUBLE PRECISION HNF
+      INTEGER K, KK, I, J
       CHARACTER*30 ANAME
       DATA ANAME /'           RESTART HEADS READ '/
 C        SPECIFICATIONS:
@@ -375,13 +377,16 @@ C     ******************************************************************
 C
 C        SPECIFICATIONS:
 C     ------------------------------------------------------------------
+      INTEGER, INTENT(IN) :: II, JJ, K, IN, IOUT
       CHARACTER*24 ANAME
-      DIMENSION A(JJ,II)
+      REAL :: A(JJ,II)
       CHARACTER*20 FMTIN
 !     CHARACTER*200 CNTRL
       CHARACTER*16 TEXT
 !     CHARACTER*200 FNAME
       INCLUDE 'openspec.inc'
+      INTEGER LOCAT, I, J, KSTP, KPER, NCOL, NROW, ILAY
+      REAL CNSTNT, PERTIM, TOTIM
 C     ------------------------------------------------------------------
 C
 C1------SET LOCAT TO NEGATIVE UNIT NUMBER FOR UNFORMATTED FILE
@@ -465,6 +470,8 @@ C     ------------------------------------------------------------------
 !!      USE GWFBASMODULE,ONLY:PERTIM,TOTIM,LBHDSV,CHEDFM,IOFLG
       USE GSFMODFLOW, ONLY: KPER, KSTP
 C
+      INTEGER, INTENT(IN) :: IHEDFM
+      INTEGER K, KL, I, J, IFIRST, KK, IHEDUN
       CHARACTER*16 TEXT
       DATA TEXT /'            HEAD'/
 C     ------------------------------------------------------------------

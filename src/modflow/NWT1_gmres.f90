@@ -12,7 +12,7 @@
 !C------------------------------------------------------------------
       SUBROUTINE GMRES7AR(IN)
 !rgn------REVISION NUMBER CHANGED TO BE CONSISTENT WITH NWT RELEASE
-!rgn------NEW VERSION NUMBER 1.1.0, 9/11/2015
+!rgn------NEW VERSION NUMBER 1.1.1, 7/28/2016
 
       USE GLOBAL, ONLY: IOUT,STRT,IBOUND
       USE GMRESMODULE
@@ -208,7 +208,7 @@
   DOUBLE PRECISION, DIMENSION(:), ALLOCATABLE :: c, s, rs, mvy
   DOUBLE PRECISION, PARAMETER :: eps_a=1.e-16_kdp   ! *** make multiple of mach eps
   ! ... Set string for use with RCS ident command
-  CHARACTER(LEN=80) :: ident_string='$RCSfile: gmres.f90,v $//$Revision: 7659 $'
+  CHARACTER(LEN=80) :: ident_string='$RCSfile: gmres.f90,v $//$Revision: 6960 $'
   !     ------------------------------------------------------------------
   !...
   ! ... comments follow Templates p.20 as closely as possible
@@ -403,7 +403,7 @@ CONTAINS
     !
     INTEGER :: i, k
     ! ... Set string for use with RCS ident command
-    CHARACTER(LEN=80) :: ident_string='$RCSfile: gmres.f90,v $//$Revision: 7659 $'
+    CHARACTER(LEN=80) :: ident_string='$RCSfile: gmres.f90,v $//$Revision: 6960 $'
     !     ------------------------------------------------------------------
     !...
     ! ... forward solve
@@ -438,7 +438,7 @@ CONTAINS
     INTEGER :: i, k
     DOUBLE PRECISION :: t
     ! ... Set string for use with RCS ident command
-    CHARACTER(LEN=80) :: ident_string='$RCSfile: gmres.f90,v $//$Revision: 7659 $'
+    CHARACTER(LEN=80) :: ident_string='$RCSfile: gmres.f90,v $//$Revision: 6960 $'
     !     ------------------------------------------------------------------
     !...
     DO  i = 1,n                ! ... n is known from host

@@ -1,6 +1,5 @@
-      ! $Id: gwf2bas7_NWT.f 7388 2015-05-01 23:00:52Z rniswon $
       MODULE GLOBAL
-        PARAMETER(NIUNIT=150) !gsf
+        PARAMETER(NIUNIT=100)
         INTEGER, SAVE, POINTER    ::NCOL,NROW,NLAY,NPER,NBOTM,NCNFBD
         INTEGER, SAVE, POINTER    ::ITMUNI,LENUNI,IXSEC,ITRSS,INBAS
         INTEGER, SAVE, POINTER    ::IFREFM,NODES,IOUT,MXITER
@@ -119,8 +118,8 @@ C  this file to use the IMPLICIT NONE statement.
       END MODULE GWFBASMODULE
 
 
-      SUBROUTINE GWF2BAS7AR(INUNIT,CUNIT,VERSION,IUDIS,IUZON,
-     2        IUMLT,MAXUNIT,IGRID,IUOC,HEADNG,IUPVAL,MFVNAM,VERSION2)
+      SUBROUTINE GWF2BAS7AR(INUNIT,CUNIT,VERSION,IUDIS,IUZON,IUMLT,
+     2              MAXUNIT,IGRID,IUOC,HEADNG,IUPVAL,MFVNAM)
 C     ******************************************************************
 C     Allocate and Read for GWF Basic Package
 C     ******************************************************************
@@ -129,30 +128,22 @@ C        SPECIFICATIONS:
 C     ------------------------------------------------------------------
       USE GLOBAL,     ONLY:NCOL,NROW,NLAY,NPER,NBOTM,NCNFBD,ITMUNI,
      1                     LENUNI,IXSEC,ITRSS,INBAS,IFREFM,NODES,IOUT,
-     2                     MXITER,IUNIT,NIUNIT,HNEW,LAYHDT,LAYHDS,
-     4                     HOLD,IBOUND,CR,CC,CV,HCOF,RHS,BUFF,STRT,
+     2                     MXITER,IUNIT,NIUNIT,HNEW,LBOTM,LAYCBD,LAYHDT,
+     3                     LAYHDS,PERLEN,NSTP,TSMULT,ISSFLG,DELR,DELC,
+     4                     BOTM,HOLD,IBOUND,CR,CC,CV,HCOF,RHS,BUFF,STRT,
      5                     DDREF
-!!      USE GLOBAL,     ONLY:NCOL,NROW,NLAY,NPER,NBOTM,NCNFBD,ITMUNI,
-!!     1                     LENUNI,IXSEC,ITRSS,INBAS,IFREFM,NODES,IOUT,
-!!     2                     MXITER,IUNIT,NIUNIT,HNEW,LBOTM,LAYCBD,LAYHDT,
-!!     3                     LAYHDS,PERLEN,NSTP,TSMULT,ISSFLG,DELR,DELC,
-!!     4                     BOTM,HOLD,IBOUND,CR,CC,CV,HCOF,RHS,BUFF,STRT,
-!!     5                     DDREF
       USE PARAMMODULE,ONLY:MXPAR,MXCLST,MXINST,ICLSUM,IPSUM,
      1                     INAMLOC,NMLTAR,NZONAR,NPVAL,
-     2                     B,IACTIVE,IPLOC,IPCLST,PARNAM,PARTYP,INAME
-!!      USE PARAMMODULE,ONLY:MXPAR,MXCLST,MXINST,ICLSUM,IPSUM,
-!!     1                     INAMLOC,NMLTAR,NZONAR,NPVAL,
-!!     2                     B,IACTIVE,IPLOC,IPCLST,PARNAM,PARTYP,
-!!     3                     ZONNAM,MLTNAM,INAME
+     2                     B,IACTIVE,IPLOC,IPCLST,PARNAM,PARTYP,
+     3                     ZONNAM,MLTNAM,INAME
       USE GWFBASMODULE,ONLY:MSUM,IHEDFM,IHEDUN,IDDNFM,IDDNUN,IBOUUN,
      1                      LBHDSV,LBDDSV,LBBOSV,IBUDFL,ICBCFL,IHDDFL,
      2                      IAUXSV,IBDOPT,IPRTIM,IPEROC,ITSOC,ICHFLG,
      3                      IDDREF,IDDREFNEW,DELT,PERTIM,TOTIM,HNOFLO,
-     4                      HDRY,STOPER,CHEDFM,CDDNFM,CBOUFM,VBVL !! ,VBNM
+     4                      HDRY,STOPER,CHEDFM,CDDNFM,CBOUFM,VBVL,VBNM
 C
       CHARACTER*4 CUNIT(NIUNIT)
-      CHARACTER*(*) VERSION,VERSION2
+      CHARACTER*(*) VERSION
       CHARACTER*80 HEADNG(2)
       CHARACTER*(*) MFVNAM
       CHARACTER*200 LINE
@@ -189,11 +180,11 @@ C
 C
 C2------Open all files in name file.
       CALL SGWF2BAS7OPEN(INUNIT,IOUT,IUNIT,CUNIT,NIUNIT,
-     &                 VERSION,INBAS,MAXUNIT,MFVNAM,VERSION2)
+     &                 VERSION,INBAS,MAXUNIT,MFVNAM)
 C
 C3------PRINT A MESSAGE IDENTIFYING THE BASIC PACKAGE.
       WRITE(IOUT,1)INBAS
-    1 FORMAT(1X,/1X,'BAS -- BASIC PACKAGE, VERSION 1.0.7, 1/15/2013',
+    1 FORMAT(1X,/1X,'BAS -- BASIC PACKAGE, VERSION 1.1.1, 7/28/2016',
      2' INPUT READ FROM UNIT ',I4)
 C
 C3A-----SHOW PRECISION OF VARIABLES
@@ -462,9 +453,8 @@ C
 C        SPECIFICATIONS:
 C     ------------------------------------------------------------------
       USE GLOBAL,      ONLY:IOUT,NLAY,NSTP,IXSEC,IFREFM
-      USE GWFBASMODULE,ONLY:IHDDFL,IBUDFL,ICBCFL,IPEROC,IBDOPT,IOFLG
-!!      USE GWFBASMODULE,ONLY:IHDDFL,IBUDFL,ICBCFL,IPEROC,ITSOC,IBDOPT,
-!!     1                      IOFLG
+      USE GWFBASMODULE,ONLY:IHDDFL,IBUDFL,ICBCFL,IPEROC,ITSOC,IBDOPT,
+     1                      IOFLG
 C
 C     ------------------------------------------------------------------
       CALL SGWF2BAS7PNT(IGRID)
@@ -588,7 +578,7 @@ C
 C
       IF(ISA.EQ.0) THEN
          WRITE(IOUT,9) KSTP,KPER
-    9    FORMAT(1X,/9X,'NO FLOW EQUATION TO SOLVE IN TIME STEP',I6, !gsf
+    9    FORMAT(1X,/9X,'NO FLOW EQUATION TO SOLVE IN TIME STEP',I5,
      1      ' OF STRESS PERIOD',I3,/1X,'ALL HEADS ARE 0.0')
          IPFLG=1
       END IF
@@ -598,7 +588,7 @@ C2------IF ITERATIVE PROCEDURE FAILED TO CONVERGE PRINT MESSAGE
          WRITE(IOUT,17) KSTP,KPER
    17    FORMAT(1X,/9X,
      1 '****FAILED TO MEET SOLVER CONVERGENCE CRITERIA IN TIME STEP',
-     2   I6,' OF STRESS PERIOD ',I4,'****') !gsf
+     2   I5,' OF STRESS PERIOD ',I4,'****')
          IPFLG=1
       END IF
 C
@@ -624,7 +614,15 @@ C5------WILL BE PRODUCED.
             ALLOCATE(DDREF(NCOL,NROW,NLAY))
             CALL SGWF2BAS7PSV(IGRID)
          END IF
-         DDREF=HNEW
+! RGN 10-7-2015 made explcit do for setting DDREF=HNEW
+         DO il = 1, NLAY
+           DO ir = 1, NROW
+              DO ic = 1, NCOL
+                DDREF(ic,ir,il)=HNEW(ic,ir,il)
+              END DO
+           END DO
+         END DO
+!
          WRITE(IOUT,99)
    99    FORMAT(1X,'Drawdown Reference has been reset to the',
      1               ' end of this time step')
@@ -917,7 +915,7 @@ C6------IF SO THEN CALL A ULASAV OR ULASV2 TO RECORD DRAWDOWN.
         IF(IOFLG(K,4).EQ.0) GO TO 79
         IF(IFIRST.EQ.1) WRITE(IOUT,74) IDDNUN,KSTP,KPER
    74   FORMAT(1X,/1X,'DRAWDOWN WILL BE SAVED ON UNIT ',I4,
-     1      ' AT END OF TIME STEP',I6,', STRESS PERIOD ',I4) !gsf
+     1      ' AT END OF TIME STEP',I5,', STRESS PERIOD ',I4)
         IFIRST=0
         IF(CDDNFM.EQ.' ') THEN
            CALL ULASAV(BUFF(:,:,K),TEXT,KSTP,KPER,PERTIM,TOTIM,NCOL,
@@ -1012,7 +1010,7 @@ C5------IF SO THEN CALL ULASAV OR ULASV2 TO SAVE HEAD.
         IF(IOFLG(K,3).EQ.0) GO TO 79
         IF(IFIRST.EQ.1) WRITE(IOUT,74) IHEDUN,KSTP,KPER
    74   FORMAT(1X,/1X,'HEAD WILL BE SAVED ON UNIT ',I4,
-     1      ' AT END OF TIME STEP',I6,', STRESS PERIOD ',I4) !gsf
+     1      ' AT END OF TIME STEP',I5,', STRESS PERIOD ',I4)
         IFIRST=0
         IF(CHEDFM.EQ.' ') THEN
            CALL ULASAV(BUFF(:,:,K),TEXT,KSTP,KPER,PERTIM,TOTIM,NCOL,
@@ -1063,7 +1061,7 @@ C5------FOR EACH LAYER: SAVE IBOUND WHEN REQUESTED.
         IF(IOFLG(K,5).EQ.0) GO TO 79
         IF(IFIRST.EQ.1) WRITE(IOUT,74) IBOUUN,KSTP,KPER
    74   FORMAT(1X,/1X,'IBOUND WILL BE SAVED ON UNIT ',I4,
-     1      ' AT END OF TIME STEP',I6,', STRESS PERIOD ',I4) !gsf
+     1      ' AT END OF TIME STEP',I5,', STRESS PERIOD ',I4)
         IFIRST=0
         CALL ULASV3(IBOUND(:,:,K),TEXT,KSTP,KPER,PERTIM,TOTIM,NCOL,
      1                NROW,KK,IBOUUN,CBOUFM,LBBOSV)
@@ -1368,7 +1366,7 @@ C        SPECIFICATIONS:
 C     ------------------------------------------------------------------
 C     ------------------------------------------------------------------
       WRITE(IOUT,199) KSTP,KPER
-  199 FORMAT(1X,///9X,'TIME SUMMARY AT END OF TIME STEP',I6, !gsf
+  199 FORMAT(1X,///9X,'TIME SUMMARY AT END OF TIME STEP',I5,
      1     ' IN STRESS PERIOD ',I4)
 C
 C1------USE TIME UNIT INDICATOR TO GET FACTOR TO CONVERT TO SECONDS.
@@ -1574,7 +1572,7 @@ C
 C    ---FORMATS
 C
   260 FORMAT('1',/2X,'VOLUMETRIC BUDGET FOR ENTIRE MODEL AT END OF'
-     1,' TIME STEP',I6,', STRESS PERIOD',I4/2X,81('-')) !gsf
+     1,' TIME STEP',I5,', STRESS PERIOD',I4/2X,78('-'))
   265 FORMAT(1X,/5X,'CUMULATIVE VOLUMES',6X,'L**3',7X
      1,'RATES FOR THIS TIME STEP',6X,'L**3/T'/5X,18('-'),17X,24('-')
      2//11X,'IN:',38X,'IN:'/11X,'---',38X,'---')
@@ -1607,8 +1605,8 @@ C1------TIME STEP.
     5    FORMAT(1X,/1X,'OUTPUT CONTROL WAS SPECIFIED FOR A NONEXISTENT',
      1   ' TIME STEP',/
      2   1X,'OR OUTPUT CONTROL DATA ARE NOT ENTERED IN ASCENDING ORDER',
-     3   /1X,'OUTPUT CONTROL STRESS PERIOD ',I4,'   TIME STEP',I6,/ !gsf
-     4   1X,'MODEL STRESS PERIOD ',I4,'   TIME STEP',I6,/ !gsf
+     3   /1X,'OUTPUT CONTROL STRESS PERIOD ',I4,'   TIME STEP',I5,/
+     4   1X,'MODEL STRESS PERIOD ',I4,'   TIME STEP',I5,/
      5   1X,'APPLYING THE SPECIFIED OUTPUT CONTROL TO THE CURRENT TIME',
      6   ' STEP')
          IPEROC=KPER
@@ -1630,7 +1628,7 @@ C3------AND RETURN.
       IF(IPEROC.NE.KPER .OR. ITSOC.NE.KSTP) THEN
          WRITE(IOUT,11) KPER,KSTP
 11       FORMAT(1X,/1X,'NO OUTPUT CONTROL FOR STRESS PERIOD ',I4,
-     1              '   TIME STEP',I6) !gsf
+     1              '   TIME STEP',I5)
          RETURN
       END IF
 C
@@ -1638,7 +1636,7 @@ C4------OUTPUT CONTROL TIME STEP MATCHES SIMULATION TIME STEP.
       IDDREF=IDDREFNEW
       WRITE(IOUT,12) IPEROC,ITSOC
 12    FORMAT(1X,/1X,'OUTPUT CONTROL FOR STRESS PERIOD ',I4,
-     1              '   TIME STEP',I6) !gsf
+     1              '   TIME STEP',I5)
       IF(IDDREFNEW.NE.0) WRITE(IOUT,52)
    52      FORMAT(1X,'Drawdown Reference will be reset at the',
      1               ' end of this time step')
@@ -1776,7 +1774,7 @@ C5------RETURN.
       RETURN
       END
       SUBROUTINE SGWF2BAS7OPEN(INUNIT,IOUT,IUNIT,CUNIT,
-     1              NIUNIT,VERSION,INBAS,MAXUNIT,MFVNAM,VERSION2)
+     1              NIUNIT,VERSION,INBAS,MAXUNIT,MFVNAM)
 C     ******************************************************************
 C     OPEN FILES.
 C     ******************************************************************
@@ -1788,7 +1786,7 @@ C     ------------------------------------------------------------------
       CHARACTER*4 CUNIT(NIUNIT)
       CHARACTER*7 FILSTAT
       CHARACTER*20 FILACT, FMTARG, ACCARG
-      CHARACTER*(*) VERSION,MFVNAM,VERSION2
+      CHARACTER*(*) VERSION,MFVNAM
       CHARACTER*40 SPACES
       CHARACTER*300 LINE, FNAME
       CHARACTER*20 FILTYP
@@ -1849,13 +1847,12 @@ C6------SPECIAL CHECK FOR 1ST FILE.
           IOUT=IU
           OPEN(UNIT=IU,FILE=FNAME(1:IFLEN),STATUS='REPLACE',
      1          FORM='FORMATTED',ACCESS='SEQUENTIAL')
-          WRITE(IOUT,60) MFVNAM,SPACES(1:INDENT),VERSION(1:LENVER),
-     2                   VERSION2(1:LENVER)
+          WRITE(IOUT,60) MFVNAM,SPACES(1:INDENT),VERSION(1:LENVER)
 60        FORMAT(34X,'MODFLOW',A,/,
      &             6X,'U.S. GEOLOGICAL SURVEY MODULAR',
      &             ' FINITE-DIFFERENCE GROUNDWATER-FLOW MODEL',/,
      &             A,'VERSION ',A,/,20X,'BASED ON MODFLOW-2005 VERSION '
-     %             ,A,/)
+     %             ,'1.11.00 08/08/2013'/)
           WRITE(IOUT,78) FNAME(1:IFLEN),IOUT
 78        FORMAT(1X,'LIST FILE: ',A,/25X,'UNIT ',I4)
         ELSE
@@ -1890,7 +1887,7 @@ C11-----CHECK FOR MAJOR OPTIONS.
       ELSE
         DO 20 I=1,NIUNIT
            IF(LINE(ITYP1:ITYP2).EQ.CUNIT(I)) THEN
-              IF ( LINE(ITYP1:ITYP1+4).EQ."IWRT" ) THEN  !next section modified for restart option
+              IF ( LINE(ITYP1:ITYP1+4).EQ."IWRT" ) THEN  !next section modified for restart option !gsf
                   IUNIT(I)=IU
                   FILSTAT='UNKNOWN'
                   FILACT=ACTION(2)

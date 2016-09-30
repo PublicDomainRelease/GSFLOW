@@ -17,160 +17,13 @@ C     Modifications made February and March 21, 2004; DEP
 C     Last change:  MLM & LFK  10 Oct 2003;  LFK 21 Jan 2004
 C     Previous change:  ERB  13 Sep 2002    9:22 am
 C
-      MODULE GWFLAKMODULE
-C------OLD USGS VERSION 7.1; JUNE 2006 GWFLAKMODULE; 
-C------UPDATED FOR MF-2005, 1.9 RELEASE, FEBRUARY 6, 2012  
-C------REVISION NUMBER CHANGED TO BE CONSISTENT WITH NWT RELEASE
-C------NEW VERSION NUMBER 1.0.9:  July 1, 2014  
-C------MINOR UPDATES JAN. 2013 (LFK)
-        CHARACTER(LEN=64),PARAMETER ::Version_lak =
-     +'$Id: gwf2lak7_NWT.f 7541 2015-07-30 21:46:59Z rniswon $'
-        INTEGER,SAVE,POINTER   ::NLAKES,NLAKESAR,ILKCB,NSSITR,LAKUNIT
-        INTEGER,SAVE,POINTER   ::MXLKND,LKNODE,ICMX,NCLS,LWRT,NDV,NTRB,
-     +                           IRDTAB
-        REAL,   SAVE,POINTER   ::THETA,SSCNCR,SURFDEPTH
-Cdep    Added SURFDEPTH  3/3/2009
-Crgn    Added budget variables for GSFLOW CSV file
-        REAL,   SAVE,POINTER   ::TOTGWIN_LAK,TOTGWOT_LAK,TOTDELSTOR_LAK
-        REAL,   SAVE,POINTER   ::TOTSTOR_LAK,TOTEVAP_LAK,TOTPPT_LAK
-        REAL,   SAVE,POINTER   ::TOTRUNF_LAK,TOTWTHDRW_LAK,TOTSURFIN_LAK
-        REAL,   SAVE,POINTER   ::TOTSURFOT_LAK
-        INTEGER,SAVE, DIMENSION(:),  POINTER ::ICS, NCNCVR, LIMERR, 
-     +                                         LAKTAB
-        INTEGER,SAVE, DIMENSION(:,:),POINTER ::ILAKE,ITRB,IDIV,ISUB,IRK
-        INTEGER,SAVE, DIMENSION(:,:,:),POINTER ::LKARR1
-        REAL,   SAVE, DIMENSION(:),  POINTER ::STAGES
-        DOUBLE PRECISION,SAVE,DIMENSION(:), POINTER ::STGNEW,STGOLD,
-     +                                        STGITER,VOLOLDD,STGOLD2
-        DOUBLE PRECISION,SAVE,DIMENSION(:), POINTER :: RUNF, RUNOFF     !EDM
-        REAL,   SAVE, DIMENSION(:),  POINTER ::VOL,FLOB,DSRFOT
-        DOUBLE PRECISION,   SAVE, DIMENSION(:),  POINTER ::PRCPLK,EVAPLK
-        REAL,   SAVE, DIMENSION(:),  POINTER ::BEDLAK
-        REAL,   SAVE, DIMENSION(:),  POINTER ::WTHDRW,RNF,CUMRNF
-        REAL,   SAVE, DIMENSION(:),  POINTER ::CUMPPT,CUMEVP,CUMGWI
-        REAL,   SAVE, DIMENSION(:),  POINTER ::CUMUZF
-        REAL,   SAVE, DIMENSION(:),  POINTER ::CUMGWO,CUMSWI,CUMSWO
-        REAL,   SAVE, DIMENSION(:),  POINTER ::CUMWDR,CUMFLX,CNDFCT
-        REAL,   SAVE, DIMENSION(:),  POINTER ::VOLINIT
-        REAL,   SAVE, DIMENSION(:),  POINTER ::BOTTMS,BGAREA,SSMN,SSMX
-Cdep    Added cumulative and time step error budget arrays
-        REAL,   SAVE, DIMENSION(:),  POINTER ::CUMVOL,CMLAKERR,CUMLKOUT
-        REAL,   SAVE, DIMENSION(:),  POINTER ::CUMLKIN,TSLAKERR,DELVOL
-crgn        REAL,   SAVE, DIMENSION(:),  POINTER ::EVAP,PRECIP,SEEP,SEEP3
-        DOUBLE PRECISION,   SAVE, DIMENSION(:),  POINTER ::EVAP,PRECIP
-        DOUBLE PRECISION,   SAVE, DIMENSION(:),  POINTER ::EVAP3,PRECIP3
-        DOUBLE PRECISION,   SAVE, DIMENSION(:),  POINTER ::FLWITER
-        DOUBLE PRECISION,   SAVE, DIMENSION(:),  POINTER ::FLWITER3
-        DOUBLE PRECISION,   SAVE, DIMENSION(:),  POINTER ::SEEP,SEEP3
-        DOUBLE PRECISION,   SAVE, DIMENSION(:),  POINTER ::SEEPUZ
-        DOUBLE PRECISION,   SAVE, DIMENSION(:),  POINTER ::WITHDRW
-        DOUBLE PRECISION,   SAVE, DIMENSION(:),  POINTER ::SURFA
-        REAL,   SAVE, DIMENSION(:),  POINTER ::SURFOT,SURFIN
-        REAL,   SAVE, DIMENSION(:),  POINTER ::SUMCNN,SUMCHN
-        REAL,   SAVE, DIMENSION(:,:),POINTER ::CLAKE,CRNF,SILLVT
-        REAL,   SAVE, DIMENSION(:,:),POINTER ::CAUG,CPPT,CLAKINIT
-        REAL,   SAVE, DIMENSION(:,:,:),POINTER ::BDLKN1
-Cdep  Added arrays for tracking lake budgets for dry lakes
-        REAL,   SAVE, DIMENSION(:),  POINTER ::EVAPO,FLWIN
-        REAL,   SAVE, DIMENSION(:),  POINTER ::GWRATELIM
-Cdep    Allocate arrays to add runoff from UZF Package
-        REAL,   SAVE, DIMENSION(:),  POINTER ::OVRLNDRNF,CUMLNDRNF
-Cdep    Allocate arrays for lake depth, area,and volume relations
-        DOUBLE PRECISION,   SAVE, DIMENSION(:,:),  POINTER ::DEPTHTABLE
-        DOUBLE PRECISION,   SAVE, DIMENSION(:,:),  POINTER ::AREATABLE
-        DOUBLE PRECISION,   SAVE, DIMENSION(:,:),  POINTER ::VOLUMETABLE
-Cdep    Allocate space for three dummy arrays used in GAGE Package
-C         when Solute Transport is active
-        REAL,   SAVE, DIMENSION(:,:),POINTER ::XLAKES,XLAKINIT,XLKOLD
-Crsr    Allocate arrays in BD subroutine
-        INTEGER,SAVE, DIMENSION(:),  POINTER ::LDRY,NCNT,NCNST,KSUB
-        INTEGER,SAVE, DIMENSION(:),  POINTER ::MSUB1
-        INTEGER,SAVE, DIMENSION(:,:),POINTER ::MSUB
-        REAL,   SAVE, DIMENSION(:),  POINTER ::FLXINL,VOLOLD,GWIN,GWOUT
-        REAL,   SAVE, DIMENSION(:),  POINTER ::DELH,TDELH,SVT,STGADJ
-        REAL,   SAVE, DIMENSION(:,:),POINTER ::LAKSEEP
-        INTEGER,SAVE,                POINTER ::NSFRLAK                      !EDM
-        INTEGER,SAVE, DIMENSION(:),  POINTER ::LAKSFR,ILKSEG,ILKRCH         !EDM
-        REAL,   SAVE, DIMENSION(:),  POINTER ::SWLAK,DELVOLLAK              !EDM
-      TYPE GWFLAKTYPE
-        INTEGER,      POINTER   ::NLAKES,NLAKESAR,ILKCB,NSSITR,LAKUNIT
-        INTEGER,      POINTER   ::MXLKND,LKNODE,ICMX,NCLS,LWRT,NDV,NTRB,
-     +                            IRDTAB
-Cdep    Added SURFDEPTH 3/3/2009
-        REAL,         POINTER   ::THETA,SSCNCR,SURFDEPTH
-Crgn    Added budget variables for GSFLOW CSV file
-        REAL,         POINTER   ::TOTGWIN_LAK,TOTGWOT_LAK,TOTDELSTOR_LAK
-        REAL,         POINTER   ::TOTSTOR_LAK,TOTEVAP_LAK,TOTPPT_LAK
-        REAL,         POINTER   ::TOTRUNF_LAK,TOTWTHDRW_LAK
-        REAL,         POINTER   ::TOTSURFOT_LAK,TOTSURFIN_LAK
-        INTEGER,      DIMENSION(:),  POINTER ::ICS, NCNCVR, LIMERR, 
-     +                                         LAKTAB
-        INTEGER,      DIMENSION(:,:),POINTER ::ILAKE,ITRB,IDIV,ISUB,IRK
-        INTEGER,      DIMENSION(:,:,:),POINTER ::LKARR1
-        REAL,         DIMENSION(:),  POINTER ::STAGES
-        DOUBLE PRECISION,DIMENSION(:),POINTER ::STGNEW,STGOLD,STGITER,
-     +                                        STGOLD2
-        DOUBLE PRECISION,DIMENSION(:),POINTER :: RUNF, RUNOFF              !EDM
-        DOUBLE PRECISION,DIMENSION(:),POINTER :: VOLOLDD
-        REAL,         DIMENSION(:),  POINTER ::VOL,FLOB, DSRFOT
-        DOUBLE PRECISION,DIMENSION(:),  POINTER ::PRCPLK,EVAPLK
-        REAL,         DIMENSION(:),  POINTER ::BEDLAK
-        REAL,         DIMENSION(:),  POINTER ::WTHDRW,RNF,CUMRNF
-        REAL,         DIMENSION(:),  POINTER ::CUMPPT,CUMEVP,CUMGWI
-        REAL,         DIMENSION(:),  POINTER ::CUMUZF
-        REAL,         DIMENSION(:),  POINTER ::CUMGWO,CUMSWI,CUMSWO
-        REAL,         DIMENSION(:),  POINTER ::CUMWDR,CUMFLX,CNDFCT
-        REAL,         DIMENSION(:),  POINTER ::VOLINIT
-        REAL,         DIMENSION(:),  POINTER ::BOTTMS,BGAREA,SSMN,SSMX
-Cdep    Added cumulative and time step error budget arrays
-        REAL,         DIMENSION(:),  POINTER ::CUMVOL,CMLAKERR,CUMLKOUT
-        REAL,         DIMENSION(:),  POINTER ::TSLAKERR,DELVOL,CUMLKIN 
-Crgn        REAL,         DIMENSION(:),  POINTER ::EVAP,PRECIP,SEEP,SEEP3
-        DOUBLE PRECISION,DIMENSION(:),  POINTER :: EVAP,PRECIP
-        DOUBLE PRECISION,DIMENSION(:),  POINTER :: EVAP3,PRECIP3
-        DOUBLE PRECISION,DIMENSION(:),  POINTER :: FLWITER
-        DOUBLE PRECISION,DIMENSION(:),  POINTER :: FLWITER3
-        DOUBLE PRECISION,DIMENSION(:),  POINTER :: SEEP,SEEP3
-        DOUBLE PRECISION,DIMENSION(:),  POINTER :: SEEPUZ
-        DOUBLE PRECISION,DIMENSION(:),  POINTER :: WITHDRW  
-        DOUBLE PRECISION,DIMENSION(:),  POINTER :: SURFA
-        REAL,         DIMENSION(:),  POINTER ::SURFIN,SURFOT
-        REAL,         DIMENSION(:),  POINTER ::SUMCNN,SUMCHN
-        REAL,         DIMENSION(:,:),POINTER ::CLAKE,CRNF,SILLVT
-        REAL,         DIMENSION(:,:),POINTER ::CAUG,CPPT,CLAKINIT
-        REAL,         DIMENSION(:,:,:),POINTER ::BDLKN1
-Cdep  Added arrays for tracking lake budgets for dry lakes
-        REAL,         DIMENSION(:),  POINTER ::EVAPO,FLWIN
-        REAL,         DIMENSION(:),  POINTER ::GWRATELIM
-Cdep    Allocate arrays to add runoff from UZF Package
-        REAL,         DIMENSION(:),  POINTER ::OVRLNDRNF,CUMLNDRNF
-Cdep    Allocate arrays for lake depth, area, and volume relations
-        DOUBLE PRECISION,         DIMENSION(:,:),POINTER ::DEPTHTABLE
-        DOUBLE PRECISION,         DIMENSION(:,:),POINTER ::AREATABLE
-        DOUBLE PRECISION,         DIMENSION(:,:),POINTER ::VOLUMETABLE
-Cdep    Allocate space for three dummy arrays used in GAGE Package
-C         when Solute Transport is active
-        REAL,         DIMENSION(:,:),POINTER ::XLAKES,XLAKINIT,XLKOLD
-Crsr    Allocate arrays in BD subroutine
-        INTEGER,      DIMENSION(:),  POINTER ::LDRY,NCNT,NCNST,KSUB
-        INTEGER,      DIMENSION(:),  POINTER ::MSUB1
-        INTEGER,      DIMENSION(:,:),POINTER ::MSUB
-        REAL,         DIMENSION(:),  POINTER ::FLXINL,VOLOLD,GWIN,GWOUT
-        REAL,         DIMENSION(:),  POINTER ::DELH,TDELH,SVT,STGADJ
-        REAL,         DIMENSION(:,:),POINTER ::LAKSEEP
-        INTEGER,                     POINTER ::NSFRLAK                     !EDM
-        INTEGER,      DIMENSION(:),  POINTER ::LAKSFR,ILKSEG,ILKRCH        !EDM
-        REAL,         DIMENSION(:),  POINTER ::SWLAK,DELVOLLAK             !EDM
-      END TYPE
-      TYPE(GWFLAKTYPE), SAVE:: GWFLAKDAT(10)
-      END MODULE GWFLAKMODULE
 C
       SUBROUTINE GWF2LAK7AR(IN,IUNITSFR,IUNITGWT,IUNITUZF,NSOL,IGRID)
 C
 C------OLD USGS VERSION 7.1; JUNE 2006 GWF2LAK7AR; 
 C------UPDATED FOR MF-2005, FEBRUARY 6, 2012  
 !rgn------REVISION NUMBER CHANGED TO BE CONSISTENT WITH NWT RELEASE
-!rgn------NEW VERSION NUMBER FOR NWT 1.0.9:  July 1, 2014
+!rgn------NEW VERSION NUMBER FOR NWT 1.1.1, 7/28/2016
 C     ******************************************************************
 C     INITIALIZE POINTER VARIABLES USED BY SFR1 TO SUPPORT LAKE3 AND
 C     GAGE PACKAGES AND THE GWT PROCESS
@@ -536,15 +389,19 @@ C
 C------OLD USGS VERSION 7.1;  JUNE 2006 GWF2LAK7RP
 C        REVISED FEBRUARY 6, 2012
 C------REVISION NUMBER CHANGED TO BE CONSISTENT WITH NWT RELEASE
-C------NEW VERSION NUMBER 1.0.9:  July 1, 2014  
+C------NEW VERSION NUMBER 1.1.1, 7/28/2016  
 C     ******************************************************************
 C       READ INPUT DATA FOR THE LAKE PACKAGE.
 C     ------------------------------------------------------------------
 C     SPECIFICATIONS:
 C     ------------------------------------------------------------------
       USE GWFLAKMODULE
+!gsf  USE LMTMODULE,    ONLY: LKFLOWTYPE,NLKFLWTYP
       USE GLOBAL,       ONLY: IOUT, NCOL, NROW, NLAY, IFREFM, IBOUND,
-     +                        LBOTM, BOTM, DELR, DELC, ISSFLG
+     +                        LBOTM, BOTM, DELR, DELC, ISSFLG,IUNIT
+C
+      IMPLICIT NONE
+C
 C     USE GWFSFRMODULE, ONLY: NSS
 C     ------------------------------------------------------------------
 C     FUNCTIONS
@@ -552,6 +409,12 @@ C     ------------------------------------------------------------------
       DOUBLE PRECISION VOLTERP
       EXTERNAL VOLTERP
 C     ------------------------------------------------------------------
+      INTEGER IGRID,ISS,LM,IUNITGWT,IN,ISOL,L1,I,J,K,KK,LK,ITMP,ITMP1,
+     &        INC,NSOL,N,I2,K1,K2,K3,K4,I1,IC,IS,JK,NSLMS,
+     &        IUNITSFR,LAKEFLG,LAKE,NTYP,J2,KKPER,IOUTS,IUNITNUM,L,
+     &        IL,IR,ITYPE,IUNITBCF,IUNITLPF,IUNITHUF,IUNITUPW,
+     &        IUNITUZF,IC1,II,IFACE,LID,M
+      REAL BOTIJ,TBNC,TBELV,TOPMST,GTSDPH,EVOL,BOTLK
       CHARACTER*24 ANAME(2)
 !     CHARACTER*30 LFRMAT
 !dep  added STGINIT as double precision
@@ -655,11 +518,11 @@ C
       IF ( KKPER==1 .AND. IRDTAB.GT.0 ) THEN
         DO L1=1,NLAKES
           WRITE(IOUT,1399) L1
-          iunit = LAKTAB(L1)
+          iunitnum = LAKTAB(L1)
  1399 FORMAT(//1X,'STAGE/VOLUME RELATION FOR LAKE',I3//6X,'STAGE',
      1        8X,'VOLUME',8X,'AREA'/)
           DO  INC=1,151
-          READ(iunit,*) DEPTHTABLE(INC,L1), VOLUMETABLE(INC,L1),
+          READ(iunitnum,*) DEPTHTABLE(INC,L1), VOLUMETABLE(INC,L1),
      +                    AREATABLE(INC,L1)
           WRITE(IOUT,1315) DEPTHTABLE(INC,L1), VOLUMETABLE(INC,L1),
      +                    AREATABLE(INC,L1)
@@ -1095,46 +958,80 @@ C
      2     3X,'WITHDRAW',3X,'BOTTOM',5X,'AREA',5X,/70('-'))
       IF (IUNITGWT.GT.0) WRITE (IOUTS,8)
  8    FORMAT (//1X,'LAKE',4X,'SOLUTE',6X,'CPPT',6X,'CRNF',6X,'CAUG'/)
+C
+C--REINITIALIZE LKFLOWTYPE WITH EACH STRESS PERIOD
+!gsf  IF(IUNIT(49).NE.0) THEN
+!gsf    LKFLOWTYPE(1)='NA'
+!gsf    LKFLOWTYPE(2)='NA'
+!gsf    LKFLOWTYPE(3)='NA'
+!gsf    LKFLOWTYPE(4)='NA'
+!gsf    LKFLOWTYPE(5)='NA'
+!gsf    LKFLOWTYPE(6)='NA'
+!gsf    NLKFLWTYP=0
+!gsf  ENDIF
+C
       DO 300 LM=1,NLAKES
-      IF(IFREFM.EQ.0) THEN
-        IF(ISS.NE.0.AND.KKPER.GT.1) READ(IN,'(6F10.4)') PRCPLK(LM),
-     1   EVAPLK(LM),RNF(LM),WTHDRW(LM),SSMN(LM),SSMX(LM)
-        IF(ISS.EQ.0.OR.KKPER.EQ.1) READ(IN,'(6F10.4)') PRCPLK(LM),
-     1   EVAPLK(LM),RNF(LM),WTHDRW(LM)
-      ELSE
-        IF(ISS.NE.0.AND.KKPER.GT.1) READ(IN,*) PRCPLK(LM),EVAPLK(LM),
-     1   RNF(LM),WTHDRW(LM),SSMN(LM),SSMX(LM)
-        IF(ISS.EQ.0.OR.KKPER.EQ.1) READ(IN,*) PRCPLK(LM),EVAPLK(LM),
-     1   RNF(LM),WTHDRW(LM)
-      END IF
-      IF(ISS.NE.0.AND.KKPER.GT.1) WRITE(IOUT,9) LM,PRCPLK(LM),EVAPLK(LM)
-     1 ,RNF(LM),WTHDRW(LM),BOTTMS(LM),BGAREA(LM),SSMN(LM),SSMX(LM)
-9     FORMAT(1X,I3,4X,1P,3E10.3,1X,5E10.3)
-      IF(ISS.EQ.0.OR.KKPER.EQ.1) WRITE(IOUT,9) LM,PRCPLK(LM),EVAPLK(LM),
-     1 RNF(LM),WTHDRW(LM),BOTTMS(LM),BGAREA(LM)
-      IF(IUNITGWT.LE.0) GO TO 300
-      DO 850 ISOL=1,NSOL
         IF(IFREFM.EQ.0) THEN
-          IF(WTHDRW(LM).LT.0.0) THEN
-            READ(IN,'(3F10.4)')CPPT(LM,ISOL),CRNF(LM,ISOL),CAUG(LM,ISOL)
-          ELSE
-            READ(IN,'(2F10.4)')CPPT(LM,ISOL),CRNF(LM,ISOL)
-          END IF
+          IF(ISS.NE.0.AND.KKPER.GT.1) READ(IN,'(6F10.4)') PRCPLK(LM),
+     1     EVAPLK(LM),RNF(LM),WTHDRW(LM),SSMN(LM),SSMX(LM)
+          IF(ISS.EQ.0.OR.KKPER.EQ.1) READ(IN,'(6F10.4)') PRCPLK(LM),
+     1     EVAPLK(LM),RNF(LM),WTHDRW(LM)
         ELSE
-          IF(WTHDRW(LM).LT.0.0) THEN
-            READ(IN,*) CPPT(LM,ISOL),CRNF(LM,ISOL),CAUG(LM,ISOL)
-          ELSE
-            READ(IN,*) CPPT(LM,ISOL),CRNF(LM,ISOL)
-          END IF
+          IF(ISS.NE.0.AND.KKPER.GT.1) READ(IN,*) PRCPLK(LM),EVAPLK(LM),
+     1     RNF(LM),WTHDRW(LM),SSMN(LM),SSMX(LM)
+          IF(ISS.EQ.0.OR.KKPER.EQ.1) READ(IN,*) PRCPLK(LM),EVAPLK(LM),
+     1     RNF(LM),WTHDRW(LM)
         END IF
-        IF(WTHDRW(LM).LT.0.0)WRITE(IOUTS,840) LM,ISOL,
-     +       CPPT(LM,ISOL),CRNF(LM,ISOL),CAUG(LM,ISOL)       
-        IF(WTHDRW(LM).GE.0.0)
-     1  WRITE(IOUTS,841) LM,ISOL,CPPT(LM,ISOL),CRNF(LM,ISOL)
-  840   FORMAT(1X,I3,6X,I3,4X,1P,3E10.2)
-  841 FORMAT(1X,I3,6X,I3,4X,1P,2E10.2)
-  850 CONTINUE
-C      WRITE (IOUTS,'(/)')
+C
+C--EDM: SET FOLLOWING VALUES FOR LMT
+!gsf    IF(IUNIT(49).NE.0) THEN
+!gsf      IF(PRCPLK(LM).NE.0.AND.LKFLOWTYPE(3).EQ.'NA') THEN
+!gsf        LKFLOWTYPE(3)='PRECIP'
+!gsf        NLKFLWTYP = NLKFLWTYP + 1
+!gsf      ENDIF
+!gsf      IF(EVAPLK(LM).NE.0.AND.LKFLOWTYPE(4).EQ.'NA') THEN 
+!gsf        LKFLOWTYPE(4)='EVAP'
+!gsf        NLKFLWTYP = NLKFLWTYP + 1
+!gsf      ENDIF
+!gsf      IF(RNF(LM).NE.0.AND.LKFLOWTYPE(5).EQ.'NA') THEN
+!gsf        LKFLOWTYPE(5)='RUNOFF'
+!gsf        NLKFLWTYP = NLKFLWTYP + 1
+!gsf      ENDIF
+!gsf      IF(WTHDRW(LM).NE.0.AND.LKFLOWTYPE(6).EQ.'NA') THEN
+!gsf        LKFLOWTYPE(6)='WITHDRAW'
+!gsf        NLKFLWTYP = NLKFLWTYP + 1
+!gsf      ENDIF
+!gsf    ENDIF
+C
+        IF(ISS.NE.0.AND.KKPER.GT.1)WRITE(IOUT,9)LM,PRCPLK(LM),EVAPLK(LM)
+     1   ,RNF(LM),WTHDRW(LM),BOTTMS(LM),BGAREA(LM),SSMN(LM),SSMX(LM)
+9       FORMAT(1X,I3,4X,1P,3E10.3,1X,5E10.3)
+        IF(ISS.EQ.0.OR.KKPER.EQ.1)WRITE(IOUT,9)LM,PRCPLK(LM),EVAPLK(LM),
+     1   RNF(LM),WTHDRW(LM),BOTTMS(LM),BGAREA(LM)
+        IF(IUNITGWT.LE.0) GO TO 300
+        DO 850 ISOL=1,NSOL
+          IF(IFREFM.EQ.0) THEN
+            IF(WTHDRW(LM).LT.0.0) THEN
+              READ(IN,'(3F10.4)')CPPT(LM,ISOL),CRNF(LM,ISOL),
+     +                          CAUG(LM,ISOL)
+            ELSE
+              READ(IN,'(2F10.4)')CPPT(LM,ISOL),CRNF(LM,ISOL)
+            END IF
+          ELSE
+            IF(WTHDRW(LM).LT.0.0) THEN
+              READ(IN,*) CPPT(LM,ISOL),CRNF(LM,ISOL),CAUG(LM,ISOL)
+            ELSE
+              READ(IN,*) CPPT(LM,ISOL),CRNF(LM,ISOL)
+            END IF
+          END IF
+          IF(WTHDRW(LM).LT.0.0)WRITE(IOUTS,840) LM,ISOL,
+     +         CPPT(LM,ISOL),CRNF(LM,ISOL),CAUG(LM,ISOL)       
+          IF(WTHDRW(LM).GE.0.0)
+     1    WRITE(IOUTS,841) LM,ISOL,CPPT(LM,ISOL),CRNF(LM,ISOL)
+  840     FORMAT(1X,I3,6X,I3,4X,1P,3E10.2)
+  841   FORMAT(1X,I3,6X,I3,4X,1P,2E10.2)
+  850   CONTINUE
+C        WRITE (IOUTS,'(/)')
   300 CONTINUE
       WRITE (IOUT,'(/)')
 C
@@ -1197,7 +1094,7 @@ C
 C
 C------OLD VERSION 7.1 JUNE 2006 GWF2LAK7AD; REVISED FEBRUARY 6, 2012
 C------REVISION NUMBER CHANGED TO BE CONSISTENT WITH NWT RELEASE
-C------NEW VERSION NUMBER 1.0.9:  July 1, 2014  
+C------NEW VERSION NUMBER 1.1.1, 7/28/2016  
 C
 C     ******************************************************************
 C     ADVANCE TO NEXT TIME STEP FOR TRANSIENT LAKE SIMULATION, AND COPY
@@ -1341,21 +1238,17 @@ C
 C
 C------OLD USGS VERSION 7.1; JUNE 2006 GWF2LAK7FM; 
 C------REVISION NUMBER CHANGED TO BE CONSISTENT WITH NWT RELEASE
-C------NEW VERSION NUMBER 1.0.9:  July 1, 2014  
+C------NEW VERSION NUMBER 1.1.1, 7/28/2016  
 C     ******************************************************************
 C     ADD LAKE TERMS TO RHS AND HCOF IF SEEPAGE OCCURS IN MODEL CELLS
 C     ******************************************************************
 C
       USE GWFLAKMODULE
-      USE GLOBAL,       ONLY: NLAY, IBOUND, IOUT, ISSFLG,
+      USE GLOBAL,       ONLY: NCOL, NROW, NLAY, IBOUND, IOUT, ISSFLG, 
      +                        DELR, DELC, LBOTM, BOTM, HNEW, HCOF, RHS 
-!!      USE GLOBAL,       ONLY: NCOL, NROW, NLAY, IBOUND, IOUT, ISSFLG, 
-!!     +                        DELR, DELC, LBOTM, BOTM, HNEW, HCOF, RHS
       USE GWFBASMODULE, ONLY: DELT
-      USE GWFSFRMODULE, ONLY: STRIN, STROUT, FXLKOT, SEG
-!!      USE GWFSFRMODULE, ONLY: STRIN, STROUT, FXLKOT, DLKSTAGE, SEG
-      USE GWFUZFMODULE, ONLY: IUZFBND
-!!      USE GWFUZFMODULE, ONLY: SURFDEP,IUZFBND,FINF,VKS
+      USE GWFSFRMODULE, ONLY: STRIN, STROUT, FXLKOT, DLKSTAGE, SEG
+      USE GWFUZFMODULE, ONLY: SURFDEP,IUZFBND,FINF,VKS
 C     ------------------------------------------------------------------
 C     SPECIFICATIONS:
 Cdep  Added functions for interpolating between areas, derivatives, 
@@ -1373,11 +1266,12 @@ C     ARGUMENTS
 C     -----------------------------------------------------------------
       INTEGER, INTENT(IN) :: KKITER, KKPER, IUNITSFR, IUNITUZF, IGRID, 
      1                       KKSTP    
+Cdep  added runoff and flobo3
+!      REAL :: RUNOFF
 Cdep  added unsaturated flow beneath lakes flag as a local variable
       INTEGER ISS, LK, ITRIB, INODE, LAKE, MTER, IICNVG, L1, MAXITER
       INTEGER NCNV, LL, II, L, IC, IR, IL, ITYPE
-      INTEGER INOFLO, IDV, IL1
-!!      INTEGER LI, INOFLO, IDV, IL1,n
+      INTEGER LI, INOFLO, IDV, IL1,n
 Cdep  added SURFDPTH, CONDMX,BOTLKUP,BOTLKDN  3/3/2009
       DOUBLE PRECISION BOTLK,BOTCL,CONDUC,H,FLOBOT,STGON,
      1                 FLOBO3,THET1,CLOSEZERO,
@@ -1390,6 +1284,7 @@ Cdep  added double precision variables
      1                 Splakout, dy, SRFPT, HD
       DOUBLE PRECISION AREA, RAIN, EV, THCK, SSMN1, SSMX1,
      1                 OUTFLOW, DSTG, VOLNEW1, VOLNEW2, STAGE2
+!      DOUBLE PRECISION RUNF
 !      PARAMETER(CLOSEZERO = 1.0E-07)
 C     ------------------------------------------------------------------
 C------SET POINTERS FOR THE CURRENT GRID.
@@ -1438,11 +1333,12 @@ C2B --- SUM UP OVERLAND RUNOFF INTO LAKE.
       DO LAKE = 1,NLAKES
 C EDM - Add indices to RUNF and RUNOFF because these terms need to be 
 C       saved for each lake in the simulation for writing to the FTL file by LMT
+          
         IF(RNF(LAKE).GE.0.0) RUNF(LAKE) = RNF(LAKE)
         IF(RNF(LAKE).LT.0.0) RUNF(LAKE) =-RNF(LAKE)*PRCPLK(LAKE)
      1                                    *BGAREA(LAKE)
         IF (IUNITUZF.GT.0) THEN
-          RUNOFF = OVRLNDRNF(LAKE)
+          RUNOFF(LAKE) = OVRLNDRNF(LAKE)
         ELSE
           RUNOFF(LAKE) = 0.0
         END IF
@@ -1827,7 +1723,7 @@ C
 C19------FORMAT STATEMENTS
 Cdep  101   FORMAT(4I5,3E20.10)    !format used for debugging
 Cdep  202  FORMAT(i5,8(1X,E20.10)) !format used for debugging
-  506           FORMAT(1X,'ERROR - NO AQUIFER UNDER LAKE CELL ',4I5)
+  506  FORMAT(1X,'ERROR - NO AQUIFER UNDER LAKE CELL ',4I5)
  1004  FORMAT(1X,'ITERATION ',I4,2X,'LAKE ',I4,2X,'NEW STAGE ',1PE15.8, !gsf
      1  '  DID NOT CONVERGE-- PREVIOUS INTERNAL ITERATION STAGE  ',
      2  1PE15.8,/) !gsf
@@ -1838,7 +1734,7 @@ C
 C
 C------OLD USGS VERSION 7.1; JUNE 2006 GWF2LAK7BD; 
 C------REVISION NUMBER CHANGED TO BE CONSISTENT WITH NWT RELEASE
-C------NEW VERSION NUMBER 1.0.9:  July 1, 2014
+C------NEW VERSION NUMBER 1.1.1, 7/28/2016
 C     ******************************************************************
 C     CALCULATE VOLUMETRIC BUDGET FOR LAKES
 C     ******************************************************************
@@ -1853,11 +1749,9 @@ C     ------------------------------------------------------------------
      
       USE GWFBASMODULE, ONLY: MSUM, ICBCFL, IAUXSV, DELT, PERTIM, TOTIM,
      +                        HNOFLO, VBVL, VBNM
-!!      USE GWFBASMODULE, ONLY: MSUM, ICBCFL, DELT, PERTIM, TOTIM,
-!!     +                        HNOFLO, VBVL, VBNM
-      USE GWFSFRMODULE, ONLY: STRIN
-!!      USE GWFSFRMODULE, ONLY: STRIN, DLKSTAGE, SLKOTFLW
-!!      USE GWFUZFMODULE, ONLY: SURFDEP,IUZFBND,FINF,VKS
+      USE GWFSFRMODULE, ONLY: STRIN, DLKSTAGE, SLKOTFLW
+      USE GWFUZFMODULE, ONLY: SURFDEP,IUZFBND,FINF,VKS
+!gsf  USE LMTMODULE,    ONLY: LKFLOWTYPE,NLKFLWTYP
       IMPLICIT NONE
       !rsr: argument IUNITSFR not used
       CHARACTER*16 TEXT
@@ -1877,9 +1771,8 @@ C     -----------------------------------------------------------------
       DOUBLE PRECISION BOTLK,BOTCL,CONDUC,H,FLOBOT,STGON,
      1RATE,RATIN,RATOUT
       DOUBLE PRECISION THET1,SURFDPTH,CONDMX,BOTLKUP,BOTLKDN,VOL2
-      DOUBLE PRECISION FLOTOUZF,SILLELEV,ADJSTAGE
-!!      DOUBLE PRECISION FLOTOUZF,SILLELEV,ADJSTAGE, voltest, areatest
-!!      DOUBLE PRECISION RAMPGW,RAMPSTGO,RAMPSTGN,RAMPSTGON,HTEMP
+      DOUBLE PRECISION FLOTOUZF,SILLELEV,ADJSTAGE, voltest, areatest
+      DOUBLE PRECISION RAMPGW,RAMPSTGO,RAMPSTGN,RAMPSTGON,HTEMP
       DOUBLE PRECISION CLOSEZERO, FLOBO2, FLOBO3, DLSTG
       DOUBLE PRECISION RUNFD, AREA, RAIN
       REAL zero, FACE, R, WDRAW, OLDSTAGE, AVHD, TOTARE, SUM
@@ -2144,7 +2037,7 @@ C11-------IF SAVING COMPACT BUDGET, WRITE FLOW FOR ONE LAKE FACE.
                CALL UBDSVB(ILKCB,NCOL,NROW,IC,IR,IL1,R,FACE(1),1,
      1                     NAUX,1,IBOUND,NLAY)
                  END IF    
-           END DO
+             END DO
          END DO
 C
 C12------COMPUTE EVAPORATION AND PRECIPITATION USING STGOLD AND 
@@ -2227,8 +2120,8 @@ C          STEADY STATE SIMULATION.
            IF(VOL2.LE.0.0D0) VOL2 = 0.0D0
            VOL(LAKE) = VOL2
          END IF
-C
 C18C-----STGON IS FRACTION OF STGOLD AND STGNEW AND SURFACE AREA
+C
 C          IS BASED ON STGOLD.
          STGON = (1.0D0-THET1)*STGOLD(LAKE) + THET1*STGNEW(LAKE)
          SURFA(LAKE)=FINTERP(STGNEW(LAKE),LAKE)
@@ -2740,8 +2633,21 @@ C-lfk
               ELSE
                 DELVOL(NN)=VOL(NN)-VOLOLD(NN)
               END IF
-C-EDM
+C
               DELVOLLAK(NN)=DELVOL(NN)/DELT
+C-EDM
+!gsf          IF(IUNIT(49).NE.0 ) THEN
+!gsf            IF ( LKFLOWTYPE(1).EQ.'NA' ) THEN
+!gsf              LKFLOWTYPE(1)='VOLUME'
+!gsf              NLKFLWTYP = NLKFLWTYP + 1
+!gsf            END IF
+!gsf          ENDIF
+!gsf          IF(IUNIT(49).NE.0 ) THEN
+!gsf            IF ( LKFLOWTYPE(2).EQ.'NA' ) THEN
+!gsf              LKFLOWTYPE(2)='DELVOL'
+!gsf              NLKFLWTYP = NLKFLWTYP + 1
+!gsf            END IF
+!gsf          ENDIF
 C
               IF(LWRT.GT.0.OR.ICBCFL.LE.0) GO TO 1100
               IF(IUNITUZF.EQ.0) THEN
@@ -3982,7 +3888,11 @@ C          FLOB02 AND FLOBO3 AS A FRACTION OF FLOBO1 AND FLOBO3.
                 END IF
                 FLOTOUZF = FLOBOT 
                 FLOBOT = 0.0D0
-                CONDUC = FLOTOUZF/(STGNEW(LAKE)-BOTLK)
+                IF ( abs((STGNEW(LAKE)-BOTLK)) > closezero ) THEN
+                  CONDUC = FLOTOUZF/(STGNEW(LAKE)-BOTLK)
+                ELSE
+                  CONDUC = 0.0
+                END IF
                 FINF(IC,IR)=FLOTOUZF/AREA
               END IF
             END IF

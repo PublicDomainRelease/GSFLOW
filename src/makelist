@@ -1,14 +1,15 @@
 
 #-------------------------------------------------------------------
-# $Id: makelist 7576 2015-08-05 23:02:48Z rsregan $
+# $Id: makelist 8349 2016-07-26 21:05:37Z rsregan $
 #-------------------------------------------------------------------
 
-MMFDIR      = ../mms
+MMFDIR      = ../mmf
 PRMSDIR     = ../prms
 GSFLOWDIR   = ../gsflow
 MODFLOWDIR  = ../modflow
 BINDIR      = ../../bin
 LIBDIR      = ../../lib
+MMFLIB      = $(LIBDIR)/libmmf.a
 
 #########################################################
 # Configure tags for each system
@@ -17,7 +18,7 @@ ARC		= LINUX
 #ARC		= WINDOWS
 
 #OPTLEVEL	= -g
-OPTLEVEL	= -O2
+OPTLEVEL	= -O
 LDFLAGS		=$(OPTLEVEL)
 
 ##########################################################

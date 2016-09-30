@@ -49,4 +49,8 @@ save_vars_to_file
 1
 1
 0
-
+####
+print_debug
+1
+1
+-1

@@ -28,11 +28,12 @@
       REAL, SAVE, ALLOCATABLE :: It0_soil_rechr(:), It0_soil_moist(:)
       REAL, SAVE, ALLOCATABLE :: It0_pref_flow_stor(:), It0_ssres_stor(:)
       REAL, SAVE, ALLOCATABLE :: It0_gravity_stor_res(:), It0_sroff(:)
-      REAL, SAVE, ALLOCATABLE :: It0_slow_stor(:), It0_potet(:)
+      REAL, SAVE, ALLOCATABLE :: It0_slow_stor(:), It0_potet(:), Gw2sm_grav_save(:)
       DOUBLE PRECISION, SAVE, ALLOCATABLE :: It0_strm_seg_in(:)
       DOUBLE PRECISION, SAVE :: It0_strm_farfield
       DOUBLE PRECISION, SAVE :: It0_basin_soil_moist, It0_basin_ssstor
       DOUBLE PRECISION, SAVE :: Basin_sz_gwin, Last_soil_moist, Last_ssstor
+      DOUBLE PRECISION, SAVE, ALLOCATABLE :: Gvr_hru_pct_adjusted(:)
 !   Declared Variables
       DOUBLE PRECISION, SAVE :: Basin_sz2gw, Basin_cap_infil_tot
       DOUBLE PRECISION, SAVE :: Basin_interflow_max, Basin_sm2gvr_max
@@ -73,6 +74,9 @@
       REAL, SAVE, ALLOCATABLE :: Ssr2gw_rate(:), Ssr2gw_exp(:)
       REAL, SAVE, ALLOCATABLE :: Soil_rechr_init(:), Soil2gw_max(:)
       REAL, SAVE, ALLOCATABLE :: Lake_evap_adj(:, :)
+!   Declared Variables used by GSFLOW only, in so that soilzone can be one version
+      DOUBLE PRECISION, SAVE :: Basin_szreject
+      REAL, SAVE, ALLOCATABLE :: Gw2sm_grav(:), Gw_rejected(:)
       END MODULE PRMS_SOILZONE
 
 !***********************************************************************
@@ -122,7 +126,7 @@
 !***********************************************************************
       szdecl = 0
 
-      Version_soilzone = '$Id: soilzone.f90 7588 2015-08-18 22:58:42Z rsregan $'
+      Version_soilzone = 'soilzone.f90 2016-07-18 16:34:00Z'
       CALL print_module(Version_soilzone, 'Soil Zone Computations      ', 90 )
       MODNAME = 'soilzone'
 
@@ -329,7 +333,7 @@
       IF ( declvar(MODNAME, 'pref_flow_infil', 'nhru', Nhru, 'real', &
      &     'Infiltration to the preferential-flow reservoir storage for each HRU', &
      &     'inches', Pref_flow_infil)/=0 ) CALL read_error(3, 'pref_flow_infil')
- 
+
       ALLOCATE ( Pref_flow_stor(Nhru) )
       IF ( declvar(MODNAME, 'pref_flow_stor', 'nhru', Nhru, 'real', &
      &     'Storage in preferential-flow reservoir for each HRU', &
@@ -447,6 +451,21 @@
      &       'Gravity flow to soil moist replenishment for each HRU', &
      &       'inches', Gvr2sm)/=0 ) CALL read_error(3, 'gvr2sm')
 
+        ALLOCATE ( Gw2sm_grav(Nhrucell) )
+        IF ( declvar(MODNAME, 'gw2sm_grav', 'nhrucell', Nhrucell, 'real', &
+     &       'Groundwater discharge to gravity-flow reservoirs', &
+     &       'inches', Gw2sm_grav)/=0 ) CALL read_error(3, 'gw2sm_grav')
+
+        ALLOCATE ( Gw_rejected(Nhru) )
+        IF ( declvar(MODNAME, 'gw_rejected', 'nhru', Nhru, 'real', &
+     &       'HRU average recharge rejected by UZF', 'inches', &
+     &       Gw_rejected)/=0 ) CALL read_error(3, 'gw_rejected')
+
+        IF ( declvar(MODNAME, 'basin_szreject', 'one', 1, 'double', &
+     &       'Basin average recharge from SZ and rejected by UZF', &
+     &       'inches', Basin_szreject)/=0) CALL read_error(3, 'basin_szreject')
+
+        ALLOCATE ( Gvr_hru_pct_adjusted(Nhrucell), Gw2sm_grav_save(Nhrucell) )
         ALLOCATE ( Hru_gvr_count(Nhru), Hrucheck(Nhru) )
         ALLOCATE ( It0_pref_flow_stor(Nhru), It0_ssres_stor(Nhru), It0_soil_rechr(Nhru), It0_soil_moist(Nhru) )
         ALLOCATE ( It0_gravity_stor_res(Nhrucell), It0_sroff(Nhru), It0_slow_stor(Nhru) )
@@ -465,7 +484,7 @@
         ALLOCATE ( Gvr_hru_id(Nhrucell) )
         IF ( Nhru/=Nhrucell ) THEN
           IF ( declparam(MODNAME, 'gvr_hru_id', 'nhrucell', 'integer', &
-     &         '1', 'bounded', 'nhru', &
+     &         '0', 'bounded', 'nhru', &
      &         'Corresponding HRU id of each GVR', &
      &         'Index of the HRU associated with each gravity reservoir', &
      &         'none')/=0 ) CALL read_error(1, 'gvr_hru_id')
@@ -483,14 +502,14 @@
 
       ALLOCATE ( Slowcoef_lin(Nhru) )
       IF ( declparam(MODNAME, 'slowcoef_lin', 'nhru', 'real', &
-     &     '0.015', '0.001', '0.5', &
+     &     '0.015', '0.0', '1.0', &
      &     'Linear gravity-flow reservoir routing coefficient', &
      &     'Linear coefficient in equation to route gravity-reservoir storage down slope for each HRU', &
      &     'fraction/day')/=0 ) CALL read_error(1, 'slowcoef_lin')
 
       ALLOCATE ( Slowcoef_sq(Nhru) )
       IF ( declparam(MODNAME, 'slowcoef_sq', 'nhru', 'real', &
-     &     '0.1', '0.001', '1.0', &
+     &     '0.1', '0.0', '1.0', &
      &     'Non-linear gravity-flow reservoir routing coefficient', &
      &     'Non-linear coefficient in equation to route'// &
      &     ' gravity-reservoir storage down slope for each HRU', &
@@ -547,14 +566,14 @@
 
       ALLOCATE ( Fastcoef_lin(Nhru) )
       IF ( declparam(MODNAME, 'fastcoef_lin', 'nhru', 'real', &
-     &     '0.1', '0.001', '1.0', &
+     &     '0.1', '0.0', '1.0', &
      &     'Linear preferential-flow routing coefficient', &
      &     'Linear coefficient in equation to route preferential-flow storage down slope for each HRU', &
      &     'fraction/day')/=0 ) CALL read_error(1, 'fastcoef_lin')
 
       ALLOCATE ( Fastcoef_sq(Nhru) )
       IF ( declparam(MODNAME, 'fastcoef_sq', 'nhru', 'real', &
-     &     '0.8', '0.001', '1.0', &
+     &     '0.8', '0.0', '1.0', &
      &     'Non-linear preferential-flow routing coefficient', &
      &     'Non-linear coefficient in equation used to route'// &
      &     ' preferential-flow storage down slope for each HRU', &
@@ -562,7 +581,7 @@
 
       ALLOCATE ( Ssr2gw_rate(Nhru) )
       IF ( declparam(MODNAME, 'ssr2gw_rate', 'nssr', 'real', &
-     &     '0.1', '0.05', '0.8', &
+     &     '0.1', '0.0001', '1.0', &
      &     'Coefficient to route water from gravity reservoir to GWR', &
      &     'Linear coefficient in equation used to route water from'// &
      &     ' the gravity reservoir to the GWR for each HRU', &
@@ -586,7 +605,7 @@
       USE PRMS_SOILZONE
       USE PRMS_MODULE, ONLY: Print_debug, Nhru, Nssr, Nlake, Model, Nhrucell, &
      &    Inputerror_flag, Parameter_check_flag, Cascade_flag, Init_vars_from_file
-      USE PRMS_BASIN, ONLY: Hru_type, Hru_perv, SMALLPARAM, &
+      USE PRMS_BASIN, ONLY: Hru_type, Hru_perv, &
      &    Basin_area_inv, Hru_area, CLOSEZERO, Hru_frac_perv, Numlake_hrus
       USE PRMS_FLOWVARS, ONLY: Soil_moist_max, Soil_rechr_max, &
      &    Ssres_stor, Basin_ssstor, Basin_soil_moist, Slow_stor, &
@@ -594,11 +613,11 @@
       USE PRMS_SNOW, ONLY: Snowcov_area
       IMPLICIT NONE
 ! Functions
-      EXTERNAL :: init_basin_vars, checkint_param_limits, check_param_zero
+      EXTERNAL :: init_basin_vars, checkdim_param_limits
       INTEGER, EXTERNAL :: getparam
       INTRINSIC MIN
 ! Local Variables
-      INTEGER :: i, ii, ihru, icnt, ierr, ierr1, ierr2, ierr3, ierr_sat
+      INTEGER :: i, ii, ihru, icnt, ierr, ierr1
       REAL :: hruarea, hruperv
 !***********************************************************************
       szinit = 0
@@ -622,7 +641,6 @@
       ENDIF
 
       IF ( Model==0 ) THEN
-        Replenish_frac = 0.0
         IF ( Nhru/=Nhrucell ) THEN
           IF ( getparam(MODNAME, 'gvr_hru_id', Nhrucell, 'integer', Gvr_hru_id)/=0 ) CALL read_error(2, 'gvr_hru_id')
         ELSE
@@ -631,6 +649,10 @@
           ENDDO
         ENDIF
         Grav_gwin = 0.0 ! dimension nhru
+        Gw2sm_grav = 0.0
+        Gw_rejected = 0.0
+        Gw2sm_grav_save = 0.0
+        Basin_szreject = 0.0D0
       ENDIF
 
       Swale_limit = 0.0
@@ -642,7 +664,6 @@
       Gvr_stor_frac = 0.0
       Soil_lower_ratio = 0.0
       Pref_flow_thrsh = 0.0
-      Pref_flow_max = 0.0
 
       Basin_soil_moist = 0.0D0
       Basin_slstor = 0.0D0
@@ -660,7 +681,7 @@
       ! Sanity checks for parameters
       DO i = 1, Nhru
         Snow_free(i) = 1.0 - Snowcov_area(i)
-        
+
         IF ( Hru_type(i)==0 .OR. Hru_type(i)==2 ) THEN !if inactive or lake
           Soil_rechr(i) = 0.0
           Soil_moist(i) = 0.0
@@ -668,44 +689,29 @@
           Slow_stor(i) = 0.0
           Pref_flow_stor(i) = 0.0
           Soil_moist_frac(i) = 0.0
-          Cpr_stor_frac(i) = 0.0
           Soil_moist_tot(i) = 0.0
           Soil_lower(i) = 0.0
           Soil_rechr_ratio(i) = 0.0
           Soil_zone_max(i) = 0.0
           Soil_lower_stor_max(i) = 0.0
+          Cpr_stor_frac(i) = 0.0
+          Sat_threshold(i) = 0.0
+          Pref_flow_den(i) = 0.0
+          Pref_flow_max(i) = 0.0
           CYCLE
         ENDIF
-        ierr_sat = 0
-        CALL check_param_zero(i, 'sat_threshold', Sat_threshold(i), ierr_sat)
-        IF ( ierr_sat==0 ) THEN
-          IF ( Hru_type(i)/=1 ) THEN ! swales, inactive, lakes
-            IF ( Hru_type(i)==3 ) Swale_limit(i) = 3.0*Sat_threshold(i)
-            Pref_flow_den(i) = 0.0
-          ENDIF
+
+        IF ( Hru_type(i)==3 ) THEN ! swale
+          Swale_limit(i) = 3.0*Sat_threshold(i)
+          Pref_flow_den(i) = 0.0
+          Pref_flow_thrsh(i) = Sat_threshold(i)
+          Pref_flow_max(i) = 0.0
+        ELSE ! land
           Pref_flow_thrsh(i) = Sat_threshold(i)*(1.0-Pref_flow_den(i))
           Pref_flow_max(i) = Sat_threshold(i) - Pref_flow_thrsh(i)
         ENDIF
 
         ierr = 0
-        IF ( Soil_moist_max(i)<SMALLPARAM ) THEN
-          IF ( Parameter_check_flag>0 ) THEN
-            PRINT *, 'ERROR, soil_moist_max value <', SMALLPARAM, ' for HRU:', i, ', value:', Soil_moist_max(i)
-            ierr = 1
-          ELSE
-            PRINT 9001, 'soil_moist_max', SMALLPARAM, i, Soil_moist_max(i), SMALLPARAM
-            Soil_moist_max(i) = SMALLPARAM
-          ENDIF
-        ENDIF
-        IF ( Soil_rechr_max(i)<SMALLPARAM ) THEN
-          IF ( Parameter_check_flag>0 ) THEN
-            PRINT *, 'ERROR, soil_rechr_max value <', SMALLPARAM, ' for HRU:', i, ', value:', Soil_rechr_max(i)
-            ierr = 1
-          ELSE
-            PRINT 9001, 'soil_rechr_max', SMALLPARAM, i, Soil_rechr_max(i), SMALLPARAM
-            Soil_rechr_max(i) = SMALLPARAM
-          ENDIF
-        ENDIF
         IF ( Soil_rechr_max(i)>Soil_moist_max(i) ) THEN
           IF ( Parameter_check_flag>0 ) THEN
             PRINT 9002, i, Soil_rechr_max(i), Soil_moist_max(i)
@@ -718,12 +724,7 @@
 
         ! hru_type = 1 or 3
         ierr1 = 0
-        ierr2 = 0
-        ierr3 = 0
         IF ( Init_vars_from_file==0 ) THEN
-          CALL check_param_zero(i, 'soil_moist_init', Soil_moist_init(i), ierr1)
-          CALL check_param_zero(i, 'soil_rechr_init', Soil_rechr_init(i), ierr2)
-          CALL check_param_zero(i, 'ssstor_init', Ssstor_init(i), ierr3)
           Soil_rechr(i) = Soil_rechr_init(i)
           IF ( Soil_rechr_init(i)>Soil_rechr_max(i) ) THEN
             IF ( Parameter_check_flag>0 ) THEN
@@ -744,98 +745,41 @@
               Soil_moist(i) = Soil_moist_max(i)
             ENDIF
           ENDIF
-          IF ( ierr1+ierr2==0 ) THEN
-            IF ( Soil_rechr(i)>Soil_moist(i) ) THEN
-              IF ( Parameter_check_flag>0 ) THEN
-                PRINT 9005, i, Soil_rechr(i), Soil_moist(i)
-                ierr = 1
-              ELSE
-                IF ( Print_debug>-1 ) PRINT 9015, i, Soil_rechr(i), Soil_moist(i)
-                Soil_rechr(i) = Soil_moist(i)
-              ENDIF
+          IF ( Soil_rechr(i)>Soil_moist(i) ) THEN
+            IF ( Parameter_check_flag>0 ) THEN
+              PRINT 9005, i, Soil_rechr(i), Soil_moist(i)
+              ierr = 1
+            ELSE
+              IF ( Print_debug>-1 ) PRINT 9015, i, Soil_rechr(i), Soil_moist(i)
+              Soil_rechr(i) = Soil_moist(i)
             ENDIF
           ENDIF
           Ssres_stor(i) = Ssstor_init(i)
-          IF ( ierr3+ierr_sat==0 ) THEN
-            IF ( Ssres_stor(i)>Sat_threshold(i) ) THEN
-              IF ( Parameter_check_flag>0 ) THEN
-                PRINT *, 'ERROR, HRU:', i, Ssres_stor(i), Sat_threshold(i), ' ssres_stor > sat_threshold'
-                ierr = 1
-              ELSE
-                PRINT *, 'WARNING, HRU:', i, Ssres_stor(i), Sat_threshold(i), ' ssres_stor > sat_threshold, ssres_stor set to max'
-                Ssres_stor(i) = Sat_threshold(i)
-              ENDIF
+          IF ( Ssres_stor(i)>Sat_threshold(i) ) THEN
+            IF ( Parameter_check_flag>0 ) THEN
+              PRINT *, 'ERROR, HRU:', i, Ssres_stor(i), Sat_threshold(i), ' ssres_stor > sat_threshold'
+              ierr = 1
+            ELSE
+              PRINT *, 'WARNING, HRU:', i, Ssres_stor(i), Sat_threshold(i), ' ssres_stor > sat_threshold, ssres_stor set to max'
+              Ssres_stor(i) = Sat_threshold(i)
             ENDIF
           ENDIF
           Slow_stor(i) = MIN( Ssres_stor(i), Pref_flow_thrsh(i) )
           Pref_flow_stor(i) = Ssres_stor(i) - Slow_stor(i)
         ENDIF
-        CALL checkint_param_limits(i, 'soil_type', Soil_type(i), 1, 3, ierr)
-        CALL check_param_zero(i, 'ssr2gw_rate', Ssr2gw_rate(i), ierr)
         IF ( Soil2gw_max(i)>0.0 ) Soil2gw(i) = 1
         IF ( Hru_type(i)==1 ) THEN ! interflow coefficient values don't matter unless land HRU
-          IF ( Slowcoef_lin(i)<0.0 ) THEN
-            PRINT 9006, i, ' slowcoef_lin ', Slowcoef_lin(i)
-            ierr = 1
-          ELSEIF ( Slowcoef_lin(i)<CLOSEZERO ) THEN
-            IF ( Parameter_check_flag>0 ) THEN
-              PRINT *, 'ERROR, slowcoef_lin <', CLOSEZERO, ' for HRU:', i, Slowcoef_lin(i)
-              ierr = 1
-            ELSE
-              PRINT *, 'WARNING, slowcoef_lin <', CLOSEZERO, ' for HRU:', i, Slowcoef_lin(i)
-              PRINT *, '         value changed to:', CLOSEZERO
-              Slowcoef_lin(i) = CLOSEZERO
-            ENDIF
-          ENDIF
-          IF ( Slowcoef_sq(i)<0.0 ) THEN
-            PRINT 9006, i, ' slowcoef_sq', Slowcoef_sq(i)
-            ierr = 1
-          ELSEIF ( Slowcoef_sq(i)<CLOSEZERO ) THEN
-            IF ( Parameter_check_flag>0 ) THEN
-              PRINT *, 'ERROR, slowcoef_sq <', CLOSEZERO, ' for HRU:', i, Slowcoef_sq(i)
-              ierr = 1
-            ELSE
-              PRINT *, 'WARNING, slowcoef_sq <', CLOSEZERO, ' for HRU:', i, Slowcoef_sq(i)
-              PRINT *, '         value changed to:', CLOSEZERO
-              Slowcoef_sq(i) = CLOSEZERO
-            ENDIF
-          ENDIF
           IF ( Pref_flow_den(i)>0.0 ) THEN
             Pref_flow_flag(i) = 1
             Pref_flag = 1
-            IF ( Fastcoef_lin(i)<0.0 ) THEN
-              PRINT 9006, i, ' fastcoef_lin', Fastcoef_lin(i)
-              ierr = 1
-            ELSEIF ( Fastcoef_lin(i)<CLOSEZERO ) THEN
-              IF ( Parameter_check_flag>0 ) THEN
-                PRINT *, 'ERROR, fastcoef_lin <', CLOSEZERO, ' for HRU:', i, Fastcoef_lin(i)
-                ierr = 1
-              ELSE
-                PRINT *, 'WARNING, fastcoef_lin cannot be 0.0 for HRU:', i, Fastcoef_lin(i)
-              PRINT *, '         value changed to:', CLOSEZERO
-                Fastcoef_lin(i) = CLOSEZERO
-              ENDIF
-            ENDIF
-            IF ( Fastcoef_sq(i)<0.0 ) THEN
-              PRINT 9006, i, ' fastcoef_sq', Fastcoef_sq(i)
-              ierr = 1
-            ELSEIF ( Fastcoef_sq(i)<CLOSEZERO ) THEN
-              IF ( Parameter_check_flag>0 ) THEN
-                PRINT *, 'ERROR, fastcoef_sq <', CLOSEZERO, ' for HRU:', i, Fastcoef_sq(i)
-                ierr = 1
-              ELSE
-                PRINT *, 'WARNING, fastcoef_sq cannot be 0.0 for HRU:', i, Fastcoef_sq(i)
-              PRINT *, '         value changed to:', CLOSEZERO
-                Fastcoef_sq(i) = CLOSEZERO
-              ENDIF
-            ENDIF
           ENDIF
         ENDIF
-        IF ( ierr+ierr1+ierr2+ierr3+ierr_sat>0 ) THEN
+        IF ( ierr+ierr1>0 ) THEN
           ierr1 = 1
           Inputerror_flag = 1
           CYCLE
         ENDIF
+
         hruarea = Hru_area(i)
         hruperv = Hru_perv(i)
         Soil_zone_max(i) = Sat_threshold(i) + Soil_moist_max(i)*Hru_frac_perv(i)
@@ -923,31 +867,27 @@
         Hru_gvr_count = 0
         DO i = 1, Nhrucell
           ihru = Gvr_hru_id(i)
-          IF ( ihru>Nhru ) THEN
-            PRINT *, 'ERROR, gvr_hru_id greater than number of HRUs'
-            PRINT *, 'gvr_hru_id:', ihru, '; nhru=', Nhru,'; gvr number:', i
-            ierr = 1
-          ELSEIF ( ihru==0 ) THEN
-            PRINT *, 'ERROR, gvr_hru_id = 0 for gvr:', i
-            PRINT *, 'Be sure gvr_hru_id is in the Parameter File'
-            ierr = 1
+          IF ( Parameter_check_flag>0 ) THEN
+            CALL checkdim_param_limits(i, 'gvr_hru_id', 'nhrucell', ihru, 1, Nhru, ierr)
+            IF ( ierr==1 ) CYCLE
+          ENDIF
+          IF ( Hru_type(ihru)==0 .OR. Hru_type(ihru)==2 ) THEN
+            Gravity_stor_res(i) = 0.0
           ELSE
-            IF ( Hru_type(ihru)==0 .OR. Hru_type(ihru)==2 ) THEN
-              Gravity_stor_res(i) = 0.0
-            ELSE
-          ! set only for cold start simulations
-              IF ( Init_vars_from_file==0 ) Gravity_stor_res(i) = Ssstor_init(ihru)
-              Hru_gvr_count(ihru) = Hru_gvr_count(ihru) + 1
-              IF ( Hru_gvr_count(ihru)>Max_gvrs ) Max_gvrs = Hru_gvr_count(ihru)
-            ENDIF
+            ! set only for cold start simulations
+            IF ( Init_vars_from_file==0 ) Gravity_stor_res(i) = Ssstor_init(ihru)
+            Hru_gvr_count(ihru) = Hru_gvr_count(ihru) + 1
+            IF ( Hru_gvr_count(ihru)>Max_gvrs ) Max_gvrs = Hru_gvr_count(ihru)
           ENDIF
         ENDDO
         IF ( ierr==0 ) THEN
           ALLOCATE ( Hru_gvr_index(Max_gvrs, Nhru) )
+          Hru_gvr_index = 0
           Hrucheck = 1
           DO i = 1, Nhru
             IF ( Hru_type(i)==0 .OR. Hru_type(i)==2 ) THEN !if inactive or lake
               Hrucheck(i) = 0
+              Replenish_frac(i) = 0.0
               CYCLE
             ENDIF
             Replenish_frac(i) = Soil_rechr_max(i)/Soil_moist_max(i)
@@ -965,12 +905,10 @@
       ENDIF
       IF ( Init_vars_from_file==0 ) DEALLOCATE ( Soil_rechr_init, Soil_moist_init, Ssstor_init )
 
- 9001 FORMAT (/, 'WARNING, ', A, ' <', F7.4, ' for HRU:', I7, /, 9X, 'value:', F10.7, ' set to', F7.4)
  9002 FORMAT (/, 'ERROR, HRU:', I7, ' soil_rechr_max > soil_moist_max', 2F10.4)
  9003 FORMAT (/, 'ERROR, HRU:', I7, ' soil_rechr_init > soil_rechr_max', 2F10.4)
  9004 FORMAT (/, 'ERROR, HRU:', I7, ' soil_moist_init > soil_moist_max', 2F10.4)
  9005 FORMAT (/, 'ERROR, HRU:', I7, ' soil_rechr > soil_moist based on init and max values', 2F10.4)
- 9006 FORMAT (/, 'ERROR, HRU:', I7, A, ' value < 0.0', F10.4)
  9012 FORMAT ('WARNING, HRU:', I7, ' soil_rechr_max > soil_moist_max,', 2F10.4, /, 9X, &
      &        'soil_rechr_max set to soil_moist_max')
  9013 FORMAT ('WARNING, HRU:', I7, ' soil_rechr_init > soil_rechr_max,', 2F10.4, /, 9X, &
@@ -991,11 +929,11 @@
 !***********************************************************************
       INTEGER FUNCTION szrun()
       USE PRMS_SOILZONE
-      USE PRMS_MODULE, ONLY: Dprst_flag, Print_debug, &
-     &    Model, Nlake, Nhrucell, Kkiter, Cascade_flag, Gw2sm_grav
+      USE PRMS_MODULE, ONLY: Dprst_flag, Print_debug, Kkiter, &
+     &    Model, Nlake, Nhrucell, Cascade_flag, Dprst_flag
       USE PRMS_BASIN, ONLY: Hru_type, Hru_perv, Hru_frac_perv, &
      &    Hru_route_order, Active_hrus, Basin_area_inv, Hru_area, &
-     &    NEARZERO, Lake_hru_id, Cov_type, Numlake_hrus, CLOSEZERO
+     &    NEARZERO, Lake_hru_id, Cov_type, Numlake_hrus, Hru_area_dble
       USE PRMS_CLIMATEVARS, ONLY: Hru_ppt, Transp_on, Potet, Basin_potet
 ! WARNING!!! Sroff, Basin_sroff, and Strm_seg_in can be updated
       USE PRMS_FLOWVARS, ONLY: Basin_ssflow, Basin_actet, Hru_actet, &
@@ -1008,7 +946,7 @@
       USE PRMS_SET_TIME, ONLY: Nowmonth, Nowday
       USE PRMS_INTCP, ONLY: Hru_intcpevap
       USE PRMS_SNOW, ONLY: Snowcov_area, Snow_evap
-      USE PRMS_SRUNOFF, ONLY: Basin_sroff, Hru_impervevap, Strm_seg_in, Dprst_evap_hru, Strm_farfield
+      USE PRMS_SRUNOFF, ONLY: Basin_sroff, Hru_impervevap, Strm_seg_in, Dprst_evap_hru, Strm_farfield, Dprst_seep_hru
       IMPLICIT NONE
 ! Functions
       INTRINSIC MIN, ABS, MAX, SNGL, DBLE
@@ -1089,7 +1027,6 @@
         ENDIF
       ENDIF
 
-
       IF ( Print_debug==1 ) THEN
         Soil_moist_ante = Soil_moist
         Ssres_stor_ante = Ssres_stor
@@ -1134,7 +1071,7 @@
             ! if lake HRU doesn't cascade, should we limit ET to
             !  water entering the HRU to this point (no gwflow yet)
             Lakein_sz(i) = Upslope_interflow(i) + Upslope_dunnianflow(i)
-            Basin_lakeinsz = Basin_lakeinsz + Lakein_sz(i)*DBLE(harea)
+            Basin_lakeinsz = Basin_lakeinsz + Lakein_sz(i)*Hru_area_dble(i)
           ENDIF
           CYCLE
         ENDIF
@@ -1206,7 +1143,7 @@
         gvr_maxin = 0.0
         Cap_waterin(i) = capwater_maxin
 
-        ! call even if capwate_maxin = 0, just in cast soil_moist now > Soil_moist_max
+        ! call even if capwater_maxin = 0, just in case soil_moist now > Soil_moist_max
         IF ( capwater_maxin+Soil_moist(i)>0.0 ) THEN
           CALL compute_soilmoist(Cap_waterin(i), Soil_moist_max(i), &
      &         Soil_rechr_max(i), Soil2gw_max(i), gvr_maxin, &
@@ -1246,7 +1183,7 @@
         ELSE
           availh2o = Slow_stor(i) + gvr_maxin
           IF ( Hru_type(i)==1 ) THEN
-            IF ( Pref_flow_flag(i)==1 ) topfr = MAX( 0.0, availh2o-Pref_flow_thrsh(i) )
+            topfr = MAX( 0.0, availh2o-Pref_flow_thrsh(i) )
             ssresin = gvr_maxin - topfr
             Slow_stor(i) = availh2o - topfr
             ! compute slow contribution to interflow, if any
@@ -1266,9 +1203,9 @@
           dunnianflw_gvr = MAX( 0.0, availh2o-Pref_flow_max(i) )
           IF ( dunnianflw_gvr>0.0 ) THEN
             topfr = topfr - dunnianflw_gvr
-            IF ( topfr<CLOSEZERO ) THEN
-!              PRINT *, 'gvr2pfr<0', topfr, dunnianflw_gvr,
-!     &                 pref_flow_max(i), pref_flow_stor(i), gvr_maxin
+            IF ( topfr<0.0 ) THEN
+!              IF ( topfr<-NEARZERO .AND. Print_debug>-1 ) PRINT *, 'gvr2pfr<0', topfr, dunnianflw_gvr, &
+!     &             Pref_flow_max(i), Pref_flow_stor(i), gvr_maxin
               topfr = 0.0
             ENDIF
           ENDIF
@@ -1291,6 +1228,8 @@
 
 !******Compute actual evapotranspiration
         Snow_free(i) = 1.0 - Snowcov_area(i)
+        Potet_rechr(i) = 0.0
+        Potet_lower(i) = 0.0
         pervactet = 0.0
         IF ( Soil_moist(i)>0.0 ) THEN
           CALL compute_szactet(Soil_moist_max(i), Soil_rechr_max(i), Transp_on(i), Cov_type(i), &
@@ -1433,6 +1372,7 @@
         Basin_soil_lower_stor_frac = Basin_soil_lower_stor_frac + Soil_lower_ratio(i)*perv_area
         Basin_soil_rechr_stor_frac = Basin_soil_rechr_stor_frac + Soil_rechr_ratio(i)*perv_area
         Recharge(i) = Soil_to_gw(i) + Ssr_to_gw(i)
+        IF ( Dprst_flag==1 ) Recharge(i) = Recharge(i) + Dprst_seep_hru(i)
         Basin_recharge = Basin_recharge + DBLE( Recharge(i)*harea )
         Grav_dunnian_flow(i) = dunnianflw_gvr
         Unused_potet(i) = Potet(i) - Hru_actet(i)
@@ -1518,7 +1458,7 @@
           Soil_to_gw = MIN( Soil2gw_max, excs )
           excs = excs - Soil_to_gw
         ENDIF
-        IF ( excs>Infil/Perv_frac ) THEN !probably dynamic
+        IF ( excs>Infil*Perv_frac ) THEN !probably dynamic
           Infil = 0.0
         ELSE
           Infil = Infil - excs/Perv_frac         !???? what if Infil<0 ??? might happen with dynamic and small values, maybe ABS < NEARZERO = 0.0
@@ -1550,15 +1490,12 @@
 ! Arguments
       INTEGER, INTENT(IN) :: Transp_on, Cov_type, Soil_type
       REAL, INTENT(IN) :: Soil_moist_max, Soil_rechr_max, Snow_free
-      REAL, INTENT(INOUT) :: Soil_moist, Soil_rechr, Avail_potet
-      REAL, INTENT(OUT) :: Perv_actet, Potet_rechr, Potet_lower
+      REAL, INTENT(INOUT) :: Soil_moist, Soil_rechr, Avail_potet, Potet_rechr, Potet_lower
+      REAL, INTENT(OUT) :: Perv_actet
 ! Local Variables
       REAL, PARAMETER :: ONETHIRD = 1.0/3.0, TWOTHIRDS = 2.0/3.0
       REAL :: et, pcts, pctr
 !***********************************************************************
-      Potet_lower = 0.0
-      Potet_rechr = 0.0
-
 !******Determine if evaporation(Et_type = 2) or transpiration plus
 !******evaporation(Et_type = 3) are active.  if not, Et_type = 1
 
@@ -1648,7 +1585,6 @@
 !     compute interflow and flow to groundwater reservoir
 !***********************************************************************
       SUBROUTINE compute_gwflow(Ssr2gw_rate, Ssr2gw_exp, Ssr_to_gw, Slow_stor)
-      USE PRMS_BASIN, ONLY: NEARZERO
       IMPLICIT NONE
 ! Arguments
       REAL, INTENT(IN) :: Ssr2gw_rate, Ssr2gw_exp
@@ -1680,10 +1616,10 @@
 !***********************************************************************
 ! Inter_flow is in inches for the timestep
 !******compute interflow
-      IF ( Coef_lin<NEARZERO .AND. Ssres_in<=0.0 ) THEN
+      IF ( Coef_lin<=0.0 .AND. Ssres_in<=0.0 ) THEN
         c1 = Coef_sq*Storage
         Inter_flow = Storage*(c1/(1.0+c1))
-      ELSEIF ( Coef_sq<NEARZERO ) THEN
+      ELSEIF ( Coef_sq<=0.0 ) THEN
         c2 = 1.0 - EXP(-Coef_lin)
         Inter_flow = Ssres_in*(1.0-c2/Coef_lin) + Storage*c2
       ELSE
@@ -1782,9 +1718,11 @@
      &           Slowcoef_sq, Ssr2gw_rate, Ssr2gw_exp, Gvr_maxin, &
      &           Pref_flow_thrsh, Gvr2pfr, Ssr_to_gw, &
      &           Slow_flow, Slow_stor, Gvr2sm, Soil_to_gw, Gwin, Hru_type)
-      USE PRMS_SOILZONE, ONLY: Gravity_stor_res, Sm2gw_grav, Hru_gvr_count, Hru_gvr_index
-      USE PRMS_MODULE, ONLY: Gw2sm_grav, Gvr_hru_pct_adjusted
+      USE PRMS_SOILZONE, ONLY: Gravity_stor_res, Sm2gw_grav, Hru_gvr_count, Hru_gvr_index, &
+     &    Gw2sm_grav, Gvr_hru_pct_adjusted
+      USE PRMS_MODULE, ONLY: Dprst_flag, Print_debug
       USE PRMS_BASIN, ONLY: NEARZERO
+      USE PRMS_SRUNOFF, ONLY: Dprst_seep_hru
       IMPLICIT NONE
 ! Functions
       INTRINSIC MAX, DBLE, SNGL
@@ -1867,6 +1805,7 @@
 
 ! add any direct recharge from soil infiltration
         Sm2gw_grav(igvr) = Sm2gw_grav(igvr) + Soil_to_gw
+        IF ( Dprst_flag==1 ) Sm2gw_grav(igvr) = Sm2gw_grav(igvr) + Dprst_seep_hru(Ihru)
 
       ENDDO ! end loop of GVRs in the HRU
 
@@ -1875,7 +1814,8 @@
       Ssr_to_gw = SNGL( togw )
       Slow_stor = SNGL( slowstor )
       IF ( Slow_stor>Pref_flow_thrsh ) THEN
-        PRINT *, 'slow_stor > thrsh', Slow_stor, Pref_flow_thrsh, ' HRU:', Ihru, ' type:', Hru_type
+        IF ( Print_debug>-1 .AND. Hru_type==1 ) &
+     &       PRINT *, 'slow_stor > thrsh', Slow_stor, Pref_flow_thrsh, ' HRU:', Ihru, ' type:', Hru_type
       ENDIF
 
       END SUBROUTINE compute_gravflow
@@ -1986,7 +1926,7 @@
         WRITE ( Restart_outunit ) Basin_lakeinsz, Basin_lakeprecip
         WRITE ( Restart_outunit ) Perv_actet
         WRITE ( Restart_outunit ) Soil_moist_tot
-!        WRITE ( Restart_outunit ) Soil_moist_frac
+        WRITE ( Restart_outunit ) Soil_moist_frac
         WRITE ( Restart_outunit ) Recharge
         WRITE ( Restart_outunit ) Cap_infil_tot
         WRITE ( Restart_outunit ) Swale_actet
@@ -1994,10 +1934,10 @@
         WRITE ( Restart_outunit ) Cap_waterin
         WRITE ( Restart_outunit ) Soil_lower
 !        WRITE ( Restart_outunit ) Soil_zone_max
-!        WRITE ( Restart_outunit ) Soil_rechr_ratio
+        WRITE ( Restart_outunit ) Soil_rechr_ratio
         WRITE ( Restart_outunit ) Potet_lower
         WRITE ( Restart_outunit ) Potet_rechr
-!        WRITE ( Restart_outunit ) Soil_lower_ratio
+        WRITE ( Restart_outunit ) Soil_lower_ratio
         WRITE ( Restart_outunit ) Dunnian_flow
 !        WRITE ( Restart_outunit ) Pref_flow_thrsh
         WRITE ( Restart_outunit ) Pref_flow_infil
@@ -2029,7 +1969,7 @@
         READ ( Restart_inunit ) Basin_lakeinsz, Basin_lakeprecip
         READ ( Restart_inunit ) Perv_actet
         READ ( Restart_inunit ) Soil_moist_tot
-!        READ ( Restart_inunit ) Soil_moist_frac
+        READ ( Restart_inunit ) Soil_moist_frac
         READ ( Restart_inunit ) Recharge
         READ ( Restart_inunit ) Cap_infil_tot
         READ ( Restart_inunit ) Swale_actet
@@ -2037,10 +1977,10 @@
         READ ( Restart_inunit ) Cap_waterin
         READ ( Restart_inunit ) Soil_lower
 !        READ ( Restart_inunit ) Soil_zone_max
-!        READ ( Restart_inunit ) Soil_rechr_ratio
+        READ ( Restart_inunit ) Soil_rechr_ratio
         READ ( Restart_inunit ) Potet_lower
         READ ( Restart_inunit ) Potet_rechr
-!        READ ( Restart_inunit ) Soil_lower_ratio
+        READ ( Restart_inunit ) Soil_lower_ratio
         READ ( Restart_inunit ) Dunnian_flow
 !        READ ( Restart_inunit ) Pref_flow_thrsh
         READ ( Restart_inunit ) Pref_flow_infil

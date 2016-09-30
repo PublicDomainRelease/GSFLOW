@@ -4,7 +4,7 @@
 !
       SUBROUTINE GWF2NWT1AR(In, Mxiter, Iunitlak, Igrid)
 !
-!------NEWTON SOLVER VERSION NUMBER 1.0.9:  July 1, 2014
+!------NEWTON SOLVER VERSION NUMBER 1.1.1, 7/28/2016
 !      RICHARD G. NISWONGER
       USE GLOBAL,     ONLY:NCOL,NROW,NLAY,IBOUND,BOTM,IOUT,LBOTM,HNEW
 !!      USE GLOBAL,     ONLY:NCOL,NROW,NLAY,ITRSS,LAYHDT,LAYHDS,LAYCBD,
@@ -34,7 +34,7 @@
 !!      REAL akappadum, gammadum, Breducdum, Btoldum, Thickdum,ZERO
 !!      INTEGER IANAME,KHANI,N,KK,nc,nr,nl,j,k,NCNVRT,NHANI,NWETD
 ! Memory use variables
-      INTEGER lrwrk,liwrk,NODES,MBLACK,NJAF
+      INTEGER lrwrk,liwrk,NODES,MBLACK,NJAF,ICHECK
 !!      REAL Memuse1,Memuse2
 !     ------------------------------------------------------------------
 !
@@ -51,7 +51,7 @@
 !1------IDENTIFY PACKAGE AND INITIALIZE.
       WRITE (Iout, 9001) In
  9001 FORMAT (1X, /' NWT1 -- Newton Solver, ',
-     +    'VERSION 1.0.9, 07/01/2014', /, 9X, 'INPUT READ FROM UNIT',
+     +    'VERSION 1.1.1, 7/28/2016', /, 9X, 'INPUT READ FROM UNIT',
      +        I3,/)
       i = 1
       Itreal = 0
@@ -142,7 +142,7 @@ C3B-----GET OPTIONS.
         Breducdum = 0.97
       ELSEIF ( IFDPARAM.EQ.2 ) THEN
         thetadum = 0.90
-        akappadum = 0.0001
+        akappadum = 0.00001   !3/25/16
         gammadum = 0.00
         amomentdum = 0.1
         Btrack = 0
@@ -234,29 +234,31 @@ C3B-----GET OPTIONS.
       II = 0
       ICELL = 0
       DIAG = 0
- ! Check heads and set to be above bottom. 
+! Check heads and set to be above bottom. 
+      ICHECK = 0
       Do il = 1, Nlay
         Do ir = 1, Nrow
           Do ic = 1, Ncol
             IF ( IBOUND(ic,ir,il).GT.0 ) THEN
               IF ( dble(BOTM(ic,ir,LBOTM(il)-1)) - 
      +             dble(BOTM(ic,ir,LBOTM(il))).LT.100.0*Thickfact ) THEN
-                WRITE(IOUT,*) 'Extremely thin cell for Column = ',ic,
-     +                         ' and Row = ',ir,' and Layer = ',il,
-     +                         ' Check input, Setting IBOUND = 0'
-                IBOUND(ic,ir,il) = 0
+      WRITE(IOUT,*) 'TOP-BOT < 100.0*Thickfact (Lay,Row,Col) =',il,ir,ic
+!                IBOUND(ic,ir,il) = 0
+                ICHECK = 1
               END IF    
- ! these next three lines could cause slow convergence when using a solution for IC.            
-!              IF ( HNEW(ic,ir,il).LT.BOTM(ic,ir,LBOTM(il)) ) THEN
-!                HNEW(ic,ir,il) = BOTM(ic,ir,LBOTM(il))+HEPS
-!              END IF
             END IF
             Hiter(ic,ir,il) = HNEW(ic,ir,il)
           End do
         End do
       End do
- !  Determine the number of active cells and then numnber of elements
- !  in linear matrix for allocating arrays.
+      IF ( ICHECK==1 ) THEN
+        WRITE(IOUT,*)
+        WRITE(IOUT,*)'CHECK INPUT'
+        WRITE(IOUT,*)'MODEL STOPPING'
+        CALL USTOP('')
+      END IF
+!  Determine the number of active cells and then numnber of elements
+!  in linear matrix for allocating arrays.
       CALL ORDERCELL()
       CALL COUNTACTIVE(jj)
       IF ( Numactive.LT.2 ) THEN
@@ -604,7 +606,9 @@ C-------STRAIGHT LINE WITH PARABOLIC SMOOTHING
       ELSEIF(X.LT.1.0D0)THEN
         X = 1.0 - X
         Y = - ACOF * x / (EPS * (Ttop - Bbot))
-        Y = 1.0-Y
+ !       Y = 1.0-Y
+        Y = -Y
+        !2-26-16. 1 should go away for derivative
       ELSE
         Y = 0.0
       ENDIF
@@ -1413,7 +1417,7 @@ C--Update heads.
 !     Return value of groundwater flow equation
       DOUBLE PRECISION FUNCTION GW_func(Ic, Ir, Il)
       USE GWFNWTMODULE
-!!      USE GLOBAL,      ONLY:iout
+      USE GLOBAL,      ONLY:iout, ibound
       USE GWFBASMODULE, ONLY:HNOFLO
       IMPLICIT NONE
 !     ------------------------------------------------------------------
@@ -1426,7 +1430,7 @@ C--Update heads.
 !     -----------------------------------------------------------------
 !     LOCAL VARIABLES
 !     -----------------------------------------------------------------
-      DOUBLE PRECISION term1, term2, term3
+      DOUBLE PRECISION term1, term2, term3, sum
 !     -----------------------------------------------------------------   
       GW_func = 0.0D0
       IF ( H==HNOFLO ) RETURN    
@@ -1434,18 +1438,11 @@ C--Update heads.
       term2 = (-Cvm1-Ccm1-Crm1-Crr-Ccc-Cvv+Hcoff)*H
       term3 = Crr*Hcp1 + Ccc*Hrp1 + Cvv*Hvp1 - Rhss
       GW_func = term1 + term2 + term3
-!      if(ic==166.and.ir==159.and.il==1)then
-!      write(iout,222)ic,ir,il,cvm1*(Hvm1-h),ccm1*(hrm1-h),crm1*(hcm1-h),
-!     +cvv*(hvp1-h),ccc*(hrp1-h),crr*(hcp1-h),rhss,gw_func
-!      end if
-!  222 format(3i5,8e20.10)
-      !if(ibound(ic,ir,il)==-1)then
-      !if(ibound(ic,ir-1,il)==1)sum=sum+ccm1*(hrm1-h)
-      !if(ibound(ic-1,ir,il)==1)sum=sum+crm1*(hcm1-h)
-      !if(ibound(ic+1,ir,il)==1)sum=sum+crr*(hcp1-h)
-      !if(ibound(ic,ir+1,il)==1)sum=sum+ccc*(hrp1-h)
-      !write(iout,*)'sum=',ic,ir,il,sum
-      !end if
+  !    if(ic==53.and.ir==47.and.il==2)then
+  !    write(iout,222)ic,ir,il,cvm1*(Hvm1-h),ccm1*(hrm1-h),crm1*(hcm1-h),
+  !   +cvv*(hvp1-h),ccc*(hrp1-h),crr*(hcp1-h),hcoff*h-rhss,gw_func
+  !    end if
+  !222 format(3i5,8e20.10)
       END FUNCTION GW_func
 !
 !

@@ -72,7 +72,7 @@
 !***********************************************************************
       map_resultsdecl = 0
 
-      Version_map_results = '$Id: map_results.f90 7434 2015-06-10 22:15:43Z rsregan $'
+      Version_map_results = 'map_results.f90 2016-05-12 15:48:00Z'
       CALL print_module(Version_map_results, 'Output Summary              ', 90)
       MODNAME = 'map_results'
 
@@ -155,7 +155,7 @@
         ENDIF
         IF ( Nhru/=Nhrucell .OR. Model==99 ) THEN
           IF ( declparam(MODNAME, 'gvr_hru_id', 'nhrucell', 'integer', &
-     &         '1', 'bounded', 'nhru', &
+     &         '0', 'bounded', 'nhru', &
      &         'Corresponding HRU id of each GVR', &
      &         'Index of the HRU associated with each gravity reservoir', &
      &         'none')/=0 ) CALL read_error(1, 'gvr_hru_id')
@@ -170,12 +170,12 @@
       INTEGER FUNCTION map_resultsinit()
       USE PRMS_MAP_RESULTS
       USE PRMS_MODULE, ONLY: Nhru, Print_debug, Nhrucell, Ngwcell, Inputerror_flag, MapOutON_OFF, &
-     &                       Start_year, Start_month, Start_day, End_year
-      USE PRMS_BASIN, ONLY: NEARZERO
+     &                       Start_year, Start_month, Start_day, End_year, Parameter_check_flag
+      USE PRMS_BASIN, ONLY: NEARZERO, CLOSEZERO
       IMPLICIT NONE
       INTRINSIC ABS, DBLE
       INTEGER, EXTERNAL :: getparam, getvartype, numchars, getvarsize
-      EXTERNAL read_error, PRMS_open_output_file
+      EXTERNAL read_error, PRMS_open_output_file, checkdim_param_limits
 ! Local Variables
       INTEGER :: i, jj, is, ios, ierr, size, dim
       REAL, ALLOCATABLE, DIMENSION(:) :: map_frac
@@ -238,14 +238,12 @@
           ierr = 1
         ENDIF
       ENDDO
-      IF ( ierr==1 ) STOP
 
       Dailyresults = 0
       Weekresults = 0
       Monresults = 0
       Yrresults = 0
       Totresults = 0
-      ierr = 0
 
       IF ( Mapvars_freq==7 ) THEN
         Dailyresults = 1
@@ -308,7 +306,7 @@
           IF ( ios/=0 ) ierr = 1
         ENDDO
       ENDIF
-      IF ( ierr==1 ) STOP
+      IF ( ierr==1 ) Inputerror_flag = 1
 
       IF ( Mapflg==0 ) THEN
         IF ( getparam(MODNAME, 'gvr_cell_id', Nhrucell, 'integer', Gvr_map_id)/=0 ) CALL read_error(2, 'gvr_cell_id')
@@ -325,49 +323,46 @@
           Gvr_map_frac = 1.0
         ENDIF
 
-        ALLOCATE ( map_frac(Ngwcell) )
-        map_frac = 0.0
-        DO i = 1, Nhrucell
-          ierr = 0
-          IF ( Gvr_map_id(i)>Ngwcell ) THEN
-            PRINT *, 'ERROR, gvr_cell_id value:', Gvr_map_id(i), ' > ngwcell value:', Ngwcell
-            PRINT *, '       for nhrucell:', i
-            ierr = 1
-          ENDIF
-          IF ( Gvr_hru_id(i)>Nhru ) THEN
-            PRINT *, 'ERROR, gvr_hru_id value:', Gvr_hru_id(i), ' > nhru value:', Nhru
-            PRINT *, '       for nhrucell:', i
-            ierr = 1
-          ENDIF
-          IF ( ierr==1 ) THEN
-            Inputerror_flag = 1
-            CYCLE
-          ENDIF
-          Gvr_map_frac_dble(i) = DBLE( Gvr_map_frac(i) )
-          IF ( Gvr_map_id(i)>0 .AND. Gvr_hru_id(i)>0 .AND. Gvr_map_frac(i)>NEARZERO ) THEN
-            is = Gvr_map_id(i)
-            map_frac(is) = map_frac(is) + Gvr_map_frac(i)
-          ELSEIF ( Print_debug>-1 ) THEN
-            PRINT *, 'WARNING, map intersection:', i, ' ignored as specification is incomplete'
-            PRINT *, '         HRU:', Gvr_hru_id(i), ' Map unit:', Gvr_map_id(i), 'Fraction:', Gvr_map_frac(i)
-          ENDIF
-        ENDDO
-
-        DO i = 1, Ngwcell
-          IF ( map_frac(i)<0.0 ) PRINT *, 'ERROR, map_frac<0, map unit:', i
-          IF ( map_frac(i)<NEARZERO ) CYCLE
-          IF ( ABS(map_frac(i)-1.0)>1.0001 ) THEN
-            IF ( Print_debug>-1 ) THEN
-              IF ( map_frac(i)>1.0 ) THEN
-                PRINT *, 'WARNING, excess accounting for area of mapped spatial unit:'
-              ELSE
-                PRINT *, 'WARNING, incomplete accounting for area of mapped spatial unit'
-              ENDIF
-              PRINT *, '           Map id:', i, ' Fraction:', map_frac(i)
+        IF ( Parameter_check_flag>0 ) THEN
+          ALLOCATE ( map_frac(Ngwcell) )
+          map_frac = 0.0
+          DO i = 1, Nhrucell
+            ierr = 0
+            CALL checkdim_param_limits(i, 'gvr_cell_id', 'nhrucell', Gvr_map_id(i), 1, Ngwcell, ierr)
+            CALL checkdim_param_limits(i, 'gvr_hru_id', 'nhrucell', Gvr_hru_id(i), 1, Nhru, ierr)
+            IF ( ierr==1 ) Inputerror_flag = 1
+            IF ( Gvr_map_id(i)>0 .AND. Gvr_hru_id(i)>0 .AND. Gvr_map_frac(i)>0.0 ) THEN
+              is = Gvr_map_id(i)
+              map_frac(is) = map_frac(is) + Gvr_map_frac(i)
+            ELSEIF ( Print_debug>-1 ) THEN
+              PRINT *, 'WARNING, map intersection:', i, ' ignored as specification is incomplete'
+              PRINT *, '         HRU:', Gvr_hru_id(i), ' Map unit:', Gvr_map_id(i), 'Fraction:', Gvr_map_frac(i)
             ENDIF
-          ENDIF
+          ENDDO
+
+          DO i = 1, Ngwcell
+            IF ( map_frac(i)<0.0 ) THEN
+              PRINT *, 'ERROR, map_frac<0, map id:', i, ' Fraction:', map_frac(i)
+              Inputerror_flag = 1
+            ELSEIF ( map_frac(i)<CLOSEZERO ) THEN
+              CYCLE
+            ELSEIF ( ABS(map_frac(i)-1.0)>NEARZERO ) THEN
+              IF ( Print_debug>-1 ) THEN
+                IF ( map_frac(i)>1.0 ) THEN
+                  PRINT *, 'WARNING, excess accounting for area of mapped spatial unit:'
+                ELSE
+                  PRINT *, 'WARNING, incomplete accounting for area of mapped spatial unit'
+                ENDIF
+                PRINT *, '           Map id:', i, ' Fraction:', map_frac(i)
+              ENDIF
+            ENDIF
+          ENDDO
+          DEALLOCATE ( map_frac )
+        ENDIF
+
+        DO i = 1, Nhrucell
+          Gvr_map_frac_dble(i) = DBLE( Gvr_map_frac(i) )
         ENDDO
-        DEALLOCATE ( map_frac )
       ENDIF
 
  9001 FORMAT ( '(',I8,'E10.3)' )
@@ -381,7 +376,7 @@
       INTEGER FUNCTION map_resultsrun()
       USE PRMS_MAP_RESULTS
       USE PRMS_MODULE, ONLY: Nhru, Nhrucell, Start_month, Start_day, End_year, End_month, End_day
-      USE PRMS_BASIN, ONLY: Hru_area, Active_hrus, Hru_route_order, Basin_area_inv, NEARZERO, Hru_area_dble
+      USE PRMS_BASIN, ONLY: Hru_area_dble, Active_hrus, Hru_route_order, Basin_area_inv, NEARZERO
       USE PRMS_SET_TIME, ONLY: Nowyear, Nowmonth, Nowday, Modays
       IMPLICIT NONE
 ! FUNCTIONS AND SUBROUTINES
@@ -502,7 +497,7 @@
         DO jj = 1, NmapOutVars
           DO j = 1, Active_hrus
             i = Hru_route_order(j)
-            Basin_var_daily(jj) = Basin_var_daily(jj) + DBLE( Map_var_daily(i, jj)*Hru_area(i) )
+            Basin_var_daily(jj) = Basin_var_daily(jj) + Map_var_daily(i, jj)*Hru_area_dble(i)
           ENDDO
           Basin_var_daily(jj) = Basin_var_daily(jj)*Basin_area_inv
 

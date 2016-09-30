@@ -21,11 +21,11 @@
       DOUBLE PRECISION, SAVE :: Rate_farout, Cumvol_farout
       DOUBLE PRECISION, SAVE :: Last_basin_soil_moist, Last_basin_ssstor
       DOUBLE PRECISION, SAVE :: Rate_strmin, Rate_wellin, Rate_wellot
-      DOUBLE PRECISION, SAVE :: Rate_surfstor, Last_basingravstor
-      DOUBLE PRECISION, SAVE :: Last_basinintcpstor, Basinswaleet
-      DOUBLE PRECISION, SAVE :: Last_basinimpervstor
-      DOUBLE PRECISION, SAVE :: Last_basinpweqv, Last_basinsoilmoist
-      DOUBLE PRECISION, SAVE :: Basin_gsfstor, Last_basinprefstor
+      DOUBLE PRECISION, SAVE :: Rate_surfstor, Last_Grav_S
+      DOUBLE PRECISION, SAVE :: Last_Canopy_S, Last_Imperv_S, Last_SnowPweqv_S, Last_Cap_S
+      DOUBLE PRECISION, SAVE :: Basin_gsfstor, Last_Pref_S
+      DOUBLE PRECISION, SAVE :: Last_Dprst_S, Rate_Dprst_S
+      DOUBLE PRECISION, SAVE :: Lake2Unsat_Q, LakeExchng2Sat_Q, Stream2Unsat_Q
       CHARACTER(LEN=10), SAVE :: MODNAME
 !      DOUBLE PRECISION, SAVE :: Cumvol_lakeppt, Cumvol_lakeevap, Cumvol_uzfet
 ! Added lake variables
@@ -35,32 +35,32 @@
       DOUBLE PRECISION, SAVE :: Cum_soilstor, Rate_soilstor
       DOUBLE PRECISION, SAVE :: Cum_uzstor, Rate_uzstor, Basingwstor
       DOUBLE PRECISION, SAVE :: Cum_satstor, Rate_satstor, Basingvr2sm
-      DOUBLE PRECISION, SAVE :: Cum_pweqv, Rate_pweqv, Lake_change_stor
-      DOUBLE PRECISION, SAVE :: Basinpweqv, Ave_uzf_infil, Basininfil
-      DOUBLE PRECISION, SAVE :: Basinsoilstor, Basinsoilmoist
-      DOUBLE PRECISION, SAVE :: Basinsoiltogw, Basinstrmflow
-      DOUBLE PRECISION, SAVE :: Strm_stor, Lake_stor, Gwflow2strms
-      DOUBLE PRECISION, SAVE :: Basinppt, Basinpervet, Basinimpervevap
-      DOUBLE PRECISION, SAVE :: Basinsz2gw, Basingw2sz, Lakebed_loss
-      DOUBLE PRECISION, SAVE :: Basinintcpstor, Basinimpervstor
-      DOUBLE PRECISION, SAVE :: Basininterflow, Basinsroff
-      DOUBLE PRECISION, SAVE :: Obs_strmflow, Basinszreject
-      DOUBLE PRECISION, SAVE :: Unsat_et, Sat_et, Uzf_et, Uzf_recharge
-      DOUBLE PRECISION, SAVE :: Basinseepout, Uzf_infil, Uzf_del_stor
+      DOUBLE PRECISION, SAVE :: Cum_pweqv, Rate_pweqv, Lake_dS
+      DOUBLE PRECISION, SAVE :: SnowPweqv_S, Ave_SoilDrainage2Unsat_Q, Infil2Soil_Q
+      DOUBLE PRECISION, SAVE :: Basinsoilstor, Cap_S
+      DOUBLE PRECISION, SAVE :: CapDrainage2Sat_Q, StreamOut_Q
+      DOUBLE PRECISION, SAVE :: Stream_S, Lake_S, SatDisch2Stream_Q
+      DOUBLE PRECISION, SAVE :: Precip_Q, CapET_Q, ImpervEvap_Q, DprstEvap_Q
+      DOUBLE PRECISION, SAVE :: PotGravDrn2Unsat_Q, Sat2Grav_Q, Lake2Sat_Q
+      DOUBLE PRECISION, SAVE :: Canopy_S, Imperv_S, SwaleEvap_Q
+      DOUBLE PRECISION, SAVE :: Interflow2Stream_Q, Sroff2Stream_Q
+      DOUBLE PRECISION, SAVE :: Obs_strmflow, UnsatDrainageExcess_Q
+      DOUBLE PRECISION, SAVE :: UnsatET_Q, SatET_Q, Uzf_et, RechargeUnsat2Sat_Q
+      DOUBLE PRECISION, SAVE :: Basinseepout, SoilDrainage2Unsat_Q, Unsat_dS
       DOUBLE PRECISION, SAVE :: Basinrain, Basinsnow, Basinslowflow
-      DOUBLE PRECISION, SAVE :: Basingvr2pfr, Basinsnowevap
-      DOUBLE PRECISION, SAVE :: Basinhortonian, Basinhortonianlakes
-      DOUBLE PRECISION, SAVE :: Basinlakeinsz, Basinlakeevap
-      DOUBLE PRECISION, SAVE :: Basinlakeprecip, Basingravstor
-      DOUBLE PRECISION, SAVE :: Basinprefflow, Basinprefstor
-      DOUBLE PRECISION, SAVE :: Streambed_loss, Basinsm2gvr
-      DOUBLE PRECISION, SAVE :: Sfruz_change_stor, Sfruz_tot_stor
-      DOUBLE PRECISION, SAVE :: Gwflow2lakes, Basindunnian
-      DOUBLE PRECISION, SAVE :: Basininfil_tot, Basininfil2pref
-      DOUBLE PRECISION, SAVE :: Basinactet, Basinsnowmelt
+      DOUBLE PRECISION, SAVE :: Basingvr2pfr, SnowEvap_Q
+      DOUBLE PRECISION, SAVE :: HortSroff2Stream_Q, HortSroff2Lake_Q
+      DOUBLE PRECISION, SAVE :: DunnInterflow2Lake_Q, LakeEvap_Q
+      DOUBLE PRECISION, SAVE :: LakePrecip_Q, Grav_S
+      DOUBLE PRECISION, SAVE :: Basinprefflow, Pref_S, Dprst_S
+      DOUBLE PRECISION, SAVE :: Stream2Sat_Q, Basinsm2gvr
+      DOUBLE PRECISION, SAVE :: UnsatStream_dS, UnsatStream_S
+      DOUBLE PRECISION, SAVE :: SatDisch2Lake_Q, DunnSroff2Stream_Q
+      DOUBLE PRECISION, SAVE :: Infil2CapTotal_Q, Infil2Pref_Q
+      DOUBLE PRECISION, SAVE :: ActualET_Q, SnowMelt_Q
       DOUBLE PRECISION, SAVE :: Basinfarfieldflow, Basinszfarflow
-      DOUBLE PRECISION, SAVE :: Basinsrofffarflow, Basinintcpevap
-      DOUBLE PRECISION, SAVE :: Basindnflow, Basinnetgwwel
+      DOUBLE PRECISION, SAVE :: Basinsrofffarflow, CanopyEvap_Q
+      DOUBLE PRECISION, SAVE :: DunnInterflow2Cap_Q, NetWellFlow_Q, BoundaryStreamFlow_Q
 !   Declared Parameters
       INTEGER, SAVE :: Id_obsrunoff
 !   Control Parameters
@@ -111,7 +111,7 @@
 !***********************************************************************
       gsfsumdecl = 0
 
-      Version_gsflow_sum = '$Id: gsflow_sum.f90 7589 2015-08-19 17:03:25Z rsregan $'
+      Version_gsflow_sum = 'gsflow_sum.f90 2016-09-02 10:07:00Z'
       CALL print_module(Version_gsflow_sum, 'GSFLOW Output CSV Summary   ', 90)
       MODNAME = 'gsflow_sum'
 
@@ -134,175 +134,191 @@
      &     ' leaving modeled region as far-field flow', &
      &     'L3/T', Basinfarfieldflow)/=0 ) CALL read_error(3, 'basinfarfieldflow')
 
-      IF ( declvar(MODNAME, 'basinsoiltogw', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'CapDrainage2Sat_Q', 'one', 1, 'double', &
      &     'Volumetric flow rate of direct gravity drainage from excess capillary water to the unsaturated zone', &
-     &     'L3/T', Basinsoiltogw)/=0 ) CALL read_error(3, 'basinsoiltogw')
+     &     'L3/T', CapDrainage2Sat_Q)/=0 ) CALL read_error(3, 'CapDrainage2Sat_Q')
 
-      IF ( declvar(MODNAME, 'basinppt', 'one', 1, 'double', &
-     &     'Volumetric flow rate of precipitation on modeled region', &
-     &     'L3/T', Basinppt)/=0 ) CALL read_error(3, 'basinppt')
+      IF ( declvar(MODNAME, 'Precip_Q', 'one', 1, 'double', &
+     &     'Volumetric flow rate of precipitation', &
+     &     'L3/T', Precip_Q)/=0 ) CALL read_error(3, 'Precip_Q')
 
       IF ( declvar(MODNAME, 'basinsnow', 'one', 1, 'double', &
-     &     'Volumetric flow rate of snow on modeled region', &
+     &     'Volumetric flow rate of snow', &
      &     'L3/T', Basinsnow)/=0 ) CALL read_error(3, 'basinsnow')
 
       IF ( declvar(MODNAME, 'basinrain', 'one', 1, 'double', &
-     &     'Volumetric flow rate of rain on modeled region', &
+     &     'Volumetric flow rate of rain', &
      &     'L3/T', Basinrain)/=0 ) CALL read_error(3, 'basinrain')
 
-      IF ( declvar(MODNAME, 'basinpervet', 'one', 1, 'double', &
-     &     'Volumetric flow rate of evapotranspiration from pervious areas', &
-     &     'L3/T', Basinpervet)/=0 ) CALL read_error(3, 'basinpervet')
+      IF ( declvar(MODNAME, 'CapET_Q', 'one', 1, 'double', &
+     &     'Volumetric flow rate of evapotranspiration from pervious areas ', &
+     &     'L3/T', CapET_Q)/=0 ) CALL read_error(3, 'CapET_Q')
 
-      IF ( declvar(MODNAME, 'basinimpervevap', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'ImpervEvap_Q', 'one', 1, 'double', &
      &     'Volumetric flow rate of evaporation from impervious areas', &
-     &     'L3/T', Basinimpervevap)/=0 ) CALL read_error(3, 'basinimpervevap')
+     &     'L3/T', ImpervEvap_Q)/=0 ) CALL read_error(3, 'ImpervEvap_Q')
 
-      IF ( declvar(MODNAME, 'basinintcpevap', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'DprstEvap_Q', 'one', 1, 'double', &
+     &     'Volumetric flow rate of evaporation from surface depressions', &
+     &     'L3/T', DprstEvap_Q)/=0 ) CALL read_error(3, 'DprstEvap_Q')
+
+      IF ( declvar(MODNAME, 'CanopyEvap_Q', 'one', 1, 'double', &
      &     'Volumetric flow rate of evaporation of intercepted precipitation', &
-     &     'L3/T', Basinintcpevap)/=0 ) CALL read_error(3, 'basinintcpevap')
+     &     'L3/T', CanopyEvap_Q)/=0 ) CALL read_error(3, 'CanopyEvap_Q')
 
-      IF ( declvar(MODNAME, 'basinsnowevap', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'SnowEvap_Q', 'one', 1, 'double', &
      &     'Volumetric flow rate of snowpack sublimation', &
-     &     'L3/T', Basinsnowevap)/=0 ) CALL read_error(3, 'basinsnowevap')
+     &     'L3/T', SnowEvap_Q)/=0 ) CALL read_error(3, 'SnowEvap_Q')
 
-      IF ( declvar(MODNAME, 'basinlakeevap', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'LakeEvap_Q', 'one', 1, 'double', &
      &     'Volumetric flow rate of evaporation from lakes', &
-     &     'L3/T', Basinlakeevap)/=0 ) CALL read_error(3, 'basinlakeevap')
+     &     'L3/T', LakeEvap_Q)/=0 ) CALL read_error(3, 'LakeEvap_Q')
 
-      IF ( declvar(MODNAME, 'basinlakeprecip', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'LakePrecip_Q', 'one', 1, 'double', &
      &     'Volumetric flow rate of precipitation on lakes', &
-     &     'L3/T', Basinlakeprecip)/=0 ) CALL read_error(3, 'basinlakeprecip')
+     &     'L3/T', LakePrecip_Q)/=0 ) CALL read_error(3, 'LakePrecip_Q')
 
-      IF ( declvar(MODNAME, 'basinstrmflow', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'StreamOut_Q', 'one', 1, 'double', &
      &     'Volumetric flow rate of streamflow leaving modeled region', &
-     &     'L3/T', Basinstrmflow)/=0 ) CALL read_error(3, 'basinstrmflow')
+     &     'L3/T', StreamOut_Q)/=0 ) CALL read_error(3, 'StreamOut_Q')
 
-      IF ( declvar(MODNAME, 'basinsz2gw', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'PotGravDrn2Unsat_Q', 'one', 1, 'double', &
      &     'Potential volumetric flow rate of gravity drainage from'// &
      &     ' the soil zone to the unsaturated zone (before conditions of the unsaturated and saturated zones are applied)', &
-     &     'L3/T', Basinsz2gw)/=0 ) CALL read_error(3, 'basinsz2gw')
+     &     'L3/T', PotGravDrn2Unsat_Q)/=0 ) CALL read_error(3, 'PotGravDrn2Unsat_Q')
 
-      IF ( declvar(MODNAME, 'basingw2sz', 'one', 1, 'double', &
-     &     'Volumetric flow rate of ground-water discharge from the saturated zone to the soil zone', &
-     &     'L3/T', Basingw2sz)/=0 ) CALL read_error(3, 'basingw2sz')
+      IF ( declvar(MODNAME, 'Sat2Grav_Q', 'one', 1, 'double', &
+     &     'Volumetric flow rate of groundwater discharge from the saturated zone to the soil zone', &
+     &     'L3/T', Sat2Grav_Q)/=0 ) CALL read_error(3, 'Sat2Grav_Q')
 
-      IF ( declvar(MODNAME, 'uzf_recharge', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'RechargeUnsat2Sat_Q', 'one', 1, 'double', &
      &     'Volumetric flow rate of recharge from the unsaturated zone to the saturated zone', &
-     &     'L3/T', Uzf_recharge)/=0 ) CALL read_error(3, 'uzf_recharge')
+     &     'L3/T', RechargeUnsat2Sat_Q)/=0 ) CALL read_error(3, 'RechargeUnsat2Sat_Q')
 
       IF ( declvar(MODNAME, 'basinseepout', 'one', 1, 'double', &
-     &     'Volumetric flow rate of ground-water discharge from the saturated zone to the soil zone', &
+     &     'Volumetric flow rate of groundwater discharge from the saturated zone to the soil zone', &
      &     'L3/T', Basinseepout)/=0 ) CALL read_error(3, 'basinseepout')
 
-      IF ( declvar(MODNAME, 'basinsoilmoist', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'Cap_S', 'one', 1, 'double', &
      &     'Volume of water in capillary reservoirs of the soil zone', &
-     &     'L3', Basinsoilmoist)/=0 ) CALL read_error(3, 'basinsoilmoist')
+     &     'L3', Cap_S)/=0 ) CALL read_error(3, 'Cap_S')
 
-      IF ( declvar(MODNAME, 'basingravstor', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'Grav_S', 'one', 1, 'double', &
      &     'Volume of water in gravity reservoirs of the soil zone', &
-     &     'L3', Basingravstor)/=0 ) CALL read_error(3, 'basingravstor')
+     &     'L3', Grav_S)/=0 ) CALL read_error(3, 'Grav_S')
 
-      IF ( declvar(MODNAME, 'basinintcpstor', 'one', 1, 'double', &
-     &     'Volume of intercepted percipitation in plant-canopy reservoirs', &
-     &     'L3', Basinintcpstor)/=0 ) CALL read_error(3, 'basinintcpstor')
+      IF ( declvar(MODNAME, 'Canopy_S', 'one', 1, 'double', &
+     &     'Volume of intercepted precipitation in plant-canopy reservoirs', &
+     &     'L3', Canopy_S)/=0 ) CALL read_error(3, 'Canopy_S')
 
-      IF ( declvar(MODNAME, 'basinimpervstor', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'Imperv_S', 'one', 1, 'double', &
      &     'Volume of water in impervious reservoirs', &
-     &     'L3', Basinimpervstor)/=0 ) CALL read_error(3, 'basinimpervstor')
+     &     'L3', Imperv_S)/=0 ) CALL read_error(3, 'Imperv_S')
 
-      IF ( declvar(MODNAME, 'basininterflow', 'one', 1, 'double', &
-     &     'Volumetric flow rate of slow interflow to streams', &
-     &     'L3/T', Basininterflow)/=0 ) CALL read_error(3, 'basininterflow')
+      IF ( declvar(MODNAME, 'Interflow2Stream_Q', 'one', 1, 'double', &
+     &     'Volumetric flow rate of slow plus fast interflow to streams', &
+     &     'L3/T', Interflow2Stream_Q)/=0 ) CALL read_error(3, 'Interflow2Stream_Q')
 
-      IF ( declvar(MODNAME, 'basinsroff', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'Sroff2Stream_Q', 'one', 1, 'double', &
      &     'Volumetric flow rate of surface runoff to streams', &
-     &     'L3/T', Basinsroff)/=0 ) CALL read_error(3, 'basinsroff')
+     &     'L3/T', Sroff2Stream_Q)/=0 ) CALL read_error(3, 'Sroff2Stream_Q')
 
-      IF ( declvar(MODNAME, 'basinhortonianlakes', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'HortSroff2Lake_Q', 'one', 1, 'double', &
      &     'Volumetric flow rate of Hortonian surface runoff to lakes', &
-     &     'L3/T', Basinhortonianlakes)/=0 ) CALL read_error(3, 'basinhortonianlakes')
+     &     'L3/T', HortSroff2Lake_Q)/=0 ) CALL read_error(3, 'HortSroff2Lake_Q')
 
-      IF ( declvar(MODNAME, 'basinlakeinsz', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'DunnInterflow2Lake_Q', 'one', 1, 'double', &
      &     'Volumetric flow rate of interflow and Dunnian surface runoff to lakes', &
-     &     'L3/T', Basinlakeinsz)/=0 ) CALL read_error(3, 'basinlakeinsz')
+     &     'L3/T', DunnInterflow2Lake_Q)/=0 ) CALL read_error(3, 'DunnInterflow2Lake_Q')
 
-      IF ( declvar(MODNAME, 'strm_stor', 'one', 1, 'double', &
-     &     'Volume of water in streams', &
-     &     'L3', Strm_stor)/=0 ) CALL read_error(3, 'strm_stor')
+      IF ( declvar(MODNAME, 'Stream_S', 'one', 1, 'double', &
+     &     'Volume of water in streams (non-zero only when transient routing option is used in SFR2)', &
+     &     'L3', Stream_S)/=0 ) CALL read_error(3, 'Stream_S')
 
-      IF ( declvar(MODNAME, 'lake_stor', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'Lake_S', 'one', 1, 'double', &
      &     'Volume of water in lakes', &
-     &     'L3', Lake_stor)/=0 ) CALL read_error(3, 'lake_stor')
+     &     'L3', Lake_S)/=0 ) CALL read_error(3, 'Lake_S')
 
       IF ( declvar(MODNAME, 'obs_strmflow', 'one', 1, 'double', &
      &     'Volumetric flow rate of streamflow measured at a gaging station', &
      &     'L3/T', Obs_strmflow)/=0 ) CALL read_error(3, 'obs_strmflow')
 
-      IF ( declvar(MODNAME, 'basinszreject', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'UnsatDrainageExcess_Q', 'one', 1, 'double', &
      &     'Volumetric flow rate of gravity drainage from the soil'// &
      &     ' zone not accepted due to conditions in the unsaturated and saturated zones', &
-     &     'L3/T', Basinszreject)/=0 ) CALL read_error(3, 'basinszreject')
+     &     'L3/T', UnsatDrainageExcess_Q)/=0 ) CALL read_error(3, 'UnsatDrainageExcess_Q')
 
-      IF ( declvar(MODNAME, 'basinprefstor', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'Pref_S', 'one', 1, 'double', &
      &     'Volume of water stored in preferential-flow reservoirs of the soil zone', &
-     &     'L3', Basinprefstor)/=0 ) CALL read_error(3, 'basinprefstor')
+     &     'L3', Pref_S)/=0 ) CALL read_error(3, 'Pref_S')
+
+      IF ( declvar(MODNAME, 'Dprst_S', 'one', 1, 'double', &
+     &     'Volume of water stored in surface-depression storage', &
+     &     'L3', Dprst_S)/=0 ) CALL read_error(3, 'Dprst_S')
+
+      IF ( declvar(MODNAME, 'SwaleEvap_Q', 'one', 1, 'double', &
+     &     'Volumetric flow rate of evaporation from swale HRUs', &
+     &     'L3/T', SwaleEvap_Q)/=0 ) CALL read_error(3, 'SwaleEvap_Q')
 
       IF ( declvar(MODNAME, 'uzf_et', 'one', 1, 'double', &
      &     'Volumetric flow rate of evapotranspiration from the unsaturated and saturated zones', &
      &     'L3/T', Uzf_et)/=0 ) CALL read_error(3, 'uzf_et')
 
-      IF ( declvar(MODNAME, 'unsat_et', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'UnsatET_Q', 'one', 1, 'double', &
      &     'Volumetric flow rate of evapotranspiration from the unsaturated zone', &
-     &     'L3/T', Unsat_et)/=0 ) CALL read_error(3, 'unsat_et')
+     &     'L3/T', UnsatET_Q)/=0 ) CALL read_error(3, 'UnsatET_Q')
 
-      IF ( declvar(MODNAME, 'sat_et', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'SatET_Q', 'one', 1, 'double', &
      &     'Volumetric flow rate of evapotranspiration from the saturated zone', &
-     &     'L3/T', Sat_et)/=0 ) CALL read_error(3, 'sat_et')
+     &     'L3/T', SatET_Q)/=0 ) CALL read_error(3, 'SatET_Q')
 
-      IF ( declvar(MODNAME, 'uzf_del_stor', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'Unsat_dS', 'one', 1, 'double', &
      &     'Change in unsaturated-zone storage', &
-     &     'L3', Uzf_del_stor)/=0 ) CALL read_error(3, 'uzf_del_stor')
+     &     'L3', Unsat_dS)/=0 ) CALL read_error(3, 'Unsat_dS')
 
-      IF ( declvar(MODNAME, 'uzf_infil', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'SoilDrainage2Unsat_Q', 'one', 1, 'double', &
      &     'Volumetric flow rate of gravity drainage to the unsaturated and saturated zones', &
-     &     'L3/T', Uzf_infil)/=0 ) CALL read_error(3, 'uzf_infil')
+     &     'L3/T', SoilDrainage2Unsat_Q)/=0 ) CALL read_error(3, 'SoilDrainage2Unsat_Q')
 
-      IF ( declvar(MODNAME, 'streambed_loss', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'Stream2Sat_Q', 'one', 1, 'double', &
      &     'Volumetric flow rate of stream leakage to the unsaturated and saturated zones', &
-     &     'L3/T', Streambed_loss)/=0 ) CALL read_error(3, 'streambed_loss')
+     &     'L3/T', Stream2Sat_Q)/=0 ) CALL read_error(3, 'Stream2Sat_Q')
 
-      IF ( declvar(MODNAME, 'sfruz_change_stor', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'UnsatStream_dS', 'one', 1, 'double', &
      &     'Change in unsaturated-zone storage under streams', &
-     &     'L3', Sfruz_change_stor)/=0 ) CALL read_error(3, 'sfruz_change_stor')
+     &     'L3', UnsatStream_dS)/=0 ) CALL read_error(3, 'UnsatStream_dS')
 
-      IF ( declvar(MODNAME, 'gwflow2strms', 'one', 1, 'double', &
-     &     'Volumetric flow rate of ground-water discharge to streams', &
-     &     'L3/T', Gwflow2strms)/=0 ) CALL read_error(3, 'gwflow2strms')
+      IF ( declvar(MODNAME, 'SatDisch2Stream_Q', 'one', 1, 'double', &
+     &     'Volumetric flow rate of groundwater discharge to streams', &
+     &     'L3/T', SatDisch2Stream_Q)/=0 ) CALL read_error(3, 'SatDisch2Stream_Q')
 
-      IF ( declvar(MODNAME, 'sfruz_tot_stor', 'one', 1, 'double', &
-     &     'Volume of water in the unsaturated zone beneath streams', &
-     &     'L3', Sfruz_tot_stor)/=0 ) CALL read_error(3, 'sfruz_tot_stor')
+      IF ( declvar(MODNAME, 'UnsatStream_S', 'one', 1, 'double', &
+     &     'Volume of water in the unsaturated zone under streams', &
+     &     'L3', UnsatStream_S)/=0 ) CALL read_error(3, 'UnsatStream_S')
 
-      IF ( declvar(MODNAME, 'lakebed_loss', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'Lake2Sat_Q', 'one', 1, 'double', &
      &     'Volumetric flow rate of lake leakage to the unsaturated and saturated zones', &
-     &     'L3/T', Lakebed_loss)/=0 ) CALL read_error(3, 'lakebed_loss')
+     &     'L3/T', Lake2Sat_Q)/=0 ) CALL read_error(3, 'Lake2Sat_Q')
 
-      IF ( declvar(MODNAME, 'lake_change_stor', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'Lake_dS', 'one', 1, 'double', &
      &     'Change in lake storage', &
-     &     'L3', Lake_change_stor)/=0 ) CALL read_error(3, 'lake_change_stor')
+     &     'L3', Lake_dS)/=0 ) CALL read_error(3, 'Lake_dS')
 
-      IF ( declvar(MODNAME, 'gwflow2lakes', 'one', 1, 'double', &
-     &     'Volumetric flow rate of ground-water discharge to lakes', &
-     &     'L3/T', Gwflow2lakes)/=0 ) CALL read_error(3, 'gwflow2lakes')
+      IF ( declvar(MODNAME, 'SatDisch2Lake_Q', 'one', 1, 'double', &
+     &     'Volumetric flow rate of groundwater discharge to lakes', &
+     &     'L3/T', SatDisch2Lake_Q)/=0 ) CALL read_error(3, 'SatDisch2Lake_Q')
 
-      IF ( declvar(MODNAME, 'basininfil', 'one', 1, 'double', &
-     &     'Volumetric flow rate of soil infiltration including precipitation, snowmelt, and cascading Hortonian flow', &
-     &     'L3/T', Basininfil)/=0 ) CALL read_error(3, 'basininfil')
+      IF ( declvar(MODNAME, 'Infil2Soil_Q', 'one', 1, 'double', &
+     &     'Volumetric flow rate of soil infiltration (including precipitation, snowmelt, and cascading Hortonian flow)', &
+     &     'L3/T', Infil2Soil_Q)/=0 ) CALL read_error(3, 'Infil2Soil_Q')
 
-      IF ( declvar(MODNAME, 'basindunnian', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'DunnSroff2Stream_Q', 'one', 1, 'double', &
      &     'Volumetric flow rate of Dunnian runoff to streams', &
-     &     'L3/T', Basindunnian)/=0 ) CALL read_error(3, 'basindunnian')
+     &     'L3/T', DunnSroff2Stream_Q)/=0 ) CALL read_error(3, 'DunnSroff2Stream_Q')
+
+      IF ( declvar(MODNAME, 'HortSroff2Stream_Q', 'one', 1, 'double', &
+     &     'Volumetric flow rate of Hortonian runoff to streams', &
+     &     'L3/T', HortSroff2Stream_Q)/=0 ) CALL read_error(3, 'HortSroff2Stream_Q')
 
       IF ( declvar(MODNAME, 'basinsm2gvr', 'one', 1, 'double', &
      &     'Volumetric flow rate of flow from capillary reservoirs to gravity reservoirs', &
@@ -312,41 +328,41 @@
      &     'Volumetric flow rate of flow from gravity reservoirs to capillary reservoirs', &
      &     'L3/T', Basingvr2sm)/=0 ) CALL read_error(3, 'basingvr2sm')
 
-      IF ( declvar(MODNAME, 'basininfil_tot', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'Infil2CapTotal_Q', 'one', 1, 'double', &
      &     'Volumetric flow rate of soil infiltration into capillary'// &
      &     ' reservoirs including precipitation, snowmelt, and'// &
      &     ' cascading Hortonian and Dunnian runoff and interflow'// &
      &     ' minus infiltration to preferential-flow reservoirs', &
-     &     'L3/T', Basininfil_tot)/=0 ) CALL read_error(3, 'basininfil_tot')
+     &     'L3/T', Infil2CapTotal_Q)/=0 ) CALL read_error(3, 'Infil2CapTotal_Q')
 
-      IF ( declvar(MODNAME, 'basininfil2pref', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'Infil2Pref_Q', 'one', 1, 'double', &
      &     'Volumetric flow rate of soil infiltration into'// &
      &     ' preferential-flow reservoirs including precipitation,'// &
      &     ' snowmelt, and cascading surface runoff', &
-     &     'L3/T', Basininfil2pref)/=0 ) CALL read_error(3, 'basininfil2pref')
+     &     'L3/T', Infil2Pref_Q)/=0 ) CALL read_error(3, 'Infil2Pref_Q')
 
-      IF ( declvar(MODNAME, 'basindnflow', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'DunnInterflow2Cap_Q', 'one', 1, 'double', &
      &     'Volumetric flow rate of cascading Dunnian runoff and interflow to HRUs', &
-     &     'L3/T', Basindnflow)/=0 ) CALL read_error(3, 'basindnflow')
+     &     'L3/T', DunnInterflow2Cap_Q)/=0 ) CALL read_error(3, 'DunnInterflow2Cap_Q')
 
-      IF ( declvar(MODNAME, 'basinactet', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'ActualET_Q', 'one', 1, 'double', &
      &     'Volumetric flow rate of actual evaporation from HRUs', &
-     &     'L3/T', Basinactet)/=0 ) CALL read_error(3, 'basinactet')
+     &     'L3/T', ActualET_Q)/=0 ) CALL read_error(3, 'ActualET_Q')
 
-      IF ( declvar(MODNAME, 'basinsnowmelt', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'SnowMelt_Q', 'one', 1, 'double', &
      &     'Volumetric flow rate of snowmelt', &
-     &     'L3/T', Basinsnowmelt)/=0 ) CALL read_error(3, 'basinsnowmelt')
+     &     'L3/T', SnowMelt_Q)/=0 ) CALL read_error(3, 'SnowMelt_Q')
 
-      IF ( declvar(MODNAME, 'ave_uzf_infil', 'one', 1, 'double', &
-     &     'Running average infiltration to UZF cell', &
-     &     'L3', Ave_uzf_infil)/=0 ) CALL read_error(3, 'ave_uzf_infil')
+      IF ( declvar(MODNAME, 'Ave_SoilDrainage2Unsat_Q', 'one', 1, 'double', &
+     &     'Running average gravity drainage to the unsaturated and saturated zones', &
+     &     'L3', Ave_SoilDrainage2Unsat_Q)/=0 ) CALL read_error(3, 'Ave_SoilDrainage2Unsat_Q')
 
       IF ( declvar(MODNAME, 'cum_pweqv', 'one', 1, 'double', &
-     &     'Cumulative change in snowpack storage in MODFLOW units', &
+     &     'Cumulative change in snowpack storage', &
      &     'L3', Cum_pweqv)/=0 ) CALL read_error(3, 'cum_pweqv')
 
       IF ( declvar(MODNAME, 'cum_soilstor', 'one', 1, 'double', &
-     &     'Cumulative change in soil storage in MODFLOW units', &
+     &     'Cumulative change in soil storage', &
      &     'L3', Cum_soilstor)/=0 ) CALL read_error(3, 'cum_soilstor')
 
       IF ( declvar(MODNAME, 'cum_uzstor', 'one', 1, 'double', &
@@ -358,11 +374,11 @@
      &     'L3', Cum_satstor)/=0 ) CALL read_error(3, 'cum_satstor')
 
       IF ( declvar(MODNAME, 'rate_pweqv', 'one', 1, 'double', &
-     &     'Change in snow pack storage in MODFLOW units', &
+     &     'Change in snow pack storage', &
      &     'L3', Rate_pweqv)/=0 ) CALL read_error(3, 'rate_pweqv')
 
       IF ( declvar(MODNAME, 'rate_soilstor', 'one', 1, 'double', &
-     &     'Change in soil storage in MODFLOW units', &
+     &     'Change in soil storage', &
      &     'L3', Rate_soilstor)/=0 ) CALL read_error(3, 'rate_soilstor')
 
       IF ( declvar(MODNAME, 'rate_uzstor', 'one', 1, 'double', &
@@ -373,17 +389,21 @@
      &     'Change in saturated storage', &
      &     'L3', Rate_satstor)/=0 ) CALL read_error(3, 'rate_satstor')
 
-      IF ( declvar(MODNAME, 'basinpweqv', 'one', 1, 'double', &
+      IF ( declvar(MODNAME, 'SnowPweqv_S', 'one', 1, 'double', &
      &     'Volume of water in snowpack storage', &
-     &     'L3', Basinpweqv)/=0 ) CALL read_error(3, 'basinpweqv')
+     &     'L3', SnowPweqv_S)/=0 ) CALL read_error(3, 'SnowPweqv_S')
 
       IF ( declvar(MODNAME, 'basinsoilstor', 'one', 1, 'double', &
-     &     'Soil moisture storage in volume of MODFLOW units', &
+     &     'Volume of soil moisture storage', &
      &     'L3', Basinsoilstor)/=0 ) CALL read_error(3, 'basinsoilstor')
 
-      IF ( declvar(MODNAME, 'basinnetgwwel', 'one', 1, 'double', &
-     &     'Net groundwater pumping in volume of MODFLOW units', &
-     &     'L3', Basinnetgwwel)/=0 ) CALL read_error(1, 'basinnetgwwel')
+      IF ( declvar(MODNAME, 'NetWellFlow_Q', 'one', 1, 'double', &
+     &     'Net volumetric flow rate of groundwater injection or removal from wells ', &
+     &     'L3', NetWellFlow_Q)/=0 ) CALL read_error(1, 'NetWellFlow_Q')
+
+      IF ( declvar(MODNAME, 'BoundaryStreamFlow_Q', 'one', 1, 'double', &
+     &     'Volumetric specified streamflow into the model domain to SFR', &
+     &     'L3/T', BoundaryStreamFlow_Q)/=0 ) CALL read_error(1, 'BoundaryStreamFlow_Q')
 
       IF ( declparam(MODNAME, 'id_obsrunoff', 'one', 'integer', &
      &     '0', 'bounded', 'nobs', &
@@ -391,9 +411,10 @@
      &     'Index of measured streamflow station corresponding to the basin outlet', &
      &     'none')/=0 ) CALL read_error(1, 'id_obsrunoff')
 
- 9001 FORMAT('    Date         SZ Bal    lakeinsz     Dunnian    Slowflow    prefflow      pervet       infil', &
-     &       '   soilmoist Last_soilmoist gravstor Last_gravstor     gw2sz       sz2gw    szreject    soiltogw')
-
+9001  FORMAT('    Date      Water Bal    capstor   last_cap   gravstor  last_grav   snowstor   lastsnow', &
+     &       '  intcpstor  lastintcp   impervst  lastimperv     dprst  lastdprst      gw2sz     precip', &
+     &       '  interflow      sroff   lakeinsz  lakesroff   drainage      capET   impervET   canopyET', &
+     &       '     snowET    swaleET    dprstET    farflow')
       END FUNCTION gsfsumdecl
 
 !***********************************************************************
@@ -409,6 +430,7 @@
       USE PRMS_MODULE, ONLY: Init_vars_from_file
       USE PRMS_BASIN, ONLY: Active_area
       USE PRMS_FLOWVARS, ONLY: Basin_soil_moist, Basin_ssstor
+      USE PRMS_SRUNOFF, ONLY: Basin_dprst_volop, Basin_dprst_volcl
       IMPLICIT NONE
       INTEGER, EXTERNAL :: getparam
       EXTERNAL GSF_PRINT, gsflow_sum_restart, MODFLOW_SFR_GET_STORAGE
@@ -455,89 +477,98 @@
 !      Cumvol_lakeevap = 0.0D0
 !      Cumvol_uzfet = 0.0D0
       IF ( IRTFLG>0 ) CALL MODFLOW_SFR_GET_STORAGE
-      Lake_stor = 0.0D0
-      IF ( IUNIT(22)>0 ) Lake_stor = TOTSTOR_LAK
+      Lake_S = 0.0D0
+      IF ( IUNIT(22)>0 ) Lake_S = TOTSTOR_LAK
       CALL BASIN_GET_STORAGE
-      Last_basinsoilmoist = Basinsoilmoist
-      Last_basingravstor = Basingravstor
-      Last_basinprefstor = Basinprefstor
+      Last_Cap_S = Cap_S
+      Last_Grav_S = Grav_S
+      Last_Pref_S = Pref_S
       Last_basin_soil_moist = Basin_soil_moist
       Last_basin_ssstor = Basin_ssstor
-      Last_basinintcpstor = Basinintcpstor
-      Last_basinimpervstor = Basinimpervstor
-      Last_basinpweqv = Basinpweqv
-      Basinswaleet = 0.0D0
-! Added lake variables
-      Rate_lakin = 0.0D0
-      Rate_lakot = 0.0D0
-      Rate_lakestor = 0.0D0
+      Last_Canopy_S = Canopy_S
+      Last_Imperv_S = Imperv_S
+      Last_SnowPweqv_S = SnowPweqv_S
+      SwaleEvap_Q = 0.0D0
+      Dprst_S = (Basin_dprst_volop + Basin_dprst_volcl) * Basin_convert
+      Last_Dprst_S = Dprst_S ! need to deal with restart
 
       IF ( Init_vars_from_file>0 ) THEN
         CALL gsflow_sum_restart(1)
         RETURN
       ENDIF
 
+! Added lake variables
+      Rate_lakin = 0.0D0
+      Rate_lakot = 0.0D0
+      Rate_lakestor = 0.0D0
+      Lake2Unsat_Q = 0.0D0
+      LakeExchng2Sat_Q = 0.0D0
+      Stream2Unsat_Q = 0.0D0
+
+      Rate_Dprst_S = 0.0D0
       Rate_soilstor = 0.0D0
       Rate_uzstor = 0.0D0
       Rate_satstor = 0.0D0
       Rate_pweqv = 0.0D0
       Rate_farout = 0.0D0
-      Uzf_infil = 0.0D0
-      Ave_uzf_infil = 0.0D0
-      Lakebed_loss = 0.0D0
-      Lake_change_stor = 0.0D0
-      Basinppt = 0.0D0
-      Basinpervet = 0.0D0
-      Basinimpervevap = 0.0D0
-      Basinintcpevap = 0.0D0
-      Basininterflow = 0.0D0
-      Basinsnowevap = 0.0D0
-      Basinlakeevap = 0.0D0
-      Basinlakeprecip = 0.0D0
-      Basinlakeinsz = 0.0D0
-      Basinstrmflow = 0.0D0
-      Basinsz2gw = 0.0D0
-      Basingw2sz = 0.0D0
-      Uzf_recharge = 0.0D0
+      SoilDrainage2Unsat_Q = 0.0D0
+      Ave_SoilDrainage2Unsat_Q = 0.0D0
+      Lake2Sat_Q = 0.0D0
+      Lake_dS = 0.0D0
+      Precip_Q = 0.0D0
+      CapET_Q = 0.0D0
+      ImpervEvap_Q = 0.0D0
+      CanopyEvap_Q = 0.0D0
+      Interflow2Stream_Q = 0.0D0
+      SnowEvap_Q = 0.0D0
+      LakeEvap_Q = 0.0D0
+      DprstEvap_Q = 0.0D0
+      LakePrecip_Q = 0.0D0
+      DunnInterflow2Lake_Q = 0.0D0
+      StreamOut_Q = 0.0D0
+      PotGravDrn2Unsat_Q = 0.0D0
+      Sat2Grav_Q = 0.0D0
+      RechargeUnsat2Sat_Q = 0.0D0
       Basinseepout = 0.0D0
 !     Basingwstor not computed, was the PRMS GWR storage which
 !     is not available
       Basingwstor = 0.0D0
-      Basinsroff = 0.0D0
-      Basinhortonianlakes = 0.0D0
-      Basinhortonian = 0.0D0
+      Sroff2Stream_Q = 0.0D0
+      HortSroff2Lake_Q = 0.0D0
+      HortSroff2Stream_Q = 0.0D0
       Obs_strmflow = 0.0D0
-      Basinnetgwwel = 0.0D0
+      NetWellFlow_Q = 0.0D0
+      BoundaryStreamFlow_Q = 0.0D0
       Basinprefflow = 0.0D0
-      Basinszreject = 0.0D0
-      Basindnflow = 0.0D0
+      UnsatDrainageExcess_Q = 0.0D0
+      DunnInterflow2Cap_Q = 0.0D0
       Uzf_et = 0.0D0
-      Unsat_et = 0.0D0
-      Sat_et = 0.0D0
-      Uzf_del_stor = 0.0D0
-      Streambed_loss = 0.0D0
-      Sfruz_change_stor = 0.0D0
-      Gwflow2strms = 0.0D0
-      Sfruz_tot_stor = 0.0D0
-      Gwflow2lakes = 0.0D0
-      Lakebed_loss = 0.0D0
+      UnsatET_Q = 0.0D0
+      SatET_Q = 0.0D0
+      Unsat_dS = 0.0D0
+      Stream2Sat_Q = 0.0D0
+      UnsatStream_dS = 0.0D0
+      SatDisch2Stream_Q = 0.0D0
+      UnsatStream_S = 0.0D0
+      SatDisch2Lake_Q = 0.0D0
+      Lake2Sat_Q = 0.0D0
       Basinslowflow = 0.0D0
-      Basininfil = 0.0D0
+      Infil2Soil_Q = 0.0D0
       Basinrain = 0.0D0
       Basinsnow = 0.0D0
-      Basinsnowmelt = 0.0D0
-      Basindunnian = 0.0D0
+      SnowMelt_Q = 0.0D0
+      DunnSroff2Stream_Q = 0.0D0
       Basinsm2gvr = 0.0D0
       Basingvr2sm = 0.0D0
       Basingvr2pfr = 0.0D0
-      Basininfil_tot = 0.0D0
-      Basininfil2pref = 0.0D0
+      Infil2CapTotal_Q = 0.0D0
+      Infil2Pref_Q = 0.0D0
       Basinfarfieldflow = 0.0D0
       Basinszfarflow = 0.0D0
-      Basinsoiltogw = 0.0D0
-      Basinactet = 0.0D0
+      CapDrainage2Sat_Q = 0.0D0
+      ActualET_Q = 0.0D0
       Basinsrofffarflow = 0.0D0
-      Basinnetgwwel = 0.0D0
+      Stream_S = 0.0D0
 
       END FUNCTION gsfsuminit
 
@@ -547,19 +578,18 @@
       INTEGER FUNCTION gsfsumrun()
       USE GSFSUM
       USE GSFMODFLOW, ONLY: Mfl3t_to_cfs, KKSTP, KKPER, Have_lakes, Maxgziter
-      USE GSFPRMS2MF, ONLY: Net_sz2gw
-      USE GSFBUDGET, ONLY: Gw_inout, Gw_bnd_in, Gw_bnd_out, Well_in, &
-     &    Well_out, Stream_inflow, Basin_gw2sm, Sat_change_stor, &
-     &    Stream_leakage, Unsat_store, Sat_store
+!      USE GSFPRMS2MF, ONLY: Net_sz2gw
+      USE GSFBUDGET, ONLY: NetBoundaryFlow2Sat_Q, Gw_bnd_in, Gw_bnd_out, Well_in, &
+     &    Well_out, Stream_inflow, Basin_gw2sm, Sat_dS, StreamExchng2Sat_Q, Unsat_S, Sat_S
 !      USE GSFPRMS2MF, ONLY: Basin_reach_latflow
       USE GSFBUDGET, ONLY: Basin_actetgw
       USE GWFUZFMODULE, ONLY: UZTSRAT
-      USE GWFSFRMODULE, ONLY: SFRUZBD, STRMDELSTOR_RATE, SFRRATIN, SFRRATOUT, IRTFLG
+      USE GWFSFRMODULE, ONLY: SFRUZBD, STRMDELSTOR_RATE, SFRRATIN, SFRRATOUT, IRTFLG, TOTSPFLOW
       USE GWFLAKMODULE, ONLY: TOTGWIN_LAK, TOTGWOT_LAK, TOTDELSTOR_LAK, &
      &    TOTSTOR_LAK, TOTWTHDRW_LAK, TOTRUNF_LAK, TOTSURFIN_LAK, &
      &    TOTSURFOT_LAK, TOTEVAP_LAK, TOTPPT_LAK
       USE GWFBASMODULE, ONLY: DELT
-      USE PRMS_MODULE, ONLY: Print_debug, KKITER, Nobs, Timestep, Basin_szreject
+      USE PRMS_MODULE, ONLY: Print_debug, KKITER, Nobs, Timestep, Dprst_flag
       USE PRMS_OBS, ONLY: Runoff, Runoff_units
       USE PRMS_CASCADE, ONLY: Outflow_flg
       USE PRMS_BASIN, ONLY: CFS2CMS_CONV
@@ -570,20 +600,21 @@
      &    Basin_soil_moist, Basin_ssstor, Basin_cfs
       USE PRMS_SRUNOFF, ONLY: Basin_imperv_evap, &
      &    Basin_sroff, Basin_hortonian, Basin_hortonian_lakes, &
-     &    Basin_infil, Strm_farfield, Basin_sroff_farflow
+     &    Basin_infil, Strm_farfield, Basin_sroff_farflow, &
+     &    Basin_dprst_evap, Basin_dprst_volop, Basin_dprst_volcl
       USE PRMS_SNOW, ONLY: Basin_snowevap, Basin_snowmelt
       USE PRMS_INTCP, ONLY: Basin_intcp_evap
       USE PRMS_SOILZONE, ONLY: Basin_lakeprecip, Basin_dunnian, &
      &    Basin_slowflow, Basin_prefflow, Basin_lakeinsz, &
      &    Basin_cap_infil_tot, Basin_pref_flow_infil, Basin_sz2gw, &
      &    Basin_szfarflow, Basin_sm2gvr, Basin_gvr2sm, &
-     &    Basin_gvr2pfr, Basin_dunnian,  Basin_dncascadeflow
+     &    Basin_gvr2pfr, Basin_dunnian,  Basin_dncascadeflow, Basin_szreject
       IMPLICIT NONE
       INTRINSIC DBLE
 ! Local variables
       DOUBLE PRECISION :: obsq_cfs !, obsq_cms
 !     REAL :: gw_out, basinreachlatflowm3
-      DOUBLE PRECISION :: sz_bal, et, rnf, gvf, szin, szout, szdstor
+      DOUBLE PRECISION :: sz_bal, et, rnf, gvf, szin, szout, szdstor, hru_bal
 !***********************************************************************
       gsfsumrun = 0
 
@@ -591,38 +622,36 @@
       ! basin_actet includes land HRU and lake ET
 
       Uzf_et = UZTSRAT(2) + UZTSRAT(7)
-      Unsat_et = UZTSRAT(2)
-      Sat_et = UZTSRAT(7)
+      UnsatET_Q = UZTSRAT(2)
+      SatET_Q = UZTSRAT(7)
 !      Cumvol_uzfet = Cumvol_uzfet + Uzf_et
 !      et = Basin_actetgw*Basin_convert
 !      IF (abs(uzf_et-et)>0.0001 ) &
-!    +  print *, 'uzfet',uzf_et-et,uzf_et,unsat_et,sat_et, &
-!    + et,basin_actetgw,basin_actet,basin_perv_et
+!    &  print *, 'uzfet',uzf_et-et,uzf_et,UnsatET_Q,SatET_Q, &
+!    & et,basin_actetgw,basin_actet,basin_perv_et
 
 ! convert PRMS variables acre-inches over the basin area (depth)
 ! to modflow length cubed (total volume)
-      Basinpervet = Basin_perv_et*Basin_convert
-      Basinswaleet = Basin_swale_et*Basin_convert
-      Basinimpervevap = Basin_imperv_evap*Basin_convert
-      Basinintcpevap = Basin_intcp_evap*Basin_convert
-      Basinsnowevap = Basin_snowevap*Basin_convert
-      Basinlakeevap = Basin_lakeevap*Basin_convert
-!      IF ( Have_lakes==1 ) Basinlakeevap = TOTEVAP_LAK
+      CapET_Q = Basin_perv_et*Basin_convert
+      SwaleEvap_Q = Basin_swale_et*Basin_convert
+      ImpervEvap_Q = Basin_imperv_evap*Basin_convert
+      CanopyEvap_Q = Basin_intcp_evap*Basin_convert
+      SnowEvap_Q = Basin_snowevap*Basin_convert
+      LakeEvap_Q = Basin_lakeevap*Basin_convert
+      DprstEvap_Q = Basin_dprst_evap*Basin_convert
+!      IF ( Have_lakes==1 ) LakeEvap_Q = TOTEVAP_LAK
       ! sanity check
 !      IF ( Have_lakes==1 ) THEN
-!        IF ( ABS(Basinlakeevap+TOTEVAP_LAK)>0.0001 ) PRINT *, &
+!        IF ( ABS(LakeEvap_Q+TOTEVAP_LAK)>0.0001 ) PRINT *, &
 !     &       'LAKE EVAP PROBLEM, MF lake evap not equal PRMS lake evap', &
-!     &       Basinlakeevap+TOTEVAP_LAK, Basinlakeevap, TOTEVAP_LAK
+!     &       LakeEvap_Q+TOTEVAP_LAK, LakeEvap_Q, TOTEVAP_LAK
 !      ENDIF
-!      Basinactet = Basin_actet*Basin_convert + Uzf_et + Basinlakeevap
-!rsr, 3/16/2010 basinactet includes PRMS lake evaporation = TOTEVAP_LAK
-!      Basinactet = Basin_actet*Basin_convert + Uzf_et
-      Basinactet = Basin_actet*Basin_convert
+      ActualET_Q = Basin_actet*Basin_convert
 
 ! STREAMFLOW
 
 ! convert basin_cfs from cfs over to modflow l3/t (volume per time step)
-      Basinstrmflow = Basin_cfs/Mfl3t_to_cfs
+      StreamOut_Q = Basin_cfs/Mfl3t_to_cfs
 
       IF ( Nobs<1 ) THEN
         obsq_cfs = -1.0D0
@@ -641,42 +670,42 @@
 !rsr  basinreachlatflowm3 = Basin_reach_latflow/Mfl3t_to_cfs
 
 ! PRECIPITATION
-      !Basinppt includes precipitation on lakes
-      Basinppt = Basin_ppt*Basin_convert
+      !Precip_Q includes precipitation on lakes
+      Precip_Q = Basin_ppt*Basin_convert
 !rsr, 3/16/2010 do not subtract lake evaporation, not included in lake in below
       Basinrain = Basin_rain*Basin_convert
       Basinsnow = Basin_snow*Basin_convert
-      Basinlakeprecip = Basin_lakeprecip*Basin_convert
+      LakePrecip_Q = Basin_lakeprecip*Basin_convert
 
 ! SOIL/RUNOFF TOTALS
 
       !flows to streams
-      Basinsroff = Basin_sroff*Basin_convert  !Hortonian and Dunnian
-      Basinhortonian = Basin_hortonian*Basin_convert
-      Basindunnian = Basin_dunnian*Basin_convert
-      Basininterflow = Basin_ssflow*Basin_convert !slow + pref
+      Sroff2Stream_Q = Basin_sroff*Basin_convert  !Hortonian and Dunnian
+      HortSroff2Stream_Q = Basin_hortonian*Basin_convert
+      DunnSroff2Stream_Q = Basin_dunnian*Basin_convert
+      Interflow2Stream_Q = Basin_ssflow*Basin_convert !slow + pref
       Basinslowflow = Basin_slowflow*Basin_convert
       Basinprefflow = Basin_prefflow*Basin_convert
       !flows to lakes
-      Basinhortonianlakes = Basin_hortonian_lakes*Basin_convert
+      HortSroff2Lake_Q = Basin_hortonian_lakes*Basin_convert
       !interflow + Dunnian soilzone
-      Basinlakeinsz = Basin_lakeinsz*Basin_convert
+      DunnInterflow2Lake_Q = Basin_lakeinsz*Basin_convert
 
 ! SOIL/GW TOTALS
       !flows to soilzone
       !to capillary and preferential
-      Basininfil = Basin_infil*Basin_convert
-      Basingw2sz = Basin_gw2sm*Basin_convert !to gravity
+      Infil2Soil_Q = Basin_infil*Basin_convert
+      Sat2Grav_Q = Basin_gw2sm*Basin_convert !to gravity
       !infil plus cascading flow to capillary
-      Basininfil_tot = Basin_cap_infil_tot*Basin_convert
+      Infil2CapTotal_Q = Basin_cap_infil_tot*Basin_convert
       !portion of infil to preferential
-      Basininfil2pref = Basin_pref_flow_infil*Basin_convert
-      Basinsnowmelt = Basin_snowmelt*Basin_convert
+      Infil2Pref_Q = Basin_pref_flow_infil*Basin_convert
+      SnowMelt_Q = Basin_snowmelt*Basin_convert
 
       !flows from soilzone
-      Basinsoiltogw = Basin_soil_to_gw*Basin_convert
-      Basinsz2gw = Basin_sz2gw*Basin_convert
-      Basinszreject = Basin_szreject*Basin_convert
+      CapDrainage2Sat_Q = Basin_soil_to_gw*Basin_convert
+      PotGravDrn2Unsat_Q = Basin_sz2gw*Basin_convert
+      UnsatDrainageExcess_Q = Basin_szreject*Basin_convert
       Basinszfarflow = Basin_szfarflow*Basin_convert
 
       !internal soilzone flows
@@ -684,7 +713,7 @@
       Basingvr2sm = Basin_gvr2sm*Basin_convert !replenish soil moist
       Basingvr2pfr = Basin_gvr2pfr*Basin_convert !>pref_flow threshold
       !cascading slow, pref, and Dunnian
-      Basindnflow = Basin_dncascadeflow*Basin_convert
+      DunnInterflow2Cap_Q = Basin_dncascadeflow*Basin_convert
 
       !flows from PRMS that go outside of basin and not to MODFLOW
       IF ( Outflow_flg==1 ) THEN
@@ -696,30 +725,31 @@
 !  Stuff from MODFLOW
       IF ( Vbnm_index(1)==-1 ) CALL MODFLOW_VB_DECODE(Vbnm_index)
 
-      Uzf_recharge = UZTSRAT(3)
+      RechargeUnsat2Sat_Q = UZTSRAT(3)
       !?? doesn't match basin_gw2sm from budget
       Basinseepout = UZTSRAT(5)
-      Uzf_infil = UZTSRAT(1)
-      Uzf_del_stor = UZTSRAT(4)
+      SoilDrainage2Unsat_Q = UZTSRAT(1)
+      Unsat_dS = UZTSRAT(4)
 
-      Streambed_loss = SFRRATIN
-      Sfruz_change_stor = SFRUZBD(5)
-      Gwflow2strms = SFRRATOUT
-      Sfruz_tot_stor = SFRUZBD(10)
+      Stream2Sat_Q = SFRRATIN
+      UnsatStream_dS = SFRUZBD(5)
+      SatDisch2Stream_Q = SFRRATOUT
+      UnsatStream_S = SFRUZBD(10)
+      BoundaryStreamFlow_Q = TOTSPFLOW
 
       IF ( Timestep>1 ) THEN ! rsr, this could be incorrect for restart
-        Ave_uzf_infil = (Ave_uzf_infil*(Timestep-1)) + Basin_sz2gw - &
+        Ave_SoilDrainage2Unsat_Q = (Ave_SoilDrainage2Unsat_Q*(Timestep-1)) + Basin_sz2gw - &
      &                  Basin_szreject + Basin_soil_to_gw
       ELSE
-        Ave_uzf_infil = Basin_sz2gw - Basin_szreject + Basin_soil_to_gw
+        Ave_SoilDrainage2Unsat_Q = Basin_sz2gw - Basin_szreject + Basin_soil_to_gw
       ENDIF
-      Ave_uzf_infil = Ave_uzf_infil/Timestep
+      Ave_SoilDrainage2Unsat_Q = Ave_SoilDrainage2Unsat_Q/Timestep
 
       IF ( Have_lakes==1 ) THEN
-        Lake_stor = TOTSTOR_LAK
-        Gwflow2lakes = TOTGWIN_LAK 
-        Lakebed_loss = TOTGWOT_LAK
-        Lake_change_stor = TOTDELSTOR_LAK
+        Lake_S = TOTSTOR_LAK
+        SatDisch2Lake_Q = TOTGWIN_LAK 
+        Lake2Sat_Q = TOTGWOT_LAK
+        Lake_dS = TOTDELSTOR_LAK
       ENDIF
 
       IF ( IRTFLG>0 ) CALL MODFLOW_SFR_GET_STORAGE
@@ -731,7 +761,7 @@
       Rate_wellin = Well_in
       Cumvol_wellot = Cumvol_wellot + Well_out
       Rate_wellot = Well_out
-      Basinnetgwwel = Cumvol_wellin - Cumvol_wellot
+      NetWellFlow_Q = Cumvol_wellin - Cumvol_wellot
 
       IF ( Print_debug==1 ) THEN
         et = Basin_perv_et + Basin_snowevap + Basin_imperv_evap + &
@@ -741,8 +771,8 @@
           WRITE (BALUNT, *) 'ET', Basin_actet - et, Basin_actet, et
           WRITE (BALUNT, *) 'ET', Basin_perv_et, Basin_snowevap, &
      &                      Basin_imperv_evap, Basin_intcp_evap, &
-     &                      Basin_lakeevap, Unsat_et, Sat_et, &
-     &                      Basin_swale_et, Basin_actetgw
+     &                      Basin_lakeevap, UnsatET_Q, SatET_Q, &
+     &                      Basin_swale_et, Basin_actetgw, Basin_dprst_evap
         ENDIF
 
         rnf = Basin_hortonian + Basin_dunnian - Basin_sroff
@@ -777,57 +807,47 @@
         Last_basin_soil_moist = Basin_soil_moist
         Last_basin_ssstor = Basin_ssstor
 
-        sz_bal = Basinlakeinsz + Basindunnian + Basinslowflow + &
-     &           Basinprefflow + Basinpervet - Basininfil + &
-     &           Basinsoilmoist - Last_basinsoilmoist + &
-     &           Basingravstor - Last_basingravstor - Basingw2sz - &
-     &           Basinszreject + Basinsz2gw + Basinsoiltogw + &
-     &           Basinszfarflow + Basinswaleet
-        IF ( ABS(sz_bal)/Basinsoilmoist>ERRCHK ) WRITE (BALUNT, *) 'Possible water balance problem'
-        WRITE (BALUNT, 9002) Nowyear, Nowmonth, Nowday, sz_bal, Basinlakeinsz, &
-     &         Basindunnian, Basinslowflow, Basinprefflow, &
-     &         Basinpervet, Basininfil, Basinsoilmoist, &
-     &         Last_basinsoilmoist, Basingravstor, &
-     &         Last_basingravstor, Basingw2sz, Basinsz2gw, &
-     &         Basinszreject, Basinsoiltogw, &
-     &         Basinszfarflow, Basinfarfieldflow, Basinswaleet
+        sz_bal = Cap_S - Last_Cap_S + Grav_S - Last_Grav_S &
+     &           - Sat2Grav_Q - Infil2Soil_Q &
+     &           + Interflow2Stream_Q + DunnSroff2Stream_Q + DunnInterflow2Lake_Q &
+     &           + SoilDrainage2Unsat_Q + CapET_Q + SwaleEvap_Q + Basinszfarflow
+        IF ( ABS(sz_bal)/Cap_S>ERRCHK ) WRITE (BALUNT, *) 'Possible soil zone water balance problem', sz_bal
+
+        hru_bal = Cap_S - Last_Cap_S + Grav_S - Last_Grav_S  + SnowPweqv_S - Last_SnowPweqv_S &
+     &            + Canopy_S - Last_Canopy_S + Imperv_S - Last_Imperv_S + Dprst_S - Last_Dprst_S &
+     &            - Sat2Grav_Q - Precip_Q &
+     &            + Interflow2Stream_Q + Sroff2Stream_Q + DunnInterflow2Lake_Q + HortSroff2Lake_Q + SoilDrainage2Unsat_Q &
+     &            + CapET_Q + ImpervEvap_Q + CanopyEvap_Q + SnowEvap_Q + SwaleEvap_Q + DprstEvap_Q + Basinfarfieldflow
+        IF ( ABS(hru_bal)/Cap_S>ERRCHK ) WRITE (BALUNT, *) 'Possible HRU water balance problem', hru_bal
+        WRITE (BALUNT, 9002) Nowyear, Nowmonth, Nowday, hru_bal, Cap_S, Last_Cap_S, Grav_S, Last_Grav_S, SnowPweqv_S, &
+     &                       Last_SnowPweqv_S, Canopy_S, Last_Canopy_S, Imperv_S, Last_Imperv_S, Dprst_S, Last_Dprst_S, &
+     &                       Sat2Grav_Q, Precip_Q, &
+     &                       Interflow2Stream_Q, Sroff2Stream_Q, DunnInterflow2Lake_Q, HortSroff2Lake_Q, SoilDrainage2Unsat_Q, &
+     &                       CapET_Q, ImpervEvap_Q, CanopyEvap_Q, SnowEvap_Q, SwaleEvap_Q, DprstEvap_Q, Basinfarfieldflow
       ENDIF
 
       IF ( Gsf_rpt==1 ) THEN
-        WRITE (Balance_unt, 9001) Nowmonth, Nowday, Nowyear, Basinppt, Basinpervet, &
-     &         Basinimpervevap, Basinintcpevap, Basinsnowevap, &
-     &         Basinstrmflow, Basinsz2gw, Basingw2sz, Gw_inout, &
-     &         Stream_leakage, Uzf_recharge, Basinseepout, Sat_store, &
-     &         Unsat_store, Basinsoilmoist, Basingravstor, Basingwstor, &
-     &         Basinintcpstor, Basinimpervstor, Basinpweqv, &
-     &         Basininterflow, Basinsroff, Strm_stor, Lake_stor, &
-     &         Obs_strmflow, Basinszreject, Basinprefstor, Uzf_et, &
-     &         Uzf_infil, Uzf_del_stor, Net_sz2gw, Sat_change_stor, &
-     &         Streambed_loss, Sfruz_change_stor, Gwflow2strms, &
-     &         Sfruz_tot_stor, Lakebed_loss, Lake_change_stor, &
-     &         Gwflow2lakes, Basininfil, Basindunnian, Basinhortonian, &
-     &         Basinsm2gvr, Basingvr2sm, Basininfil_tot, &
-     &         Basininfil2pref, Basindnflow, Basinactet, Basinsnowmelt, &
-     &         Basinhortonianlakes, Basinlakeinsz, Basinlakeevap, &
-     &         Basinlakeprecip, Basinfarfieldflow, Basinsoiltogw, &
-     &         Basinszfarflow, Basinsrofffarflow, Basinswaleet, &
-     &         Unsat_et, Sat_et, Basinnetgwwel, KKITER
-!     &        basinreachlatflowm3, Basinrain, &
-!     &        Basinsnow, Basingvr2pfr, Basinslowflow, Basinprefflow
+        WRITE ( Balance_unt, 9001 ) Nowmonth, Nowday, Nowyear, StreamOut_Q, &
+     &          HortSroff2Stream_Q, DunnSroff2Stream_Q, Interflow2Stream_Q, Stream2Unsat_Q, StreamExchng2Sat_Q, &
+     &          Canopy_S, SnowPweqv_S, Imperv_S, Dprst_S, Cap_S, Grav_S, Unsat_S, Sat_S, UnsatStream_S, Lake_S, Stream_s, &
+     &          Precip_Q, NetBoundaryFlow2Sat_Q, NetWellFlow_Q, BoundaryStreamFlow_Q, &
+     &          CanopyEvap_Q, SnowEvap_Q, ImpervEvap_Q, DprstEvap_Q, CapET_Q, SwaleEvap_Q, UnsatET_Q, SatET_Q, LakeEvap_Q, &
+     &          DunnInterflow2Lake_Q, HortSroff2Lake_Q, Lake2Unsat_Q, LakeExchng2Sat_Q, &
+     &          SoilDrainage2Unsat_Q, Sat2Grav_Q, RechargeUnsat2Sat_Q, Infil2Soil_Q, KKITER
       ENDIF
 
 !     DANGER strmin set to zero
 !  RGN I think I fixed strmin
-      Cumvol_precip = Cumvol_precip + Basinppt*DELT    !9-10-2015. Multiplied all value by DELT to get cumulatives
-      Rate_precip = Basinppt
+      Cumvol_precip = Cumvol_precip + Precip_Q*DELT    !9-10-2015. Multiplied all value by DELT to get cumulatives
+      Rate_precip = Precip_Q
 ! RGN change Cumvol_strmin to include specified inflows
       Rate_strmin = Stream_inflow
       Cumvol_strmin = Cumvol_strmin + Rate_strmin*DELT
       Cumvol_gwbndin = Cumvol_gwbndin + Gw_bnd_in*DELT
       Rate_gwbndin = Gw_bnd_in
-      Rate_et = Basinactet
+      Rate_et = ActualET_Q
       Cumvol_et = Cumvol_et + Rate_et*DELT
-      Rate_strmot = Basinstrmflow
+      Rate_strmot = StreamOut_Q
       Cumvol_strmot = Cumvol_strmot + Rate_strmot*DELT
       Cumvol_gwbndot = Cumvol_gwbndot + Gw_bnd_out*DELT
       Rate_gwbndot = Gw_bnd_out
@@ -844,7 +864,6 @@
 !          Rate_lakot = 0.0D0
 !          Rate_lakin = TOTWTHDRW_LAK
 !        END IF
-       !rsr, 3/16/2010 TOTEVAP_LAK included in basinactet
         Rate_lakot = (-TOTSURFOT_LAK - TOTGWOT_LAK - TOTEVAP_LAK - TOTWTHDRW_LAK)/DELT   !RGN 7/22/15 these are volumes. added /DELT
 !        Cumvol_lakeevap = Cumvol_lakeevap + TOTEVAP_LAK
         Rate_lakin = (TOTRUNF_LAK + TOTSURFIN_LAK + TOTGWIN_LAK + TOTPPT_LAK)/DELT        !RGN 7/22/15 these are volumes. added /DELT
@@ -857,25 +876,33 @@
 !        print *, totsurfot_lak, totevap_lak, totgwot_lak, totrunf_lak
 !        print *, totsurfin_lak, totgwin_lak
       END IF
-      Rate_pweqv = Basinpweqv - Last_basinpweqv
+      Rate_pweqv = SnowPweqv_S - Last_SnowPweqv_S
       Cum_pweqv = Cum_pweqv + Rate_pweqv*DELT
 
-      Rate_surfstor = Basinintcpstor - Last_basinintcpstor + &
-     &                Basinimpervstor - Last_basinimpervstor + Rate_pweqv
+      Rate_surfstor = Canopy_S - Last_Canopy_S + &
+     &                Imperv_S - Last_Imperv_S + Rate_pweqv
       Cum_surfstor = Cum_surfstor + Rate_surfstor*DELT
 
-      Rate_soilstor = Basinsoilmoist - Last_basinsoilmoist + &
-     &                Basingravstor - Last_basingravstor  !grav + pref
+      Rate_soilstor = Cap_S - Last_Cap_S + &
+     &                Grav_S - Last_Grav_S  !grav + pref
       Cum_soilstor = Cum_soilstor + Rate_soilstor*DELT
 
-      Rate_uzstor = Uzf_del_stor + Sfruz_change_stor
+      Rate_uzstor = Unsat_dS + UnsatStream_dS
       Cum_uzstor = Cum_uzstor + Rate_uzstor*DELT
 
-      Rate_satstor = Sat_change_stor
+      Rate_satstor = Sat_dS
       Cum_satstor = Cum_satstor + Rate_satstor
 
       Rate_delstore = Rate_surfstor + Rate_soilstor + Rate_satstor + &
      &                Rate_uzstor + Rate_lakestor + STRMDELSTOR_RATE
+
+      IF ( Dprst_flag==1 ) THEN
+        Dprst_S = (Basin_dprst_volop + Basin_dprst_volcl) * Basin_convert
+        Rate_dprst_S = Dprst_S - Last_Dprst_S
+        !Cum_dprststor = Cum_dprststor + Rate_dprst_S*DELT
+        Rate_delstore = Rate_delstore + Basin_dprst_volop + Basin_dprst_volcl ! need rate
+      ENDIF
+
       Cum_delstore = Cum_delstore + Rate_delstore*DELT
 
       Rpt_count = Rpt_count + 1
@@ -885,15 +912,16 @@
       ENDIF
 
 !  Save old values before computation of new ones
-      Last_basinintcpstor = Basinintcpstor
-      Last_basinimpervstor = Basinimpervstor
-      Last_basinpweqv = Basinpweqv
-      Last_basinsoilmoist = Basinsoilmoist
-      Last_basingravstor = Basingravstor
-      Last_basinprefstor = Basinprefstor
+      Last_Canopy_S = Canopy_S
+      Last_Imperv_S = Imperv_S
+      Last_SnowPweqv_S = SnowPweqv_S
+      Last_Cap_S = Cap_S
+      Last_Grav_S = Grav_S
+      Last_Pref_S = Pref_S
+      Last_Dprst_S = Dprst_S
 
- 9001 FORMAT (2(I2.2, '/'), I4, 61(',', E15.7), ',', I5)
- 9002 FORMAT (I5, 2('/', I2.2), F12.3, 17(F12.0))
+ 9001 FORMAT (2(I2.2, '/'), I4, 38(',', E15.7), ',', I5)
+ 9002 FORMAT (I5, 2('/', I2.2), F12.3, 27(F11.0))
       END FUNCTION gsfsumrun
 
 !***********************************************************************
@@ -938,7 +966,7 @@
 
       IF ( control_integer(Rpt_days, 'rpt_days')/=0 ) CALL read_error(5, 'rpt_days')
       IF ( Print_debug>-1 ) PRINT '(/,A,I4,/)', 'Water Budget print frequency is:', Rpt_days
-      WRITE (Logunt, '(/,A,I4,/)') 'Water Budget print frequency is:', Rpt_days
+      WRITE (Logunt, '(/,A,I4)') 'Water Budget print frequency is:', Rpt_days
       IF ( control_string(Gsflow_output_file, 'gsflow_output_file')/=0 ) CALL read_error(5, 'gsflow_output_file')
       IF ( Gsflow_output_file(:1)==' ' .OR. Gsflow_output_file(:1)==CHAR(0) ) Gsflow_output_file = 'gsflow.out'
 
@@ -964,27 +992,15 @@
       USE GSFSUM, ONLY: Balance_unt
       IMPLICIT NONE
 !***********************************************************************
-      ! uzf_tot_stor = unsat_store, modflow_tot_stor = sat_store
+      ! uzf_tot_stor = Unsat_S, modflow_tot_stor = Sat_S
       WRITE (Balance_unt, 9001)
- 9001 FORMAT ('Date,basinppt,basinpervet,basinimpervevap', &
-     &        ',basinintcpevap,basinsnowevap,basinstrmflow', &
-     &        ',basinsz2gw,basingw2sz,gw_inout,stream_leakage', &
-     &        ',uzf_recharge,basinseepout,sat_stor,unsat_stor', &
-     &        ',basinsoilmoist,basingravstor,basingwstor', &
-     &        ',basinintcpstor,basinimpervstor,basinpweqv', &
-     &        ',basininterflow,basinsroff,strm_stor,lake_stor', &
-     &        ',obs_strmflow,basinszreject,basinprefstor', &
-     &        ',uzf_et,uzf_infil,uzf_del_stor,net_sz2gw', &
-     &        ',sat_change_stor,streambed_loss,sfruz_change_stor', &
-     &        ',gwflow2strms,sfruz_tot_stor,lakebed_loss', &
-     &        ',lake_change_stor,gwflow2lakes,basininfil,basindunnian', &
-     &        ',basinhortonian,basinsm2gvr,basingvr2sm,basininfil_tot', &
-     &        ',basininfil2pref,basindnflow,basinactet,basinsnowmelt', &
-     &        ',basinhortonianlakes,basinlakeinsz,basinlakeevap', &
-     &        ',basinlakeprecip,basinfarfieldflow,basinsoiltogw', &
-     &        ',basinszfarflow,basinsrofffarflow,basinswaleet', &
-     &        ',unsat_et,sat_et,basinnetgwwel,kkiter')
-
+ 9001 FORMAT ('Date,StreamOut_Q', &
+     &       ',HortSroff2Stream_Q,DunnSroff2Stream_Q,Interflow2Stream_Q,Stream2Unsat_Q,StreamExchng2Sat_Q', &
+     &       ',Canopy_S,SnowPweqv_S,Imperv_S,Dprst_S,Cap_S,Grav_S,Unsat_S,Sat_S,UnsatStream_S,Lake_S,Stream_S', &
+     &       ',Precip_Q,NetBoundaryFlow2Sat_Q,NetWellFlow_Q,BoundaryStreamFlow_Q', &
+     &       ',CanopyEvap_Q,SnowEvap_Q,ImpervEvap_Q,DprstEvap_Q,CapET_Q,SwaleEvap_Q,UnsatET_Q,SatET_Q,LakeEvap_Q', &
+     &       ',DunnInterflow2Lake_Q,HortSroff2Lake_Q,Lake2Unsat_Q,LakeExchng2Sat_Q', &
+     &       ',SoilDrainage2Unsat_Q,Sat2Grav_Q,RechargeUnsat2Sat_Q,Infil2Soil_Q,KKITER')
       END SUBROUTINE GSF_HEADERS
 
 !***********************************************************************
@@ -997,25 +1013,25 @@
       USE PRMS_INTCP, ONLY: Basin_intcp_stor
       USE PRMS_SNOW, ONLY: Basin_pweqv
       USE PRMS_SOILZONE, ONLY: Basin_pref_stor
-      USE GSFBUDGET, ONLY: Sat_store, Unsat_store
+      USE GSFBUDGET, ONLY: Sat_S, Unsat_S
       IMPLICIT NONE
 !***********************************************************************
 ! LAND SURFACE STORAGE
-      Basinintcpstor = Basin_intcp_stor*Basin_convert
-      Basinimpervstor = Basin_imperv_stor*Basin_convert
-      Basinpweqv = Basin_pweqv*Basin_convert
+      Canopy_S = Basin_intcp_stor*Basin_convert
+      Imperv_S = Basin_imperv_stor*Basin_convert
+      SnowPweqv_S = Basin_pweqv*Basin_convert
 
 ! SOIL STORAGE
-      Basinsoilmoist = Basin_soil_moist*Basin_convert
-      Basingravstor = Basin_ssstor*Basin_convert
-      Basinsoilstor = Basingravstor + Basinsoilmoist
-      Basinprefstor = Basin_pref_stor*Basin_convert
+      Cap_S = Basin_soil_moist*Basin_convert
+      Grav_S = Basin_ssstor*Basin_convert
+      Basinsoilstor = Grav_S + Cap_S
+      Pref_S = Basin_pref_stor*Basin_convert
 
 ! MODFLOW STORAGE
-!rsr, 4/18/2010 Basingravstor includes gravity and preferential
-      Basin_gsfstor = Sat_store + Unsat_store + Basinsoilmoist + &
-     &                Basingravstor + Basinintcpstor + &
-     &                Basinpweqv + Basinimpervstor + Lake_stor + Strm_stor
+!rsr, 4/18/2010 Grav_S includes gravity and preferential
+      Basin_gsfstor = Sat_S + Unsat_S + Cap_S + &
+     &                Grav_S + Canopy_S + &
+     &                SnowPweqv_S + Imperv_S + Lake_S + Stream_S
 
       END SUBROUTINE BASIN_GET_STORAGE
 
@@ -1231,7 +1247,6 @@
 !     ******************************************************************
 !     FORMAT VALUE BASED ON VALUE SIZE
 !     ******************************************************************
-      USE PRMS_BASIN, ONLY: DNEARZERO
       IMPLICIT NONE
       INTRINSIC ABS, INT
 ! Arguments
@@ -1242,7 +1257,7 @@
       DOUBLE PRECISION :: absval
 !***********************************************************************
       absval = ABS(Val)
-      IF ( absval<DNEARZERO ) THEN
+      IF ( absval<1.0D-5 ) THEN
 !       WRITE (Strng, '(I18)') INT(Val)
         Strng = ' '
       ELSEIF ( absval>BIG .OR. absval<SMALL ) THEN
@@ -1256,20 +1271,20 @@
 ! Figure out the total storage of the streams
 !***********************************************************************
       SUBROUTINE MODFLOW_SFR_GET_STORAGE
-      USE GSFSUM, ONLY: Strm_stor
+      USE GSFSUM, ONLY: Stream_S
       USE GWFSFRMODULE, ONLY: STRM, NSTRM
       IMPLICIT NONE
 ! Local Variables
       INTEGER :: l
 !      REAL :: depth, width, strlen
 !***********************************************************************
-      Strm_stor = 0.0D0
+      Stream_S = 0.0D0
 
       DO l = 1, NSTRM
 !        depth = STRM(7, l)
 !        width = STRM(5, l)
 !        strlen = STRM(1, l)
-        Strm_stor = Strm_stor + (STRM(7, l)*STRM(5, l)*STRM(1, l))
+        Stream_S = Stream_S + (STRM(7, l)*STRM(5, l)*STRM(1, l))
       ENDDO
 
       END SUBROUTINE MODFLOW_SFR_GET_STORAGE
@@ -1289,31 +1304,37 @@
       IF ( In_out==0 ) THEN
         WRITE ( Restart_outunit ) MODNAME
         WRITE ( Restart_outunit ) Rate_soilstor, Rate_uzstor, Basingwstor, &
-     &          Rate_satstor, Basingvr2sm, Rate_pweqv, Lake_change_stor, &
-     &          Basinpweqv, Ave_uzf_infil, Basininfil, Basinsoilstor, Basinsoilmoist, &
-     &          Basinsoiltogw, Basinstrmflow, Gwflow2strms
-        WRITE ( Restart_outunit ) Basinppt, Basinpervet, Basinimpervevap, Basinsz2gw, Basingw2sz, Lakebed_loss, &
-     &          Basinintcpstor, Basinimpervstor, Basininterflow, Basinsroff, Obs_strmflow, Basinszreject, Unsat_et, &
-     &          Sat_et, Uzf_et, Uzf_recharge, Basinseepout, Uzf_infil, Uzf_del_stor, Basinrain, Basinsnow, Basinslowflow
-        WRITE ( Restart_outunit ) Basingvr2pfr, Basinsnowevap, Basinhortonian, Basinhortonianlakes, &
-     &          Basinlakeinsz, Basinlakeevap, Basinlakeprecip, Basingravstor, Basinprefflow, Basinprefstor, &
-     &          Streambed_loss, Basinsm2gvr, Sfruz_change_stor, Sfruz_tot_stor, Gwflow2lakes, Basindunnian
-        WRITE ( Restart_outunit ) Basininfil_tot, Basininfil2pref, Basinactet, Basinsnowmelt, &
-     &          Basinintcpevap, Basindnflow, Basinnetgwwel
+     &          Rate_satstor, Basingvr2sm, Rate_pweqv, Lake_dS, &
+     &          SnowPweqv_S, Ave_SoilDrainage2Unsat_Q, Infil2Soil_Q, Basinsoilstor, Cap_S, &
+     &          CapDrainage2Sat_Q, StreamOut_Q, SatDisch2Stream_Q
+        WRITE ( Restart_outunit ) Precip_Q, CapET_Q, ImpervEvap_Q, PotGravDrn2Unsat_Q, Sat2Grav_Q, Lake2Sat_Q, &
+     &          Canopy_S, Imperv_S, Interflow2Stream_Q, Sroff2Stream_Q, Obs_strmflow, UnsatDrainageExcess_Q, UnsatET_Q, &
+     &          SatET_Q, Uzf_et, RechargeUnsat2Sat_Q, Basinseepout, SoilDrainage2Unsat_Q, Unsat_dS, Basinrain, &
+     &          Basinsnow, Basinslowflow
+        WRITE ( Restart_outunit ) Basingvr2pfr, SnowEvap_Q, HortSroff2Stream_Q, HortSroff2Lake_Q, &
+     &          DunnInterflow2Lake_Q, LakeEvap_Q, LakePrecip_Q, Grav_S, Basinprefflow, Pref_S, &
+     &          Stream2Sat_Q, Basinsm2gvr, UnsatStream_dS, UnsatStream_S, SatDisch2Lake_Q, DunnSroff2Stream_Q
+        WRITE ( Restart_outunit ) Infil2CapTotal_Q, Infil2Pref_Q, ActualET_Q, SnowMelt_Q, &
+     &          CanopyEvap_Q, DunnInterflow2Cap_Q, NetWellFlow_Q, Stream2Unsat_Q, &
+     &          Dprst_S, DprstEvap_Q, Lake2Unsat_Q, LakeExchng2Sat_Q, Lake_S, Stream_S, &
+     &          BoundaryStreamFlow_Q, SwaleEvap_Q
       ELSE
         READ ( Restart_inunit ) module_name
         CALL check_restart(MODNAME, module_name)
         READ ( Restart_inunit ) Rate_soilstor, Rate_uzstor, Basingwstor, &
-     &         Rate_satstor, Basingvr2sm, Rate_pweqv, Lake_change_stor, &
-     &         Basinpweqv, Ave_uzf_infil, Basininfil, Basinsoilstor, Basinsoilmoist, &
-     &         Basinsoiltogw, Basinstrmflow, Gwflow2strms
-        READ ( Restart_inunit ) Basinppt, Basinpervet, Basinimpervevap, Basinsz2gw, Basingw2sz, Lakebed_loss, &
-     &         Basinintcpstor, Basinimpervstor, Basininterflow, Basinsroff, Obs_strmflow, Basinszreject, Unsat_et, &
-     &         Sat_et, Uzf_et, Uzf_recharge, Basinseepout, Uzf_infil, Uzf_del_stor, Basinrain, Basinsnow, Basinslowflow
-        READ ( Restart_inunit ) Basingvr2pfr, Basinsnowevap, Basinhortonian, Basinhortonianlakes, &
-     &         Basinlakeinsz, Basinlakeevap, Basinlakeprecip, Basingravstor, Basinprefflow, Basinprefstor, &
-     &         Streambed_loss, Basinsm2gvr, Sfruz_change_stor, Sfruz_tot_stor, Gwflow2lakes, Basindunnian
-        READ ( Restart_inunit ) Basininfil_tot, Basininfil2pref, Basinactet, Basinsnowmelt, &
-     &         Basinintcpevap, Basindnflow, Basinnetgwwel
+     &         Rate_satstor, Basingvr2sm, Rate_pweqv, Lake_dS, &
+     &         SnowPweqv_S, Ave_SoilDrainage2Unsat_Q, Infil2Soil_Q, Basinsoilstor, Cap_S, &
+     &         CapDrainage2Sat_Q, StreamOut_Q, SatDisch2Stream_Q
+        READ ( Restart_inunit ) Precip_Q, CapET_Q, ImpervEvap_Q, PotGravDrn2Unsat_Q, Sat2Grav_Q, Lake2Sat_Q, &
+     &         Canopy_S, Imperv_S, Interflow2Stream_Q, Sroff2Stream_Q, Obs_strmflow, UnsatDrainageExcess_Q, UnsatET_Q, &
+     &         SatET_Q, Uzf_et, RechargeUnsat2Sat_Q, Basinseepout, SoilDrainage2Unsat_Q, Unsat_dS, Basinrain, &
+     &         Basinsnow, Basinslowflow
+        READ ( Restart_inunit ) Basingvr2pfr, SnowEvap_Q, HortSroff2Stream_Q, HortSroff2Lake_Q, &
+     &         DunnInterflow2Lake_Q, LakeEvap_Q, LakePrecip_Q, Grav_S, Basinprefflow, Pref_S, &
+     &         Stream2Sat_Q, Basinsm2gvr, UnsatStream_dS, UnsatStream_S, SatDisch2Lake_Q, DunnSroff2Stream_Q
+        READ ( Restart_inunit ) Infil2CapTotal_Q, Infil2Pref_Q, ActualET_Q, SnowMelt_Q, &
+     &         CanopyEvap_Q, DunnInterflow2Cap_Q, NetWellFlow_Q, Stream2Unsat_Q, &
+     &         Dprst_S, DprstEvap_Q, Lake2Unsat_Q, LakeExchng2Sat_Q, Lake_S, Stream_S, &
+     &         BoundaryStreamFlow_Q, SwaleEvap_Q
       ENDIF
       END SUBROUTINE gsflow_sum_restart

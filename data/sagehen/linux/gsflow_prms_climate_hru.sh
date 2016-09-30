@@ -1,2 +1,2 @@
 
-../../../bin/gsflow ./prms_climate_hru.control
+../../../bin/gsflow ./gsflow_prms_climate_hru.control

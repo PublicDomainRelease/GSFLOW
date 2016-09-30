@@ -97,7 +97,7 @@
         ENDIF
 
       ELSEIF ( Process(:4)=='decl' ) THEN
-        Version_frost_date = '$Id: frost_date.f90 6900 2014-10-29 16:01:04Z rsregan $'
+        Version_frost_date = 'frost_date.f90 2016-03-04 17:57:51Z'
         CALL print_module(Version_frost_date, 'Preprocessing               ', 90)
         MODNAME = 'frost_date'
 

@@ -556,13 +556,6 @@ nhru
 30.59000015259
 32.00000047684
 ####
-radmax 0
-1
-one
-1
-2
-0.8000000119209
-####
 tmin_cbh_adj
 1
 nhru
@@ -996,13 +989,6 @@ nmonths
 2
 12*5.0
 ####
-ppt_rad_adj
-1
-nmonths
-12
-2
-12*0.02
-####
 soil2gw_max 4
 1
 nhru
@@ -1334,13 +1320,6 @@ nhru
 0.38590999916195
 0.55833002328891
 ####
-adj_by_hru
-1
-one
-1
-1
-1
-####
 melt_force 0
 1
 one
@@ -1362,26 +1341,12 @@ nhru
 2
 128*0.1
 ####
-radj_wppt 0
-1
-one
-1
-2
-0.5
-####
 albset_rnm 0
 1
 one
 1
 2
 0.6000000238419
-####
-radj_sppt 0
-1
-one
-1
-2
-0.44
 ####
 tstorm_mo
 1
@@ -1456,3 +1421,17 @@ one
 1
 2
 0.7570000290871
+####
+potet_cbh_adj
+1
+nhru
+128
+2
+128*1.0
+####
+snowpack_init
+1
+nhru
+128
+2
+128*0.0

@@ -3398,7 +3398,7 @@ c***********************************************************************
      [   k, i, n, mmax
 c
 c----initialize tag
-      free = 1 !rgn, rsr changed to 1 to arrays would be in bounds if not set below
+      free = 1 !rgn
       tag = mark(ek)
 c
 c----for each vertex vi in ek

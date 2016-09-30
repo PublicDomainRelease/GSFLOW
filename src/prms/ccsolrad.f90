@@ -24,9 +24,11 @@
       INTEGER FUNCTION ccsolrad()
       USE PRMS_CCSOLRAD
       USE PRMS_MODULE, ONLY: Process, Print_debug, Nhru, Nsol
-      USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_area, Basin_area_inv, NEARZERO
-      USE PRMS_CLIMATEVARS, ONLY: Swrad, Basin_orad, Orad_hru, Radj_sppt, Radj_wppt, Ppt_rad_adj, Radmax, &
-     &    Rad_conv, Hru_solsta, Basin_horad, Basin_potsw, Basin_solsta, Orad, Hru_ppt, Tmax_hru, Tmin_hru, Solsta_flag
+      USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_area, &
+     &    Basin_area_inv, NEARZERO
+      USE PRMS_CLIMATEVARS, ONLY: Swrad, Basin_orad, Orad_hru, &
+     &    Rad_conv, Hru_solsta, Basin_horad, Basin_potsw, Basin_solsta, Orad, Hru_ppt, &
+     &    Tmax_hru, Tmin_hru, Solsta_flag, Radj_sppt, Radj_wppt, Ppt_rad_adj, Radmax
       USE PRMS_SOLTAB, ONLY: Soltab_potsw, Soltab_basinpotsw, Hru_cossl, Soltab_horad_potsw
       USE PRMS_SET_TIME, ONLY: Jday, Nowmonth, Summer_flag
       USE PRMS_OBS, ONLY: Solrad
@@ -64,7 +66,7 @@
           ENDIF
 
           ccov = Ccov_slope(j, Nowmonth)*(Tmax_hru(j)-Tmin_hru(j)) + Ccov_intcp(j, Nowmonth)
-          IF ( ccov<NEARZERO ) THEN
+          IF ( ccov<0.0 ) THEN
             ccov = 0.0
           ELSEIF ( ccov>1.0 ) THEN
             ccov = 1.0
@@ -78,7 +80,7 @@
           Cloud_radadj(j) = radadj*pptadj
           Basin_radadj = Basin_radadj + DBLE( Cloud_radadj(j)*Hru_area(j) )
 
-          Orad_hru(j) = Cloud_radadj(j)*Soltab_horad_potsw(Jday,j)
+          Orad_hru(j) = Cloud_radadj(j)*SNGL( Soltab_horad_potsw(Jday,j) )
           Basin_orad = Basin_orad + DBLE( Orad_hru(j)*Hru_area(j) )
           IF ( Solsta_flag==1 ) THEN
             k = Hru_solsta(j)
@@ -95,7 +97,7 @@
               ENDIF
             ENDIF
           ENDIF
-          Swrad(j) = Soltab_potsw(Jday, j)*Cloud_radadj(j)/Hru_cossl(j)
+          Swrad(j) = SNGL( Soltab_potsw(Jday, j)*DBLE(Cloud_radadj(j))/Hru_cossl(j) )
           Basin_potsw = Basin_potsw + DBLE( Swrad(j)*Hru_area(j) )
         ENDDO
         Basin_orad = Basin_orad*Basin_area_inv
@@ -103,13 +105,13 @@
         IF ( Observed_flag==1 ) THEN
           Orad = Solrad(Basin_solsta)*Rad_conv
         ELSE
-          Orad = Basin_orad
+          Orad = SNGL( Basin_orad )
         ENDIF
         Basin_potsw = Basin_potsw*Basin_area_inv
         Basin_cloud_cover = Basin_cloud_cover*Basin_area_inv
 
       ELSEIF ( Process(:4)=='decl' ) THEN
-        Version_ccsolrad = '$Id: ccsolrad.f90 7528 2015-07-29 22:31:58Z rsregan $'
+        Version_ccsolrad = 'ccsolrad.f90 2016-05-10 18:52:00Z'
         CALL print_module(Version_ccsolrad, 'Solar Radiation Distribution', 90)
         MODNAME = 'ccsolrad'
 

@@ -1,5 +1,5 @@
 # prms libraray makefile
-# $Id: Makefile 7593 2015-08-28 19:26:41Z rsregan $
+# $Id: Makefile 8247 2016-04-14 22:53:07Z rsregan $
 
 include ../makelist
 PRMSLIB = $(LIBDIR)/libprmsiv.a
@@ -43,6 +43,7 @@ LIBOBJS = \
         potet_hamon.o \
         potet_pan.o \
         potet_pm.o \
+        potet_pm_sta.o \
         potet_pt.o \
         potet_hs.o \
         write_climate_hru.o \
@@ -118,6 +119,9 @@ potet_jh.o: potet_jh.f90 prms_module.mod prms_basin.mod prms_climatevars.mod prm
 
 potet_pm.o: potet_pm.f90 prms_module.mod prms_basin.mod prms_climatevars.mod prms_climate_hru.mod prms_soltab.mod prms_set_time.mod
 	$(FC) -c $(FFLAGS) potet_pm.f90
+
+potet_pm_sta.o: potet_pm_sta.f90 prms_module.mod prms_basin.mod prms_climatevars.mod prms_climate_hru.mod prms_soltab.mod prms_set_time.mod
+	$(FC) -c $(FFLAGS) potet_pm_sta.f90
 
 potet_pt.o: potet_pt.f90 prms_module.mod prms_basin.mod prms_climatevars.mod prms_set_time.mod
 	$(FC) -c $(FFLAGS) potet_pt.f90

@@ -25,7 +25,6 @@
 !   Declared Parameters
       INTEGER, SAVE :: Max_tsta
       REAL, SAVE :: Dist_max
-      REAL, SAVE, ALLOCATABLE :: Tmax_mo_adj(:, :), Tmin_mo_adj(:, :)
       REAL, SAVE :: Monmin(12), Monmax(12)
       REAL, SAVE :: Lapsemin_min(12), Lapsemin_max(12)
       REAL, SAVE :: Lapsemax_min(12), Lapsemax_max(12)
@@ -61,7 +60,7 @@
 !***********************************************************************
 !     t2dist2decl - set up parameters for temperature computations
 !   Declared Parameters
-!     tsta_elev, tmax_mo_adj, tmin_mo_adj
+!     tsta_elev, tmax_adj, tmin_adj
 !     hru_elev, hru_area, temp_units, basin_tsta, max_tsta
 !     monmin, monmax, lapsemin_min, lapsemin_max, lapsemax_min
 !     lapsemax_max, tsta_xlong, tsta_ylat, hru_ylat, hru_xlong, dist_max
@@ -79,7 +78,7 @@
 !***********************************************************************
       t2dist2decl = 0
 
-      Version_temp = '$Id: temp_dist2.f90 7435 2015-06-10 22:21:36Z rsregan $'
+      Version_temp = 'temp_dist2.f90 2016-05-12 20:03:40Z'
       CALL print_module(Version_temp, 'Temperature Distribution    ', 90)
       MODNAME = 'temp_dist2'
 
@@ -89,6 +88,7 @@
       ENDIF
 
 ! added by Mastin 5/8/98
+      ALLOCATE ( Elfac(Nhru,Ntemp), Delv(Ntemp,Ntemp), Dist(Nhru,Ntemp), N_tsta(Nhru) )
 
       IF ( declvar(MODNAME, 'basin_lapse_max', 'one', 1, 'real', &
      &     'Basin area-weighted average maximum air temperature lapse rate per 1000 feet', &
@@ -105,7 +105,7 @@
      &     'feet')/=0 ) CALL read_error(1, 'dist_max')
 
       IF ( declparam(MODNAME, 'max_tsta', 'one', 'integer', &
-     &     '2', 'bounded', 'ntemp', &
+     &     '0', 'bounded', 'ntemp', &
      &     'Maximum number of temperature stations to use for'// &
      &     ' distributing temperature to any HRU', &
      &     'Maximum number of air-temperature measurement stations to use for'// &
@@ -113,8 +113,7 @@
      &     'none')/=0 ) CALL read_error(1, 'max_tsta')
 
 ! added THE FOLLOWING NEW PARAMETERS by J Vaccaro 7.98,
-!       various parmaeters to interpolate
-!       and constrain lapse rates for temperature
+!       various parameters to interpolate and constrain lapse rates for temperature
 
       IF ( declparam(MODNAME, 'monmin', 'nmonths', 'real', &
      &     '-60.0', '-60.0', '65.0', &
@@ -184,39 +183,18 @@
       IF ( declparam(MODNAME, 'hru_ylat', 'nhru', 'real', &
      &     '0.0', '-1.0E9', '1.0E9', &
      &     'HRU latitude of centroid, State Plane', &
-     &     'Latitude of each HRU for the centroid,'// &
-     &     ' State Plane Coordinate System', &
+     &     'Latitude of each HRU for the centroid, State Plane Coordinate System', &
      &     'feet')/=0 ) CALL read_error(1, 'hru_ylat')
 
       ALLOCATE ( Hru_xlong(Nhru) )
       IF ( declparam(MODNAME, 'hru_xlong', 'nhru', 'real', &
      &     '0.0', '-1.0E9', '1.0E9', &
      &     'HRU longitude of centroid, State Plane', &
-     &     'Longitude of each HRU for the centroid,'// &
-     &     ' State Plane Coordinate System', &
+     &     'Longitude of each HRU for the centroid, State Plane Coordinate System', &
      &     'feet')/=0 ) CALL read_error(1, 'hru_xlong')
 
 ! END NEW PARAMETERS
 
-      ALLOCATE ( Tmax_mo_adj(Nhru,12) )
-      IF ( declparam(MODNAME, 'tmax_mo_adj', 'nhru,nmonths', 'real', &
-     &     '0.0', '-10.0', '10.0', &
-     &     'HRU monthly maximum temperature adjustment', &
-     &     'Monthly (January to December) adjustment factor to'// &
-     &     ' maximum air temperature for each HRU, estimated'// &
-     &     ' based on slope and aspect', &
-     &     'temp_units')/=0 ) CALL read_error(1, 'tmax_mo_adj')
-
-      ALLOCATE ( Tmin_mo_adj(Nhru,12) )
-      IF ( declparam(MODNAME, 'tmin_mo_adj', 'nhru,nmonths', 'real', &
-     &     '0.0', '-10.0', '10.0', &
-     &     'HRU monthly minimum temperature adjustment', &
-     &     'Monthly (January to December) adjustment factor to'// &
-     &     ' maximum air temperature for each HRU, estimated'// &
-     &     ' based on slope and aspect', &
-     &     'temp_units')/=0 ) CALL read_error(1, 'tmin_mo_adj')
-
-      t2dist2decl = 0
       END FUNCTION t2dist2decl
 
 !***********************************************************************
@@ -235,7 +213,7 @@
       INTRINSIC DSQRT, ABS, DABS, DBLE
 ! Local Variables
       INTEGER :: i, j, k, n, kk, kkbig
-      DOUBLE PRECISION :: distx, disty, distance, big_dist, dist2, dist_max_dble
+      DOUBLE PRECISION :: distx, disty, distance, big_dist, dist2
       DOUBLE PRECISION, ALLOCATABLE :: nuse_tsta_dist(:, :)
 !***********************************************************************
       t2dist2init = 0
@@ -243,6 +221,7 @@
       IF ( getparam(MODNAME, 'dist_max', 1, 'real', Dist_max)/=0 ) CALL read_error(2, 'dist_max')
 
       IF ( getparam(MODNAME, 'max_tsta', 1, 'real', Max_tsta)/=0 ) CALL read_error(2, 'max_tsta')
+      IF ( Max_tsta==0 ) Max_tsta = Ntemp
 
       IF ( getparam(MODNAME, 'monmin', 12, 'real', Monmin)/=0 ) CALL read_error(2, 'monmin')
 
@@ -272,12 +251,6 @@
       IF ( getparam(MODNAME, 'hru_ylat', Nhru, 'real', Hru_ylat) &
      &     /=0 ) CALL read_error(2, 'hru_ylat')
 
-      IF ( getparam(MODNAME, 'tmax_mo_adj', Nhru*12, 'real', &
-     &     Tmax_mo_adj)/=0 ) CALL read_error(2, 'tmax_mo_adj')
-
-      IF ( getparam(MODNAME, 'tmin_mo_adj', Nhru*12, 'real', &
-     &     Tmin_mo_adj)/=0 ) CALL read_error(2, 'tmin_mo_adj')
-
       IF ( Init_vars_from_file==0 ) THEN
         Basin_lapse_max = 0.0
         Basin_lapse_min = 0.0
@@ -287,13 +260,10 @@
 
 ! CALCULATE:  DISTANCE FROM EACH MRU TO EACH TEMPERATURE GAGE
 !          :  ELEVATION FACTOR FOR EACH MRU TO EACH TEMPERATURE GAGE
-      ALLOCATE ( Elfac(Nhru,Ntemp), Delv(Ntemp,Ntemp), Dist(Nhru,Ntemp) )
-      ALLOCATE ( N_tsta(Nhru) )
       ALLOCATE ( Nuse_tsta(Max_tsta,Nhru), nuse_tsta_dist(Max_tsta,Nhru) )
       N_tsta = 0
       Nuse_tsta = 0
       nuse_tsta_dist = 0.0D0
-      dist_max_dble = DBLE( Dist_max )
       DO i = 1, Nhru
         DO k = 1, Ntemp
           Elfac(i, k) = (Hru_elev(i)-Tsta_elev(k))/1000.0
@@ -303,7 +273,7 @@
           IF ( DABS(distance)<DNEARZERO ) distance = 1.0D0
           dist2 = 1.0D0/(distance/5280.0D0)
           Dist(i, k) = dist2*dist2
-          IF ( distance<dist_max_dble ) THEN
+          IF ( distance<DBLE(Dist_max) ) THEN
             n = N_tsta(i)
             IF ( n<Max_tsta ) THEN
               n = n + 1
@@ -351,8 +321,8 @@
       INTEGER FUNCTION t2dist2run()
       USE PRMS_TEMP_DIST2
       USE PRMS_MODULE, ONLY: Ntemp
-      USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_area, Basin_area_inv
-      USE PRMS_CLIMATEVARS, ONLY: Solrad_tmax, Solrad_tmin, Basin_temp, &
+      USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_area, Basin_area_inv, DNEARZERO
+      USE PRMS_CLIMATEVARS, ONLY: Solrad_tmax, Solrad_tmin, Basin_temp, Tmax_aspect_adjust, Tmin_aspect_adjust, &
      &    Basin_tmax, Basin_tmin, Tmaxf, Tminf, Tminc, Tmaxc, Tavgf, Tavgc, Basin_tsta
       USE PRMS_SET_TIME, ONLY: Nowmonth
       USE PRMS_OBS, ONLY: Tmax, Tmin
@@ -462,9 +432,9 @@
           tmn = tmn + DBLE( (Tmin(k)+tcrn) )*Dist(j, k)
         ENDDO
 
-        IF ( sumdist>0.0D0 ) THEN
-          tmn = tmn/sumdist - DBLE( Tmin_mo_adj(j, Nowmonth) )
-          tmx = tmx/sumdist - DBLE( Tmax_mo_adj(j, Nowmonth) )
+        IF ( sumdist>DNEARZERO ) THEN
+          tmn = tmn/sumdist - DBLE( Tmin_aspect_adjust(j, Nowmonth) )
+          tmx = tmx/sumdist - DBLE( Tmax_aspect_adjust(j, Nowmonth) )
         ELSE
           tmn = DBLE( (mn+mx)*0.5 )
           tmx = tmn

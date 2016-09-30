@@ -1,6 +1,6 @@
 MODULE machine_constants
   ! ... machine dependent parameters
-  ! ... $Revision: 6501 $//$Date: 2007/07/25 23:32:29 $
+  ! ... $Revision: 6461 $//$Date: 2007/07/25 23:32:29 $
   IMPLICIT NONE
   SAVE
   INTEGER, PARAMETER :: kdp = SELECTED_REAL_KIND(14,60)

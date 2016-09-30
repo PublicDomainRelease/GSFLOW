@@ -31,10 +31,8 @@
 
       INTEGER FUNCTION precip_1sta_laps()
       USE PRMS_PRECIP_1STA_LAPS
-      USE PRMS_MODULE, ONLY: Process, Nhru, Nrain, Inputerror_flag, &
-     &    Parameter_check_flag, Precip_flag, Model
-      USE PRMS_BASIN, ONLY: Active_hrus, Hru_area, Hru_route_order, Basin_area_inv, &
-     &    Hru_elev, SMALLPARAM, MM2INCH
+      USE PRMS_MODULE, ONLY: Process, Nhru, Nrain, Inputerror_flag, Precip_flag, Model, Print_debug
+      USE PRMS_BASIN, ONLY: Active_hrus, Hru_area, Hru_route_order, Basin_area_inv, Hru_elev, MM2INCH
       USE PRMS_CLIMATEVARS, ONLY: Newsnow, Pptmix, Prmx, Basin_ppt, &
      &    Basin_rain, Basin_snow, Hru_ppt, Hru_rain, Hru_snow, &
      &    Basin_obs_ppt, Tmaxf, Tminf, Tmax_allrain_f, Tmax_allsnow_f, &
@@ -48,7 +46,7 @@
       EXTERNAL :: read_error, precip_form, print_module, compute_precip_laps
       EXTERNAL :: print_date, checkdim_param_limits
 ! Local Variables
-      INTEGER :: i, ii, j, ierr
+      INTEGER :: i, ii, ierr
       REAL :: ppt
       DOUBLE PRECISION :: sum_obs
       CHARACTER(LEN=80), SAVE :: Version_precip
@@ -60,8 +58,10 @@
         DO i = 1, Nrain
           IF ( Psta_nuse(i)==1 ) THEN
             IF ( Precip_local(i)<0.0 ) THEN
-              PRINT 9002, Precip_local(i), MODNAME, i
-              CALL print_date(1)
+              IF ( Print_debug>-1 ) THEN
+                PRINT 9002, Precip_local(i), MODNAME, i
+                CALL print_date(1)
+              ENDIF
               Precip_local(i) = 0.0
             ELSEIF ( Precip_units==1 ) THEN
               Precip_local(i) = Precip_local(i)*MM2INCH
@@ -83,7 +83,6 @@
           Newsnow(i) = 0
           Pptmix(i) = 0
           ppt = Precip_local(Hru_psta(i))
-          ! ignore very small amounts of precipitation, don't ignore 4/7/2015 rsr
           IF ( ppt>0.0 ) &
      &         CALL precip_form(ppt, Hru_ppt(i), Hru_rain(i), Hru_snow(i), Tmaxf(i), &
      &                          Tminf(i), Pptmix(i), Newsnow(i), Prmx(i), &
@@ -96,14 +95,13 @@
         Basin_snow = Basin_snow*Basin_area_inv
 
       ELSEIF ( Process(:4)=='decl' ) THEN
-        Version_precip = '$Id: precip_1sta_laps.f90 7431 2015-06-10 21:27:42Z rsregan $'
+        Version_precip = 'precip_1sta_laps.f90 2016-05-10 15:48:00Z'
         IF ( Precip_flag==1 ) THEN
           MODNAME = 'precip_1sta'
-          Version_precip = Version_precip(:16)//Version_precip(22:80)
         ELSE
           MODNAME = 'precip_laps'
-          Version_precip = Version_precip(:11)//Version_precip(17:80)
         ENDIF
+        Version_precip = MODNAME//'.f90 '//Version_precip(22:80)
         CALL print_module(Version_precip, 'Precipitation Distribution  ', 90)
 
         ALLOCATE ( Psta_nuse(Nrain), Precip_local(Nrain) )
@@ -111,7 +109,7 @@
 ! Declare parameters
         ALLOCATE ( Hru_psta(Nhru) )
         IF ( declparam(MODNAME, 'hru_psta', 'nhru', 'integer', &
-     &       '1', 'bounded', 'nrain', &
+     &       '0', 'bounded', 'nrain', &
      &       'Index of base precipitation station for HRU', &
      &       'Index of the base precipitation station used for lapse'// &
      &       ' rate calculations for each HRU', &
@@ -169,7 +167,7 @@
 
           ALLOCATE ( Hru_plaps(Nhru) )
           IF ( declparam(MODNAME, 'hru_plaps', 'nhru', 'integer', &
-     &         '1', 'bounded', 'nrain', &
+     &         '0', 'bounded', 'nrain', &
      &         'Index of precipitation station to lapse against hru_psta', &
      &         'Index of the lapse precipitation measurement station used for lapse'// &
      &         ' rate calculations for each HRU', &
@@ -188,20 +186,6 @@
           IF ( getparam(MODNAME, 'padj_sn', Nrain*12, 'real', Padj_sn)/=0 ) CALL read_error(2, 'padj_sn')
           IF ( getparam(MODNAME, 'hru_plaps', Nhru, 'integer', Hru_plaps)/=0 ) CALL read_error(2, 'hru_plaps')
           IF ( getparam(MODNAME, 'pmn_mo', Nrain*12, 'real', Pmn_mo)/=0 ) CALL read_error(2, 'pmn_mo')
-          DO j = 1, 12
-            DO i = 1, Nrain
-              IF ( Pmn_mo(i,j)<SMALLPARAM ) THEN
-                PRINT *, 'pmn_mo needs to be at least:', SMALLPARAM
-                IF ( Parameter_check_flag>0 ) THEN
-                  PRINT *, 'ERROR, HRU:', i, 'month:', j, ', pmn_mo:', Pmn_mo(i, j)
-                  Inputerror_flag = 1
-                ELSE
-                  PRINT *, 'WARNING, HRU:', i, 'month:', j, ', pmn_mo:', Pmn_mo(i, j), ') set to', SMALLPARAM
-                  Pmn_mo(i, j) = SMALLPARAM
-                ENDIF
-              ENDIF
-            ENDDO
-          ENDDO
         ENDIF
 
         Psta_nuse = 0

@@ -14,7 +14,7 @@
       INTEGER FUNCTION potet_jh()
       USE PRMS_POTET_JH
       USE PRMS_MODULE, ONLY: Process, Nhru
-      USE PRMS_BASIN, ONLY: Basin_area_inv, Active_hrus, Hru_area, Hru_route_order, NEARZERO
+      USE PRMS_BASIN, ONLY: Basin_area_inv, Active_hrus, Hru_area, Hru_route_order
       USE PRMS_CLIMATEVARS, ONLY: Basin_potet, Potet, Tavgc, Tavgf, Swrad
       USE PRMS_SET_TIME, ONLY: Nowmonth
       IMPLICIT NONE
@@ -39,20 +39,20 @@
           i = Hru_route_order(j)
           elh = (597.3-(0.5653*Tavgc(i)))*2.54
           Potet(i) = Jh_coef(i, Nowmonth)*(Tavgf(i)-Jh_coef_hru(i))*Swrad(i)/elh
-          IF ( Potet(i)<NEARZERO ) Potet(i) = 0.0
+          IF ( Potet(i)<0.0) Potet(i) = 0.0
           Basin_potet = Basin_potet + DBLE( Potet(i)*Hru_area(i) )
         ENDDO
         Basin_potet = Basin_potet*Basin_area_inv
 
 !******Declare parameters
       ELSEIF ( Process(:4)=='decl' ) THEN
-        Version_potet_jh = '$Id: potet_jh.f90 7525 2015-07-28 19:39:43Z rsregan $'
+        Version_potet_jh = 'potet_jh.f90 2016-05-10 15:48:00Z'
         CALL print_module(Version_potet_jh, 'Potential Evapotranspiration', 90)
         MODNAME = 'potet_jh'
 
         ALLOCATE ( Jh_coef(Nhru,12) )
         IF ( declparam(MODNAME, 'jh_coef', 'nhru,nmonths', 'real', &
-     &       '0.014', '0.005', '0.1', &
+     &       '0.014', '0.0', '0.1', &
      &       'Monthly air temperature coefficient for each HRU - Jensen-Haise', &
      &       'Monthly (January to December) air temperature coefficient used in Jensen-Haise potential ET computations'// &
      &       ' for each HRU', &

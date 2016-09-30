@@ -1,13 +1,13 @@
 
                   Sagehen Restart Sample Problem for GSFLOW
-                                 August 2015
+                                 October 2016
  
 This sample is for the Sagehen Creek Watershed and demonstrates use of the 
 GSFLOW restart option. The problem is described in Regan and others (2015, 
 USGS TM 6-D3).
 
 Control and shell script files are provided in the 'linux' subdirectory to run
-run problem in three model modes.
+the problem in three model modes.
 
 1. GSFLOW mode: The script file for this series of restart simulations 
 ('gsflow.sh') runs GSFLOW a total of 16 times, and its structure differs 
@@ -23,19 +23,15 @@ through September 1, 1983. Note that for this run, the simulation 'end_time'
 has been reset to '1983,9,1,0,0,0' in the script file; several other input-
 control parameters also are reset for this and each of the subsequent runs.
 
-Output for the series of simulations is provided in the 'output-test' sub-
-directory ('1_GSFLOW_mode'). Note that an executable program located in the
+Note that an executable program located in the
 'bin' directory named 'CSV_merge_sagehen' merges all of the csv output
 files for the restart simulations into a single output file using information 
-from the 'names.dat' file provided in the 'linux' subdirectory. Also note that 
-the 'gsflow.log' file provided in the directory is for the very last restart 
-simulation that extends from December 2, 1983, through January 30, 1984.
+from the 'names.dat' file provided in the 'linux' subdirectory.
 
 2. PRMS mode: The script file for this simulation is 'gsflow_prms.sh' and the
 control file is 'gsflow.control.' Note that control parameter 'model_mode' is
 reset from a value of GSFLOW to PRMS in the script file. This simulation extends
-from October 1, 1980, through January 30, 1984. Output for the simulation is 
-provided in the '2_PRMS_model' subdirectory under the 'output-test' subdirectory.
+from October 1, 1980, through January 30, 1984. 
 
 3. MODFLOW mode: The script file for this simulation is 'gsflow_modflow.sh' and 
 the control file is 'gsflow.modflow.control.' Note that although the value of 
@@ -44,9 +40,7 @@ the control file is 'gsflow.modflow.control.' Note that although the value of
 30, 1996, because the number of time steps specified for the second stress period 
 of this simulation in the discretization file is 5,844 days; this demonstrates 
 that for a MODFLOW-only simulation, the discretization file time information 
-takes precedence. Output for the simulation is provided in the '3_MODFLOW_model'
-subdirectory under the 'output-test' subdirectory.
-
+takes precedence. 
 
 Reference:
 

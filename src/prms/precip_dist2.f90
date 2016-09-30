@@ -69,7 +69,7 @@
 !***********************************************************************
       pptdist2decl = 0
 
-      Version_precip = '$Id: precip_dist2.f90 7432 2015-06-10 21:50:54Z rsregan $'
+      Version_precip = 'precip_dist2.f90 2016-05-12 15:48:00Z'
       CALL print_module(Version_precip, 'Precipitation Distribution  ', 90)
       MODNAME = 'precip_dist2'
 
@@ -88,7 +88,7 @@
      &     'feet')/=0 ) CALL read_error(1, 'dist_max')
 
       IF ( declparam(MODNAME, 'max_psta', 'one', 'integer', &
-     &     '2', 'bounded', 'nrain', &
+     &     '0', 'bounded', 'nrain', &
      &     'Maximum number of precipitation stations to distribute to an HRU', &
      &     'Maximum number of precipitation measurement stations to distribute to an HRU', &
      &     'none')/=0 ) CALL read_error(1, 'max_psta')
@@ -128,7 +128,7 @@
 
       ALLOCATE ( Psta_mon(Nrain, 12) )
       IF ( declparam(MODNAME, 'psta_mon', 'nrain,nmonths', 'real', &
-     &     '1.0', '0.00001', '50.0', &
+     &     '1.0', '0.0000001', '50.0', &
      &     'Monthly precipitation for each of the nrain precipitation measurement stations', &
      &     'Monthly (January to December) factor to precipitation'// &
      &     ' at each measured station to adjust precipitation distributed to each HRU to'// &
@@ -170,15 +170,15 @@
 !***********************************************************************
       INTEGER FUNCTION pptdist2init()
       USE PRMS_PRECIP_DIST2
-      USE PRMS_MODULE, ONLY: Nhru, Nrain, Inputerror_flag, Parameter_check_flag
-      USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, DNEARZERO, SMALLPARAM
+      USE PRMS_MODULE, ONLY: Nhru, Nrain
+      USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, DNEARZERO
       IMPLICIT NONE
 ! Functions
       INTEGER, EXTERNAL :: getparam
       EXTERNAL read_error
       INTRINSIC DSQRT, DABS, DBLE
 ! Local Variables
-      INTEGER :: i, k, j, n, kk, kkbig, jj
+      INTEGER :: i, k, n, kk, kkbig, jj
       DOUBLE PRECISION :: distx, disty, distance, big_dist, dist, dist_max_dble
       DOUBLE PRECISION, ALLOCATABLE :: nuse_psta_dist(:, :)
 !***********************************************************************
@@ -193,7 +193,7 @@
 
       IF ( getparam(MODNAME, 'max_psta', 1, 'real', Max_psta) &
      &     /=0 ) CALL read_error(2, 'max_psta')
-      IF ( Max_psta>Nrain ) Max_psta = Nrain
+      IF ( Max_psta==0 ) Max_psta = Nrain
 
 !      IF ( get param(MODNAME, 'maxmon_prec', 12, 'real', Maxmon_prec) &
 !           /=0 ) CALL read_error(2, 'maxmon_prec')
@@ -260,20 +260,6 @@
               ENDIF
             ENDIF
           ENDIF
-
-          DO j = 1, 12
-            IF ( Psta_mon(k,j)<SMALLPARAM ) THEN
-              PRINT *, 'psta_mon needs to be at least:', SMALLPARAM
-              IF ( Parameter_check_flag>0 ) THEN
-                PRINT *, 'ERROR, HRU:', k, 'month:', j, ', psta_mon:', Psta_mon(k, j)
-                Inputerror_flag = 1
-              ELSE
-                PRINT *, 'WARNING, HRU:', k, 'month:', j, ', psta_mon:', &
-     &                   Psta_mon(k, j), ') set to', SMALLPARAM
-                Psta_mon(k, j) = SMALLPARAM
-              ENDIF
-            ENDIF
-          ENDDO
         ENDDO
       ENDDO
       DEALLOCATE ( nuse_psta_dist )

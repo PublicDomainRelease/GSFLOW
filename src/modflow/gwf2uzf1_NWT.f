@@ -1,3 +1,110 @@
+
+C
+C
+C     ******************************************************************
+C     SIMULATE ET
+C     ******************************************************************
+      subroutine simuzet(etopt,smoothet,hh,s,x,c,trhs,thcof,dET,gwet)
+      implicit none
+      double precision, intent(in) :: hh,s,x,c,smoothet
+      double precision, intent(inout) :: trhs,thcof,dET,gwet
+      integer, intent(in) :: etopt
+      external :: etlinear
+      external :: etnonlinear
+      double precision :: etlinear
+      double precision :: etnonlinear
+      gwet = 0.0d0
+      trhs = 0.0d0
+      thcof = 0.0d0
+      dET = 0.0d0
+      IF ( ETOPT.EQ.1 ) THEN
+        gwet = etlinear(smoothet,hh,s,x,c,trhs,thcof,dET)
+      ELSE IF ( ETOPT.EQ.2 ) THEN
+        gwet = etnonlinear(smoothet,hh,s,x,c,trhs,thcof,dET)
+      END IF
+      END subroutine simuzet
+!
+      double precision function etlinear(smoothet,hh,s,x,c,trhs,
+     +                                   thcof,dET)
+      implicit none
+      double precision, intent(in) :: hh,s,x,c,smoothet
+      double precision, intent(inout) :: trhs,thcof,dET
+! local
+      double precision etgw
+!
+! Between ET surface and extintion depth
+      IF ( hh.GT.(s-x) .AND. hh.LT.s ) THEN
+        etgw = (c*(hh-(s-x))/x)
+        IF ( etgw.GT.c ) THEN
+          etgw = c
+          trhs = etgw
+        ELSE
+          trhs = c - c*s/x
+          thcof = -c/x
+          etgw = trhs-(thcof*hh)
+        END IF
+! Above land surface
+      ELSE IF ( hh.GE.s ) THEN
+        trhs = c
+        etgw = c
+! Below extintion depth
+       ELSE
+         etgw = 0.0
+       END IF
+      etlinear = etgw
+      END FUNCTION etlinear
+!
+      double precision FUNCTION etnonlinear(smoothet,hh,s,x,c,trhs,
+     +                                      thcof,dET)
+      implicit none
+      double precision, intent(in) :: hh,s,x,c,smoothet
+      double precision, intent(inout) :: trhs,thcof,dET
+! local
+      double precision depth,gwet,smint,etgw,detdh
+      external smoothuz
+      double precision smoothuz
+!
+      depth = hh - (s - x)
+      if ( depth.lt.0.0 ) depth = 0.0
+      etgw = c
+      detdh = 0.0d0
+      smint = smoothet*x
+      if ( depth>0.0d0) then
+          etgw = etgw*smoothuz(depth,detdh,smint)
+      else
+          etgw = 0.0d0
+      end if
+      trhs = etgw
+      dET = detdh
+      etnonlinear = etgw
+      END FUNCTION etnonlinear
+!
+      DOUBLE PRECISION FUNCTION smoothuz(h,dwdh,smint)
+! h is the depth above extinction
+! dwdh is the derivative
+      IMPLICIT NONE
+      DOUBLE PRECISION h, s, aa, bb, x, y, dwdh, smint
+      DOUBLE PRECISION cof1, cof2, cof3
+      smoothuz = 0.0D0
+      s = smint
+      x = h
+      aa = -6.0d0/(s**3.0d0)
+      bb = -6.0d0/(s**2.0d0)
+      cof1 = x**2.0D0
+      cof2 = -(2.0D0*x)/(s**3.0D0)
+      cof3 = 3.0D0/(s**2.0D0)
+      y = cof1*(cof2+cof3)
+      dwdh = (aa*x**2.0D0-bb*x)
+      IF ( x.LE.0.0 ) THEN
+        y = 0.0D0
+        dwdh = 0.0D0
+      ELSE IF ( x-s.GT.-1.0e-14 ) THEN
+        y = 1.0D0
+        dwdh = 0.0D0
+      END IF
+      smoothuz = y
+      END FUNCTION smoothuz
+! end of et function options
 C
 C-------SUBROUTINE GWF2UZF1AR
       SUBROUTINE GWF2UZF1AR(In, Iunitbcf, Iunitlpf, Iunithuf, 
@@ -7,7 +114,7 @@ C     ALLOCATE ARRAY STORAGE FOR UNSATURATED FLOW, RECHARGE, AND ET
 C     READ AND CHECK VARIABLES THAT REMAIN CONSTANT
 !--------REVISED FOR MODFLOW-2005 RELEASE 1.9, FEBRUARY 6, 2012
 !rgn------REVISION NUMBER CHANGED TO BE CONSISTENT WITH NWT RELEASE
-!rgn------NEW VERSION NUMBER 1.0.9:  July 1, 2014
+!rgn------NEW VERSION NUMBER 1.1.1, 7/28/2016
 C     ******************************************************************
       USE GWFUZFMODULE
       USE GLOBAL,       ONLY: NCOL, NROW, NLAY, IOUT, ITRSS, ISSFLG, 
@@ -32,23 +139,30 @@ C     ------------------------------------------------------------------
       INTEGER ibndflg, ichld, iflgbnd, igage, igunit, irhld, isyflg, 
      +        iuzcol, iuzflg, iuzlay, iuzopt, iuzrow, l, ncck, ncth, 
      +        nlth, nrck, nrnc, nrth, i, icheck, kkrch, k, NPP, MXVL,
-     +        llocsave
-      REAL r, sy, fkmin, fkmax, range, finc, thick
+     +        llocsave, icheck2
+      REAL r, sy, fkmin, fkmax, range, finc, thick, smooth
       CHARACTER(LEN=200) line
-      CHARACTER(LEN=24) aname(8)
+      CHARACTER(LEN=24) aname(9)
+      character(len=16)  :: text        = 'UZF'
+      logical :: found
+      character(len=40) :: keyvalue
       DATA aname(1)/' AREAL EXTENT OF UZ FLOW'/
       DATA aname(2)/' ROUTING OVERLAND RUNOFF'/
       DATA aname(3)/' SATURATED WATER CONTENT'/
-      DATA aname(4)/'   INITIAL WATER CONTENT'/
+      DATA aname(4)/'  RESIDUAL WATER CONTENT'/
       DATA aname(5)/'    BROOKS-COREY EPSILON'/
       DATA aname(6)/'    SATURATED VERTICAL K'/
       DATA aname(7)/'    UZ CELL BOTTOM ELEV.'/
-      DATA aname(8)/'  RESIDUAL WATER CONTENT'/
+      DATA aname(8)/'   INITIAL WATER CONTENT'/
+      DATA aname(9)/' LAND SURFACE VERTICAL K'/
 C     ------------------------------------------------------------------
-      Version_uzf =
-     +'$Id: gwf2uzf1_NWT.f 7578 2015-08-11 15:14:00Z rniswon $'
+      Version_uzf = 'gwf2uzf1_NWT.f 2016-07-21 11:42:00Z'
       ALLOCATE(NUMCELLS, TOTCELLS, Iseepsupress, IPRCNT)
-      Iseepsupress = 0   ! Iseepsupress =1 means seepout not calculated
+      ALLOCATE(Isurfkreject, Ireadsurfk, Iseepreject)
+      Iseepsupress = 0   ! Iseepsupress = 1 means seepout not calculated
+      Ireadsurfk = 0     ! Ireadsurfk = 1 means surfk will be read
+      Isurfkreject = 0   ! Infiltration will be rejected using surfk
+      Iseepreject = 0    ! Surface leakage will be calculated using surfk
       NUMCELLS = NCOL*NROW
       TOTCELLS = NUMCELLS*NLAY
       IPRCNT = 0
@@ -57,70 +171,154 @@ C     ------------------------------------------------------------------
       ALLOCATE (IUZFCB1, IUZFCB2, NTRAIL, NWAV, NSETS, IUZFB22, IUZFB11)
       ALLOCATE (NUZGAG, NUZGAGAR, NUZCL, NUZRW, TOTRUNOFF)
       ALLOCATE (SURFDEP,IGSFLOW, RTSOLUTE)
-      ALLOCATE (ITHTIFLG, ITHTRFLG, IETBUD)
+      ALLOCATE (ITHTIFLG, ITHTRFLG, IETBUD, ETOPT)
+      ALLOCATE (INETFLUX,UNITRECH,UNITDIS,SMOOTHET)
+      INETFLUX = 0
       ITHTIFLG = 0
       ITHTRFLG = 0
       IETBUD = 0
+      ETOPT = 1
+      MXVL = 0
+      NPP = 0
+      UNITRECH = 0
+      UNITDIS = 0
+      LAYNUM = 0
+      SMOOTHET = 0.0D0
+      smooth = 0.0
 C
 C1------IDENTIFY PACKAGE AND INITIALIZE.
       WRITE (IOUT, 9001) In
  9001 FORMAT (1X, /' UZF1 -- UNSATURATED FLOW PACKAGE, VERSION 1.4', 
      +        ', 02/06/2012', /, 9X, 'INPUT READ FROM UNIT', I3)
+!
       CALL URDCOM(In, IOUT, line)
 ! Check for alternate input.
       CALL UPARLSTAL(IN,IOUT,LINE,NPP,MXVL)
       lloc = 1
       CALL URWORD(LINE,LLOC,ISTART,ISTOP,1,I,R,IOUT,IN)
-      IF(LINE(ISTART:ISTOP).EQ.'SPECIFYTHTR') THEN
-        ITHTRFLG = 1
-        WRITE(iout,*)
-        WRITE(IOUT,'(A)')' RESIDUAL WATER CONTENT (THTR) WILL BE READ ',
-     +                ' AND USED FOR THE FIRST TRANSIENT STRESS PERIOD'
-        WRITE(iout,*)
-        llocsave = lloc
+      keyvalue = LINE(ISTART:ISTOP)
+      call upcase(keyvalue)
+      IF(keyvalue.EQ.'OPTIONS') THEN
+              write(iout,'(/1x,a)') 'PROCESSING '//
+     +              trim(adjustl(text)) //' OPTIONS'
+        do
+        CALL URDCOM(In, IOUT, line)
+        lloc = 1
+        CALL URWORD(LINE,LLOC,ISTART,ISTOP,1,I,R,IOUT,IN)
+        keyvalue = LINE(ISTART:ISTOP)
+        call upcase(keyvalue)
+        select case (keyvalue)
+          case('SPECIFYTHTR')
+            ITHTRFLG = 1
+            WRITE(iout,*)
+            WRITE(IOUT,'(A)')' RESIDUAL WATER CONTENT (THTR) WILL BE ',
+     +                'READ AND USED FOR THE FIRST TRANSIENT STRESS ',
+     +                'PERIOD'
+            WRITE(iout,*)
+            found = .true.
+          case('SPECIFYTHTI')
+            ITHTIFLG = 1
+            WRITE(iout,*)
+            WRITE(IOUT,'(A)')' INITIAL WATER CONTENT (THTI) WILL BE ',
+     +                 'READ FOR THE FIRST SS OR TR STRESS PERIOD'
+            WRITE(iout,*)
+            found = .true.
+          case('ETSQUARE')
+            i=1
+            CALL URWORD(line, lloc, istart, istop, 3, i, smooth, 
+     +                  IOUT, In)
+            SMOOTHET = smooth
+            IF( SMOOTHET<1.0E-7 ) SMOOTHET = 1.0D-7
+            IF( SMOOTHET>1.0 ) SMOOTHET = 1.0D0
+            ETOPT = 2
+            WRITE(iout,*)
+            WRITE(IOUT,'(A)')
+     +            ' A SQUARE ET FUNCTION WILL BE USED TO SIMULATE GW ET'
+            WRITE(iout,*)
+            found = .true.
+          case('NOSURFLEAK')
+            Iseepsupress = 1
+            WRITE(iout,*)
+            WRITE(IOUT,'(A)')' SURFACE LEAKAGE WILL NOT BE SIMULATED '
+            WRITE(iout,*)
+            found = .true.
+          case('SPECIFYSURFK')
+            Ireadsurfk = 1
+            WRITE(iout,*)
+            WRITE(IOUT,'(A)')'HYDRAULIC CONDUCTIVITY OF LAND SURFACE ',
+     +                       'WILL BE READ'
+            WRITE(iout,*)
+            found = .true.
+          case('REJECTSURFK')
+              Isurfkreject = 1
+              WRITE(iout,*)
+              WRITE(IOUT,'(A)')'INFILTRATION WILL BE REJECTED USING '
+     +                    ,'LAND SURFACE K'
+              WRITE(iout,*)
+            found = .true.
+          case('SEEPSURFK')
+              Iseepreject = 1
+              WRITE(iout,*)
+              WRITE(IOUT,'(A)')'SURFACE LEAKAGE WILL BE CALCULATED ',
+     +                         'USING LAND SURFACE K'
+              WRITE(iout,*)
+              found = .true.
+        case ('NETFLUX')
+            CALL URWORD(LINE,LLOC,ISTART,ISTOP,2,UNITRECH,R,IOUT,IN)
+            IF(UNITRECH.LT.0) UNITRECH=0
+            CALL URWORD(LINE,LLOC,ISTART,ISTOP,2,UNITDIS,R,IOUT,IN)
+            IF(UNITDIS.LT.0) UNITDIS=0
+            IF ( UNITRECH > 0 .AND. UNITDIS > 0 ) INETFLUX = 1
+            IF ( INETFLUX > 0 ) WRITE(IOUT,31) UNITRECH,UNITDIS
+   31 FORMAT(1X,' OUTPUT WILL BE WRITTEN TO NETRECH AND NETDIS ',
+     +                 'FILES WITH UNIT NUMBERS ',I10,I10, 
+     +                 ', RESPECTIVELY')
+
+        case ('END')
+          CALL URDCOM(In, IOUT, line)
+          exit
+        case default
+    ! -- No options found
+        found = .false.
+        CALL URDCOM(In, IOUT, line)
+        exit
+        end select
+      end do
+      end if
+ !
+      if ( Ireadsurfk == 0 .and. Isurfkreject == 1) then
+          WRITE(iout,*)
+          WRITE(IOUT,'(A)')'WARNING REJECTSURFK SPECIFIED BUT ',
+     +                    'NO SURFK SPECIFIED. OPTION IGNORED'
+          WRITE(iout,*) 
+          Isurfkreject = 0
+      end if
+!            
+      if ( Ireadsurfk == 0 .and. Iseepreject == 1 ) then
+          WRITE(iout,*)
+          WRITE(IOUT,'(A)')'WARNING SEEPSURFK SPECIFIED BUT ',
+     +                     'NO SURFK SPECIFIED. OPTION IGNORED'
+          WRITE(iout,*) 
+          Iseepreject = 0
+      end if
+!
+      if ( Iseepsupress > 0 .and. Iseepreject == 1 ) then
+          WRITE(iout,*)
+          WRITE(IOUT,'(A)')'WARNING NOSURFLEAK SPECIFIED BUT ',
+     +                     'SEEPSURFK WAS SPECIFIED. SEEPSURFK ',
+     +                     'OPTION IGNORED'
+          WRITE(iout,*) 
+          Iseepreject = 0
+      end if
+ !
+      IF ( INETFLUX.GT.0 ) THEN
+        ALLOCATE (FNETEXFIL2(NCOL,NROW))
+        ALLOCATE(FNETEXFIL1(NCOL,NROW), TIMEPRINT)
       ELSE
-        WRITE(iout,*)
-        WRITE(IOUT,'(A)')' RESIDUAL WATER CONTENT (THTR) WILL BE ',
-     +              ' CALCULATED AS THE DIFFERENCE BETWEEN THTS AND SY'
-        WRITE(iout,*)
-        llocsave = 1
+        ALLOCATE (FNETEXFIL2(1,1))
+        ALLOCATE(FNETEXFIL1(1,1), TIMEPRINT)
       END IF
-      lloc = llocsave
-      CALL URWORD(LINE,LLOC,ISTART,ISTOP,1,I,R,IOUT,IN)
-      IF(LINE(ISTART:ISTOP).EQ.'SPECIFYTHTI') THEN
-         ITHTIFLG = 1
-         WRITE(iout,*)
-         WRITE(IOUT,'(A)')' INITIAL WATER CONTENT (THTI) WILL BE READ ',
-     +                ' FOR THE FIRST SS OR TR STRESS PERIOD'
-         WRITE(iout,*)
-         llocsave = lloc
-      ELSE
-         WRITE(iout,*)
-         WRITE(IOUT,'(A)') ' INITIAL WATER CONTENT (THTI) WILL BE ',
-     +                 ' CALCULATED BASED ON THE SS INFILTRATION RATE ',
-     +                 'IF STARTING WITH SS.'
-         WRITE(iout,*)
-      END IF
-      lloc = llocsave
-      CALL URWORD(LINE,LLOC,ISTART,ISTOP,1,I,R,IOUT,IN)
-      IF(LINE(ISTART:ISTOP).EQ.'NOSURFLEAK') THEN
-         Iseepsupress = 1
-         WRITE(iout,*)
-         WRITE(IOUT,'(A)')' SURFACE LEAKAGE WILL NOT BE SIMULATED '
-         WRITE(iout,*)
-         llocsave = lloc
-      END IF
-! lloc = llocsave
-! CALL URWORD(LINE,LLOC,ISTART,ISTOP,1,I,R,IOUT,IN)
-! IF(LINE(ISTART:ISTOP).EQ.'ONLYET') THEN
-! IETBUD = 1
-! WRITE(iout,*)
-! WRITE(IOUT,'(A)')' ONLY ET WILL BE WRITTEN TO THE UNFORMATTED 
-!+                      BUDGET FILES '
-! WRITE(iout,*)
-! END IF
-      IF ( ITHTIFLG.GT.0 .OR. ITHTRFLG.GT.0 .OR. Iseepsupress.GT.0 ) 
-     +     CALL URDCOM(In, IOUT, line)
+!
       lloc = 1
       CALL URWORD(line, lloc, istart, istop, 2, NUZTOP, r, IOUT, In)
       CALL URWORD(line, lloc, istart, istop, 2, IUZFOPT, r, IOUT, In)
@@ -246,6 +444,10 @@ C
 C7------ALLOCATE SPACE FOR ARRAYS AND INITIALIZE.
       ALLOCATE (VKS(NCOL,NROW))
       VKS = 0.0 
+      IF ( Ireadsurfk > 0 ) THEN
+          ALLOCATE (SURFK(NCOL,NROW))
+          SURFK = 0.0
+      END IF
       ALLOCATE (EPS(NUZCL,NUZRW), THTS(NUZCL,NUZRW), THTI(NUZCL,NUZRW))
       EPS = 0.0
       THTS = 0.0
@@ -255,15 +457,6 @@ C7------ALLOCATE SPACE FOR ARRAYS AND INITIALIZE.
       THTR = 0.0
       ALLOCATE (FINF(NCOL,NROW),PETRATE(NCOL,NROW),UZFETOUT(NCOL,NROW))
       ALLOCATE (GWET(NCOL,NROW))
-      ALLOCATE (INETFLUX)
-      INETFLUX = 0
-      IF ( INETFLUX.GT.0 ) THEN
-        ALLOCATE (FNETEXFIL2(NCOL,NROW))
-        ALLOCATE(FNETEXFIL1(NCOL,NROW), TIMEPRINT)
-      ELSE
-        ALLOCATE (FNETEXFIL2(1,1))
-        ALLOCATE(FNETEXFIL1(1,1), TIMEPRINT)
-      END IF
       IF ( IETBUD.GT.0 ) THEN
         ALLOCATE (CUMGWET(NCOL,NROW))
       ELSE
@@ -447,6 +640,40 @@ C13-----CHECK FOR ERRORS IN VERTICAL HYDRAULIC CONDUCTIVITY
           END DO
         END DO
       END IF
+C
+C12b-----READ SURFACE CONDUCTIVITY FROM UZF INPUT FILE.
+      IF ( Ireadsurfk > 0 ) THEN
+        CALL U2DREL(SURFK, aname(9), NROW, NCOL, 0, In, IOUT)
+C
+C13b-----CHECK FOR ERRORS IN SURFACE K
+        DO nrck = 1, NROW
+          DO ncck = 1, NCOL
+            iflgbnd = 1
+            IF ( IUZFBND(ncck, nrck).NE.0 ) THEN
+              IF ( SURFK(ncck, nrck).LT.CLOSEZERO ) THEN
+                WRITE (IOUT, 9030) nrck, ncck
+ 9030           FORMAT (1X/, 'LAND SURFACE K FOR CELL AT ROW ', 
+     +                  I5, ', COL. ', I5, ' IS LESS THAN OR EQUAL TO ',
+     +                 'ZERO-- SETTING LAND SURFACE K EQUAL TO ', 
+     +                 'UNSAT. K')
+                iflgbnd = 0
+              END IF
+ !             IF ( SURFK(ncck, nrck).GT.VKS(ncck, nrck) ) THEN
+ !               WRITE (IOUT, 9031) nrck, ncck
+ !9031           FORMAT (1X/, 'LAND SURFACE K FOR CELL AT ROW ', 
+ !    +                  I5, ', COL. ', I5, ' IS GREATER THAN ',
+ !    +                 'VKS-- SETTING LAND SURFACE K EQUAL TO ', 
+ !    +                 'UNSAT. K')
+ !               iflgbnd = 0
+ !             END IF
+            END IF
+            IF ( iflgbnd.EQ.0 ) THEN
+                SURFK(ncck, nrck) = VKS(ncck, nrck)
+            END IF
+          END DO
+        END DO
+      END IF
+!
       IF ( iuzflg.GT.0 ) THEN
 C
 C14-----READ BROOKS-COREY EPSILON ASSUMING IT IS CONSTANT THROUGHOUT
@@ -458,7 +685,7 @@ C       IS CONSTANT THROUGHOUT VERTICAL COLUMN.
         CALL U2DREL(THTS, aname(3), NUZRW, NUZCL, 0, In, IOUT)
 C
         IF ( ITHTRFLG.GT.0 )THEN
-          CALL U2DREL(THTR, aname(8), NUZRW, NUZCL, 0, In, IOUT)
+          CALL U2DREL(THTR, aname(4), NUZRW, NUZCL, 0, In, IOUT)
         END IF
 C
 C15-----READ AIR ENTRY PRESSURE FOR UNSATURATED ZONE ASSUMING IT
@@ -474,7 +701,7 @@ C16-----READ INITIAL WATER CONTENT FOR UNSATURATED ZONE ASSUMING IT
 C         IS CONSTANT THROUGHOUT VERTICAL COLUMN. DO NOT READ
 C         INITIAL WATER CONTENT IF PERIOD IS STEADY STATE.
         IF ( ISSFLG(1).EQ.0 .OR. ITHTIFLG.GT.0 )  
-     +       CALL U2DREL(THTI, aname(4), NUZRW, NUZCL, 0, In, IOUT)
+     +       CALL U2DREL(THTI, aname(8), NUZRW, NUZCL, 0, In, IOUT)
 C
 C17-----CHECK FOR ERRORS IN EPS, THTS, AND THTI ARRAYS.
         DO nrck = 1, NUZRW
@@ -949,7 +1176,7 @@ C     -----------------------------------------------------------------
 C     -----------------------------------------------------------------
 C     LOCAL VARIABLES
 C     -----------------------------------------------------------------
-      DOUBLE PRECISION h
+      DOUBLE PRECISION h, fks
       DOUBLE PRECISION thtrcell
       DOUBLE PRECISION bottom, celtop, slen, width, etdpth, surfinf
       DOUBLE PRECISION thick, surfpotet, top
@@ -984,6 +1211,8 @@ C4------CHECK FOR NEGATIVE INFILTRATION RATES.
         DO nrck = 1, NROW
           DO ncck = 1, NCOL
             IF ( IUZFBND(ncck, nrck).NE.0 ) THEN
+              fks = VKS(ncck, nrck)
+              IF ( Isurfkreject > 0 ) fks = SURFK(ncck, nrck)
               surfinf = FINF(ncck, nrck)
               IF ( FINF(ncck, nrck).LT.0.0 ) THEN
                 WRITE (IOUT, 9002) nrck, ncck
@@ -995,10 +1224,10 @@ C
 C5------SET INFILTRATION RATE TO SATURATED VERTICAL K WHEN RATE IS
 C        GREATER THAN K AND ROUTE EXCESS WATER TO STREAM IF 
 C        IRUNFLG IS NOT EQUAL TO ZERO.
-              ELSE IF ( FINF(ncck, nrck).GT.VKS(ncck, nrck) ) THEN
-                EXCESPP(ncck, nrck) =  (FINF(ncck, nrck) - 
-     +                      VKS(ncck, nrck))*DELC(nrck)*DELR(ncck)
-                FINF(ncck, nrck) = VKS(ncck, nrck)
+              ELSE IF ( FINF(ncck, nrck).GT.fks ) THEN
+                EXCESPP(ncck, nrck) =  (FINF(ncck, nrck) - fks)*
+     +                      DELC(nrck)*DELR(ncck)
+                FINF(ncck, nrck) = fks
               END IF
             END IF
             IF ( IUNITSFR.GT.0 ) RECHSAVE(ncck, nrck) = FINF(ncck, nrck)
@@ -1427,7 +1656,7 @@ C     SURFACE LEAKAGE AND ADD OR SUBTRACT TERMS RHS AND HCOF
 C     VERSION 1.0.5:  April 5, 2012
 C     ******************************************************************
       USE GWFUZFMODULE
-      USE GLOBAL,       ONLY: NLAY, HNEW, ISSFLG, DELR,
+      USE GLOBAL,       ONLY: NCOL, NROW, NLAY, HNEW, ISSFLG, DELR,
      +                        DELC, BOTM, IBOUND, HCOF, RHS,
      +                        ITMUNI
 !!      USE GLOBAL,       ONLY: NCOL, NROW, NLAY, HNEW, ISSFLG, DELR,
@@ -1458,11 +1687,11 @@ C     -----------------------------------------------------------------
      +                 zoldist, totflux, etact, rateud, hld, htest1,
      +                 htest2, flength, width, thr, cellarea, fact,
      +                 totfluxtot, totetact, csep, csepmx,seepoutcheck,
-     +                 rhsnew, hcofold, hcofnew, rhsold
+     +                 rhsnew, hcofold, hcofnew, rhsold, fkseep
 !!     +                 dcsep
 !!     +                 rhsnew, hcofold, hcofnew, rhsold, bbot, ttop, 
 !!     +                 dcsep
-      DOUBLE PRECISION s, x, c, etdp, etgw, trhs, thcof 
+      DOUBLE PRECISION s, x, c, etdp, etgw, trhs, thcof, hh, dET
 C     -----------------------------------------------------------------
 C
 C1------SET POINTERS FOR THE CURRENT GRID.
@@ -1592,6 +1821,11 @@ C3------SEARCH FOR UPPERMOST ACTIVE CELL.
           width = DELR(ic)
           cellarea = flength*width
           fks = VKS(ic, ir)
+          IF ( Iseepreject > 0 ) then
+            fkseep = surfk(ic,ir)
+          ELSE
+            fkseep = VKS(ic,ir)   
+          END IF
           IF ( IUZFOPT.GT.0 ) THEN
             ths = THTS(ic, ir)
             thr = THTR(ic, ir)
@@ -1734,7 +1968,7 @@ C6------GROUNDWATER IS DISCHARGING TO LAND SURFACE.
             IF ( htest1.GT.-CLOSEZERO ) THEN
 ! Suppress seepout beneath a lake
               IF ( lakflg.NE.1 ) THEN
-                csepmx = fks*cellarea/(0.5*celthick)
+                csepmx = fkseep*cellarea/(0.5*celthick)
                 csep = (csepmx/SURFDEP)*(h-celtop)
                 IF ( csep .GT. csepmx ) csep = csepmx
                 IF ( csep .LT. 0.0D0 ) csep = 0.0D0
@@ -1759,106 +1993,19 @@ C6------GROUNDWATER IS DISCHARGING TO LAND SURFACE.
           END IF
           REJ_INF(ic, ir) = cellarea * ( finfhold - finfact )
 C7------CALCULATE ET DEMAND LEFT FOR GROUND WATER.
-          IF ( IETFLG.GT.0 .AND. ibnd.NE.0 ) THEN
-            etdp = celtop - ROOTDPTH(ic, ir)
-            rhsnew = 0.0D0
-            rhsold = 0.0D0
-            hcofnew = 0.0D0
-            hcofold = 0.0D0
-            trhs = 0.0D0
-            thcof = 0.0D0
-            idr = 1
-            c = PETRATE(ic, ir)- etact/DELT
-            IF ( c.GT.0.0 ) THEN
-            IF ( Iunitnwt.GT.0 ) idr = 2
-            DO I = 1, idr
-              c = PETRATE(ic, ir)- etact/DELT
-              IF ( i.EQ.2 ) h = h + Heps
-              IF ( h.GT.etdp .AND. h.LT.celtop ) THEN
-                s = celtop
-                x = ROOTDPTH(ic, ir)
-!                c = PETRATE(ic, ir)- etact/DELT
-                IF ( c.GT.0.0 ) THEN
-                  c = c*cellarea
-                ELSE
-                  c = 0.0
-                END IF
-                etgw = (c*(h-(s-x))/x)
-                IF ( etgw/cellarea+etact/DELT.GT.PETRATE(ic, ir)
-     +                ) THEN
-! Suppress ET beneath a lake
-                  IF ( lakflginf.NE.1 ) THEN
-                    etgw = (PETRATE(ic, ir)-etact/DELT)*cellarea
-                    IF ( etgw.lt.0.0 ) THEN
-                      c = 0.0
-                      etgw = 0.0
-                    END IF
-                    IF ( i.EQ.1 ) THEN
-                      RHSOLD = etgw
-                      RHS(ic, ir, il) = RHS(ic, ir, il) + etgw
-                    ELSE
-                      RHSNEW = etgw
-                    END IF
-                  ELSE
-                    etgw = 0.0
-                    c = 0.0
-                  END IF
-                ELSE
-! Suppress ET beneath a lake
-                  IF ( lakflginf.NE.1 ) THEN
-                    trhs = c - c*s/x
-                    thcof = -c/x
-                  ELSE
-                    trhs = 0.0
-                    thcof = 0.0
-                    c = 0.0
-                  END IF
-                  IF ( i.EQ.1 ) THEN
-                    RHS(ic, ir, il) = RHS(ic, ir, il) + trhs
-                    HCOF(ic, ir, il) = HCOF(ic, ir, il) + thcof
-                    RHSOLD = trhs
-                    HCOFOLD = thcof
-                    etgw = trhs-(thcof*h)
-                  ELSE
-                    RHSNEW = trhs
-                    HCOFNEW = thcof
-                  END IF
-                END IF
-              ELSE IF ( h.GE.celtop ) THEN
-! Suppress ET beneath a lake              
-                IF ( lakflginf.NE.1 ) THEN
-                  c = PETRATE(ic, ir) - etact/DELT
-                ELSE
-                  c = 0.0
-                END IF
-                IF ( c.GT.0.0 ) THEN
-                  c = c*cellarea
-                ELSE
-                  c = 0.0
-                END IF
-                IF ( i.EQ.1 ) THEN
-                  RHSOLD = c
-                  RHS(ic, ir, il) = RHS(ic, ir, il) + c
-                ELSE
-                  RHSNEW = c
-                END IF
-                etgw = c
-              ELSE
-                etgw = 0.0
-              END IF
-            END DO
-            IF ( Iunitnwt.GT.0 ) THEN
-              ij = Icell(ic, ir, il)
-              IF ( abs(trhs).GT.CLOSEZERO ) THEN
+          IF ( IETFLG.GT.0 .AND. lakflginf.NE.1 ) THEN
+            s = celtop
+            x = ROOTDPTH(ic, ir)
+            c = ( PETRATE(ic, ir)- etact/DELT )*CELLAREA
+            hh = H
+            IF ( c.LT.0.0d0 ) c = 0.0d0
+            call simuzet(etopt,smoothet,hh,s,x,c,trhs,thcof,dET,etgw)
+            RHS(ic, ir, il) = RHS(ic, ir, il) + trhs
+            HCOF(ic, ir, il) = HCOF(ic, ir, il) + thcof
 ! Derivative for RHS
-                A(IA(ij)) = A(IA(ij)) - (RHSNEW-RHSOLD)/Heps
-              END IF
-              IF ( abs(thcof).GT.CLOSEZERO ) THEN
-! Derivative for HCOF
-                A(IA(ij)) = A(IA(ij)) + h*(HCOFNEW-HCOFOLD)/Heps
-              END IF
-            END IF
-            UZFETOUT(ic, ir) = etact*cellarea + etgw*DELT
+            IF ( Iunitnwt.GT.0 ) THEN
+              ij = Icell(IC,IR,IL)
+              A(IA(ij)) = A(IA(ij)) - dET*etgw
             END IF
           END IF
         END IF
@@ -1942,9 +2089,9 @@ C-------------SFR AND SWR REACHES
                   SEG(26, irun) = SEG(26, irun) + seepout1
                 END IF
               END IF
-!              IF ( Iunitswr.GT.0 ) THEN
-!                CALL GWF2SWR7EX(Igrid,1,1,irun,seepout1)  !FILL QUZFLOW IN SWR SUBROUTINE
-!              END IF
+!gsf          IF ( Iunitswr.GT.0 ) THEN
+!gsf            CALL GWF2SWR7EX_V(Igrid,1,irun,seepout1)  !FILL QUZFLOW IN SWR SUBROUTINE
+!gsf          END IF
 C-------------LAK REACHES
             ELSE IF ( irun.LT.0 ) THEN
               IF ( Iunitlak.GT.0 ) THEN
@@ -1959,8 +2106,24 @@ C-------------LAK REACHES
         END DO
       END DO
 C
+Ctemp------add runoff only to last reach in a segment for P.Juckem
+      !IF ( Iunitsfr.GT.0 ) THEN
+      !  irchcheck = 0
+      !  nsegold = 1
+      !  DO i = 1, NSTRM
+      !    nseg = ISTRM(4, i)
+      !    if ( nsegold.NE.nseg ) irchcheck = 1
+      !    nsegold = nseg
+      !    seglen = SEG(1, nseg)
+      !    gwrunof = SEG(26, nseg)
+      !    rchlen = STRM(1, i)
+      !    IF ( ISEG(4, nseg).EQ.irchcheck ) STRM(24, i) = gwrunof
+      !    irchcheck = irchcheck + 1
+      !  END DO
+      !END IF
+C
 C5------PROPORTION RUNOFF TO REACHES ON BASIS OF STREAM LENGTH.
-      IF ( Iunitsfr.GT.0 ) THEN
+      IF ( Iunitsfr.GT.0 ) THEN  !rgn original code commented out for Paul Juckem
         DO i = 1, NSTRM
           nseg = ISTRM(4, i)
           seglen = SEG(1, nseg)
@@ -2006,9 +2169,10 @@ C     -----------------------------------------------------------------
      +                 cellarea, prcntdif, depthsave
       DOUBLE PRECISION small, acumdif, aratdif, unsatvol, unsatrat,
      +                 cumdiff, ratedif, fact, totetact, totfluxtot,
-     +                 deltinc
+     +                 deltinc, fkseep, trhs, thcof, hh, dET, s, x, c, 
+     +                 etgw
       REAL avdpt, avwat, bigvl1, bigvl2, depthinc, epsilon, 
-     +     s, x, c, etdp, etgw, eps_m1, ftheta1, ftheta2
+     +     etdp, eps_m1, ftheta1, ftheta2
       REAL fhold, fks, fminn, gcumin, gcumrch, gdelstor, gdlstr, ghdif, 
      +     ghnw, ginfltr, grchr, gseep, gseepr, guzstore, prcntercum,
      +     prcnterrat, ratin, ratout, cumapplinf, dum1, dum2
@@ -2024,16 +2188,19 @@ C     -----------------------------------------------------------------
       INTEGER lakflg, lakid, nlayp1, lakflginf
       CHARACTER(LEN=16) textrch, textet, textexfl, textinf, textinf2
       CHARACTER(LEN=16) uzsttext, uzettext, uzinftxt, txthold,textrej
+      CHARACTER(LEN=16) netrchtext, netdistext
       CHARACTER(LEN=17) val1, val2
       DATA textinf/'    UZF INFILTR.'/
       DATA textinf2/'SFR-DIV. INFLTR.'/
       DATA textrch/'    UZF RECHARGE'/
       DATA textet/'           GW ET'/
       DATA textexfl/' SURFACE LEAKAGE'/
-      DATA textrej/'        HORT+DUNN'/
+      DATA textrej/'       HORT+DUNN'/
       DATA uzinftxt/'    INFILTRATION'/
       DATA uzsttext/'  STORAGE CHANGE'/
       DATA uzettext/'          UZF ET'/
+      DATA netrchtext/'     NETRECHARGE'/
+      DATA netdistext/'    NETDISCHARGE'/
 C     -----------------------------------------------------------------
       nlayp1 = NLAY + 1
 C
@@ -2102,6 +2269,15 @@ CDEP 05/05/2006
         ibnd = IUZFBND(ic, ir)
         volinflt = 0.0D0
         IF ( ibnd.GT.0 ) l = l + 1
+! EDM
+!gsf    IF ( FINF(ic, ir).GT.VKS(ic, ir) ) THEN
+!gsf      EXCESPP(ic, ir) =  (FINF(ic, ir) - 
+!gsf +                 VKS(ic, ir))*DELC(ir)*DELR(ic)
+!gsf      FINF(ic, ir) = VKS(ic, ir)
+!gsf    ELSE
+!gsf      EXCESPP(ic, ir) = 0.0
+!gsf    ENDIF
+! EDM
         finfhold = FINF(ic, ir)
         IF ( IUZFBND(ic, ir).EQ.0 ) finfhold = 0.0D0
 C set excess precipitation to zero for integrated (GSFLOW) simulation
@@ -2215,6 +2391,11 @@ C7------PRINT WARNING WHEN NUZTOP IS 3 AND ALL LAYERS ARE INACTIVE.
             celthick = BOTM(ic, ir, land-1) - BOTM(ic, ir, il)
           END IF
           fks = VKS(ic, ir)
+          IF ( Iseepreject > 0 ) then
+            fkseep = surfk(ic,ir)
+          ELSE
+            fkseep = fks  
+          END IF
           etact = 0.0D0
 C
 C8------SET NWAVES TO 1 WHEN IUZFOPT IS NEGATIVE.
@@ -2256,7 +2437,7 @@ C8------SET NWAVES TO 1 WHEN IUZFOPT IS NEGATIVE.
           IF ( htest1.GE.0.0D0 .AND. htest2.GE.0.0D0 ) THEN
 ! Suppress SEEPOUT beneath a lake
             IF ( lakflg.NE.1 .AND. Iseepsupress.EQ.0 ) THEN
-              csepmx = fks*cellarea/(0.5*celthick)
+              csepmx = fkseep*cellarea/(0.5*celthick)
               csep = (csepmx/SURFDEP)*(h-celtop)
               IF ( csep .GT. csepmx ) csep = csepmx
               IF ( csep .LT. 0.0 ) csep = 0.0
@@ -2288,21 +2469,11 @@ C
 C9------CALCULATE ET FROM GROUND WATER.
 ! Suppress ET beneath a lake
             IF ( IETFLG.GT.0 .AND. lakflginf.NE.1 ) THEN
-              c = PETRATE(ic, ir)
-              IF ( c.GT.0.0 ) THEN
-                c = c*cellarea
-              ELSE
-                c = 0.0
-              END IF
-              etgw = c
-              IF ( etgw/cellarea.GT.PETRATE(ic, ir) ) THEN
-                etgw = PETRATE(ic, ir)*cellarea
-                c = etgw
-                IF ( c.lt.0.0 ) THEN
-                  c = 0.0
-                  etgw = 0.0
-                END IF
-              END IF
+              s = celtop
+              x = ROOTDPTH(ic, ir)
+              c = PETRATE(ic, ir)*CELLAREA
+              hh = H
+              call simuzet(etopt,smoothet,hh,s,x,c,trhs,thcof,dET,etgw)
               UZFETOUT(ic, ir) = 0.0
               GWET(ic, ir) = etgw
             END IF
@@ -2313,7 +2484,7 @@ C         STORAGE WHEN WATER TABLE RISES TO LAND SURFACE.
           ELSE IF ( htest1.GE.0.0D0 .AND. htest2.LT.0.0D0 ) THEN
 ! Suppress SEEPOUT beneath a lake
             IF ( lakflg.NE.1  .AND. Iseepsupress.EQ.0 )THEN
-              csepmx = fks*cellarea/(0.5*celthick)
+              csepmx = fkseep*cellarea/(0.5*celthick)
               csep = (csepmx/SURFDEP)*(h-celtop)
               IF ( csep .GT. csepmx ) csep = csepmx
               IF ( csep .LT. 0.0 ) csep = 0.0
@@ -2396,22 +2567,14 @@ C
 C12-----CALCULATE ET DEMAND LEFT FOR GROUND WATER.
 ! Suppress ET beneath a lake
             IF ( IETFLG.GT.0 .AND. lakflginf.NE.1 ) THEN
-              c = PETRATE(ic, ir) - etact/DELT
-              IF ( c.GT.0.0 ) THEN
-                c = c*cellarea
-              ELSE
-                c = 0.0
-              END IF
-              etgw = c
-              IF ( etgw/cellarea+etact/DELT.GT.PETRATE(ic, ir)
-     +              ) THEN
-                etgw = (PETRATE(ic, ir)-etact/DELT)*cellarea
-                c = etgw
-                IF ( c.lt.0.0 ) THEN
-                  c = 0.0
-                  etgw = 0.0
-                END IF
-              END IF
+              trhs = 0.0d0
+              thcof = 0.0d0
+              s = celtop
+              x = ROOTDPTH(ic, ir)
+              c = ( PETRATE(ic, ir)- etact/DELT )*CELLAREA
+              hh = H
+              IF ( c.LT.0.0d0 ) c = 0.0d0
+              call simuzet(etopt,smoothet,hh,s,x,c,trhs,thcof,dET,etgw)
               UZFETOUT(ic, ir) = etact*cellarea
               GWET(ic, ir) = etgw
             END IF
@@ -2772,30 +2935,12 @@ C
 C25-----CALCULATE ET DEMAND LEFT FOR GROUND WATER.
 ! Suppress ET beneath a lake
             IF ( IETFLG.GT.0 .AND. lakflginf.NE.1 ) THEN
-              etdp = celtop - ROOTDPTH(ic, ir)
-              IF ( h.GT.etdp ) THEN
-                s = celtop
-                x = ROOTDPTH(ic, ir)
-                c = PETRATE(ic, ir) - etact/DELT
-                IF ( c.GT.0.0 ) THEN
-                  c = c*cellarea
-                ELSE
-                  c = 0.0
-                END IF
-                etgw = c*(h-(s-x))/x
-              ELSE
-                etgw = 0.0
-              END IF
-              c = etgw
-              IF ( etgw/cellarea+etact/DELT.GT.PETRATE(ic, ir)
-     +             ) THEN
-                etgw = (PETRATE(ic, ir)-etact/DELT)*cellarea
-                c = etgw
-                IF ( c.lt.0.0 ) THEN
-                  c = 0.0
-                  etgw = 0.0
-                END IF
-              END IF           
+              s = celtop
+              x = ROOTDPTH(ic, ir)
+              c = ( PETRATE(ic, ir)- etact/DELT )*CELLAREA
+              hh = H
+              IF ( c.LT.0.0d0 ) c = 0.0d0
+              call simuzet(etopt,smoothet,hh,s,x,c,trhs,thcof,dET,etgw)
               UZFETOUT(ic, ir) = etact*cellarea
               GWET(ic, ir) = etgw
             END IF
@@ -2804,7 +2949,6 @@ C
 C26------UPDATE ALL VADOSE ZONE WAVES WHEN WATER TABLE
 C          DROPS BELOW LAND SURFACE.
           ELSE IF ( htest1.LT.0.0D0 .AND. htest2.GE.0.0D0 ) THEN
-! Suppress SEEPOUT beneath a lake
             IF ( IUZFOPT.GT.0 ) THEN
               IF ( ibnd.GT.0 ) THEN
                 IF ( iss.EQ.0 ) THEN
@@ -2899,30 +3043,14 @@ C27-----CALCULATE ET DEMAND LEFT FOR GROUND WATER.
 C
 ! Suppress ET beneath a lake
             IF ( IETFLG.GT.0 .AND. lakflginf.NE.1 ) THEN
-              etdp = celtop - ROOTDPTH(ic, ir)
-              IF ( h.GT.etdp ) THEN
-                s = celtop
-                x = ROOTDPTH(ic, ir)
-                c = PETRATE(ic, ir) - etact/DELT
-                IF ( c.GT.0.0 ) THEN
-                  c = c*cellarea
-                ELSE
-                  c = 0.0
-                END IF
-                etgw = c*(h-(s-x))/x
-              ELSE
-                etgw = 0.0
-              END IF
-              c = etgw
-              IF ( etgw/cellarea+etact/DELT.GT.PETRATE(ic, ir)
-     +           ) THEN
-                etgw = (PETRATE(ic, ir)-etact/DELT)*cellarea
-                c = etgw
-                IF ( c.lt.0.0 ) THEN
-                  c = 0.0
-                  etgw = 0.0
-                END IF
-              END IF      
+              trhs = 0.0d0
+              thcof = 0.0d0
+              s = celtop
+              x = ROOTDPTH(ic, ir)
+              c = ( PETRATE(ic, ir)- etact/DELT )*CELLAREA
+              hh = H
+              IF ( c.LT.0.0d0 ) c = 0.0d0
+              call simuzet(etopt,smoothet,hh,s,x,c,trhs,thcof,dET,etgw)
               UZFETOUT(ic, ir) = etact*cellarea
               GWET(ic, ir) = etgw
             END IF
@@ -2932,7 +3060,7 @@ C
           END IF
 C
 C28-----COMPUTE UNSATURATED ERROR FOR EACH CELL.
-          volinflt = finfact*cellarea*DELT
+          volinflt = finfact*cellarea*DELT            
           IF ( iss.EQ.0 ) THEN
             volet = etact*cellarea          
             IF ( IUZFOPT.GT.0 .AND. ibnd.GT.0 ) THEN
@@ -3001,7 +3129,7 @@ C30-----NO UNSATURATED ZONE AND GROUND WATER DISCHARGES TO SURFACE.
           CUMUZVOL(5) = CUMUZVOL(5) + (SEEPOUT(ic, ir))*DELT
           UZTSRAT(5) = UZTSRAT(5) + (SEEPOUT(ic, ir))
         END IF
-        ratout = ratout + c
+        ratout = ratout + ETGW
         IF ( IUZFOPT.GT.0 .AND. ibnd.GT.0 ) THEN
           IF ( iss.EQ.0 ) THEN
             ratin = ratin + UZFLWT(ic, ir)/DELT
@@ -3035,51 +3163,66 @@ C31-----UPDATE RATES AND BUFFERS WITH ET FOR UZF OR MODFLOW BUDGET ITEMS.
 C
 C Print net recharge as ascii to a separate output file
       IF ( INETFLUX.GT.0 ) THEN
-        TIMEPRINT = TIMEPRINT + DELT
-        DO ir = 1, NROW
-          DO ic = 1, NCOL
-            IF ( IUZFBND(ic,ir).NE.0 ) THEN
-              dum1 = 0.0
-              dum2 = 0.0
-              IF ( Iunitsfr.GT.0 ) THEN
-                IF ( FNETSEEP(ic,ir).GT.0.0 ) THEN
-                  dum1 = FNETSEEP(ic,ir)*DELT
-                ELSE
-                  dum2 = FNETSEEP(ic,ir)*DELT
-                END IF
-              END IF
-              IF (Iunitlak.GT.0 ) THEN
-                IF ( LAKSEEP(ic,ir).GT. 0.0 ) THEN
-                  dum1 = dum1 + LAKSEEP(ic,ir)*DELT
-                ELSE
-                  dum2 = dum2 + LAKSEEP(ic,ir)*DELT
-                END IF
-              END IF
-              FNETEXFIL1(ic, ir) = FNETEXFIL1(ic, ir) + dum1 + 
-     +                             UZFLWT(ic, ir)
-              FNETEXFIL2(ic, ir) = FNETEXFIL2(ic, ir) -SEEPOUT(ic, ir)
-     +                             -GWET(ic, ir)+dum2
-            END IF
-          END DO
-        END DO
-         IF ( ibd.GT.0 .OR. ibduzf.GT.0 ) THEN
-          IF ( ABS(TIMEPRINT-365.0*DELT).LT.0.1 ) THEN
-           OPEN(991,file='Netrech.txt')
-           OPEN(992,file='Netdis.txt')
-           write(991,*)kkper, kkstp
+        TIMEPRINT = TIMEPRINT + DELT    
+           CALL INITARRAY(TOTCELLS,0.0,BUFF(:,:,1))
            DO ir = 1, NROW
-             WRITE(991,221)(FNETEXFIL1(ic, ir)/TIMEPRINT,ic=1,NCOL)
-             WRITE(992,221)(FNETEXFIL2(ic, ir)/TIMEPRINT,ic=1,NCOL)
              DO ic = 1, NCOL
-               FNETEXFIL1(ic, ir) = 0.0
-               FNETEXFIL2(ic, ir) = 0.0
+               IF ( IUZFBND(ic,ir).NE.0 ) THEN
+                  dum1 = 0.0
+                  dum2 = 0.0
+                  IF ( Iunitsfr.GT.0 ) THEN
+                    IF ( FNETSEEP(ic,ir).GT.0.0 ) THEN
+                      dum1 = FNETSEEP(ic,ir)*DELT
+                    ELSE
+                      dum2 = FNETSEEP(ic,ir)*DELT
+                    END IF
+                  END IF
+                  IF (Iunitlak.GT.0 ) THEN
+                    IF ( LAKSEEP(ic,ir) .GT. 0.0 ) THEN
+                      dum1 = dum1 + LAKSEEP(ic,ir)*DELT
+                    ELSE
+                      dum2 = dum2 + LAKSEEP(ic,ir)*DELT
+                    END IF
+                  END IF
+                  FNETEXFIL1(ic, ir) = FNETEXFIL1(ic, ir) + dum1 + 
+     +                                 UZFLWT(ic, ir)
+                  FNETEXFIL2(ic, ir) = FNETEXFIL2(ic, ir)-
+     +                             SEEPOUT(ic, ir)-GWET(ic, ir)+dum2
+                  BUFF(ic, ir, 1) = FNETEXFIL1(ic, ir)/TIMEPRINT
+               END IF          
              END DO
            END DO
-           TIMEPRINT = 0.0
+           txthold = netrchtext
+C 
+C-----SAVE NET RECHARGE RATES TO UNFORMATTED FILE FOR UZF OR MODFLOW BUDGET ITEMS.
+          IF ( ICBCFL.GT.0 ) CALL UBDSV3(Kkstp, Kkper, txthold,  
+     +                               UNITRECH, BUFF, LAYNUM, 1,
+     +                               NCOL, NROW, NLAY, IOUT, DELT,  
+     +                               PERTIM, TOTIM, IBOUND)
+          txthold = netdistext
+          DO ir = 1, NROW
+            DO ic = 1, NCOL
+              IF ( IUZFBND(ic,ir).NE.0 ) THEN
+                BUFF(ic, ir, 1) = FNETEXFIL2(ic, ir)/TIMEPRINT
+              END IF
+            END DO
+          END DO
+C 
+C-----SAVE NET DISCHARGE RATES TO UNFORMATTED FILE FOR UZF OR MODFLOW BUDGET ITEMS.                
+          IF ( ICBCFL.GT.0 ) THEN
+            CALL UBDSV3(Kkstp, Kkper, txthold,  
+     +                  UNITDIS, BUFF, LAYNUM, 1,
+     +                  NCOL, NROW, NLAY, IOUT, DELT,  
+     +                  PERTIM, TOTIM, IBOUND)
+            DO ir = 1, NROW
+              DO ic = 1, NCOL
+                FNETEXFIL1(ic, ir) = 0.0
+                FNETEXFIL2(ic, ir) = 0.0    
+              END DO
+            END DO
           END IF
-         END IF
-  221 FORMAT(5000e20.10)
-       END IF
+        END IF
+
 C
 C31-----UPDATE RATES AND BUFFERS WITH ET FOR UZF OR MODFLOW BUDGET ITEMS.
 C
@@ -3189,22 +3332,63 @@ C37-----SAVE INFILTRATION RATES TO UNFORMATTED FILE.
      +                                   PERTIM, TOTIM, IBOUND)
         END IF
       END IF
-C
+
+C--not sure if this is used for MODSIM-MODFLOW. Uncomment if yes.
 C35-----UPDATE RATES AND BUFFERS FOR SFR-DIVERTED INFILTRATION.
-!      IF ( Iunitsfr.GT.0 .AND. IETBUD.EQ.0 ) THEN
-!      IF ( ibd.GT.0 .OR. ibduzf.GT.0 ) THEN
+!      IF ( Iunitsfr.GT.0 ) THEN
+!        IF ( IUZFB22.LT.0 .OR. IUZFB11.LT.0 ) THEN
+!          IF ( ibd.GT.0 .OR. ibduzf.GT.0 ) THEN                                              
+!            CALL INITARRAY(TOTCELLS,0.0,BUFF(:,:,1))                                         
+!            DO ir = 1, NROW                                                                  
+!              DO ic = 1, NCOL                                                                
+!                DO il = 1, NLAY                                                              
+!                  BUFF(ic, ir, il) = 0.0                                                     
+!                END DO                                                                       
+!                ill = LAYNUM(ic, ir)                                                         
+!                IF ( ill.GT.0 ) THEN                                                         
+!                  BUFF(ic, ir, ill)= FINF(ic, ir)*DELC(ir)*DELR(ic)+
+!     +                               EXCESPP(ic,ir)-RECHSAVE(ic,ir)*
+!     +                               DELC(ir)*DELR(ic)
+!                  IF ( BUFF(ic, ir, ill).LT.0.0 ) 
+!     +            BUFF(ic, ir, ill) = 0.0
+!                END IF
+!              END DO
+!            END DO
+!          END IF
+C   
+C37-----SAVE INFILTRATION RATES TO UNFORMATTED FILE.
+!          IF ( ibd.GT.0 ) CALL UBUDSV(Kkstp, Kkper, textinf2, IUZFCB1,
+!     +                                BUFF, NCOL, NROW, NLAY, IOUT)
+!          IF ( ibduzf.GT.0 ) CALL UBDSV3(Kkstp, Kkper, textinf2,  
+!     +                                   IUZFCB2, BUFF, LAYNUM, NUZTOP,
+!     +                                   NCOL, NROW, NLAY, IOUT, DELT,  
+!     +                                   PERTIM, TOTIM, IBOUND)
+!        END IF
+!      END IF
+C--possible end here for MODSIM-MODFLOW
+C
+C--Uncomment for MODSIM-MODFLOW required output. 
+C35-----UPDATE RATES AND BUFFERS FOR INFILTRATION.
+!      IF ( ibd.GT.0 .OR. ibduzf.GT.0 .AND. IETBUD.EQ.0 ) THEN
 !        IF ( IUZFB22.LT.0 .OR. IUZFB11.LT.0 ) THEN
 !          CALL INITARRAY(TOTCELLS,0.0,BUFF(:,:,1))
 !          DO ir = 1, NROW
 !            DO ic = 1, NCOL
-!              ill = LAYNUM(ic, ir)
-!              IF ( ill.GT.0 ) THEN
-!                IF ( IUZFB22.LT.0 .OR. IUZFB11.LT.0 ) THEN
-!                  BUFF(ic, ir, ill)= (UZOLSFLX(ic, ir)-
-!     +                               RECHSAVE(ic,ir))*DELC(ir)*DELR(ic)
-!                  IF ( BUFF(ic, ir, ill).LT.0.0 ) 
-!     +            BUFF(ic, ir, ill) = 0.0
+!             DO il = 1, NLAY
+!               BUFF(ic, ir, il) = 0.0
+!             END DO
+!              IF ( IUZFBND(ic,ir).NE.0 ) THEN
+!                ill = LAYNUM(ic, ir)
+!                IF ( ill.GT.0 ) THEN
+!                  IF ( IUZFB22.LT.0 .OR. IUZFB11.LT.0 ) THEN
+!                    BUFF(ic, ir, ill)= RECHSAVE(ic, ir)* !EDM 4/3/15 [print just precip (specified in UZF1 input file) for MS/MF]
+!     +                                 DELC(ir)*DELR(ic)
+!                  END IF
+!                ELSE
+!                  LAYNUM(ic, ir) = NLAY
 !                END IF
+!              ELSE
+!                LAYNUM(ic, ir) = NLAY
 !              END IF
 !            END DO
 !          END DO
@@ -3212,14 +3396,15 @@ C35-----UPDATE RATES AND BUFFERS FOR SFR-DIVERTED INFILTRATION.
 C   
 C37-----SAVE INFILTRATION RATES TO UNFORMATTED FILE.
 !        IF ( IUZFB22.LT.0 .OR. IUZFB11.LT.0 ) THEN
-!          IF ( ibd.GT.0 ) CALL UBUDSV(Kkstp, Kkper, textinf2, IUZFCB1,
+!          IF ( ibd.GT.0 ) CALL UBUDSV(Kkstp, Kkper, textinf, IUZFCB1,
 !     +                                BUFF, NCOL, NROW, NLAY, IOUT)
-!          IF ( ibduzf.GT.0 ) CALL UBDSV3(Kkstp, Kkper, textinf2,  
+!          IF ( ibduzf.GT.0 ) CALL UBDSV3(Kkstp, Kkper, textinf,  
 !     +                                   IUZFCB2, BUFF, LAYNUM, NUZTOP,
 !     +                                   NCOL, NROW, NLAY, IOUT, DELT,  
 !     +                                   PERTIM, TOTIM, IBOUND)
+!        END IF
 !      END IF
-C
+C--Uncomment to here for MODSIM-MODFLOW
 C38-----UPDATE RATES AND BUFFERS FOR RECHARGE.
       IF ( ibd.GT.0 .OR. ibduzf.GT.0 .AND. IETBUD.EQ.0 ) THEN
         CALL INITARRAY(TOTCELLS,0.0,BUFF(:,:,1))
@@ -3249,7 +3434,7 @@ C38-----UPDATE RATES AND BUFFERS FOR RECHARGE.
         END DO
       END IF
 C
-C39-----SAVE RECHARGE RATES TO UNFORMATTED FILE.
+C39-----SAVE ACTUAL INFILTRATION RATES TO UNFORMATTED FILE.
       IF ( IETBUD.EQ.0 ) THEN
         IF ( ibd.GT.0 ) CALL UBUDSV(Kkstp, Kkper, textrch, IUZFCB1, 
      +                            BUFF, NCOL, NROW, NLAY, IOUT)
@@ -3299,7 +3484,7 @@ C40-----UPDATE RATES AND BUFFERS FOR REJECTED INFILTRATON RATES.
      +             .AND. IUZFBND(ic,ir).NE.0 ) THEN
                 ill = LAYNUM(ic, ir)
                 IF ( ill.GT.0 ) THEN
-              BUFF(ic, ir, ill) = + EXCESPP(ic, ir) + REJ_INF(ic, ir)
+              BUFF(ic, ir, ill) = EXCESPP(ic, ir) + REJ_INF(ic, ir)
                 END IF
               END IF
             END DO
@@ -3314,16 +3499,8 @@ C41-----SAVE REJECTED INFILTRATON RATES TO UNFORMATTED FILE.
      +                               NCOL, NROW, NLAY, IOUT, DELT,  
      +                               PERTIM, TOTIM, IBOUND)
       END IF
-      
-C41-----SAVE UNSATURATED STORAGE TO UNFORMATTED FILE.
-        IF ( ibd.GT.0 ) CALL UBUDSV(Kkstp, Kkper, textexfl, IUZFCB1, 
-     +                            BUFF, NCOL, NROW, NLAY, IOUT)
-        IF ( ibduzf.GT.0 ) CALL UBDSV3(Kkstp, Kkper, textexfl,  
-     +                               IUZFCB2, BUFF, LAYNUM, NUZTOP,
-     +                               NCOL, NROW, NLAY, IOUT, DELT,  
-     +                               PERTIM, TOTIM, IBOUND)
 C
-C40-----UPDATE RATES AND BUFFERS FOR REJECTED INFILTRATON RATES.
+C40-----UPDATE RATES AND BUFFERS FOR STORAGE CHANGES.
       IF ( ibd.GT.0 .OR. ibduzf.GT.0 ) THEN
           CALL INITARRAY(TOTCELLS,0.0,BUFF(:,:,1))
           DO ir = 1, NROW
@@ -3332,7 +3509,7 @@ C40-----UPDATE RATES AND BUFFERS FOR REJECTED INFILTRATON RATES.
      +             .AND. IUZFBND(ic,ir).NE.0 ) THEN
                 ill = LAYNUM(ic, ir)
                 IF ( ill.GT.0 ) THEN
-              BUFF(ic, ir, ill) = + DELSTOR(IC,IR)/delt
+              BUFF(ic, ir, ill) = DELSTOR(IC,IR)/delt
                 END IF
               END IF
             END DO
@@ -3902,7 +4079,7 @@ C     ------------------------------------------------------------------
 C     ------------------------------------------------------------------
 C     LOCAL VARIABLES
 C     ------------------------------------------------------------------
-      DOUBLE PRECISION bottomtime, shortest, fcheck, fhold
+      DOUBLE PRECISION bottomtime, shortest, fcheck, fhold, fhold2
       DOUBLE PRECISION eps_m1, timenew, feps3, bottom
       DOUBLE PRECISION thsrinv, epsfksths, timedt, big, f7, f8
       DOUBLE PRECISION ttt, diff, comp1, comp2, ftheta1, ftheta2
@@ -3969,7 +4146,7 @@ C3------CALCULATE TIME UNTIL A WAVE WILL OVERTAKE A WAVE AHEAD.
                 kk = j + Itrwave(Jpnt+j)
                 IF ( j.GT.2 ) THEN
                   IF ( ABS(Speed(jpntm2+j)-
-     +                 Speed(jpntm1+j)).GT.CLOSEZERO ) THEN
+     +                 Speed(jpntm1+j)).GT.ZEROD15 ) THEN
                     CHECKTIME(j) = (Depth(jpntm1+j)-Depth(jpntm2+j))
      +                             /(Speed(jpntm2+j)-Speed(jpntm1+j))
                   ELSE
@@ -3984,27 +4161,28 @@ C3------CALCULATE TIME UNTIL A WAVE WILL OVERTAKE A WAVE AHEAD.
 C
 C4------LEAD WAVE INTERSECTS A TRAIL WAVE.
                   fhold = 0.0D0
-                  IF ( ABS(Theta(jpntm1+jj)-Thetar).GT.CLOSEZERO )
+                  IF ( ABS(Theta(jpntm1+jj)-Thetar).GT.ZEROD15 )
      +                fhold = (f7*Theta(jpntm2+j)+f8*Theta(jpntm3+j)-
      +                        Thetar)/(Theta(jpntm1+jj)-Thetar)
-                  IF ( fhold.LT.NEARZERO ) fhold = 0.0D0
-                    CHECKTIME(j) = (Depth(jpntm1+j)-Depth(jpntm1+jj)
-     +                             *(fhold**eps_m1))/(Speed(jpntm1+jj)
+                  fhold2 = (Speed(jpntm1+jj)
      +                             *(fhold**eps_m1)-Speed(jpntm1+j))
+                  IF ( abs(fhold2).LT.ZEROD15 ) fhold2 = ZEROD15
+                    CHECKTIME(j) = (Depth(jpntm1+j)-Depth(jpntm1+jj)
+     +                             *(fhold**eps_m1))/fhold2
                 ELSE
                   j = j + 1
                   lcheck = (Ltrail(jpntm1+j).NE.0 .AND.
      +                     Itrwave(Jpnt+j).GT.0)
                 END IF
               END DO
-            ELSE IF ( ABS(Speed(jpntm2+j)-Speed(jpntm1+j)).GT.CLOSEZERO 
+            ELSE IF ( ABS(Speed(jpntm2+j)-Speed(jpntm1+j)).GT.ZEROD15
      +                .AND. j.NE.1 ) THEN
               CHECKTIME(j) = (Depth(jpntm1+j)-Depth(jpntm2+j))
      +                       /(Speed(jpntm2+j)-Speed(jpntm1+j))
             ELSE
               CHECKTIME(j) = big
             END IF
-          ELSE IF ( ABS(Speed(jpntm2+j)-Speed(jpntm1+j)).GT.CLOSEZERO 
+          ELSE IF ( ABS(Speed(jpntm2+j)-Speed(jpntm1+j)).GT.ZEROD15
      +                .AND. j.NE.1 ) THEN
             CHECKTIME(j) = (Depth(jpntm1+j)-Depth(jpntm2+j))
      +                     /(Speed(jpntm2+j)-Speed(jpntm1+j))
@@ -4014,7 +4192,7 @@ C4------LEAD WAVE INTERSECTS A TRAIL WAVE.
           j = j + 1
         END DO
         DO j = 2, Numwaves
-          IF ( CHECKTIME(j).LT.NEARZERO ) CHECKTIME(j) = big
+          IF ( CHECKTIME(j).LT.ZEROD15 ) CHECKTIME(j) = big
         END DO
 C
 C5------CALCULATE HOW LONG IT WILL TAKE BEFORE DEEPEST WAVE REACHES
@@ -4026,7 +4204,7 @@ Cdep
             bottom = Speed(jpntp1)
             IF ( bottom.LT.ZEROD15 ) bottom = ZEROD15
             bottomtime = (Depth(Jpnt)-Depth(jpntp1))/bottom
-            IF ( bottomtime.LT.0.0 ) bottomtime = 1.0D-12
+            IF ( bottomtime.LT.ZEROD15 ) bottomtime = ZEROD15
           END IF
         END IF
 C
@@ -4235,7 +4413,8 @@ C         WHEN LEAD TRAIL WAVE INTERSECTS A LEAD WAVE.
      +                   = Theta(jpntm3+j) - ZEROD9
                     IF ( comp2.LT.CLOSEZERO ) Flux(jpntm1+j)
      +                   = Flux(jpntm3+j) - ZEROD15
-                    IF ( Flux(jpntm1+j)-Flux(jpntm3+j).LT.0.0D0 ) THEN
+                    IF ( Flux(jpntm1+j)-Flux(jpntm3+j).LT.
+     +                                                CLOSEZERO ) THEN
                       fhold = (Theta(jpntm1+j)-Thetar)*thsrinv
                       IF ( fhold.LT.NEARZERO ) fhold = 0.0D0
                       Speed(jpntm1+j) = epsfksths * (fhold**eps_m1)
@@ -4886,20 +5065,26 @@ C9------ALL WAVES SHALLOWER THAN ET EXTINCTION DEPTH.
                   fhold = ((Theta(kj)-Thetar)*thsrinv)**Eps
                   IF ( fhold.LT.NEARZERO ) fhold = 0.0D0
                   Speed(kj) = epsfksths * (fhold**eps_m1)
-                  Flux(kj) = Fksat*(((Theta(kj)-Thetar)*thsrinv)**Eps)
+                  fhold = Theta(kj)-Thetar
+                  IF ( fhold < ZEROD15 ) fhold = ZEROD15
+                  Flux(kj) = Fksat*((fhold*thsrinv)**Eps)
                   Ltrail(kj) = 1
                   Itrwave(kj) = 0
                 ELSE
-                  fhold = ((Theta(kj-1)-Thetar)*thsrinv)**Eps
-                  IF ( fhold.LT.NEARZERO ) fhold = 0.0D0
+                  fhold = Theta(kj-1)-Thetar
+                  IF ( fhold < ZEROD15 ) fhold = ZEROD15
+                  fhold = (fhold*thsrinv)**Eps
                   ftheta1 = Fksat*fhold
-                  fhold = ((Theta(kj)-Thetar)*thsrinv)**Eps
-                  IF ( fhold.LT.NEARZERO ) fhold = 0.0D0
+                  fhold = Theta(kj)-Thetar
+                  IF ( fhold < ZEROD15 ) fhold = ZEROD15
+                  fhold = (fhold*thsrinv)**Eps
                   ftheta2 = Fksat*fhold
                   bottom  = Theta(kj-1)-Theta(kj)
                   IF ( bottom.LT.ZEROD15 ) bottom = ZEROD15
                   Speed(kj) = (ftheta1-ftheta2)/bottom
-                  Flux(kj) = Fksat*(((Theta(kj)-Thetar)*thsrinv)**Eps)
+                  fhold = Theta(kj)-Thetar
+                  IF ( fhold < ZEROD15 ) fhold = ZEROD15
+                  Flux(kj) = Fksat*((fhold*thsrinv)**Eps)
                   Ltrail(kj) = 1
                   Itrwave(kj) = 0
                 END IF
@@ -5070,13 +5255,10 @@ C--------SUBROUTINE CELL_AVERAGE
 C     ******************************************************************
 C     AVEARGE WATER CONTENT AND FLUX FOR MT3DMS
 C     ******************************************************************
-      USE GLOBAL,       ONLY: BOTM, NLAY
-!!      USE GLOBAL,       ONLY: BOTM, IOUT, NLAY
+      USE GLOBAL,       ONLY: BOTM, IOUT, NLAY
       USE GWFBASMODULE, ONLY: DELT
       USE GWFUZFMODULE, ONLY: NWAV, CLOSEZERO, IUZFBND, NWAVST,
-     +                        GRIDSTOR, GRIDET, IUZFOPT
-!!      USE GWFUZFMODULE, ONLY: NWAV, CLOSEZERO, IUZFBND, NWAVST,
-!!     +                        RTSOLUTE, GRIDSTOR, GRIDET, IUZFOPT
+     +                        RTSOLUTE, GRIDSTOR, GRIDET, IUZFOPT
       IMPLICIT NONE
 C     ------------------------------------------------------------------
 C     SPECIFICATIONS:
@@ -5242,6 +5424,7 @@ C     ------------------------------------------------------------------
       DEALLOCATE (GWFUZFDAT(Igrid)%IUZFB22)
       DEALLOCATE (GWFUZFDAT(Igrid)%IUZFB11)
       DEALLOCATE (GWFUZFDAT(Igrid)%NTRAIL)
+      DEALLOCATE (GWFUZFDAT(Igrid)%ETOPT)
       DEALLOCATE (GWFUZFDAT(Igrid)%NWAV)
       DEALLOCATE (GWFUZFDAT(Igrid)%NSETS)
       DEALLOCATE (GWFUZFDAT(Igrid)%IGSFLOW)
@@ -5307,6 +5490,12 @@ C     ------------------------------------------------------------------
       DEALLOCATE (GWFUZFDAT(Igrid)%IETBUD) 
       DEALLOCATE (GWFUZFDAT(Igrid)%CUMGWET)
       DEALLOCATE (GWFUZFDAT(Igrid)%INETFLUX)
+      DEALLOCATE (GWFUZFDAT(Igrid)%Ireadsurfk)
+      DEALLOCATE (GWFUZFDAT(Igrid)%Isurfkreject)
+      DEALLOCATE (GWFUZFDAT(Igrid)%UNITRECH)
+      DEALLOCATE (GWFUZFDAT(Igrid)%UNITDIS)
+      DEALLOCATE (GWFUZFDAT(Igrid)%ISEEPREJECT)
+      DEALLOCATE (GWFUZFDAT(Igrid)%SMOOTHET)
 C
       END SUBROUTINE GWF2UZF1DA
 C
@@ -5332,6 +5521,7 @@ C     ------------------------------------------------------------------
       IUZFB22=>GWFUZFDAT(Igrid)%IUZFB22
       IUZFB11=>GWFUZFDAT(Igrid)%IUZFB11
       NTRAIL=>GWFUZFDAT(Igrid)%NTRAIL
+      ETOPT=>GWFUZFDAT(Igrid)%ETOPT
       NWAV=>GWFUZFDAT(Igrid)%NWAV
       NSETS=>GWFUZFDAT(Igrid)%NSETS
       IGSFLOW=>GWFUZFDAT(Igrid)%IGSFLOW
@@ -5397,6 +5587,12 @@ C     ------------------------------------------------------------------
       IETBUD=>GWFUZFDAT(Igrid)%IETBUD
       CUMGWET=>GWFUZFDAT(Igrid)%CUMGWET
       INETFLUX=>GWFUZFDAT(Igrid)%INETFLUX
+      Ireadsurfk=>GWFUZFDAT(Igrid)%Ireadsurfk
+      Isurfkreject=>GWFUZFDAT(Igrid)%Isurfkreject
+      UNITRECH=>GWFUZFDAT(Igrid)%UNITRECH
+      UNITDIS=>GWFUZFDAT(Igrid)%UNITDIS
+      ISEEPREJECT=>GWFUZFDAT(Igrid)%ISEEPREJECT
+      SMOOTHET=>GWFUZFDAT(Igrid)%SMOOTHET
 C
       END SUBROUTINE SGWF2UZF1PNT
 C
@@ -5421,6 +5617,7 @@ C     ------------------------------------------------------------------
       GWFUZFDAT(Igrid)%IUZFCB2=>IUZFCB2
       GWFUZFDAT(Igrid)%IUZFB22=>IUZFB22
       GWFUZFDAT(Igrid)%IUZFB11=>IUZFB11
+      GWFUZFDAT(Igrid)%ETOPT=>ETOPT
       GWFUZFDAT(Igrid)%NTRAIL=>NTRAIL
       GWFUZFDAT(Igrid)%NWAV=>NWAV
       GWFUZFDAT(Igrid)%NSETS=>NSETS
@@ -5487,5 +5684,11 @@ C     ------------------------------------------------------------------
       GWFUZFDAT(Igrid)%IETBUD=>IETBUD
       GWFUZFDAT(Igrid)%CUMGWET=>CUMGWET
       GWFUZFDAT(Igrid)%INETFLUX=>INETFLUX
+      GWFUZFDAT(Igrid)%Ireadsurfk=>Ireadsurfk
+      GWFUZFDAT(Igrid)%Isurfkreject=>Isurfkreject
+      GWFUZFDAT(Igrid)%UNITRECH=>UNITRECH
+      GWFUZFDAT(Igrid)%UNITDIS=>UNITDIS
+      GWFUZFDAT(Igrid)%ISEEPREJECT=>ISEEPREJECT
+      GWFUZFDAT(Igrid)%SMOOTHET=>SMOOTHET
 C
       END SUBROUTINE SGWF2UZF1PSV

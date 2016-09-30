@@ -13,7 +13,7 @@
       INTEGER FUNCTION potet_pan()
       USE PRMS_POTET_PAN
       USE PRMS_MODULE, ONLY: Process, Print_debug, Save_vars_to_file, Init_vars_from_file, Nevap
-      USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_area, Basin_area_inv, NEARZERO
+      USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_area, Basin_area_inv
       USE PRMS_CLIMATEVARS, ONLY: Basin_potet, Potet, Hru_pansta, Epan_coef
       USE PRMS_SET_TIME, ONLY: Nowmonth
       USE PRMS_OBS, ONLY: Pan_evap
@@ -43,7 +43,7 @@
           i = Hru_route_order(j)
           k = Hru_pansta(i)
           Potet(i) = Pan_evap(k)*Epan_coef(i, Nowmonth)
-          IF ( Potet(i)<NEARZERO ) Potet(i) = 0.0
+          IF ( Potet(i)<0.0 ) Potet(i) = 0.0
           Basin_potet = Basin_potet + DBLE( Potet(i)*Hru_area(i) )
         ENDDO
         Basin_potet = Basin_potet*Basin_area_inv
@@ -51,7 +51,7 @@
 
 !******Declare parameters
       ELSEIF ( Process(:4)=='decl' ) THEN
-        Version_potet_pan = '$Id: potet_pan.f90 7430 2015-06-10 21:09:20Z rsregan $'
+        Version_potet_pan = 'potet_pan.f90 2015-12-04 23:29:08Z'
         CALL print_module(Version_potet_pan, 'Potential Evapotranspiration', 90)
         MODNAME = 'potet_pan'
 

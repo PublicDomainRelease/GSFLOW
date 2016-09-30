@@ -24,8 +24,9 @@
       USE PRMS_MODULE, ONLY: Process, Print_debug, Nhru, Nsol
       USE PRMS_BASIN, ONLY: Active_hrus, Hru_route_order, Hru_area, Basin_area_inv
       USE PRMS_CLIMATEVARS, ONLY: Swrad, Tmax_hru, Basin_orad, Orad_hru, &
-     &    Rad_conv, Hru_solsta, Basin_horad, Radj_sppt, Radj_wppt, Ppt_rad_adj, Radmax, &
-     &    Basin_potsw, Basin_solsta, Orad, Hru_ppt, Tmax_allrain, Solsta_flag
+     &    Rad_conv, Hru_solsta, Basin_horad, &
+     &    Basin_potsw, Basin_solsta, Orad, Hru_ppt, Tmax_allrain, &
+     &    Solsta_flag, Radj_sppt, Radj_wppt, Ppt_rad_adj, Radmax
       USE PRMS_SOLTAB, ONLY: Soltab_potsw, Soltab_basinpotsw, Hru_cossl, Soltab_horad_potsw
       USE PRMS_SET_TIME, ONLY: Jday, Nowmonth, Summer_flag
       USE PRMS_OBS, ONLY: Solrad
@@ -87,7 +88,7 @@
 
           radadj = radadj*pptadj
           IF ( radadj<0.2 ) radadj = 0.2
-          Orad_hru(j) = radadj*Soltab_horad_potsw(Jday,j)
+          Orad_hru(j) = radadj*SNGL( Soltab_horad_potsw(Jday,j) )
           Basin_orad = Basin_orad + DBLE( Orad_hru(j)*Hru_area(j) )
 
           IF ( Solsta_flag==1 ) THEN
@@ -105,7 +106,7 @@
               ENDIF
             ENDIF
           ENDIF
-          Swrad(j) = Soltab_potsw(Jday, j)/Soltab_horad_potsw(Jday, j)*Orad_hru(j)/Hru_cossl(j)
+          Swrad(j) = SNGL( Soltab_potsw(Jday, j)/Soltab_horad_potsw(Jday, j)*DBLE(Orad_hru(j))/Hru_cossl(j) )
           Basin_potsw = Basin_potsw + DBLE( Swrad(j)*Hru_area(j) )
         ENDDO
         Basin_orad = Basin_orad*Basin_area_inv
@@ -117,7 +118,7 @@
         Basin_potsw = Basin_potsw*Basin_area_inv
 
       ELSEIF ( Process(:4)=='decl' ) THEN
-        Version_ddsolrad = '$Id: ddsolrad.f90 7530 2015-07-29 22:33:42Z rsregan $'
+        Version_ddsolrad = 'ddsolrad.f90 2015-09-14 17:50:22Z'
         CALL print_module(Version_ddsolrad, 'Solar Radiation Distribution', 90)
         MODNAME = 'ddsolrad'
 
@@ -161,7 +162,6 @@
         IF ( getparam(MODNAME, 'radadj_slope', Nhru*12, 'real', Radadj_slope)/=0 ) CALL read_error(2, 'radadj_slope')
         IF ( getparam(MODNAME, 'radadj_intcp', Nhru*12, 'real', Radadj_intcp)/=0 ) CALL read_error(2, 'radadj_intcp')
         IF ( getparam(MODNAME, 'tmax_index', Nhru*12, 'real', Tmax_index)/=0 ) CALL read_error(2, 'tmax_index')
-
         Observed_flag = 0
         IF ( Nsol>0 .AND. Basin_solsta>0 ) Observed_flag = 1
 

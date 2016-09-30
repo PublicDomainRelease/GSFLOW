@@ -3,12 +3,12 @@
 !***********************************************************************
       MODULE PRMS_MODULE
       IMPLICIT NONE
-      INTEGER, PARAMETER :: MAXFILE_LENGTH = 132, MAXCONTROL_LENGTH = 20
+      INTEGER, PARAMETER :: MAXFILE_LENGTH = 256, MAXCONTROL_LENGTH = 20
       INTEGER, PARAMETER :: MAXDIM = 500
-      CHARACTER(LEN=80), PARAMETER :: &
-     &  EQULS = '================================================================================'
+      CHARACTER(LEN=68), PARAMETER :: &
+     &  EQULS = '===================================================================='
       CHARACTER(LEN=11), PARAMETER :: MODNAME = 'gsflow_prms'
-      CHARACTER(LEN=24), PARAMETER :: PRMS_VERSION = 'Version 4.0.1 03/15/2015'
+      CHARACTER(LEN=24), PARAMETER :: PRMS_VERSION = 'Version 4.0.2 08/15/2016'
       CHARACTER(LEN=MAXCONTROL_LENGTH), SAVE :: Process
       CHARACTER(LEN=80), SAVE :: PRMS_versn
       INTEGER, SAVE :: Model, Process_flag, Call_cascade, Ncascade, Ncascdgw
@@ -28,19 +28,14 @@
       INTEGER, SAVE :: PRMS_output_unit, Restart_inunit, Restart_outunit
       INTEGER, SAVE :: Elapsed_time_start(8), Elapsed_time_end(8), Elapsed_time_minutes
       REAL, SAVE :: Execution_time_start, Execution_time_end, Elapsed_time
-      DOUBLE PRECISION, SAVE, ALLOCATABLE :: Gvr_hru_pct_adjusted(:)
-!   Declared Variables used by GSFLOW only, in so that soilzone can be one version
       INTEGER, SAVE :: Kkiter
-      DOUBLE PRECISION, SAVE :: Basin_szreject
-      REAL, SAVE, ALLOCATABLE :: Gw2sm_grav(:), Gw_rejected(:), Gw2sm_grav_save(:)
-!   Declared Parameters used by GSFLOW only, in so that soilzone can be one version
       INTEGER, SAVE, ALLOCATABLE :: Gvr_cell_id(:)
 ! Precip_flag (1=precip_1sta; 2=precip_laps; 3=precip_dist2; 5=ide_dist; 6=xyz_dist; 7=climate_hru
 ! Temp_flag (1=temp_1sta; 2=temp_laps; 3=temp_dist2; 5=ide_dist; 6=xyz_dist; 7=climate_hru
 ! Control parameters
       INTEGER, SAVE :: Print_debug, MapOutON_OFF, CsvON_OFF, Dprst_flag, Subbasin_flag, Parameter_check_flag
       INTEGER, SAVE :: Init_vars_from_file, Save_vars_to_file, Orad_flag, Cascade_flag, Cascadegw_flag
-      INTEGER, SAVE :: NhruOutON_OFF
+      INTEGER, SAVE :: NhruOutON_OFF, Gwr_swale_flag
       CHARACTER(LEN=MAXFILE_LENGTH), SAVE :: Model_output_file, Var_init_file, Var_save_file
       CHARACTER(LEN=MAXFILE_LENGTH), SAVE :: Csv_output_file, Model_control_file
       CHARACTER(LEN=MAXCONTROL_LENGTH), SAVE :: Temp_module, Srunoff_module, Et_module
@@ -68,7 +63,7 @@
       INTEGER, EXTERNAL :: intcp, snowcomp, gwflow
       INTEGER, EXTERNAL :: srunoff, soilzone
       INTEGER, EXTERNAL :: strmflow, subbasin, basin_sum, map_results, write_climate_hru
-      INTEGER, EXTERNAL :: strmflow_in_out, muskingum
+      INTEGER, EXTERNAL :: strmflow_in_out, muskingum, potet_pm_sta
       INTEGER, EXTERNAL :: gsflow_modflow, gsflow_prms2mf, gsflow_mf2prms, gsflow_budget, gsflow_sum
       INTEGER, EXTERNAL :: declvar, declparam, getparam, numchars
       EXTERNAL :: module_error, read_error, print_module, PRMS_open_output_file
@@ -91,16 +86,17 @@
         ENDIF
         Process_flag = 1
 
-        PRMS_versn = '$Id: gsflow_prms.f90 7633 2015-09-11 22:17:53Z rsregan $'
+        PRMS_versn = 'gsflow_prms.f90 2016-09-12 10:48:00Z'
 
         IF ( check_dims()/=0 ) STOP
 
-        PRINT 10, PRMS_VERSION, PRMS_versn(23:36)
-        WRITE ( Logunt, 10 ) PRMS_VERSION, PRMS_versn(23:36)
-  10  FORMAT (//, 25X, 'U.S. Geological Survey', /, 15X, &
+        PRINT 10, PRMS_VERSION
+        WRITE ( Logunt, 10 ) PRMS_VERSION
+        WRITE ( PRMS_output_unit, 10 ) PRMS_VERSION
+  10  FORMAT (//, 15X, &
      &        'Precipitation-Runoff Modeling System (PRMS)', /, &
-     &        15X, A, ' Tag: ', A, /)
-  15  FORMAT (/, 'The following modules are available:', //, 5X, 'Process',  19X, 'Modules', /, 74('-'), /, &
+     &        20X, 'Based on ', A, /)
+  15  FORMAT (/, 'The following PRMS modules are available:', //, 5X, 'Process',  19X, 'Modules', /, 67('-'), /, &
      &        '  Basin Definition: basin', /, &
      &        '    Cascading Flow: cascade', /, &
      &        '  Time Series Data: obs', /, &
@@ -112,7 +108,7 @@
      &        '    Solar Rad Dist: ccsolrad, ddsolrad, climate_hru', /, &
      &        'Transpiration Dist: transp_tindex, climate_hru, transp_frost', /, &
      &        '      Potential ET: potet_hamon, potet_jh, potet_pan, climate_hru,', /, &
-     &        '                    potet_hs, potet_pt, potet_pm', /, &
+     &        '                    potet_hs, potet_pt, potet_pm, potet_pm_sta', /, &
      &        '      Interception: intcp', /, &
      &        '     Snow Dynamics: snowcomp', /, &
      &        '    Surface Runoff: srunoff_smidx, srunoff_carea', /, &
@@ -120,43 +116,34 @@
      &        '       Groundwater: gwflow', /, &
      &        'Streamflow Routing: strmflow, strmflow_in_out, muskingum', /, &
      &        '    Output Summary: basin_sum, subbasin, map_results, nhru_summary', /, &
-     &        '     Preprocessing: write_climate_hru, frost_date', /, 74('-'))
-  16  FORMAT (//, 'Active modules listed in the order in which they are called:', //, 8X, 'Process', 16X, &
-     &        'Module (source code version)')
+     &        '     Preprocessing: write_climate_hru, frost_date', /, 67('-'))
+  16  FORMAT (//, 'PRMS modules listed in the order in which they are called:', //, 8X, 'Process', 18X, &
+     &        'Module (source code version)', /, A)
 
         IF ( Model/=1 ) THEN
           call_modules = gsflow_modflow()
           IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
         ENDIF
 
-        PRINT 15
+        IF ( Print_debug>-1 ) PRINT 15
+        PRINT 16, EQULS
         WRITE ( Logunt, 15 )
-        PRINT 9002
-        PRINT 16
-        PRINT '(A)', EQULS(:74)
+        WRITE ( Logunt, 16) EQULS
+        IF ( Print_debug>-2 ) THEN
+          WRITE ( PRMS_output_unit, 15 )
+          WRITE ( PRMS_output_unit, 16 ) EQULS
+        ENDIF
         CALL print_module(PRMS_versn, 'GSFLOW Computation Order    ', 90)
 
         IF ( Model==0 .OR. Model==99 ) THEN
           IF ( declvar(MODNAME, 'KKITER', 'one', 1, 'integer', &
      &         'Current iteration in GSFLOW simulation', 'none', KKITER)/=0 ) CALL read_error(3, 'KKITER')
-          ALLOCATE ( Gw2sm_grav(Nhrucell) )
-          IF ( declvar(MODNAME, 'gw2sm_grav', 'nhrucell', Nhrucell, 'real', &
-     &         'Groundwater discharge to gravity-flow reservoirs', &
-     &         'inches', Gw2sm_grav)/=0 ) CALL read_error(3, 'gw2sm_grav')
           ALLOCATE ( Gvr_cell_id(Nhrucell) )
           IF ( declparam(MODNAME, 'gvr_cell_id', 'nhrucell', 'integer', &
      &         '0', 'bounded', 'ngwcell', &
      &         'Corresponding grid cell id associated with each GVR', &
      &         'Index of the grid cell associated with each gravity reservoir', &
      &         'none')/=0 ) CALL read_error(1, 'gvr_cell_id')
-          ALLOCATE ( Gw_rejected(Nhru) )
-          IF ( declvar(MODNAME, 'gw_rejected', 'nhru', Nhru, 'real', &
-     &         'HRU average recharge rejected by UZF', 'inches', &
-     &         Gw_rejected)/=0 ) CALL read_error(3, 'gw_rejected')
-          IF ( declvar(MODNAME, 'basin_szreject', 'one', 1, 'double', &
-     &         'Basin average recharge from SZ and rejected by UZF', &
-     &         'inches', Basin_szreject)/=0) CALL read_error(3, 'basin_szreject')
-          ALLOCATE ( Gvr_hru_pct_adjusted(Nhrucell), Gw2sm_grav_save(Nhrucell) )
         ENDIF
 
         Kkiter = 1 ! set for PRMS-only mode
@@ -166,12 +153,6 @@
             Timestep = 0
           ELSE
             CALL call_modules_restart(1)
-          ENDIF
-          IF ( Model==0 ) THEN
-            Gw2sm_grav = 0.0
-            Gw_rejected = 0.0
-            Gw2sm_grav_save = 0.0
-            Basin_szreject = 0.0D0
           ENDIF
         ENDIF
         First_timestep = Timestep
@@ -184,37 +165,29 @@
         IF ( Model==0 ) THEN
           IF ( getparam(MODNAME, 'gvr_cell_id', Nhrucell, 'integer', &
      &         Gvr_cell_id)/=0 ) CALL read_error(2, 'gvr_cell_id')
-          IF ( Nhru==Nhrucell ) Gvr_hru_pct_adjusted = 1.0D0 ! default value
           call_modules = gsflow_modflow()
           IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
-        ELSEIF ( Model==1 ) THEN
-          PRINT '(/,2A,/)', 'PRMS model output written to file: ', Model_output_file(:numchars(Model_output_file))
-        ENDIF
-        IF ( Model/=2 ) THEN
+        ELSEIF ( Model/=2 ) THEN
           nc = numchars(Model_control_file)
-          PRINT 9004, 'Using Control File: ', Model_control_file(:nc)
+          IF ( Print_debug>-1 ) PRINT 9004, 'Using Control File: ', Model_control_file(:nc)
           WRITE ( Logunt, 9004 ) 'Using Control File: ', Model_control_file(:nc)
-          WRITE ( PRMS_output_unit, 9004 ) 'Using Control File: ', Model_control_file(:nc)
+          IF ( Print_debug>-1 ) WRITE ( PRMS_output_unit, 9004 ) 'Using Control File: ', Model_control_file(:nc)
 
           IF ( Init_vars_from_file==1 ) THEN
             nc = numchars(Var_init_file)
-          PRINT 9004, 'Using var_init_file: ', Var_init_file(:nc)
-          !WRITE ( Logunt, 9004 ) 'Writing var_init_file: ', Var_init_file(:nc)
+            IF ( Print_debug>-1 ) PRINT 9004, 'Using var_init_file: ', Var_init_file(:nc)
+            WRITE ( Logunt, 9004 ) 'Writing var_init_file: ', Var_init_file(:nc)
           ENDIF
           IF ( Save_vars_to_file==1 ) THEN
             nc = numchars(Var_save_file)
-          PRINT 9004, 'Using var_save_file: ', Var_save_file(:nc)
-          !WRITE ( Logunt, 9004 ) 'Writing var_save_file: ', Var_save_file(:nc)
+            IF ( Print_debug>-1 ) PRINT 9004, 'Using var_save_file: ', Var_save_file(:nc)
+            WRITE ( Logunt, 9004 ) 'Writing var_save_file: ', Var_save_file(:nc)
           ENDIF
 
           nc = numchars(Model_output_file)
-          PRINT 9004, 'Writing PRMS Water Budget File: ', Model_output_file(:nc)
+          IF ( Print_debug>-1 ) PRINT 9004, 'Writing PRMS Water Budget File: ', Model_output_file(:nc)
           WRITE ( Logunt, 9004 ) 'Writing PRMS Water Budget File: ', Model_output_file(:nc)
         ENDIF
-
-        PRINT 4, 'Simulation time period:', Start_year, Start_month, Start_day, ' -', End_year, End_month, End_day
-        WRITE ( Logunt, 4 ) 'Simulation time period:', Start_year, Start_month, Start_day, ' -', End_year, End_month, End_day
-   4    FORMAT (/, 2(A, I5, 2('/',I2.2)), /)
 
       ELSEIF ( Process(:7)=='setdims' ) THEN
         Process_flag = 4
@@ -231,6 +204,17 @@
         IF ( Model==0 ) THEN
           call_modules = gsflow_modflow()
           IF ( call_modules/=0 ) CALL module_error(MODNAME, Arg, call_modules)
+        ENDIF
+      ENDIF
+
+      IF ( Model==99 ) THEN
+        IF ( Process_flag==4 .OR. Process_flag<2 ) THEN
+          Init_vars_from_file = 0 ! make sure this is set so all variables and parameters are declared
+          CALL module_doc()
+          call_modules = 0
+          RETURN
+        ELSE
+          STOP
         ENDIF
       ENDIF
 
@@ -317,6 +301,8 @@
           call_modules = potet_pan()
         ELSEIF ( Et_flag==5 ) THEN
           call_modules = potet_pt()
+        ELSEIF ( Et_flag==6 ) THEN
+          call_modules = potet_pm_sta()
         ELSEIF ( Et_flag==11 ) THEN
           call_modules = potet_pm()
         ELSE !IF ( Et_flag==10 ) THEN
@@ -411,7 +397,7 @@
       ENDIF
 
       IF ( Process_flag==3 ) THEN
-        IF ( MODEL==1 ) THEN
+        IF ( Model==1 ) THEN
           CALL DATE_AND_TIME(VALUES=Elapsed_time_end)
           PRINT 9001
           PRINT 9003, 'start', (Elapsed_time_start(i),i=1,3), (Elapsed_time_start(i),i=5,7)
@@ -424,12 +410,17 @@
      &                             Elapsed_time - Elapsed_time_minutes*60.0, ' seconds'
         ENDIF
       ELSEIF ( Process_flag==1 ) THEN
-        IF ( Model==1 ) PRINT '(A)', EQULS(:74)
-        IF ( Parameter_check_flag>0 ) CALL check_nhru_params()
+        IF ( Model==1 ) THEN
+          PRINT '(A)', EQULS
+          WRITE ( PRMS_output_unit, '(A)' ) EQULS
+          WRITE ( Logunt, '(A)') EQULS
+        ENDIF
       ELSEIF ( Process_flag==2 ) THEN
+        IF ( Parameter_check_flag>0 ) CALL check_nhru_params()
         IF ( Inputerror_flag==1 ) THEN
-          PRINT '(//,A,/,A)', '**FIX input errors in your Parameter File to continue**', &
-     &          'NOTE: some errors may be due to use of defalut values'
+          PRINT '(//,A,//,A,/,A,/,A)', '**Fix input errors in your Parameter File to continue**', &
+     &          '  Set control parameter parameter_check_flag to 0 after', &
+     &          '  all parameter values are valid.'
           PRINT '(/,A,/,A,/,A,/,A,/,A,/)', &
      &          'If input errors are related to paramters used for automated', &
      &          'calibration processes, with CAUTION, set control parameter', &
@@ -442,10 +433,10 @@
         IF ( Parameter_check_flag==2 ) STOP
       ENDIF
 
- 9001 FORMAT (/, 38('='), /, 'INFORMATION: Normal completion of PRMS', /, 38('='), /)
+ 9001 FORMAT (/, 26X, 27('='), /, 26X, 'Normal completion of GSFLOW', /, 26X, 27('='), /)
  9002 FORMAT (//, 74('='), /, 'Please give careful consideration to fixing all ERROR and WARNING messages', /, 74('='))
  9003 FORMAT ('Execution ', A, ' date and time (yyyy/mm/dd hh:mm:ss)', I5, 2('/',I2.2), I3, 2(':',I2.2), /)
- 9004 FORMAT (/, 2A)
+ 9004 FORMAT (/, 2A, /)
 
       END FUNCTION call_modules
 
@@ -474,11 +465,11 @@
 
       PRINT 3
       WRITE ( Logunt, 3 )
-    3 FORMAT (//, 27X, 'U.S. Geological Survey', /, 9X, &
+    3 FORMAT (//, 26X, 'U.S. Geological Survey', /, 8X, &
      &        'Coupled Groundwater and Surface-water FLOW model (GSFLOW)', /, &
-     &        26X, 'Version 1.2.0 08/21/2015', //, &
-     &        5X, 'An integration of the Precipitation-Runoff Modeling System (PRMS)', /, &
-     &        5X, 'and the Modular Groundwater Model (MODFLOW-NWT and MODFLOW-2005)', /)
+     &        25X, 'Version 1.2.1 10/01/2016', //, &
+     &        '    An integration of the Precipitation-Runoff Modeling System (PRMS)', /, &
+     &        '    and the Modular Groundwater Model (MODFLOW-NWT and MODFLOW-2005)', /)
 
       ! debug print flag:
       ! -1=quiet - reduced screen output
@@ -486,6 +477,8 @@
       ! 4=basin_sum; 5=soltab; 7=soil zone;
       ! 9=snowcomp; 13=cascade; 14=subbasin tree
       IF ( control_integer(Print_debug, 'print_debug')/=0 ) Print_debug = 0
+
+      IF ( control_integer(Parameter_check_flag, 'parameter_check_flag')/=0 ) Parameter_check_flag = 1
 
       IF ( control_string(Model_mode, 'model_mode')/=0 ) CALL read_error(5, 'model_mode')
       PRMS_flag = 1
@@ -502,6 +495,8 @@
         Model = 9
       ELSEIF ( Model_mode(:13)=='WRITE_CLIMATE' ) THEN
         Model = 4
+      ELSEIF ( Model_mode(:13)=='DOCUMENTATION' ) THEN
+        Model = 99
       ELSE
         PRINT '(/,2A)', 'ERROR, invalid model_mode value: ', Model_mode
         STOP
@@ -693,6 +688,8 @@
         Et_flag = 7
       ELSEIF ( Et_module(:8)=='potet_hs' ) THEN
         Et_flag = 10
+      ELSEIF ( Et_module(:12)=='potet_pm_sta' ) THEN
+        Et_flag = 6
       ELSEIF ( Et_module(:8)=='potet_pm' ) THEN
         Et_flag = 11
       ELSEIF ( Et_module(:8)=='potet_pt' ) THEN
@@ -707,10 +704,8 @@
       IF ( Et_flag==7 ) Climate_potet_flag = 1
       Humidity_cbh_flag = 0
       Windspeed_cbh_flag = 0
-      IF ( Et_flag==11 ) THEN
-        Humidity_cbh_flag = 1
-        Windspeed_cbh_flag = 1
-      ENDIF
+      IF ( Et_flag==11 .OR. Et_flag==5 ) Humidity_cbh_flag = 1
+      IF ( Et_flag==11 ) Windspeed_cbh_flag = 1
 
       Srunoff_module = ' '
       IF ( control_string(Srunoff_module, 'srunoff_module')/=0 ) CALL read_error(5, 'srunoff_module')
@@ -788,7 +783,6 @@
 
       IF ( control_integer(Dprst_flag, 'dprst_flag')/=0 ) Dprst_flag = 0
       IF ( control_integer(CsvON_OFF, 'csvON_OFF')/=0 ) CsvON_OFF = 0
-      IF ( control_integer(Parameter_check_flag, 'parameter_check_flag')/=0 ) Parameter_check_flag = 1
 
 ! map results dimensions
       IF ( control_integer(MapOutON_OFF, 'mapOutON_OFF')/=0 ) MapOutON_OFF = 0
@@ -801,11 +795,14 @@
      &     'Number of spatial units in the target map for mapped results')/=0 ) CALL read_error(7, 'ngwcell')
       IF ( decldim('nreach', idim, MAXDIM, 'Number of reaches on all stream segments')/=0 ) CALL read_error(7, 'nreach')
 
+      IF ( control_integer(Gwr_swale_flag, 'gwr_swale_flag')/=0 ) Gwr_swale_flag = 0
+
 ! nhru_summary
       IF ( control_integer(NhruOutON_OFF, 'nhruOutON_OFF')/=0 ) NhruOutON_OFF = 0
 
 ! cascade
       IF ( control_integer(Cascade_flag, 'cascade_flag')/=0 ) Cascade_flag = 1
+      ! if cascadegw_flag = 2, use same cascades as HRUs
       IF ( control_integer(Cascadegw_flag, 'cascadegw_flag')/=0 ) Cascadegw_flag = 1
 
 ! spatial units
@@ -827,7 +824,6 @@
       IF ( decldim('ndepl', 1, MAXDIM, 'Number of snow-depletion curves')/=0 ) CALL read_error(7, 'ndelp')
       IF ( decldim('ndeplval', 11, MAXDIM, 'Number of values in all snow-depletion curves (set to ndepl*11)')/=0 ) &
      &     CALL read_error(7, 'ndelplval')
-      Ndeplval = 11
 
 ! fixed dimensions
       IF ( declfix('ndays', 366, 366, 'Maximum number of days in a year ')/=0 ) CALL read_error(7, 'ndays')
@@ -850,6 +846,7 @@
       INTEGER FUNCTION check_dims()
       USE PRMS_MODULE
       IMPLICIT NONE
+! Functions
       INTEGER, EXTERNAL :: getdim
 !***********************************************************************
 
@@ -889,12 +886,19 @@
       IF ( Ncascade==-1 ) CALL read_error(7, 'ncascade')
       Ncascdgw = getdim('ncascdgw')
       IF ( Ncascdgw==-1 ) CALL read_error(7, 'ncascdgw')
-      IF ( Ncascade==0 ) Cascade_flag = 0
-      IF ( Ncascdgw==0 ) Cascadegw_flag = 0
-      IF ( Cascade_flag/=1 .AND. Cascadegw_flag/=1 .AND. Model/=99 ) THEN
-        Call_cascade = 0
-      ELSE
+      IF ( Cascadegw_flag==2 ) Ncascdgw = Ncascade
+      IF ( Model==99 ) THEN
         Call_cascade = 1
+        Cascade_flag = 1
+        Cascadegw_flag = 1
+      ELSE
+        IF ( Ncascade==0 ) Cascade_flag = 0
+        IF ( Ncascdgw==0 .OR. Model==0 .OR. Model==2 ) Cascadegw_flag = 0
+        IF ( Cascade_flag==1 .OR. Cascadegw_flag>0 ) THEN
+          Call_cascade = 1
+        ELSE
+          Call_cascade = 0
+        ENDIF
       ENDIF
 
       Nlake = getdim('nlake')
@@ -903,9 +907,21 @@
       Ndepl = getdim('ndepl')
       IF ( Ndepl==-1 ) CALL read_error(7, 'ndepl')
 
+      Ndeplval = getdim('ndeplval')
+      IF ( Ndeplval==-1 ) CALL read_error(7, 'ndeplval')
+
+      IF ( Ndepl==0 ) THEN
+        PRINT *, 'ERROR, ndepl must be > 0: ndepl=', Ndepl
+        Inputerror_flag = 1
+      ENDIF
+      IF ( Ndeplval/=Ndepl*11 ) THEN
+        PRINT *, 'ERROR, ndeplval must be = ndepl*11: ndeplval:', Ndeplval, ', ndepl=', Ndepl
+        Inputerror_flag = 1
+      ENDIF
+
       Nsub = getdim('nsub')
       IF ( Nsub==-1 ) CALL read_error(7, 'nsub')
-      ! default = 1, as new flag, turn off if no subbasins
+      ! default = 1, turn off if no subbasins
       IF ( Subbasin_flag==1 .AND. Nsub==0 ) Subbasin_flag = 0
 
       Nsegment = getdim('nsegment')
@@ -928,13 +944,15 @@
         IF ( Nobs==0 ) Nobs = 1
         IF ( Ncascade==0 ) Ncascade = 1
         IF ( Ncascdgw==0 ) Ncascdgw = 1
-        IF ( Ndepl==0 ) Ndepl = 1
         IF ( Nsub==0 ) Nsub = 1
         IF ( Nevap==0 ) Nevap = 1
         IF ( Nhrucell==0 ) Nhrucell = 1
         IF ( Ngwcell==0 ) Ngwcell = 1
         IF ( Nsegment==0 ) Nsegment = 1
         IF ( Nratetbl==0 ) Nratetbl = 4
+        Subbasin_flag = 1
+        Cascade_flag = 1
+        Cascadegw_flag = 1
       ENDIF
 
       IF ( Nsegment<1 ) THEN
@@ -952,6 +970,80 @@
 
       check_dims = Inputerror_flag
       END FUNCTION check_dims
+
+!**********************************************************************
+!     Module documentation
+!**********************************************************************
+      SUBROUTINE module_doc()
+      IMPLICIT NONE
+! Functions
+      INTEGER, EXTERNAL :: basin, climateflow, prms_time
+      INTEGER, EXTERNAL :: cascade, obs, soltab, transp_tindex
+      INTEGER, EXTERNAL :: transp_frost, frost_date, routing
+      INTEGER, EXTERNAL :: temp_1sta_laps, temp_dist2
+      INTEGER, EXTERNAL :: precip_1sta_laps, climate_hru
+      INTEGER, EXTERNAL :: precip_dist2, xyz_dist, ide_dist
+      INTEGER, EXTERNAL :: ddsolrad, ccsolrad
+      INTEGER, EXTERNAL :: potet_pan, potet_jh, potet_hamon, potet_hs, potet_pt, potet_pm
+      INTEGER, EXTERNAL :: intcp, snowcomp, gwflow, srunoff, soilzone
+      INTEGER, EXTERNAL :: strmflow, subbasin, basin_sum, map_results, strmflow_in_out
+      INTEGER, EXTERNAL :: write_climate_hru, muskingum, potet_pm_sta
+      INTEGER, EXTERNAL :: gsflow_prms2mf, gsflow_mf2prms, gsflow_budget, gsflow_sum
+      EXTERNAL :: nhru_summary, water_balance
+! Local variable
+      INTEGER :: test
+!**********************************************************************
+      test = basin()
+      test = cascade()
+      test = climateflow()
+      test = soltab()
+      test = prms_time()
+      test = obs()
+      test = temp_1sta_laps()
+      test = temp_dist2()
+      test = xyz_dist()
+      test = ide_dist()
+      test = climate_hru()
+      test = precip_1sta_laps()
+      test = precip_dist2()
+      test = ddsolrad()
+      test = ccsolrad()
+      test = transp_tindex()
+      test = frost_date()
+      test = transp_frost()
+      test = potet_jh()
+      test = potet_hamon()
+      test = potet_pan()
+      test = potet_hs()
+      test = potet_pt()
+      test = potet_pm()
+      test = potet_pm_sta()
+      test = write_climate_hru()
+      test = intcp()
+      test = snowcomp()
+      test = srunoff()
+      test = soilzone()
+      test = gsflow_prms2mf()
+      test = gsflow_mf2prms()
+      test = gsflow_budget()
+      test = gsflow_sum()
+      test = gwflow()
+      test = routing()
+      test = strmflow()
+      test = strmflow_in_out()
+      test = muskingum()
+      test = basin_sum()
+      test = map_results()
+      CALL nhru_summary()
+      CALL water_balance()
+      test = subbasin()
+
+      PRINT 9001
+ 9001 FORMAT (//, ' All available modules have been called.', /, &
+     &        ' All parameters have been declared.', /, &
+     &        ' Note, no simulation was computed.', /)
+
+      END SUBROUTINE module_doc
 
 !***********************************************************************
 !     call_modules_restart - write or read restart file
@@ -1011,6 +1103,10 @@
           IF ( Et_flag==4 ) THEN
             PRINT *, 'ERROR, Initial Conditions File saved for model using potet_pan module'
             PRINT *, '       current model also must use potet_pan'
+            ierr = 1
+          ELSEIF ( Et_flag==6 ) THEN
+            PRINT *, 'ERROR, Initial Conditions File saved for model using potet_pm_sta module'
+            PRINT *, '       current model also must use potet_pm_sta'
             ierr = 1
           ELSEIF ( Et_flag==11 ) THEN
             PRINT *, 'ERROR, Initial Conditions File saved for model using potet_pm module'

@@ -1,2 +1,2 @@
 
-../../../bin/gsflow ./gsflow_prms.control -set mapOutON_OFF 1
+../../../bin/gsflow ./gsflow_prms_map_results.control

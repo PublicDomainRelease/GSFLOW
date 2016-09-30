@@ -58,10 +58,8 @@
       SUBROUTINE GWF2UPW1AR(In, Igrid)
  
       USE GLOBAL,     ONLY:NCOL,NROW,NLAY,ITRSS,LAYHDT,LAYHDS,LAYCBD,
-     1                     NCNFBD,IBOUND,BUFF,IOUT
-!!      USE GLOBAL,     ONLY:NCOL,NROW,NLAY,ITRSS,LAYHDT,LAYHDS,LAYCBD,
-!!     1                     NCNFBD,IBOUND,BUFF,BOTM,NBOTM,DELR,DELC,IOUT,
-!!     2                     LBOTM,HNEW
+     1                     NCNFBD,IBOUND,BUFF,BOTM,NBOTM,DELR,DELC,IOUT,
+     2                     LBOTM,HNEW
       USE GWFBASMODULE,ONLY:HDRY
       USE GWFNWTMODULE, ONLY: Numcell
       USE GWFUPWMODULE
@@ -79,8 +77,7 @@
 !     ------------------------------------------------------------------
 !     LOCAL VARIABLES
 !     ------------------------------------------------------------------
-      INTEGER lloc, istart, istop, i
-!!      INTEGER lloc, istart, istop, i, ic, ir, il, jj
+      INTEGER lloc, istart, istop, i, ic, ir, il, jj
       CHARACTER(LEN=200) line
       INTEGER NPHK,NPVKCB,NPVK,NPVANI,NPSS,NPSY,NPHANI
       INTEGER IANAME,KHANI,N,KK,j,k,NCNVRT,NHANI,NWETD
@@ -110,7 +107,7 @@ C
 !1------IDENTIFY PACKAGE AND INITIALIZE.
       WRITE (Iout, 9001) In
  9001 FORMAT (1X, /' UPW1 -- UPSTREAM WEIGHTING FLOW PACKAGE, ',
-     +       'VERSION 1.0.6, 12/05/2012', /, 9X, 'INPUT READ FROM UNIT',
+     +       'VERSION 1.1.1, 7/28/2016', /, 9X, 'INPUT READ FROM UNIT',
      +        I3,/)
 !  ALLOCATE, READ AND SET DATA FOR CELL PROPERTIES (FROM LPF)
 C1------Allocate scalar data.
@@ -566,9 +563,8 @@ C     ******************************************************************
 C
 C        SPECIFICATIONS:
 C     ------------------------------------------------------------------
-      USE GLOBAL,      ONLY:NCOL,NROW,NLAY,IBOUND,HNEW,IOUT
-!!      USE GLOBAL,      ONLY:NCOL,NROW,NLAY,IBOUND,HNEW,LAYCBD,CV,
-!!     1                      BOTM,NBOTM,DELR,DELC,IOUT
+      USE GLOBAL,      ONLY:NCOL,NROW,NLAY,IBOUND,HNEW,LAYCBD,CV,
+     1                      BOTM,NBOTM,DELR,DELC,IOUT
       USE GWFBASMODULE,ONLY:HNOFLO
       USE GWFUPWMODULE,ONLY:HKUPW,VKAUPW
 C     ------------------------------------------------------------------
@@ -624,17 +620,14 @@ C     ******************************************************************
 C
 C        SPECIFICATIONS:
 C     ------------------------------------------------------------------
-      USE GLOBAL,      ONLY:NCOL,NROW,NLAY,IBOUND,BOTM,
-     1                      LBOTM,HNEW,RHS,HCOF,HOLD,ISSFLG
-!!      USE GLOBAL,      ONLY:NCOL,NROW,NLAY,IBOUND,BOTM,NBOTM,DELR,DELC,
-!!     1                      LBOTM,CV,HNEW,RHS,HCOF,HOLD,ISSFLG,IOUT
+      USE GLOBAL,      ONLY:NCOL,NROW,NLAY,IBOUND,BOTM,NBOTM,DELR,DELC,
+     1                      LBOTM,CV,HNEW,RHS,HCOF,HOLD,ISSFLG,IOUT
       USE GWFBASMODULE,ONLY:DELT
       USE GWFNWTMODULE,ONLY:A, ICELL, IA
       USE GWFUPWMODULE
       DOUBLE PRECISION, EXTERNAL :: DHORIZUPW
       DOUBLE PRECISION ZERO
-      DOUBLE PRECISION HTMP, TP, BT, TLED, ONE
-!!      DOUBLE PRECISION HTMP, TP, BT, TLED, ONE, SOLD, SNEW, STRG
+      DOUBLE PRECISION HTMP, TP, BT, TLED, ONE, SOLD, SNEW, STRG
       DOUBLE PRECISION RHO1, RHO2, HLD, THICK, dS
 C     ------------------------------------------------------------------
 C
@@ -920,13 +913,11 @@ C     ------------------------------------------------------------------
      1                      BUFF,BOTM,LBOTM,IOUT
       USE GWFBASMODULE,ONLY:MSUM,ICBCFL,VBVL,VBNM,DELT,PERTIM,TOTIM
       USE GWFUPWMODULE,ONLY:IUPWCB,SC1,SC2UPW,So,Sn,IBOUND2,LAYTYPUPW
-      USE GWFNWTMODULE,ONLY: Icell
-!!      USE GWFNWTMODULE,ONLY: Thickfact,Icell
+      USE GWFNWTMODULE,ONLY: Thickfact,Icell
       CHARACTER*16 TEXT
       DOUBLE PRECISION STOIN,STOUT,SSTRG,ZERO,HSING,THICK
       DOUBLE PRECISION STRG, SIN, SOUT
-      DOUBLE PRECISION BT, TP, RHO1, RHO2, HLD, TLED, ONE
-!!      DOUBLE PRECISION BT, TP, RHO1, RHO2, HLD, BBT, TLED, ONE
+      DOUBLE PRECISION BT, TP, RHO1, RHO2, HLD, BBT, TLED, ONE
 C
       DATA TEXT /'         STORAGE'/
 C     ------------------------------------------------------------------
@@ -1326,8 +1317,7 @@ C     ******************************************************************
 C
 C     SPECIFICATIONS:
 C     ------------------------------------------------------------------
-      USE GLOBAL,        ONLY:NCOL,NROW,DELR,DELC
-!!      USE GLOBAL,        ONLY:NCOL,NROW,DELR,DELC,BOTM,LBOTM,LAYCBD
+      USE GLOBAL,        ONLY:NCOL,NROW,DELR,DELC,BOTM,LBOTM,LAYCBD
 C
       DIMENSION SC(NCOL,NROW)
 C     ------------------------------------------------------------------
@@ -1364,8 +1354,7 @@ C     ******************************************************************
 C
 C      SPECIFICATIONS:
 C     ------------------------------------------------------------------
-      USE GWFUPWMODULE,  ONLY:LAYVKAUPW
-!!      USE GWFUPWMODULE,  ONLY:CHANI,LAYVKAUPW
+      USE GWFUPWMODULE,  ONLY:CHANI,LAYVKAUPW
       USE PARAMMODULE
 C
       CHARACTER*4 PTYP
@@ -1410,10 +1399,8 @@ C     ******************************************************************
 C
 C      SPECIFICATIONS:
 C     ------------------------------------------------------------------
-      USE GLOBAL, ONLY:Ncol, Nrow, Ibound, Delr, Delc,
+      USE GLOBAL, ONLY:Ncol, Nrow, Nlay, Ibound, Delr, Delc, iout, 
      +                 CC, CR
-!!      USE GLOBAL, ONLY:Ncol, Nrow, Nlay, Ibound, Delr, Delc, iout, 
-!!     +                 CC, CR
       USE GWFUPWMODULE
 C     ------------------------------------------------------------------
 C
@@ -1482,8 +1469,7 @@ C     ******************************************************************
 C
 C      SPECIFICATIONS:
 C     ------------------------------------------------------------------
-      USE GLOBAL, ONLY:Ncol, Nrow, Ibound, Delr, Delc, CR, CC
-!!      USE GLOBAL, ONLY:Ncol, Nrow, Nlay, Ibound, Delr, Delc, CR, CC
+      USE GLOBAL, ONLY:Ncol, Nrow, Nlay, Ibound, Delr, Delc, CR, CC
       USE GWFUPWMODULE
 C     ------------------------------------------------------------------
 C
@@ -1569,10 +1555,8 @@ C     ******************************************************************
 C
 C      SPECIFICATIONS:
 C     ------------------------------------------------------------------
-      USE GLOBAL,      ONLY:NCOL,NROW,IBOUND,CR,CC,DELR,DELC
-!!      USE GLOBAL,      ONLY:NCOL,NROW,IBOUND,CR,CC,DELR,DELC,BOTM,LBOTM
-      USE GWFUPWMODULE,ONLY:HKUPW,CHANI,HANI
-!!      USE GWFUPWMODULE,ONLY:HKUPW,CHANI,HANI,LAYTYPUPW
+      USE GLOBAL,      ONLY:NCOL,NROW,IBOUND,CR,CC,DELR,DELC,BOTM,LBOTM
+      USE GWFUPWMODULE,ONLY:HKUPW,CHANI,HANI,LAYTYPUPW
 C     ------------------------------------------------------------------
 C
       ZERO=0.
@@ -1657,10 +1641,8 @@ C     ******************************************************************
 C
 C      SPECIFICATIONS:
 C     ------------------------------------------------------------------
-      USE GLOBAL, ONLY:Ncol, Nrow, Ibound, Delr, Delc,
+      USE GLOBAL, ONLY:Ncol, Nrow, Nlay, Ibound, Delr, Delc, iout, 
      +                 CC, CR, BOTM, LBOTM
-!!      USE GLOBAL, ONLY:Ncol, Nrow, Nlay, Ibound, Delr, Delc, iout, 
-!!     +                 CC, CR, BOTM, LBOTM
       USE GWFUPWMODULE
 C     ------------------------------------------------------------------
 C
@@ -1739,10 +1721,8 @@ C     ******************************************************************
 C
 C      SPECIFICATIONS:
 C     ------------------------------------------------------------------
-      USE GLOBAL, ONLY:Ncol, Nrow, Ibound, Delr, Delc, CR, CC,
+      USE GLOBAL, ONLY:Ncol, Nrow, Nlay, Ibound, Delr, Delc, CR, CC,
      +                 BOTM, LBOTM
-!!      USE GLOBAL, ONLY:Ncol, Nrow, Nlay, Ibound, Delr, Delc, CR, CC,
-!!     +                 BOTM, LBOTM
       USE GWFUPWMODULE
 C     ------------------------------------------------------------------
 C
@@ -1837,8 +1817,7 @@ C
 C      SPECIFICATIONS:
 C     ------------------------------------------------------------------
       USE GLOBAL,      ONLY:NCOL,NROW,IBOUND,CR,CC,DELR,DELC,BOTM,LBOTM
-      USE GWFUPWMODULE,ONLY:HKUPW,CHANI,HANI
-!!      USE GWFUPWMODULE,ONLY:HKUPW,CHANI,HANI,LAYTYPUPW
+      USE GWFUPWMODULE,ONLY:HKUPW,CHANI,HANI,LAYTYPUPW
 C     ------------------------------------------------------------------
 C
       ZERO=0.
@@ -1931,18 +1910,16 @@ C4------RETURN.
 ! RETURNS SATURATED THICKNESS OF CELL BASED ON SMOOTH FUNCTION
       USE GWFUPWMODULE
       USE GWFNWTMODULE, ONLY: Thickfact
-!!      USE GLOBAL, ONLY: IOUT
+      USE GLOBAL, ONLY: IOUT
       IMPLICIT NONE
 !     ------------------------------------------------------------------
 !     SPECIFICATIONS:
 !     ------------------------------------------------------------------
 !     LOCAL VARIABLES
 !     -----------------------------------------------------------------
-      INTEGER il ! make METHOD global
-!!      INTEGER ic, ir, il, iltyp, METHOD1 ! make METHOD global
+      INTEGER ic, ir, il, iltyp, METHOD1 ! make METHOD global
       DOUBLE PRECISION hup, bbot, zero, ttop, factor, x, EPS, ACOF
-      DOUBLE PRECISION Y
-!!      DOUBLE PRECISION cof1, cof2, s, v, factor1, factor2, Y, Z, EPSQD
+      DOUBLE PRECISION cof1, cof2, s, v, factor1, factor2, Y, Z, EPSQD
 !     -----------------------------------------------------------------
 ! Calculate saturated thickenss
       zero = 0.0D0
@@ -2098,8 +2075,7 @@ C------Set old saturation to new saturation.
 !
 !     SUBROUTINE GWF2UPWUPDATE. UPDATE VALUES AFTER OUTER ITERATION.
       SUBROUTINE GWF2UPWUPDATE(Itest, Igrid)
-      USE GLOBAL, ONLY: HNEW
-!!      USE GLOBAL, ONLY: Ncol, Nrow, Nlay, Ibound, HNEW
+      USE GLOBAL, ONLY: Ncol, Nrow, Nlay, Ibound, HNEW
       USE GWFNWTMODULE, ONLY: A, IA, Numactive, Diag, HITER
       IMPLICIT NONE
 !     ------------------------------------------------------------------
@@ -2133,8 +2109,7 @@ C------SET POINTERS FOR THE CURRENT GRID.
       SUBROUTINE Sn_update()
       USE GWFUPWMODULE
       USE GWFNWTMODULE, ONLY: Diag, Numactive
-      USE GLOBAL,      ONLY: HNEW,BOTM,LBOTM
-!!      USE GLOBAL,      ONLY: Iout,HNEW,BOTM,LBOTM,NLAY
+      USE GLOBAL,      ONLY: Iout,HNEW,BOTM,LBOTM,NLAY
       IMPLICIT NONE
 !     ------------------------------------------------------------------
 !     SPECIFICATIONS:
@@ -2179,9 +2154,8 @@ C------SET POINTERS FOR THE CURRENT GRID.
 !     -----------------------------------------------------------------
 !     LOCAL VARIABLES
 !     -----------------------------------------------------------------
-      DOUBLE PRECISION factor, x, EPS, ACOF, Y
-!!      DOUBLE PRECISION factor, x, s, v, cof1, cof2, EPS, ACOF, Y
-!!      DOUBLE PRECISION EPSQD, z
+      DOUBLE PRECISION factor, x, s, v, cof1, cof2, EPS, ACOF, Y
+      DOUBLE PRECISION EPSQD, z
       DOUBLE PRECISION DHORIZUPW
       INTEGER il
 !     -----------------------------------------------------------------
@@ -2199,7 +2173,8 @@ C-------STRAIGHT LINE WITH PARABOLIC SMOOTHING
       ELSEIF(X.LT.1.0D0)THEN
         X = 1.0 - X
         Y = - ACOF * x / (EPS * (Ttop - Bbot))
-        Y = 1.0-Y
+!        Y = 1.0-Y
+        Y = -Y     !2-26-16. 1 should go away for derivative
       ELSE
         Y = 0.0
       ENDIF

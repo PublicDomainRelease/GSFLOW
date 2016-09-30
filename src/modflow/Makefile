@@ -1,5 +1,5 @@
 # mf2k5 libraray makefile
-# $Id: Makefile 7494 2015-07-17 16:30:06Z rsregan $
+# $Id: Makefile 8266 2016-05-09 16:13:58Z rsregan $
 
 include ../makelist
 
@@ -23,6 +23,7 @@ LIBOBJS = \
         gwf2upw1.o \
         gwfuzfmodule_NWT.o \
         gwfsfrmodule_NWT.o \
+        gwflakmodule_NWT.o \
         gwf2lak7_NWT.o \
         gwf2sfr7_NWT.o \
         gwf2uzf1_NWT.o \
@@ -76,13 +77,13 @@ mach_mod.o: mach_mod.f90
 	$(FC) -c $(FFLAGS) mach_mod.f90
 
 NWT1_gmres.o: NWT1_gmres.f90
-	$(CC) -c $(FFLAGS) NWT1_gmres.f90
+	$(FC) -c $(FFLAGS) NWT1_gmres.f90
 
 NWT1_ilupc_mod.o: NWT1_ilupc_mod.f90
-	$(CC) -c $(FFLAGS) NWT1_ilupc_mod.f90
+	$(FC) -c $(FFLAGS) NWT1_ilupc_mod.f90
 
 ccfd.o: ccfd.c ccfd.h
-	$(CC) -c $(CFLAGS) ccfd.c
+	$(FC) -c $(CFLAGS) ccfd.c
 
 mhc7.o: mhc7.f
 	$(FC) -c $(FFLAGS) mhc7.f
@@ -129,10 +130,10 @@ gwf2upw7.o: gwf2upw1.f gwf2bas7_NWT.o NWT1_module.o
 gwf2wel7.o: gwf2wel7.f gwf2bas7_NWT.o NWT1_module.o gwf2upw1.o
 	$(FC) $(FFLAGS) -c gwf2wel7.f
 
-gwf2sfr7_NWT.o: gwf2sfr7_NWT.f gwf2bas7_NWT.o gwfsfrmodule_NWT.o gwf2lpf7.o gwf2bcf7.o gwf2huf7.o gwf2upw1.o gwfuzfmodule_NWT.o NWT1_module.o gwf2lak7_NWT.o
+gwf2sfr7_NWT.o: gwf2sfr7_NWT.f gwf2bas7_NWT.o gwfsfrmodule_NWT.o gwf2lpf7.o gwf2bcf7.o gwf2huf7.o gwf2upw1.o gwfuzfmodule_NWT.o NWT1_module.o gwflakmodule_NWT.o
 	$(FC) $(FFLAGS) -c gwf2sfr7_NWT.f
 
-gwf2uzf1_NWT.o: gwf2uzf1_NWT.f gwf2bas7_NWT.o gwfsfrmodule_NWT.o gwf2lpf7.o gwf2bcf7.o gwf2huf7.o gwf2upw1.o gwfuzfmodule_NWT.o NWT1_module.o gwf2lak7_NWT.o
+gwf2uzf1_NWT.o: gwf2uzf1_NWT.f gwf2bas7_NWT.o gwfsfrmodule_NWT.o gwf2lpf7.o gwf2bcf7.o gwf2huf7.o gwf2upw1.o gwfuzfmodule_NWT.o NWT1_module.o gwflakmodule_NWT.o
 	$(FC) $(FFLAGS) -c gwf2uzf1_NWT.f
 
 gwf2mnw17_NWT.o: gwf2mnw17_NWT.f gwf2bas7_NWT.o gmg7.o sip7_NWT.o de47_NWT.o pcg7_NWT.o NWT1_module.o gwf2bcf7.o gwf2lpf7.o gwf2huf7.o gwf2upw1.o
@@ -150,7 +151,7 @@ gwf2chd7.o: gwf2chd7.f gwf2bas7_NWT.o
 gwf2fbh7.o: gwf2fhb7.f gwf2bas7_NWT.o
 	$(FC) $(FFLAGS) -c gwf2fhb7.f
 
-gwf2gag7.o: gwf2gag7.f gwf2bas7_NWT.o gwf2lak7_NWT.o gwf2sfr7_NWT.o
+gwf2gag7.o: gwf2gag7.f gwf2bas7_NWT.o gwflakmodule_NWT.o gwf2sfr7_NWT.o
 	$(FC) $(FFLAGS) -c gwf2gag7.f
 
 gwf2ghb7_NWT.o: gwf2ghb7_NWT.f gwf2bas7_NWT.o
@@ -190,7 +191,7 @@ obs2bas7.o: obs2bas7.f gwf2bas7_NWT.o
 obs2chd7.o: obs2chd7.f gwf2bas7_NWT.o
 	$(FC) $(FFLAGS) -c obs2chd7.f
 
-gwf2lak7_NWT.o: gwf2lak7_NWT.f gwf2bas7_NWT.o gwfsfrmodule_NWT.o gwfuzfmodule_NWT.o
+gwf2lak7_NWT.o: gwf2lak7_NWT.f gwflakmodule_NWT.o gwf2bas7_NWT.o gwfsfrmodule_NWT.o gwfuzfmodule_NWT.o
 	$(FC) $(FFLAGS) -c gwf2lak7_NWT.f
 
 obs2ghb7.o: obs2ghb7.f gwf2bas7_NWT.o gwf2ghb7_NWT.o
@@ -201,6 +202,9 @@ gwfsfrmodule_NWT.o: gwfsfrmodule_NWT.f
 
 gwfuzfmodule_NWT.o: gwfuzfmodule_NWT.f
 	$(FC) $(FFLAGS) -c gwfuzfmodule_NWT.f
+
+gwflakmodule_NWT.o: gwflakmodule_NWT.f
+	$(FC) $(FFLAGS) -c gwflakmodule_NWT.f
 
 global.mod: gwf2bas7_NWT.o
 	$(FC) $(FFLAGS) -c gwf2bas7_NWT.f

@@ -39,12 +39,13 @@
       USE PRMS_SOLTAB, ONLY: Soltab_basinpotsw, Hru_cossl, Soltab_potsw
       IMPLICIT NONE
 ! Functions
-      INTRINSIC ABS, DBLE
+      INTRINSIC ABS, DBLE, SNGL
       INTEGER, EXTERNAL :: declparam, control_integer, getparam, control_string, declvar
       EXTERNAL :: read_error, precip_form, temp_set, find_header_end, find_current_time
       EXTERNAL :: read_cbh_date, check_cbh_value, check_cbh_intvalue, print_module
 ! Local Variables
       INTEGER :: yr, mo, dy, i, hr, mn, sec, jj, ierr, istop, missing, ios
+      DOUBLE PRECISION :: sum_obs
       REAL :: tmax_hru, tmin_hru, ppt, harea
       CHARACTER(LEN=80), SAVE :: Version_climate_hru
 !***********************************************************************
@@ -79,7 +80,7 @@
           Basin_ppt = 0.0D0
           Basin_rain = 0.0D0
           Basin_snow = 0.0D0
-          Basin_obs_ppt = 0.0D0
+          sum_obs = 0.0D0
         ENDIF
 
         IF ( Climate_potet_flag==1 ) THEN
@@ -191,11 +192,12 @@
      &                         Tmaxf(i), Tminf(i), Pptmix(i), Newsnow(i), &
      &                         Prmx(i), Tmax_allrain_f(i,Nowmonth), &
      &                         Rain_cbh_adj(i,Nowmonth), Snow_cbh_adj(i,Nowmonth), &
-     &                         Adjmix_rain(i,Nowmonth), harea, Basin_obs_ppt, Tmax_allsnow_f(i,Nowmonth))
+     &                         Adjmix_rain(i,Nowmonth), harea, sum_obs, Tmax_allsnow_f(i,Nowmonth))
             ELSEIF ( Hru_ppt(i)<0.0 ) THEN
-              PRINT *, 'WARNING, negative precipitation value entered in CBH File and set to 0.0, HRU:', i
+              PRINT *, 'ERROR, negative precipitation value entered in CBH File, HRU:', i
               CALL print_date(0)
-              Hru_ppt(i) = 0.0
+              ierr = 1
+!              Hru_ppt(i) = 0.0
             ENDIF
           ENDIF
 
@@ -210,7 +212,7 @@
           ENDIF
         ENDDO
 
-        IF ( missing==1 ) THEN
+        IF ( missing==1 .OR. ierr==1 ) THEN
           CALL print_date(0)
           STOP
         ENDIF
@@ -225,21 +227,21 @@
 
         IF ( Climate_precip_flag==1 ) THEN
           Basin_ppt = Basin_ppt*Basin_area_inv
-          Basin_obs_ppt = Basin_obs_ppt*Basin_area_inv
+          Basin_obs_ppt = sum_obs*Basin_area_inv
           Basin_rain = Basin_rain*Basin_area_inv
           Basin_snow = Basin_snow*Basin_area_inv
         ENDIF
         IF ( Climate_potet_flag==1 ) Basin_potet = Basin_potet*Basin_area_inv
         IF ( Climate_swrad_flag==1 ) THEN
           Basin_horad = Soltab_basinpotsw(Jday)
-          IF ( Orad_flag==0 ) Orad = (Swrad(1)*Hru_cossl(1)*Basin_horad)/Soltab_potsw(Jday,1) ! ??bad assumption using HRU 1
+          IF ( Orad_flag==0 ) Orad = SNGL( (DBLE(Swrad(1))*Hru_cossl(1)*Basin_horad)/Soltab_potsw(Jday,1) ) ! ??bad assumption using HRU 1
           Basin_potsw = Basin_potsw*Basin_area_inv
         ENDIF
         IF ( Humidity_cbh_flag==1 ) Basin_humidity = Basin_humidity*Basin_area_inv
         IF ( Windspeed_cbh_flag==1 ) Basin_windspeed = Basin_windspeed*Basin_area_inv
 
       ELSEIF ( Process(:4)=='decl' ) THEN
-        Version_climate_hru = '$Id: climate_hru.f90 7588 2015-08-18 22:58:42Z rsregan $'
+        Version_climate_hru = 'climate_hru.f90 2016-03-02 17:03:19Z'
         MODNAME = 'climate_hru'
 
         IF ( control_integer(Cbh_check_flag, 'cbh_check_flag')/=0 ) Cbh_check_flag = 1
@@ -253,11 +255,11 @@
         IF ( Humidity_cbh_flag==1 .OR. Model==99 ) THEN
           IF ( declvar(MODNAME, 'basin_humidity', 'one', 1, 'double', &
      &         'Basin area-weighted average humidity', &
-     &         'decimal fraction', Basin_humidity)/=0 ) CALL read_error(3, 'basin_humidity')
+     &         'percentage', Basin_humidity)/=0 ) CALL read_error(3, 'basin_humidity')
           ALLOCATE ( Humidity_hru(Nhru) )
           IF ( declvar(MODNAME, 'humidity_hru', 'nhru', Nhru, 'real', &
      &         'Relative humidity of each HRU', &
-     &         'decimal fraction', Humidity_hru)/=0 ) CALL read_error(3, 'humidity_hru')
+     &         'percentage', Humidity_hru)/=0 ) CALL read_error(3, 'humidity_hru')
         ENDIF
         IF ( Windspeed_cbh_flag==1 .OR. Model==99 ) THEN
           IF ( declvar(MODNAME, 'basin_windspeed', 'one', 1, 'double', &

@@ -53,15 +53,14 @@ C     READ STREAM DATA THAT IS CONSTANT FOR ENTIRE SIMULATION:
 C     REACH DATA AND PARAMETER DEFINITIONS
 !--------REVISED FOR MODFLOW-2005 RELEASE 1.9, FEBRUARY 6, 2012
 !rgn------REVISION NUMBER CHANGED TO BE CONSISTENT WITH NWT RELEASE
-!rgn------NEW VERSION NUMBER 1.0.9:  July 1, 2014
+!rgn------NEW VERSION NUMBER 1.1.1, 7/28/2016
 C     ******************************************************************
 C     SPECIFICATIONS:
 C     ------------------------------------------------------------------
       USE GWFSFRMODULE
-      USE GLOBAL,       ONLY: IOUT, IBOUND, BOTM, DELR, DELC,
-     +                        ITRSS,NCOL,NROW,LAYHDT  !CJM added ncol and nrow
-!!      USE GLOBAL,       ONLY: IOUT, IBOUND, BOTM, STRT, DELR, DELC,
-!!     +                        ITRSS,NCOL,NROW,LAYHDT  !CJM added ncol and nrow
+!gsf  USE LMTMODULE,    ONLY: NFLOWTYPE
+      USE GLOBAL,       ONLY: IOUT, IBOUND, BOTM, STRT, DELR, DELC, 
+     +                        ITRSS, NCOL, NROW, LAYHDT, IUNIT  !CJM added ncol and nrow
       USE GWFLPFMODULE, ONLY: SC2LPF=>SC2
       USE GWFBCFMODULE, ONLY: SC1, SC2, LAYCON
       USE GWFHUFMODULE, ONLY: SC2HUF
@@ -86,14 +85,16 @@ C     ------------------------------------------------------------------
       INTEGER nseg, nreach, krch, irch, jrch, jseg, ireach, ksfropt
       INTEGER krck, irck, jrck, jsegck, ireachck, kkptflg, ib
       INTEGER lstsum, lstbeg, numinst, idum(1), ip, iterp, mstrmar
-      INTEGER nssar, nstrmar, NPP, MXVL, IRFG, ITRFLG
+      INTEGER nssar, nstrmar, NPP, MXVL, IRFG
 !!      INTEGER nssar, nstrmar, Ltyp, NPP, MXVL, IRFG, ITRFLG
       INTEGER k, kkrch, IERR, IFLG
       REAL r, seglen, sumlen, thsslpe, thislpe, uhcslpe, rchlen, dist
       REAL epsslpe
+      character(len=40) :: keyvalue
+      character(len=16)  :: text        = 'SFR2'
+      logical :: found
 C     ------------------------------------------------------------------
-      Version_sfr =
-     +'$Id: gwf2sfr7_NWT.f 7541 2015-07-30 21:46:59Z rniswon $'
+      Version_sfr = 'gwf2sfr7_NWT.f 2016-07-28 11:42:00Z'
       iterp = 1
       idum(1) = 0
       ALLOCATE (NSS, NSTRM,TOTSPFLOW)
@@ -105,7 +106,12 @@ C     ------------------------------------------------------------------
       ALLOCATE (NSEGDIM)
       ALLOCATE (SFRRATIN, SFRRATOUT)
       ALLOCATE (STRMDELSTOR_CUM, STRMDELSTOR_RATE)
-      ALLOCATE (NINTOT)                                    !EDM - FOR LMT
+      ALLOCATE (SFRUZINFIL, SFRUZDELSTOR, SFRUZRECH)
+      ALLOCATE (ITRFLG)
+!gsf  IF(IUNIT(49).GT.0) THEN
+!gsf    ALLOCATE (NINTOT,NFLOWTYPE)                             !EDM - FOR LMT
+!gsf  ENDIF
+      ALLOCATE (FACTOR)
 C1------IDENTIFY PACKAGE AND INITIALIZE NSTRM.
       WRITE (IOUT, 9001) In
  9001 FORMAT (1X, /, ' SFR7 -- STREAMFLOW ROUTING PACKAGE, '
@@ -134,41 +140,70 @@ C         DLEAK, ISTCB1, ISTCB2.
       lloc = 1
       IERR = 0
       IFLG = 0
+      found = .false.
+      factor = 1.0
+      SFRUZINFIL = 0.0
+      SFRUZDELSTOR = 0.0
+      SFRUZRECH = 0.0
       CALL URDCOM(In, IOUT, line)
 ! Check for alternate input (replacement for setting NSTRM<0).
       CALL UPARLSTAL(IN,IOUT,LINE,NPP,MXVL)
+      
       lloc = 1
       CALL URWORD(LINE,LLOC,ISTART,ISTOP,1,I,R,IOUT,IN)
-      IF(LINE(ISTART:ISTOP).EQ.'REACHINPUT') THEN
-         IRFG = 1
-         WRITE(IOUT,32)
-   32  FORMAT(1X,I10,' Some stream information will be read by reach. ',
+      keyvalue = LINE(ISTART:ISTOP)
+      call upcase(keyvalue)
+      IF(keyvalue.EQ.'OPTIONS') THEN
+              write(iout,'(/1x,a)') 'PROCESSING '//
+     +              trim(adjustl(text)) //' OPTIONS'
+        do
+        CALL URDCOM(In, IOUT, line)
+        lloc = 1
+        CALL URWORD(LINE,LLOC,ISTART,ISTOP,1,I,R,IOUT,IN)
+        keyvalue = LINE(ISTART:ISTOP)
+        call upcase(keyvalue)
+        select case (keyvalue)
+          case('REACHINPUT')
+            IRFG = 1
+            WRITE(IOUT,32)
+   32 FORMAT(1X,I10,' Some stream information will be read by reach. ',
      +                'This option replaces NSTRM<0')
-      ELSE
-         WRITE(IOUT,'(A)') ' Segment information will not be ',
-     +                     ' read by reach'
-      END IF
-      CALL URWORD(LINE,LLOC,ISTART,ISTOP,1,I,R,IOUT,IN)
-      IF(LINE(ISTART:ISTOP).EQ.'TRANSROUTE') THEN
-        ITRFLG = 1
-      END IF
-      IF ( ITRFLG.EQ.1 .OR. IRFG.EQ.1 ) READ(IN,'(A)') LINE
-! Check keyword for tabular inflow rates.
-      CALL UPARLSTAL(IN,IOUT,LINE,NPP,MXVL)
-      lloc = 1
-      CALL URWORD(LINE,LLOC,ISTART,ISTOP,1,I,R,IOUT,IN)
-      IF(LINE(ISTART:ISTOP).EQ.'TABFILES') THEN
-         CALL URWORD(LINE,LLOC,ISTART,ISTOP,2,NUMTAB,R,IOUT,IN)
-         IF(NUMTAB.LT.0) NUMTAB=0
-         CALL URWORD(LINE,LLOC,ISTART,ISTOP,2,MAXVAL,R,IOUT,IN)
-         IF(MAXVAL.LT.0) MAXVAL=0
-         WRITE(IOUT,31) NUMTAB,MAXVAL
-   31    FORMAT(1X,I10,' Specifed inflow files will be read ',
+            found = .true.
+          case('TRANSROUTE')
+            ITRFLG = 1
+            WRITE(iout,*)
+            WRITE(IOUT,'(A)')' TRANSIENT ROUTING IN STREAMS IS ACTIVE'
+            WRITE(iout,*)
+            found = .true.
+          case('TABFILES')
+            CALL URWORD(LINE,LLOC,ISTART,ISTOP,2,NUMTAB,R,IOUT,IN)
+            IF(NUMTAB.LT.0) NUMTAB=0
+            CALL URWORD(LINE,LLOC,ISTART,ISTOP,2,MAXVAL,R,IOUT,IN)
+            IF(MAXVAL.LT.0) MAXVAL=0
+            WRITE(IOUT,31) NUMTAB,MAXVAL
+   31    FORMAT(1X,I10,' Specified inflow files will be read ',
      +                 'with a maximum of ',I10,' row entries per file')
-         READ(IN,'(A)') LINE
-      ELSE
-         WRITE(IOUT,'(A)') ' No specifed inflow files'
-      END IF
+            found = .true.
+          case('LOSSFACTOR')
+            WRITE(IOUT,*)
+            CALL URWORD(line, lloc, istart, istop, 3, i, FACTOR,IOUT,In)
+            WRITE(IOUT,322) FACTOR
+  322    FORMAT('Stream loss will be calculated as a factor ',
+     +                 'of the streambed hydraulic conductivity. ',
+     +                 'Multiplication factor is equal to ',E20.10)
+           found = .true.
+        case ('END')
+          CALL URDCOM(In, IOUT, line)
+          exit
+        case default
+    ! -- No options found
+        found = .false.
+        CALL URDCOM(In, IOUT, line)
+        exit
+        end select
+      end do
+      end if
+!
       lloc = 1
       CALL URWORD(line, lloc, istart, istop, 2, NSTRM, r, IOUT, In)
       CALL URWORD(line, lloc, istart, istop, 2, NSS, r, IOUT, In)
@@ -958,7 +993,7 @@ C     ------------------------------------------------------------------
 C
       IF ( Iunitlpf.GT.0 .OR. Iunithuf.GT.0 .OR. Iunitupw.GT.0 ) THEN 
         IF ( ISFROPT.EQ.2.OR.ISFROPT.EQ.4 )
-     +    CALL SGWF2SFR7UHC(Iunitlpf, Iunithuf, Iunitupw)
+     +    CALL SGWF2SFR7UHC(Iunitlpf, Iunitupw)
       END IF
 C
 C23-----SAVE POINTERS FOR GRID AND RETURN.
@@ -967,7 +1002,7 @@ C23-----SAVE POINTERS FOR GRID AND RETURN.
       END SUBROUTINE GWF2SFR7AR
 C
 C-------SUBROUTINE SGWF2SFR7UHC
-      SUBROUTINE SGWF2SFR7UHC(Iunitlpf, Iunithuf, Iunitupw)
+      SUBROUTINE SGWF2SFR7UHC(Iunitlpf, Iunitupw)
 C     ******************************************************************
 C     SETS UNSATURATED VERTICAL HYDRAULIC CONDUCTIVITY TO VERTICAL
 C     HYDRAULIC CONDUCTIVITY IN THE LAYER-PROPERTY FLOW PACKAGE.
@@ -982,7 +1017,7 @@ C     ******************************************************************
       IMPLICIT NONE
 C     ------------------------------------------------------------------
 C     SPECIFICATIONS:
-      INTEGER Iunitlpf, Iunithuf, Iunitupw
+      INTEGER Iunitlpf, Iunitupw
 C     ------------------------------------------------------------------
 C     LOCAL VARIABLES
 C     ------------------------------------------------------------------
@@ -1035,16 +1070,16 @@ C2------RETURN.
 C
 C-------SUBROUTINE GWF2SFR7RP
       SUBROUTINE GWF2SFR7RP(In, Iunitgwt, Iunitlak, Kkper, Kkstp, Nsol,
-     +                      Iouts, Iunitbcf, Iunitlpf, Iunithuf, 
-     +                      Iunitupw, Iunituzf, Igrid)
+     +                      Iouts, Iunituzf, Igrid)
 C     ******************************************************************
 C     READ STREAM DATA FOR STRESS PERIOD
 !--------REVISED FOR MODFLOW-2005 RELEASE 1.9, FEBRUARY 6, 2012
 C     Compute three new tables for lake outflow
 C     ******************************************************************
       USE GWFSFRMODULE
+!gsf  USE LMTMODULE,    ONLY: NFLOWTYPE,FLOWTYPE
       USE GLOBAL,       ONLY: IOUT, ISSFLG, IBOUND, BOTM, HNEW, NLAY, 
-     +                        LAYHDT
+     +                        LAYHDT, IUNIT
       USE PARAMMODULE,  ONLY: MXPAR, PARTYP, IACTIVE, IPLOC
       USE ICHKSTRBOT_MODULE
       IMPLICIT NONE
@@ -1068,9 +1103,8 @@ C     ------------------------------------------------------------------
       INTEGER i, ic, icalc, ichk, icp, iflginit, ii, ik, il, ilay, ip,
      +        ipt, ir, irch, irp, isoptflg, iss, istep, istsg, iwvcnt,
      +        jj, jk, k5, k6, k7, kk, ksfropt, kss, ktot, l, lstbeg,
-     +        nseg, nstrpts,krck,irck,jrck,ireachck, j, numval, iunit,
+     +        nseg, nstrpts,krck,irck,jrck,ireachck, j, numval,iunitnum,
      +        ierr,IFLG
-!!     +        Ltyp,ierr,IFLG
 C     ------------------------------------------------------------------
 C
 C-------SET POINTERS FOR CURRENT GRID.
@@ -1283,6 +1317,14 @@ C
 C18-----COMPUTE STREAM REACH VARIABLES.
         irch = 1
         ksfropt = 0
+!gsf    IF(IUNIT(49).GT.0) THEN  !IUNIT(49): LMT
+!gsf      FLOWTYPE(1) = 'NA'
+!gsf      FLOWTYPE(2) = 'NA'
+!gsf      FLOWTYPE(3) = 'NA'
+!gsf      FLOWTYPE(4) = 'NA'
+!gsf      FLOWTYPE(5) = 'NA'
+!gsf      NFLOWTYPE=0
+!gsf    ENDIF
         DO nseg = 1, NSS
           ireachck = ISTRM(5, irch)
           icalc = ISEG(1, nseg)
@@ -1291,6 +1333,33 @@ C18-----COMPUTE STREAM REACH VARIABLES.
           etsw = SEG(4, nseg)
           pptsw = SEG(5, nseg)
           sumlen = 0.0
+C
+C--SET SOME VALUES NEEDED BY THE LMT PACKAGE
+C--AS EACH SEGMENT IS READ, DETERMINE IF ANY OF THE FOLLOWING ARE ACTIVE
+C  (1) STORAGE (TRANSIENT ROUTING); (2) PRECIP; (3) EVAP; (4) USER-SPECIFIED RUNOFF; 
+C  (5) RUNOFF FROM UZF1 PACKAGE; (6) UNSATURATED FLOW BENEATH REACH (NOT AVAILABLE YET)
+!gsf      IF(IUNIT(49).GT.0) THEN  !IUNIT(49): LMT
+!gsf        IF(FLOWTYPE(1).EQ.'NA') THEN !Originally: (ITRFLG.EQ.1.AND.FLOWTYPE(1).EQ.'NA')
+!gsf          NFLOWTYPE = NFLOWTYPE + 1
+!gsf          FLOWTYPE(1)='VOLUME'
+!gsf        ENDIF
+!gsf        IF(FLOWTYPE(2).EQ.'NA') THEN
+!gsf          NFLOWTYPE = NFLOWTYPE + 1
+!gsf          FLOWTYPE(2)='RCHLEN'
+!gsf        ENDIF
+!gsf        IF(SEG(5,nseg).NE.0.AND.FLOWTYPE(3).EQ.'NA') THEN  ! CHECK FOR SURFACE WATER PRECIP
+!gsf          NFLOWTYPE = NFLOWTYPE + 1
+!gsf          FLOWTYPE(3)='PRECIP'
+!gsf        ENDIF
+!gsf        IF(SEG(4,nseg).NE.0.AND.FLOWTYPE(4).EQ.'NA') THEN  ! CHECK FOR SURFACE WATER EVAP
+!gsf          NFLOWTYPE = NFLOWTYPE + 1
+!gsf          FLOWTYPE(4)='EVAP'
+!gsf        ENDIF
+!gsf        IF(SEG(3,nseg).NE.0.AND.FLOWTYPE(5).EQ.'NA') THEN  ! CHECK FOR USER-SPECIFIED RUNOFF
+!gsf          NFLOWTYPE = NFLOWTYPE + 1
+!gsf          FLOWTYPE(5)='RUNOFF'
+!gsf        ENDIF
+!gsf      ENDIF
 C
 C19-----COMPUTE VARIABLES NEEDED FOR STREAM LEAKAGE.
           IF ( icalc.EQ.0 .OR. icalc.EQ.1 ) THEN
@@ -1820,9 +1889,9 @@ CC45-----READ TABLES FOR SPECIFIED INFLOWS
             WRITE(iout,9033)ISFRLIST(1,i),ISFRLIST(3,i)
             WRITE(iout,9031)
             numval = ISFRLIST(2,i)
-            iunit = ISFRLIST(3,i)
+            iunitnum = ISFRLIST(3,i)
             DO j = 1, numval
-              READ(iunit,*)TABTIME(j,ISFRLIST(1,i)),
+              READ(iunitnum,*)TABTIME(j,ISFRLIST(1,i)),
      +                     TABFLOW(j,ISFRLIST(1,i))
               IF ( TABFLOW(j,ISFRLIST(1,i)).LT.0.0 ) THEN
                 TABFLOW(j,ISFRLIST(1,i)) = 0.0
@@ -1850,7 +1919,7 @@ C     *****************************************************************
 C     ADD STREAM TERMS TO RHS AND HCOF IF FLOW OCCURS IN MODEL CELL
 !--------REVISED FOR MODFLOW-2005 RELEASE 1.9, FEBRUARY 6, 2012
 !rgn------REVISION NUMBER CHANGED TO BE CONSISTENT WITH NWT RELEASE
-!rgn------NEW VERSION NUMBER 1.0.9:  July 1, 2014
+!rgn------NEW VERSION NUMBER 1.1.1, 7/28/2016
 C     *****************************************************************
 !      USE GWFRCHMODULE,ONLY:RECH  !cjm
 !!      USE GWFUZFMODULE,ONLY:FINF  !cjm
@@ -1900,7 +1969,7 @@ C     -----------------------------------------------------------------
      +                 flwpet1, flwpet2, err, dlhold, precip, etstr, 
      +                 runof, runoff, qa, qb, qc, qd, hstrave, fbot
       DOUBLE PRECISION fbcheck, hld, totflwt, sbdthk, thetas, epsilon, 
-     +                 thr, thet1, dvrsn,
+     +                 thr, thet1, dvrsn, fact,
      +                 depthtr, dwdh, wetpermsmooth,cstrsmooth
 !      DOUBLE PRECISION rhsh1, rhsh2, hcofh1, hcofh2
       REAL areamax, avhc, errold, fks, ha, qcnst, seep, 
@@ -1912,7 +1981,7 @@ C     -----------------------------------------------------------------
      +        il, ilay, iprior, iprndpth, iprvsg, ir, istsg, itot,itrib,
      +        itstr, iwidthcheck, kerp, kss, l, lk, ll, nstrpts, nreach,
      +        maxwav, icalccheck, iskip, iss, lsub, numdelt, irt, !  ii, 
-     +        idr, lfold, ij, illake, lakid
+     +        lfold, illake, lakid
 !!      INTEGER irr, icc, icount  !cjm
       DOUBLE PRECISION FIVE_THIRDS
       PARAMETER (FIVE_THIRDS=5.0D0/3.0D0)
@@ -1932,6 +2001,7 @@ C2------THERE ARE STREAMS.  INITIALIZE SEGMENT INFLOWS AND OUTFLOWS
 C         TO ZERO FOR LAKE PACKAGE.
       itstr = 0
       iprvsg = -1 
+      fact = FACTOR
 !      fin = 0.0
 !      fout = 0.0
       IF ( Iunitlak.GT.0 ) THEN
@@ -2190,6 +2260,12 @@ C24-----INITIALIZE VARIABLES.
           avhc = STRM(6, l)
           sbdthk = STRM(8, l)
           hstr = depth + STRM(3, l)
+! factor for losing streams
+          if ( hstr-h > 0.0 ) then
+            avhc = avhc*fact
+          else
+            avhc = STRM(6, l)
+          end if
           cstr = STRM(16, l)
           precip = STRM(14, l)
           etstr = STRM(13, l)
@@ -2503,6 +2579,12 @@ C         AND STREAMBED LEAKAGE WHEN ICALC IS GREATER THAN 0.
               ibflg = 0
               depth1 = depthp
               depth2 = depth1 + 2.0D0*(deps)
+              hstr = depth1 + STRM(3, l)
+              if ( hstr-h > 0.0 ) then
+                avhc = avhc*fact
+              else
+                avhc = STRM(6, l)
+              end if
 C
 C41-----CALCULATE FLOBOT1 AND FLOBOT2 FOR ICALC EQUAL TO 1.
 Cdep  Corrected depth1+dlh and depth2+dlh to be depth1 and depth2.
@@ -3385,7 +3467,7 @@ C     *****************************************************************
       USE GWFLAKMODULE, ONLY: LKARR1, STGNEW
 !!      USE GWFLAKMODULE, ONLY: VOL, LKARR1, STGNEW, STGOLD
       USE GLOBAL,       ONLY: NCOL, NROW, NLAY, IOUT, ISSFLG, IBOUND,
-     +                        HNEW, BUFF, BOTM, LBOTM
+     +                        HNEW, BUFF, BOTM, LBOTM, IUNIT
 !!      USE GLOBAL,       ONLY: NCOL, NROW, NLAY, IOUT, ISSFLG, IBOUND,
 !!     +                        HNEW, BUFF, BOTM, LBOTM, DELR, DELC
 !IFACE
@@ -3431,7 +3513,8 @@ C     ------------------------------------------------------------------
      +                 slope, cdpth, fdpth, hdiff, grad, depth,
      +                 hld, fbcheck, totflwt, totdelstor, totuzstor,
      +                 thetas, epsilon, thr, qa, qb, qc, qd, awdth,
-     +                 bwdth, gwflow, dvrsn, fbot, depthtr, strtop,dwdh
+     +                 bwdth, gwflow, dvrsn, fbot, depthtr, strtop,
+     +                 dwdh, fact
       EXTERNAL CALC_XSA
       DOUBLE PRECISION CALC_XSA
 C     ------------------------------------------------------------------
@@ -3467,8 +3550,14 @@ C         ACCUMULATORS (RATIN AND RATOUT).
       Transient_bd_tot = 0.0
       Transient_bd = 0.0
       lfold = 0
+      fact = FACTOR
+      SFRUZINFIL = 0.0
+      SFRUZDELSTOR = 0.0
+      SFRUZRECH = 0.0
       maxwav = NSFRSETS*NSTRAIL
-      NINTOT = 0                  !EDM
+      IF(IUNIT(49).GT.0) THEN  !IUNIT(49): LMT
+        NINTOT = 0              
+      ENDIF
       IF ( IUZT.EQ.1 ) THEN
         SFRUZBD(4) = zero
         SFRUZBD(5) = zero
@@ -3582,10 +3671,12 @@ C6------DETERMINE STREAM SEGMENT AND REACH NUMBER.
 C
 C7------SET FLOWIN EQUAL TO STREAM SEGMENT INFLOW IF FIRST REACH.
           IF ( nreach.EQ.1 ) THEN
+            flowin = SEG(2, istsg)
 !EDM - Count connection for LMT
-            IF ( ISEG(3, istsg).EQ.5 ) THEN  
-              flowin = SEG(2, istsg)
-              NINTOT = NINTOT + 1
+            IF(IUNIT(49).GT.0) THEN  !IUNIT(49): LMT
+              IF ( ISEG(3, istsg).EQ.5 ) THEN  
+                NINTOT = NINTOT + 1 
+              ENDIF
             ENDIF
             IF ( IDIVAR(1,istsg).EQ.0 ) 
      +          sfrbudg_in = sfrbudg_in + SEG(2, istsg)
@@ -3612,7 +3703,7 @@ C11-----SET SPECIFIED OUTFLOW FROM LAKE
                 flowin = FXLKOT(istsg)
                 sfrbudg_in = sfrbudg_in + FXLKOT(istsg)
               END IF
-              NINTOT = NINTOT + 1    !EDM
+C              NINTOT = NINTOT + 1    !EDM  WITH NEW FTL FORMAT, THIS INDEX SHOULD NO LONGER BE COUNTED AS 'CONNECT SFR LAK' WILL ACCOUNT FOR IT
             END IF
 C
 C14-----COMPUTE ONE OR MORE DIVERSIONS FROM UPSTREAM SEGMENT.
@@ -3635,7 +3726,7 @@ C20-----SET FLOW INTO DIVERSION IF SEGMENT IS DIVERSION.
 !EDM - For LMT
                 IF( IDIVAR(1,istsg).GT.0 ) THEN
                   flowin = DVRSFLW(istsg)
-                  NINTOT = NINTOT + 1
+                  IF(IUNIT(49).GT.0) NINTOT = NINTOT + 1
                 ENDIF
               END IF
             END IF
@@ -3671,14 +3762,20 @@ C22-----SUM TRIBUTARY OUTFLOW AND USE AS INFLOW INTO DOWNSTREAM SEGMENT.
                 IF ( istsg.EQ.IOTSG(itrib) ) THEN
                   trbflw = SGOTFLW(itrib)
                   flowin = flowin + trbflw
-                  NINTOT = NINTOT + 1   !EDM
+                  IF(IUNIT(49).GT.0) THEN  !IUNIT(49): LMT
+                    NINTOT = NINTOT + 1   !EDM
+                  ENDIF
                 END IF
                 itrib = itrib + 1
               END DO
-              flowin = flowin + SEG(2, istsg)
-              NINTOT = NINTOT + 1   !EDM
+              flowin = flowin + SEG(2, istsg)  !SEG(2,istsg) stores specified inflow, and should have a spot in "Headwaters" flows
+              IF(IUNIT(49).GT.0) THEN  !IUNIT(49): LMT
+                IF(SEG(2,ISTSG).GT.CLOSEZERO) THEN  !Possible to have both tributary inflow and specified inflow. if the latter exist, count it next
+                  NINTOT = NINTOT + 1   !EDM
+                ENDIF
+              ENDIF
 C
-C23-----CHECK IF "FLOW" IS WITHDRAWAL, THAT WATER IS AVAILABLE.
+C23-----CHECK IF SPECIFIED "FLOW" IS WITHDRAWAL (i.e., negative), THAT WATER IS AVAILABLE.
               IF ( flowin.LT.0.0D0 ) THEN
                 flowin = 0.0D0
  !               WRITE (IOUT, 9003) istsg
@@ -3692,8 +3789,17 @@ C24-----SET INFLOW EQUAL TO OUTFLOW FROM UPSTREAM REACH, WHEN REACH
 C         GREATER THAN 1.
           ELSE IF ( nreach.GT.1 ) THEN
             flowin = STRM(9, ll)
-            NINTOT = NINTOT + 1    !EDM
+            IF(IUNIT(49).GT.0) THEN  !IUNIT(49): LMT
+              NINTOT = NINTOT + 1    !EDM
+            ENDIF
           END IF
+C
+C- EDM -IF OUTSEG=0 THEN SEGMENT IS A NETWORK SINK AND SHOULD BE COUNTED FOR LMT
+          IF(IUNIT(49).GT.0) THEN  !IUNIT(49): LMT
+            IF(IOTSG(ISTSG).EQ.0.AND.NREACH.EQ.ISEG(4,ISTSG)) THEN
+              NINTOT = NINTOT + 1
+            ENDIF
+          ENDIF
 C
 C25-----SEARCH FOR UPPER MOST ACTIVE CELL IN STREAM REACH. Revised ERB
           ilay = il
@@ -4245,7 +4351,7 @@ Cdep   added compact budget option for streamflow out of reach
       
 !!    2 FORMAT ('I4, 2('-', I2.2), I3.2, ':', I2.2, I3.2,I10,e15.6)
 
-924   format(e20.10,5000e20.10)
+!924   format(e20.10,5000e20.10)
 !
 C
 C52-----RETURN.
@@ -6129,7 +6235,8 @@ C     ZONE BENEATH STREAMBED.
 !--------REVISED FOR MODFLOW-2005 RELEASE 1.9, FEBRUARY 6, 2012
 C     ******************************************************************
       USE GWFSFRMODULE, ONLY: ISUZN,NSTOTRL,NUMAVE,STRM,ITRLSTH,SFRUZBD,
-     +                        SUMLEAK,SUMRCH, NEARZERO, CLOSEZERO
+     +                        SUMLEAK,SUMRCH, NEARZERO, CLOSEZERO,
+     +                        SFRUZINFIL,SFRUZDELSTOR,SFRUZRECH
       USE GLOBAL,       ONLY: BUFF
 !!      USE GLOBAL,       ONLY: BUFF,IOUT
 !      USE GWFBASMODULE, ONLY: DELT
@@ -6152,7 +6259,7 @@ C     ------------------------------------------------------------------
      +                 Uzdpst(NSTOTRL), Uzthst(NSTOTRL)
       DOUBLE PRECISION H, Hld, Thr, Thetas, Epsilon, Ratin, Ratout,
      +                 Flobot, Sbot, Totflwt, Totuzstor, Totdelstor,
-     +                 Gwflow
+     +                 Gwflow, uzinfiltot
 C     ------------------------------------------------------------------
 C     LOCAL VARIABLES
 C     ------------------------------------------------------------------
@@ -6172,6 +6279,7 @@ C
       Totflwt = 0.0D0
       Totdelstor = 0.0D0
       Totuzstor = 0.0D0
+      uzinfiltot = 0.0d0
       strtop = STRM(3, L)
       htest1 = H - Sbot
       htest2 = Hld - Sbot
@@ -6278,6 +6386,7 @@ C         STORAGE WHEN WATER TABLE RISES TO ELEVATION OF STREAMBED.
             Uzolsflx(i) = 0.0D0
             Totflwt = Totflwt + Uzflwt(i)
             Totdelstor = Totdelstor + Delstor(i)
+            uzinfiltot = uzinfiltot + Uzseep(i)
           END IF
         END DO
         SUMRCH(L) = SUMRCH(L) + Totflwt
@@ -6316,6 +6425,7 @@ C         WHEN WATER TABLE REMAINS BELOW STREAMBED ELEVATION.
           Uzflwt(i) = Uzseep(i)*Uzwdth(i)*Strlen*Deltinc
           Uzolsflx(i) = Uzseep(i)
           SUMRCH(L) = SUMRCH(L) + Uzflwt(i)
+          uzinfiltot = uzinfiltot + Uzseep(i)
           iset = iset + ntotuzn
         END DO 
         STRM(29,L) = 0.0
@@ -6573,6 +6683,7 @@ C         WHEN NO WAVES INTERSECTED.
               uzstorhold = Uzstor(i)
               Uzstor(i) = fm*Uzwdth(i)*Strlen
               Delstor(i) = Uzstor(i) - uzstorhold
+              uzinfiltot = uzinfiltot + Uzseep(i)
 C
 C13-----CALCULATE CHANGE IN UNSATURATED ZONE STORAGE WHEN GROUND- 
 C         WATER LEVEL DROPS.
@@ -6616,6 +6727,7 @@ C         WATER LEVEL DROPS.
             Totflwt = Totflwt + Uzflwt(i)
             Totdelstor = Totdelstor + Delstor(i)
             Totuzstor = Totuzstor + Uzstor(i)
+            uzinfiltot = uzinfiltot + Uzseep(i)
           END IF
         END DO
         SUMRCH(L) = SUMRCH(L) + Totflwt
@@ -6685,6 +6797,7 @@ C         BELOW STREAMBED.
             Totflwt = Totflwt + Uzflwt(i)
             Totdelstor = Totdelstor + Delstor(i)
             Totuzstor = Totuzstor + Uzstor(i)
+            uzinfiltot = uzinfiltot + Uzseep(i)
           END IF
         END DO
         SUMRCH(L) = SUMRCH(L) + Totflwt
@@ -6760,6 +6873,10 @@ C17-----STORE UNSATURATED FLOW RATES FOR GAGE PACKAGE.
       STRM(21, L) = Totflwt/Deltinc
       STRM(22, L) = Totdelstor/Deltinc
       STRM(23, L) = Totuzstor
+      SFRUZINFIL = SFRUZINFIL + uzinfiltot
+      SFRUZDELSTOR = SFRUZDELSTOR + Totdelstor/Deltinc
+      SFRUZRECH = SFRUZRECH + Totflwt
+
       DEALLOCATE (loop)
 C18-----RETURN.
       RETURN
@@ -8004,7 +8121,8 @@ C8------EXIT LOOP IF delq LESS THAN TOLERANCE.
       END DO CONVERGE
       stor = Strlen*(ad2+ac)/(2.0D0*Deltinc) - 
      +       Strlen*(ab+aa)/(2.0D0*Deltinc)
-      Chanstor = Qc - Qd - stor - FLOBOT
+!      Chanstor = Qc - Qd - stor - FLOBOT
+      Chanstor = stor
       IF ( i.GE.maxiter ) WRITE(IOUT,*) 'Non-convergence in ROUTE_CHAN',
      +                                  L, delq
       IF ( Qd.LT.tol ) tol = 0.0D0
@@ -8034,7 +8152,7 @@ C     ------------------------------------------------------------------
 C     ------------------------------------------------------------------
 C     LOCAL VARIABLES
 C     ------------------------------------------------------------------
-      INTEGER i, maxiter, iprndpth
+      INTEGER maxiter, iprndpth
       DOUBLE PRECISION aa, wetperm, depth, CALC_XSA
 C     ------------------------------------------------------------------
       iprndpth = 0
@@ -8074,7 +8192,7 @@ C
 C        SPECIFICATIONS:
 C     ------------------------------------------------------------------
       USE GWFBASMODULE, ONLY: TOTIM
-      USE GWFSFRMODULE, ONLY: NSS, NUMTAB, ISFRLIST,
+      USE GWFSFRMODULE, ONLY: NSS, TABFLOW, TABTIME, NUMTAB, ISFRLIST,
      +                        SEG, FXLKOT, IDIVAR, CLOSEZERO
 !!      USE GWFSFRMODULE, ONLY: NSS, TABFLOW, TABTIME, NUMTAB, ISFRLIST,
 !!     +                        SEG, FXLKOT, IDIVAR, CLOSEZERO
@@ -8126,8 +8244,9 @@ C     OF TIME TO CACULATE SPECIFIED INFLOW TO SEGMENTS.
 !!      USE GWFSFRMODULE, ONLY: TABFLOW, TABTIME, NUMTAB, ISFRLIST,
 !!     +                        CLOSEZERO
       USE GWFBASMODULE, ONLY: DELT
-      REAL TIME, FLOW, TIMEBEG
-      INTEGER INUM
+      IMPLICIT NONE
+      REAL TIME, FLOW, TIMEBEG, TIMEND, TIMESTART, SUMFLOW, TOLF2
+      INTEGER INUM, IEND, ISTM1, ISTART, iflg, ISEG, NVAL, I
       TOLF2=1.0E-4
       FLOW = 0.0
       NVAL = ISFRLIST(2,INUM)
@@ -8314,6 +8433,7 @@ C     ------------------------------------------------------------------
       DEALLOCATE (GWFSFRDAT(IGRID)%ISFRLIST)
       DEALLOCATE (GWFSFRDAT(IGRID)%FNETSEEP)
       DEALLOCATE (GWFSFRDAT(IGRID)%NSEGDIM)
+      DEALLOCATE (GWFSFRDAT(IGRID)%factor)
 C
       END SUBROUTINE GWF2SFR7DA
 C
@@ -8425,6 +8545,7 @@ C     ------------------------------------------------------------------
       ISFRLIST=>GWFSFRDAT(IGRID)%ISFRLIST
       FNETSEEP=>GWFSFRDAT(IGRID)%FNETSEEP
       NSEGDIM=>GWFSFRDAT(IGRID)%NSEGDIM
+      factor=>GWFSFRDAT(IGRID)%factor
 C
       END SUBROUTINE SGWF2SFR7PNT
 C
@@ -8536,5 +8657,6 @@ C     ------------------------------------------------------------------
       GWFSFRDAT(IGRID)%ISFRLIST=>ISFRLIST
       GWFSFRDAT(IGRID)%FNETSEEP=>FNETSEEP
       GWFSFRDAT(IGRID)%NSEGDIM=>NSEGDIM
+      GWFSFRDAT(IGRID)%factor=>factor
 C
       END SUBROUTINE SGWF2SFR7PSV
