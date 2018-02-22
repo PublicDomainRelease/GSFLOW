@@ -17,7 +17,7 @@
 !   Local Variables
       CHARACTER(LEN=6), SAVE :: MODNAME
       DOUBLE PRECISION, SAVE, ALLOCATABLE :: Gwstor_minarea(:), Gwin_dprst(:)
-      DOUBLE PRECISION, SAVE :: Basin_gw_upslope, Basin_gwfarflow
+      DOUBLE PRECISION, SAVE :: Basin_gw_upslope
       INTEGER, SAVE :: Gwminarea_flag
       DOUBLE PRECISION, SAVE :: Basin_dnflow
 !   Declared Variables
@@ -79,7 +79,7 @@
 !***********************************************************************
       gwflowdecl = 0
 
-      Version_gwflow = 'gwflow.f90 2016-06-01 10:10:00Z'
+      Version_gwflow = 'gwflow.f90 2018-01-18 16:59:00Z'
       CALL print_module(Version_gwflow, 'Groundwater                 ', 90)
       MODNAME = 'gwflow'
 
@@ -175,7 +175,7 @@
 
       ALLOCATE ( Gwsink_coef(Ngw) )
       IF ( declparam(MODNAME, 'gwsink_coef', 'ngw', 'real', &
-     &     '0.0', '0.0', '0.05', &
+     &     '0.0', '0.0', '1.0', &
      &     'Groundwater sink coefficient', &
      &     'Linear coefficient in the equation to compute outflow'// &
      &     ' to the groundwater sink for each GWR', &
@@ -197,7 +197,7 @@
 
       IF ( declvar(MODNAME, 'basin_gwstor_minarea_wb', 'one', 1, 'double', &
      &     'Basin area-weighted average storage added to each GWR when storage is less than gwstor_min', &
-     &     'inches', Basin_gwstor_minarea_wb)/=0 ) CALL read_error(3, 'basin_gwstor_minarea_wbr_minarea_wb')
+     &     'inches', Basin_gwstor_minarea_wb)/=0 ) CALL read_error(3, 'basin_gwstor_minarea_wb')
 
       END FUNCTION gwflowdecl
 
@@ -291,7 +291,6 @@
       Basin_gwflow = 0.0D0
       Basin_gwsink = 0.0D0
       Basin_gwin = 0.0D0
-      Basin_gwfarflow = 0.0D0
       Basin_gw_upslope = 0.0D0
       Basin_dnflow = 0.0D0
       Hru_streamflow_out = 0.0D0
@@ -321,7 +320,7 @@
 ! Local Variables
       INTEGER :: i, j
       REAL :: dnflow
-      DOUBLE PRECISION :: gwin, gwstor, gwsink, gwflow, gwstor_last, gwarea, far_gwflow
+      DOUBLE PRECISION :: gwin, gwstor, gwsink, gwflow, gwstor_last, gwarea
 !***********************************************************************
       gwflowrun = 0
 
@@ -336,7 +335,6 @@
       Basin_gwstor = 0.0D0
       Basin_gwsink = 0.0D0
       Basin_gwin = 0.0D0
-      Basin_gwfarflow = 0.0D0
       DO j = 1, Active_gwrs
         i = Gwr_route_order(j)
         gwarea = Hru_area_dble(i)
@@ -354,9 +352,16 @@
           Gwin_dprst(i) = Dprst_seep_hru(i)*gwarea
           gwin = gwin + Gwin_dprst(i)
         ENDIF
+        gwstor = gwstor + gwin
+        Basin_gwin = Basin_gwin + gwin
         IF ( Gwminarea_flag==1 ) THEN
           ! check to be sure gwres_stor >= gwstor_minarea before computing outflows
           IF ( gwstor<Gwstor_minarea(i) ) THEN
+            IF ( gwstor<0.0D0 ) THEN
+              IF ( Print_debug>-1 ) PRINT *, 'Warning, groundwater reservoir for HRU:', i, &
+     &                                       ' is < 0.0 with gwstor_min active', gwstor
+!              STOP
+            ENDIF
             gwstor_last = gwstor
             gwstor = Gwstor_minarea(i)
             !rsr, keep track of change in storage for WB
@@ -369,8 +374,6 @@
             Gwstor_minarea_wb(i) = 0.0D0
           ENDIF
         ENDIF
-        gwstor = gwstor + gwin
-        Basin_gwin = Basin_gwin + gwin
 
 ! Compute groundwater discharge
         gwflow = gwstor*DBLE( Gwflow_coef(i) )
@@ -395,14 +398,12 @@
         Basin_gwsink = Basin_gwsink + gwsink
         Basin_gwstor = Basin_gwstor + gwstor
 
-        dnflow = 0.0
         Gwres_flow(i) = SNGL( gwflow/gwarea )
         IF ( Cascadegw_flag>0 ) THEN
           IF ( Ncascade_gwr(i)>0 ) THEN
-            CALL rungw_cascade(i, Ncascade_gwr(i), Gwres_flow(i), dnflow, far_gwflow)
-            Hru_gw_cascadeflow(i) = dnflow + SNGL( far_gwflow )
+            CALL rungw_cascade(i, Ncascade_gwr(i), Gwres_flow(i), dnflow)
+            Hru_gw_cascadeflow(i) = dnflow
             Basin_dnflow = Basin_dnflow + dnflow*gwarea
-            Basin_gwfarflow = Basin_gwfarflow + far_gwflow*gwarea
           ENDIF
         ENDIF
         Basin_gwflow = Basin_gwflow + DBLE(Gwres_flow(i))*gwarea
@@ -422,7 +423,6 @@
       Basin_gwstor = Basin_gwstor*Basin_area_inv
       Basin_gwsink = Basin_gwsink*Basin_area_inv
       Basin_gwin = Basin_gwin*Basin_area_inv
-      Basin_gwfarflow = Basin_gwfarflow*Basin_area_inv
       Basin_gw_upslope = Basin_gw_upslope*Basin_area_inv
       Basin_gwstor_minarea_wb = Basin_gwstor_minarea_wb*Basin_area_inv
       Basin_dnflow = Basin_dnflow*Basin_area_inv
@@ -432,22 +432,22 @@
 !***********************************************************************
 !     Compute cascading GW flow
 !***********************************************************************
-      SUBROUTINE rungw_cascade(Igwr, Ncascade_gwr, Gwres_flow, Dnflow, Far_gwflow)
-      USE PRMS_SRUNOFF, ONLY: Strm_seg_in, Strm_farfield
+      SUBROUTINE rungw_cascade(Igwr, Ncascade_gwr, Gwres_flow, Dnflow)
+      USE PRMS_SRUNOFF, ONLY: Strm_seg_in
       USE PRMS_GWFLOW, ONLY: Gw_upslope
-      USE PRMS_CASCADE, ONLY: Gwr_down, Gwr_down_frac, Cascade_gwr_area, Nsegmentp1
+      USE PRMS_CASCADE, ONLY: Gwr_down, Gwr_down_frac, Cascade_gwr_area
       ! Cfs_conv converts acre-inches per timestep to cfs
       USE PRMS_SET_TIME, ONLY: Cfs_conv
       IMPLICIT NONE
-      INTRINSIC IABS, DBLE, SNGL
+      INTRINSIC IABS, DBLE
 ! Arguments
       INTEGER, INTENT(IN) :: Igwr, Ncascade_gwr
-      REAL, INTENT(INOUT) :: Gwres_flow, Dnflow
-      DOUBLE PRECISION, INTENT(OUT) :: Far_gwflow
+      REAL, INTENT(INOUT) :: Gwres_flow
+      REAL, INTENT(OUT) :: Dnflow
 ! Local variables
       INTEGER :: j, k
 !***********************************************************************
-      Far_gwflow = 0.0D0
+      Dnflow = 0.0
       DO k = 1, Ncascade_gwr
         j = Gwr_down(k, Igwr)
         ! Gwres_flow is in inches
@@ -458,17 +458,12 @@
 ! if gwr_down(k, Igwr) < 0, cascade contributes to a stream
         ELSEIF ( j<0 ) THEN
           j = IABS( j )
-          IF ( j/=Nsegmentp1 ) THEN
-            Strm_seg_in(j) = Strm_seg_in(j) + DBLE( Gwres_flow*Cascade_gwr_area(k, Igwr) )*Cfs_conv
-          ELSE
-            Strm_farfield = Strm_farfield + DBLE( Gwres_flow*Cascade_gwr_area(k, Igwr) )*Cfs_conv
-            Far_gwflow = Far_gwflow + DBLE( Gwres_flow*Gwr_down_frac(k, Igwr) )
-          ENDIF
+          Strm_seg_in(j) = Strm_seg_in(j) + DBLE( Gwres_flow*Cascade_gwr_area(k, Igwr) )*Cfs_conv
         ENDIF
       ENDDO
 
-      ! gwres_flow reduced by cascading flow to HRUs or farfield
-      Gwres_flow = Gwres_flow - Dnflow - SNGL( Far_gwflow )
+      ! gwres_flow reduced by cascading flow to HRUs
+      Gwres_flow = Gwres_flow - Dnflow
       IF ( Gwres_flow<0.0 ) Gwres_flow = 0.0
 
       END SUBROUTINE rungw_cascade
@@ -488,7 +483,7 @@
       IF ( In_out==0 ) THEN
         WRITE ( Restart_outunit ) MODNAME
         WRITE ( Restart_outunit ) Basin_gwstor, Basin_gwflow, Basin_gwsink, Basin_gwin, Basin_gwstor_minarea_wb, &
-     &          Gwminarea_flag, Basin_dnflow, Basin_gw_upslope, Basin_gwfarflow
+     &          Gwminarea_flag, Basin_dnflow, Basin_gw_upslope
         IF ( Gwminarea_flag==1 ) THEN
           WRITE ( Restart_outunit ) Gwstor_minarea_wb
           WRITE ( Restart_outunit ) Gwstor_minarea
@@ -509,7 +504,7 @@
         READ ( Restart_inunit ) module_name
         CALL check_restart(MODNAME, module_name)
         READ ( Restart_inunit ) Basin_gwstor, Basin_gwflow, Basin_gwsink, Basin_gwin, Basin_gwstor_minarea_wb, &
-     &         Gwminarea_flag, Basin_dnflow, Basin_gw_upslope, Basin_gwfarflow
+     &         Gwminarea_flag, Basin_dnflow, Basin_gw_upslope
         IF ( Gwminarea_flag==1 ) THEN ! could be error if someone turns off gwstor_min for restart
           READ ( Restart_inunit ) Gwstor_minarea_wb
           READ ( Restart_inunit ) Gwstor_minarea

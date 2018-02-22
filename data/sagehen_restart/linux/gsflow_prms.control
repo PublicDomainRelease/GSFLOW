@@ -3,7 +3,7 @@ GSFLOW Control File for the Sagehen Creek Watershed using pre-processed climate 
 model_mode
 1
 4
-GSFLOW
+PRMS
 ####
 start_time
 6

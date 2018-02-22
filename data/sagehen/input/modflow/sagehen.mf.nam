@@ -2,7 +2,7 @@ LIST 26  ../output/modflow/sagehen.mfonly.list
 BAS6  8  ../input/modflow/sagehen.bas
 oc    9  ../input/modflow/sagehen.oc
 dis  11  ../input/modflow/sagehen.mf.dis
-lpf  12  ../input/modflow/sagehen.mf.lpf
+lpf  12  ../input/modflow/sagehen.lpf
 pcg  13  ../input/modflow/sagehen.pcg
 uzf  14  ../input/modflow/sagehen.uzf
 sfr  15  ../input/modflow/sagehen.sfr

@@ -5,6 +5,16 @@ model_mode
 4
 GSFLOW
 ####
+modflow_time_zero
+6
+1
+1980
+10
+1
+0
+0
+0
+####
 start_time
 6
 1

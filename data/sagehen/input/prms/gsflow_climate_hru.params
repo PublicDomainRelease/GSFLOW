@@ -393,13 +393,6 @@ nhru
 2
 128*0.0
 ####
-szconverge 4
-1
-one
-1
-2
-1.0E-4
-####
 smidx_coef
 1
 nhru
@@ -1361,13 +1354,6 @@ one
 1
 1
 25
-####
-mnsziter 4
-1
-one
-1
-1
-4
 ####
 albset_rnm 0
 1
